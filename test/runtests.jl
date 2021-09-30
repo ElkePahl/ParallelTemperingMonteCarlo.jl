@@ -10,4 +10,6 @@ using ParallelTemperingMonteCarlo
     config = @inferred Config{10}(pointarray,bc)
     @test length(config) == 10
     @test_throws ErrorException @inferred Config(pointarray,bc)
+    p2 = Point(-1.,-1.,-1.)
+    @test dist2(p1,p2) == 12.0
 end
