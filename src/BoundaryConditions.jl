@@ -6,8 +6,6 @@
 """
 module BoundaryConditions
 
-using BenchmarkTools
-
 export SphericalBC, AbstractBC
 
 # include("SphericalBC.jl")
