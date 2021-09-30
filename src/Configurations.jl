@@ -17,7 +17,7 @@ end
     Config{N}(positions::Vector{Point}, boundary::AbstractBC)
 Generate a configuration of `N` points.
 """
-struct Config{BC, N, T} 
+struct Config{N, BC, T} 
     points::Vector{Point{T}}
     bc::BC
 end
@@ -25,12 +25,15 @@ end
 #type constructor
 function Config(positions::Vector{Point{T}}, boundary::BC) where {T,BC<:AbstractBC}
     N = length(positions)
-    return Config{BC,N,T}(positions,boundary)
+    return Config{N,BC,T}(positions,boundary)
 end
 
 function Config{N}(positions::Vector{Point{T}}, boundary::BC) where {N,T,BC<:AbstractBC}
-    @boundscheck length(positions) == N || error("number of atoms and number positions not the same")
-    return Config{BC,N,T}(positions,boundary)
+    @boundscheck length(positions) == N || error("number of atoms and number of positions not the same")
+    return Config{N,BC,T}(positions,boundary)
 end
+
+Base.length(::Config{N}) where N = N
+
 
 end
