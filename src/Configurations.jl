@@ -56,7 +56,7 @@ dist2(p1::Point, p2::Point) = ((p1.x - p2.x)^2 + (p1.y - p2.y)^2 +(p1.z - p2.z)^
 Generate a configuration of `N` points.
 """
 struct Config{N, BC, T} 
-    points::Vector{Point{T}}
+    pos::Vector{Point{T}}
     bc::BC
 end
 
@@ -97,8 +97,9 @@ end
 
 Moves n_atom-th atom in configuration by delta_move  
 """
-function move_atom!(config::Config, n_atom, delta_move)
-    config.points[n_atom] += delta_move
+function move_atom!(config, n_atom, delta_move)
+    config.pos[n_atom] += delta_move
+    return config
 end
 
 end
