@@ -18,9 +18,5 @@ struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius squared
 end
 
-function move_atom!(config,bc::SphericalBC)
-end
-
-    
 
 end
