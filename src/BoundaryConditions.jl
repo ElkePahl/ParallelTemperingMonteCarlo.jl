@@ -9,18 +9,13 @@ module BoundaryConditions
 export SphericalBC, AbstractBC
 
 # include("SphericalBC.jl")
-
-
-
-
 # could be named SphericalBC.jl
-
 
 "documentation - one line"
 abstract type AbstractBC{T} end
 
 struct SphericalBC{T} <: AbstractBC{T}
-    radius::T
+    radius2::T   #radius squared
 end
 
 function move_atom!(config,bc::SphericalBC)
