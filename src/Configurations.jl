@@ -94,7 +94,7 @@ end
 #one can check with @code_warntype
 function Config(pos::Vector{SVector{3,T}}, bc::BC) where {T,BC<:AbstractBC}
     N = length(pos)
-    return Config{N,BC,T}(pos,bc)
+    return Config{N,BC,T}(pos,bc)conf1
 end
 
 #type stable constructor as N is passed along 
@@ -103,12 +103,23 @@ function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
     return Config{N,BC,T}(pos,bc)
 end
 
+function Config(pos, bc::BC) where {BC<:AbstractBC}
+    poss = [SVector{3}(p[i] for i in 1:3) for p in pos]
+    N = length(poss)
+    T = eltype(poss[1])
+    return Config{N,BC,T}(poss, bc)
+end
+
+#function Config(list::Vector{<:Number}, bc::BC) where {BC<:AbstractBC}
+
+#?pos as matrix
+
 """
     move_atom!(config::Config, n_atom, delta_move)
 
 Moves `n_atom`-th atom in configuration by `delta_move`  
 """
-function move_atom!(config, n_atom, delta_move)
+function move_atom!(config::Config, n_atom, delta_move)
     config.pos[n_atom] += delta_move
     return config
 end
