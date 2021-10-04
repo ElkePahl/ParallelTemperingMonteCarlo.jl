@@ -11,12 +11,12 @@ This module defines types and functions for working with atomic configurations o
 """
 module Configurations
 
-export Config
-export dist2, move_atom!
-
 using StaticArrays
 
 using ..BoundaryConditions
+
+export Config
+export dist2, move_atom!
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -78,33 +78,35 @@ using ..BoundaryConditions
 """
     Config(pos::Vector{SVector{3,T}}, bc::AbstractBC)
     Config{N}(positions::Vector{SVector{3,T}}, bc::AbstractBC)
-Generate a configuration of `N` atomic positions, each position saved as SVector of length 3.
+Generates a configuration of `N` atomic positions, each position saved as SVector of length 3.
+Fieldnames: 
+- `pos`: vector of x,y, and z coordinates of every atom 
+- `bc`: boundary condition
 """
 struct Config{N, BC, T} 
     pos::Vector{SVector{3,T}}
     bc::BC
 end
 
+#type constructors:
+
+#not type stable! (as N can only be determined during run time when positions known)
+#one can check with @code_warntype
 function Config(pos::Vector{SVector{3,T}}, bc::BC) where {T,BC<:AbstractBC}
     N = length(pos)
     return Config{N,BC,T}(pos,bc)
 end
 
-#type stable constructor as N is passed along (for compiler)
+#type stable constructor as N is passed along 
 function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
     @boundscheck length(pos) == N || error("number of atoms and number of positions not the same")
     return Config{N,BC,T}(pos,bc)
 end
 
-function check_bc(bc::SphericalBC,pos)
-    sum(x->x^2,pos) > bc.radius2 ? flag = false : flag= true
-    return flag
-end
-
 """
     move_atom!(config::Config, n_atom, delta_move)
 
-Moves n_atom-th atom in configuration by delta_move  
+Moves `n_atom`-th atom in configuration by `delta_move`  
 """
 function move_atom!(config, n_atom, delta_move)
     config.pos[n_atom] += delta_move

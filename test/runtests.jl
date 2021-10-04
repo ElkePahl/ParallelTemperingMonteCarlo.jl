@@ -33,3 +33,13 @@ using StaticArrays
     @test conf.pos[1] == SVector(1.,3.,5.)
     @test conf1.pos[1] == SVector(1.,3.,5.)
 end
+
+@testset "BoundaryConditions" begin
+    bc = SphericalBC(1.0)
+    @test bc.radius2 == 1.
+
+    @test outside_of_boundary(bc,SVector(0,0.5,1.))
+    @test outside_of_boundary(bc,SVector(0,0.5,0.5))== false
+end
+
+outside_of_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
