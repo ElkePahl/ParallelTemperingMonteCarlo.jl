@@ -1,6 +1,7 @@
 module ParallelTemperingMonteCarlo
 
 using Reexport
+using StaticArrays
 
 include("BoundaryConditions.jl")
 include("Configurations.jl")
