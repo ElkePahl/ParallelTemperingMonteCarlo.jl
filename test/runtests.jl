@@ -41,5 +41,3 @@ end
     @test outside_of_boundary(bc,SVector(0,0.5,1.))
     @test outside_of_boundary(bc,SVector(0,0.5,0.5))== false
 end
-
-outside_of_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
