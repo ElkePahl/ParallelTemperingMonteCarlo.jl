@@ -78,6 +78,7 @@ export dist2, move_atom!
 """
     Config(pos::Vector{SVector{3,T}}, bc::AbstractBC)
     Config{N}(positions::Vector{SVector{3,T}}, bc::AbstractBC)
+    Config(pos, bc::BC) where {BC<:AbstractBC}
 Generates a configuration of `N` atomic positions, each position saved as SVector of length 3.
 Fieldnames: 
 - `pos`: vector of x,y, and z coordinates of every atom 
@@ -103,6 +104,7 @@ function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
     return Config{N,BC,T}(pos,bc)
 end
 
+#not type stable, allows for input of positions as vector or tuples
 function Config(pos, bc::BC) where {BC<:AbstractBC}
     poss = [SVector{3}(p[i] for i in 1:3) for p in pos]
     N = length(poss)
@@ -110,7 +112,9 @@ function Config(pos, bc::BC) where {BC<:AbstractBC}
     return Config{N,BC,T}(poss, bc)
 end
 
-#function Config(list::Vector{<:Number}, bc::BC) where {BC<:AbstractBC}
+#overloads Base function length
+Base.length(::Config{N}) where N = N
+
 
 #?pos as matrix
 
