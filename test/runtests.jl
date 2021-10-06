@@ -28,6 +28,9 @@ using StaticArrays
     @test length(config.pos) == 10
     @test_throws ErrorException @inferred Config(posarray,bc)
 
+    #posarray = [[rand(),rand(),rand()] for _ in 1:10]
+    #config = @inferred Config{10}(posarray,bc)
+
     delta = SVector(0.,1.,2.)
     conf1 = move_atom!(conf, 1, delta)
     @test conf.pos[1] == SVector(1.,3.,5.)
