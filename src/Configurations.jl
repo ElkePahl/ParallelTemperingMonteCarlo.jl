@@ -94,7 +94,7 @@ end
 #one can check with @code_warntype
 function Config(pos::Vector{SVector{3,T}}, bc::BC) where {T,BC<:AbstractBC}
     N = length(pos)
-    return Config{N,BC,T}(pos,bc)conf1
+    return Config{N,BC,T}(pos,bc)
 end
 
 #type stable constructor as N is passed along 
