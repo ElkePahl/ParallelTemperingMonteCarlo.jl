@@ -21,12 +21,14 @@ Encompasses possible boundary conditions; implemented:
 abstract type AbstractBC{T} end
 
 """
-    SphericalBC{T}
+    SphericalBC{T}(;radius)
 Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@ref).
+Needs radius of binding sphere as keyword argument   
 fieldname: `radius2`: squared radius of binding sphere
 """
 struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
+    SphericalBC(; radius::T) where T = new{T}(radius*radius)
 end
 
 """

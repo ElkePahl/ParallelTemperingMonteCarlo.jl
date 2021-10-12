@@ -16,11 +16,11 @@ using StaticArrays, LinearAlgebra
 # end
 
 @testset "Config" begin
-    bc = SphericalBC(1.0)
+    bc = SphericalBC(radius=2.0)
     v1 = SVector(1., 2., 3.)
     conf = Config{3}([v1,v1,v1],bc)
 
-    @test conf.bc.radius2 == 1.0
+    @test conf.bc.radius2 == 4.0
     @test conf.pos[1] == v1
 
     posarray = [SVector(rand(),rand(),rand()) for _ in 1:10]
@@ -50,9 +50,9 @@ using StaticArrays, LinearAlgebra
 end
 
 @testset "BoundaryConditions" begin
-    bc = SphericalBC(1.0)
+    bc = SphericalBC(radius=1.0)
     @test bc.radius2 == 1.
 
     @test outside_of_boundary(bc,SVector(0,0.5,1.))
-    @test outside_of_boundary(bc,SVector(0,0.5,0.5))== false
+    @test outside_of_boundary(bc,SVector(0,0.5,0.5)) == false
 end
