@@ -18,7 +18,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance_mat, move_atom!
+export distance2, get_distance2_mat, move_atom!
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -142,6 +142,6 @@ distance2(a,b) = (a-b)⋅(a-b)
 
 Builds the matrix of squared distances between positions of configuration.
 """
-get_distance_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
+get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
 
 end

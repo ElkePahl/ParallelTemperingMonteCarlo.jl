@@ -35,10 +35,18 @@ using StaticArrays, LinearAlgebra
     v2 = SVector(2.,4.,6.)
     @test distance2(v1,v2) == 14.0
 
+    v3 = SVector(0., 1., 0.)
+    conf2 = Config{3}([v1,v2,v3],bc)
+    d2mat = get_distance2_mat(conf2)
+    @test d2mat[1,3] == 11.0
+    @test d2mat[2,1] == d2mat[1,2]
+
     delta = SVector(0.,1.,2.)
     conf1 = move_atom!(conf, 1, delta)
     @test conf.pos[1] == SVector(1.,3.,5.)
     @test conf1.pos[1] == SVector(1.,3.,5.)
+
+    
 end
 
 @testset "BoundaryConditions" begin
