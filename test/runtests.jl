@@ -1,6 +1,6 @@
 using Test
 using ParallelTemperingMonteCarlo
-using StaticArrays
+using StaticArrays, LinearAlgebra
 
 # @testset "Point" begin
 #     p1 = Point(1.,1.,1.)
