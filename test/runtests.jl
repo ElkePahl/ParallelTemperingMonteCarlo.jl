@@ -32,6 +32,9 @@ using StaticArrays
     config = Config(posarray,bc)
     @test length(config) == 10
 
+    v2 = SVector(2.,4.,6.)
+    @test distance2(v1,v2) == 14.0
+
     delta = SVector(0.,1.,2.)
     conf1 = move_atom!(conf, 1, delta)
     @test conf.pos[1] == SVector(1.,3.,5.)
