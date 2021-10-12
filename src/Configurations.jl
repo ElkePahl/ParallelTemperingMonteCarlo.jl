@@ -7,16 +7,18 @@ This module defines types and functions for working with atomic configurations o
 - [`Config`](@ref) 
 
 ## Exported functions
+- [`distance2`](@ref)
+- [`get_distance_mat`](@ref)
 - [`move_atom!`](@ref)
 """
 module Configurations
 
-using StaticArrays
+using StaticArrays, LinearAlgebra
 
 using ..BoundaryConditions
 
 export Config
-export dist2, move_atom!
+export distance2, get_distance_mat, move_atom!
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -121,11 +123,25 @@ Base.length(::Config{N}) where N = N
 """
     move_atom!(config::Config, n_atom, delta_move)
 
-Moves `n_atom`-th atom in configuration by `delta_move`  
+Moves `n_atom`-th atom in configuration by `delta_move`.  
 """
 function move_atom!(config::Config, n_atom, delta_move)
     config.pos[n_atom] += delta_move
     return config
 end
+"""
+    distance2(a,b) 
+    
+Finds the distance between two positions a and b.
+"""
+distance2(a,b) = (a-b)⋅(a-b)
+
+#distance matrix
+"""
+    get_distance_mat(conf::Config{N})
+
+Builds the matrix of squared distances between positions of configuration.
+"""
+get_distance_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
 
 end
