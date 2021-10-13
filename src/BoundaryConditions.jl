@@ -39,4 +39,11 @@ Returns `true` when atom outside of spherical boundary
 """
 outside_of_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
+
+"""
+    test_cluster_inside(conf,bc::SphericalBC)
+Tests if whole cluster lies in the binding sphere     
+"""
+test_cluster_inside(conf,bc) = sum(x->outside_of_boundary(bc,x),conf.pos) == 0
+
 end

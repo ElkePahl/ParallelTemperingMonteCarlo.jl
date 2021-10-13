@@ -163,7 +163,7 @@ pos_ne13 =[[2.825384495892464, 0.928562467914040, 0.505520149314310],
 
 bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
 
-ne13_conf = Config(pos_ne13, bc_ne13)
+conf_ne13 = Config(pos_ne13, bc_ne13)
 
 
 bc_ar32 = SphericalBC(radius=14.5)  #Angstrom
