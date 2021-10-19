@@ -1,7 +1,5 @@
 module MCRun
 
-import InputParams: kB
-
 export metropolis_condition
 
 """
