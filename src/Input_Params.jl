@@ -3,7 +3,7 @@
 
     this module provides structs and methods to arrange input parameters
 """
-module Input
+module InputParams
 
 using StaticArrays
 
