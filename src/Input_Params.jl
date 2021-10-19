@@ -9,6 +9,8 @@ using StaticArrays
 
 export MCParams, TempGrid
 
+const kB = 3.16681196E-6  # in Hartree/K 
+
 struct MCParams
     mc_cycles::Int
     eq_cycles::Int
@@ -22,6 +24,7 @@ end
 
 struct TempGrid{N,T} 
     t_grid::SVector{N,T}
+    beta_grid::SVector{N,T}
 end
 
 function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
@@ -33,7 +36,8 @@ function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
     else
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end
-    return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid))
+    betagrid = 1. /(kB*tgrid)
+    return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid),SVector{N}(betagrid))
 end 
 
 end
