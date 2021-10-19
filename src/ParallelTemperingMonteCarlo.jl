@@ -8,7 +8,7 @@ include("Configurations.jl")
 include("EnergyEvaluation.jl")
 include("MCRun.jl")
 
-@reexport using .Input
+@reexport using .InputParams
 @reexport using .BoundaryConditions
 @reexport using .Configurations
 @reexport using .EnergyEvaluation
