@@ -9,12 +9,8 @@ Determines probability to accept a MC move at inverse temperature beta, takes en
 """
 function metropolis_condition(energy_unmoved, energy_moved, beta)
     prob_val = exp(-(energy_moved-energy_unmoved)*beta)
-    if prob_val > 1
-        return 1.
-    else
-        return prob_val
-    end
+    T = typeof(prob_val)
+    return ifelse(prob_val > 1, T(1), prob_val)
 end
-
 
 end

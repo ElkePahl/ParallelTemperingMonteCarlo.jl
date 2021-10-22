@@ -40,4 +40,6 @@ function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
     return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid),SVector{N}(betagrid))
 end 
 
+TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
+
 end
