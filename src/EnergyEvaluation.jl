@@ -15,7 +15,23 @@ export dimer_energy, dimer_energy_atom
 #Dimer energies - no angle dependence
 #extended Lennard Jones, ELJ, general definition n=6 to N+6
 
-struct ELJPotential{N,T}
+"""   
+    AbstractPotential
+Encompasses possible potentials; implemented: 
+- ELJPotential [`ELJPotential`](@ref)
+
+
+Needs method for dimer_energy [`dimer_energy`](@ref)
+"""
+abstract type AbstractPotential end
+
+"""   
+    ELJPotential{N,T} 
+Implements type for extended Lennard Jones potential; subtype of [`AbstractPotential`](@ref);
+as sum over c_i r^(-i), starting with i=6 up to i=N+6
+field name: coeff : contains ELJ coefficients c_ifrom i=6 to i=N+6, coefficient for every power needed.
+"""
+struct ELJPotential{N,T} <: AbstractPotential
     coeff::SVector{N,T}
 end
 
@@ -33,16 +49,11 @@ function ELJPotential(c)
     return ELJPotential{N,T}(coeff)
 end
 
-
-# function dimer_energy1(pot::ELJPotential{N},r2) where N
-#     r = sqrt(r2)
-#     sum1 = 0.
-#     for i = 1:N
-#         sum1 += pot.coeff[i] * r^(-i-5)
-#     end
-#     return sum1
-# end
-
+"""
+    dimer_energy(pot::ELJPotential{N}, r2)
+Calculates energy of dimer for given potential `pot` of type ELJPotential [`ELJPotential`](@ref), 
+and squared distance `r2` between atoms
+"""
 function dimer_energy(pot::ELJPotential{N}, r2) where N
     r = sqrt(r2)
     r6inv = 1/(r2*r2*r2)
@@ -54,7 +65,14 @@ function dimer_energy(pot::ELJPotential{N}, r2) where N
     return sum1
 end
 
-function dimer_energy_atom(i, d2mat, pot)
+
+"""
+    dimer_energy_atom(i, d2mat, pot<:AbstractPotential)
+Sums the dimer energies for atom `i` with all other atoms
+Needs matrix of squared distances `dmat`, see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot`
+"""
+function dimer_energy_atom(i, d2mat, pot<:AbstractPotential)
     sum1 = 0.
     for j in 1:i-1
         sum1 += dimer_energy(pot, d2mat[j,i])
