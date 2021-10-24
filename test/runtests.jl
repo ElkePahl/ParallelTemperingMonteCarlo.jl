@@ -53,6 +53,6 @@ end
     bc = SphericalBC(radius=1.0)
     @test bc.radius2 == 1.
 
-    @test outside_of_boundary(bc,SVector(0,0.5,1.))
-    @test outside_of_boundary(bc,SVector(0,0.5,0.5)) == false
+    @test check_boundary(bc,SVector(0,0.5,1.))
+    @test check_boundary(bc,SVector(0,0.5,0.5)) == false
 end

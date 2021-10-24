@@ -129,6 +129,12 @@ function move_atom!(config::Config, n_atom, delta_move)
     config.pos[n_atom] += delta_move
     return config
 end
+
+function move_atom!(pos,delta_move)
+    pos += delta_move
+    return pos
+end
+
 """
     distance2(a,b) 
     
