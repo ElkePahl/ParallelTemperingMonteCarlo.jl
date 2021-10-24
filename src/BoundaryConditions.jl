@@ -7,7 +7,7 @@
 module BoundaryConditions
 
 export SphericalBC, AbstractBC
-export outside_of_boundary
+export check_boundary
 
 # include("SphericalBC.jl")
 # could be named SphericalBC.jl
@@ -32,12 +32,12 @@ struct SphericalBC{T} <: AbstractBC{T}
 end
 
 """
-    outside_of_boundary(bc::SpericalBC,pos)
+    check_boundary(bc::SpericalBC,pos)
 
 Returns `true` when atom outside of spherical boundary
 (squared norm of position vector < radius^2 of binding sphere).
 """
-outside_of_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
+check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
 
 """
