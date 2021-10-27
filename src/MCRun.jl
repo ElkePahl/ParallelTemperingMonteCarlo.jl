@@ -23,6 +23,7 @@ function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, i_atom, max_displac
     end
     #find energy difference
     dist2_new = [distance2(trial_pos,b) for b in config.pos]
+    #delta_en = dimer_energy_atom(i_atom, dist2_new, pot1) - dimer_energy_atom(i_atom, config.pos[i_atom], pot1)
     #decide acceptance
     #restore or accept
 end

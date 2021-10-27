@@ -9,7 +9,7 @@ module EnergyEvaluation
 #using Configurations
 using StaticArrays
 
-export ELJPotential
+export ELJPotential, AbstractPotential 
 export dimer_energy, dimer_energy_atom
 
 #Dimer energies - no angle dependence
@@ -65,21 +65,20 @@ function dimer_energy(pot::ELJPotential{N}, r2) where N
     return sum1
 end
 
-
 """
-    dimer_energy_atom(i, d2mat, pot<:AbstractPotential)
+    dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
 Sums the dimer energies for atom `i` with all other atoms
-Needs vector of squared distances `dvec` between atom `i` and all other atoms in configuration
+Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
 see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
-function dimer_energy_atom(i, pos, d2vec, pot::AbstractPotential)
+function dimer_energy_atom(i, d2vec, pot::AbstractPotential)
     sum1 = 0.
     for j in 1:i-1
         sum1 += dimer_energy(pot, d2vec[j])
     end
-    for j in i+1:size(dvec,1)
-        sum1 += dimer_energy(pot, d2mat[j])
+    for j in i+1:size(d2vec,1)
+        sum1 += dimer_energy(pot, d2vec[j])
     end 
     return sum1
 end
