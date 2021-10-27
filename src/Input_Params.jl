@@ -7,9 +7,21 @@ module InputParams
 
 using StaticArrays
 
+export InputParameters
 export MCParams, TempGrid
+export AbstractDisplacementParams, DisplacementParams_Atom_Move_only
 
 const kB = 3.16681196E-6  # in Hartree/K 
+
+struct InputParameters
+    mc_parameters::MCParams
+    temp_parameters::TempGrid
+    starting_conf::Config
+    random_seed::Int
+    potential::AbstractPotential
+    max_displacement::AbstractDisplacementParams
+end
+
 
 struct MCParams
     mc_cycles::Int
@@ -37,9 +49,86 @@ function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end
     betagrid = 1. /(kB*tgrid)
-    return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid),SVector{N}(betagrid))
+    return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
 end 
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
+
+abstract type AbstractDisplacementParams{T} end
+
+struct DisplacementParams_Atom_Move_only{T} <: AbstractDisplacementParams{T}
+    max_displacement::T  #maximum atom displacement in Angstrom
+    update_stepsize::Int
+end 
+
+function DisplacementParams_Atom_Move_only(displ; update_stepsize=100)
+    T = eltype(displ)
+    return DisplacementParams_Atom_Move_only{T}(displ, update_stepsize)
+end
+
+#define boundary conditions starting configuration
+bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
+
+#starting configuration
+conf_ne13 = Config(pos_ne13, bc_ne13)
+
+#
+
+
+#default configurations
+#icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
+pos_ne13 =[[2.825384495892464, 0.928562467914040, 0.505520149314310],
+[2.023342172678102,	-2.136126268595355, 0.666071287554958],
+[2.033761811732818,	-0.643989413759464, -2.133000349161121],
+[0.979777205108572,	2.312002562803556, -1.671909307631893],
+[0.962914279874254,	-0.102326586625353, 2.857083360096907],
+[0.317957619634043,	2.646768968413408, 1.412132053672896],
+[-2.825388342924982, -0.928563755928189, -0.505520471387560],
+[-0.317955944853142, -2.646769840660271, -1.412131825293682],
+[-0.979776174195320, -2.312003751825495, 1.671909138648006],
+[-0.962916072888105, 0.102326392265998,	-2.857083272537599],
+[-2.023340541398004, 2.136128558801072,	-0.666071089291685],
+[-2.033762834001679, 0.643989905095452, 2.132999911364582],
+[0.000002325340981,	0.000000762100600, 0.000000414930733]]
+
+
+
+
+#bc_ar32 = SphericalBC(radius=14.5)  #Angstrom
+
+#Ar32 starting config (fcc, pbc)
+# pos_ar32 = 0.2000000000E+02  0.2000000000E+02  0.2000000000E+02
+# -0.1000000000E+02 -0.1000000000E+02 -0.1000000000E+02
+# -0.5000000000E+01 -0.5000000000E+01 -0.1000000000E+02
+# -0.5000000000E+01 -0.1000000000E+02 -0.5000000000E+01
+# -0.1000000000E+02 -0.5000000000E+01 -0.5000000000E+01
+# -0.1000000000E+02 -0.1000000000E+02  0.0000000000E+00
+# -0.5000000000E+01 -0.5000000000E+01  0.0000000000E+00
+# -0.5000000000E+01 -0.1000000000E+02  0.5000000000E+01
+# -0.1000000000E+02 -0.5000000000E+01  0.5000000000E+01
+# -0.1000000000E+02  0.0000000000E+00 -0.1000000000E+02
+# -0.5000000000E+01  0.5000000000E+01 -0.1000000000E+02
+# -0.5000000000E+01  0.0000000000E+00 -0.5000000000E+01
+# -0.1000000000E+02  0.5000000000E+01 -0.5000000000E+01
+# -0.1000000000E+02  0.0000000000E+00  0.0000000000E+00
+# -0.5000000000E+01  0.5000000000E+01  0.0000000000E+00
+# -0.5000000000E+01  0.0000000000E+00  0.5000000000E+01
+# -0.1000000000E+02  0.5000000000E+01  0.5000000000E+01
+#  0.0000000000E+00 -0.1000000000E+02 -0.1000000000E+02
+#  0.5000000000E+01 -0.5000000000E+01 -0.1000000000E+02
+#  0.5000000000E+01 -0.1000000000E+02 -0.5000000000E+01
+#  0.0000000000E+00 -0.5000000000E+01 -0.5000000000E+01
+#  0.0000000000E+00 -0.1000000000E+02  0.0000000000E+00
+#  0.5000000000E+01 -0.5000000000E+01  0.0000000000E+00
+#  0.5000000000E+01 -0.1000000000E+02  0.5000000000E+01
+#  0.0000000000E+00 -0.5000000000E+01  0.5000000000E+01
+#  0.0000000000E+00  0.0000000000E+00 -0.1000000000E+02
+#  0.5000000000E+01  0.5000000000E+01 -0.1000000000E+02
+#  0.5000000000E+01  0.0000000000E+00 -0.5000000000E+01
+#  0.0000000000E+00  0.5000000000E+01 -0.5000000000E+01
+#  0.0000000000E+00  0.0000000000E+00  0.0000000000E+00
+#  0.5000000000E+01  0.5000000000E+01  0.0000000000E+00
+#  0.5000000000E+01  0.0000000000E+00  0.5000000000E+01
+#  0.0000000000E+00  0.5000000000E+01  0.5000000000E+01
 
 end
