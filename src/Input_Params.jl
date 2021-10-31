@@ -69,18 +69,9 @@ struct InputParameters
     max_displacement::AbstractDisplacementParams
 end
 
-#define boundary conditions starting configuration
-bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
-
-#starting configuration
-conf_ne13 = Config(pos_ne13, bc_ne13)
-
-#
-
-
 #default configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
-pos_ne13 =[[2.825384495892464, 0.928562467914040, 0.505520149314310],
+pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [2.023342172678102,	-2.136126268595355, 0.666071287554958],
 [2.033761811732818,	-0.643989413759464, -2.133000349161121],
 [0.979777205108572,	2.312002562803556, -1.671909307631893],
@@ -94,7 +85,11 @@ pos_ne13 =[[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [-2.033762834001679, 0.643989905095452, 2.132999911364582],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]]
 
+#define boundary conditions starting configuration
+bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
 
+#starting configuration
+conf_ne13 = Config(pos_ne13, bc_ne13)
 
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom
