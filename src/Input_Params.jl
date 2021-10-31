@@ -9,6 +9,7 @@ using StaticArrays
 
 using ..BoundaryConditions
 using ..Configurations
+using ..EnergyEvaluation
 
 export InputParameters
 export MCParams, TempGrid
