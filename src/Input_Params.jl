@@ -11,7 +11,7 @@ export InputParameters
 export MCParams, TempGrid
 export AbstractDisplacementParams, DisplacementParams_Atom_Move_only
 
-const kB = 3.16681196E-6  # in Hartree/K 
+const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
 struct InputParameters
     mc_parameters::MCParams
