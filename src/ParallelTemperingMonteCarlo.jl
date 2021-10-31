@@ -4,8 +4,8 @@ using Reexport
 
 include("BoundaryConditions.jl")
 include("Configurations.jl")
-include("Input_Params.jl")
 include("EnergyEvaluation.jl")
+include("Input_Params.jl")
 include("Initialization")
 include("MCRun.jl")
 
