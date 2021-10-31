@@ -6,7 +6,7 @@ include("BoundaryConditions.jl")
 include("Configurations.jl")
 include("EnergyEvaluation.jl")
 include("Input_Params.jl")
-include("Initialization")
+#include("Initialization")
 include("MCRun.jl")
 
 @reexport using .InputParams
