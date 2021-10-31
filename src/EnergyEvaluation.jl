@@ -83,4 +83,22 @@ function dimer_energy_atom(i, d2vec, pot::AbstractPotential)
     return sum1
 end
 
+"""
+    dimer_energy_config(distmat, NAtoms, pot::AbstractPotential)
+Stores the total of dimer energies of one atom with all other atoms in vector and
+calculates total energy of configuration
+Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot` [`Abstract_Potential`](@ref) 
+"""
+
+function dimer_energy_config(distmat, NAtoms, pot::AbstractPotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    for i in 1:NAtoms
+        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot)
+        energy_tot += dimer_energy_vec[i]
+    end 
+    return dimer_energy_vec, 0.5*energy_tot
+end
+
 end
