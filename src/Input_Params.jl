@@ -13,16 +13,6 @@ export AbstractDisplacementParams, DisplacementParams_Atom_Move_only
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
-struct InputParameters
-    mc_parameters::MCParams
-    temp_parameters::TempGrid
-    starting_conf::Config
-    random_seed::Int
-    potential::AbstractPotential
-    max_displacement::AbstractDisplacementParams
-end
-
-
 struct MCParams
     mc_cycles::Int
     eq_cycles::Int
@@ -64,6 +54,15 @@ end
 function DisplacementParams_Atom_Move_only(displ; update_stepsize=100)
     T = eltype(displ)
     return DisplacementParams_Atom_Move_only{T}(displ, update_stepsize)
+end
+
+struct InputParameters
+    mc_parameters::MCParams
+    temp_parameters::TempGrid
+    starting_conf::Config
+    random_seed::Int
+    potential::AbstractPotential
+    max_displacement::AbstractDisplacementParams
 end
 
 #define boundary conditions starting configuration
