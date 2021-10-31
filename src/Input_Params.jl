@@ -7,6 +7,9 @@ module InputParams
 
 using StaticArrays
 
+using ..BoundaryConditions
+using ..Configurations
+
 export InputParameters
 export MCParams, TempGrid
 export AbstractDisplacementParams, DisplacementParams_Atom_Move_only
@@ -18,7 +21,7 @@ struct MCParams
     eq_cycles::Int
 end 
 
-function MCParams(cycles;eq_percentage = 0.2)
+function MCParams(cycles; eq_percentage = 0.2)
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
     return MCParams(mc_cycles,eq_cycles)
