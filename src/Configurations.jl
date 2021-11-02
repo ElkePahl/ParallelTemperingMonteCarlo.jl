@@ -135,6 +135,30 @@ function move_atom!(pos,delta_move)
     return pos
 end
 
+
+IF ( MOD(MCstep,100) == 0 ) THEN                        !100 is the number of steps after which step size is updated
+        Adjust=REAL(Maccepted(t))/REAL(100*NMolecules)       !Denominator is multiplied by NMolecules because the EXTRA loop over the number of molecules
+        IF ( Adjust < 0.4 ) THEN                             !number of accepted steps/number of total steps should
+           maxDisplacement(t)=maxDisplacement(t)*0.9         !lie in [0.4,0.6]
+        ELSEIF ( Adjust > 0.6 ) THEN
+           maxDisplacement(t)=maxDisplacement(t)*1.1
+        ENDIF
+        Maccepted(t)=0                                       !It restarts to count only the conf accepted every 100 steps
+     ENDIF
+
+function update_max_stepsize!(displ, count_accept, NAtoms)
+    for i in 1:length(count_acc)
+        acc_rate =  count_accept[i] / (displ.update_step * NAtoms)
+        if acc_rate < 0.4
+            displ.max_displacement[i] *= 0.9
+        elseif acc_rate > 0.6
+            displ.max_displacement[i] *= 1.1
+        end
+        count_accept[i] = 0
+    end
+    return displ, count_accept
+end
+
 """
     distance2(a,b) 
     

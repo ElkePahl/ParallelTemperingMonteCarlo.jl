@@ -50,14 +50,17 @@ TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
 abstract type AbstractDisplacementParams{T} end
 
-struct DisplacementParams_Atom_Move_only{T} <: AbstractDisplacementParams{T}
-    max_displacement::T  #maximum atom displacement in Angstrom
-    update_stepsize::Int
+mutable struct DisplacementParams_Atom_Move{T} <: AbstractDisplacementParams{T}
+    max_displacement::Vector{T} #maximum atom displacement in Angstrom
+    update_step::Int
 end 
 
-function DisplacementParams_Atom_Move_only(displ; update_stepsize=100)
+function DisplacementParams_Atom_Move(displ,tgrid; update_stepsize=100)
     T = eltype(displ)
-    return DisplacementParams_Atom_Move_only{T}(displ, update_stepsize)
+    N = length(tgrid)
+    #initialize displacement vector
+    max_displ = [0.1*sqrt(displ*tgrid[i]) for i in 1:N]
+    return DisplacementParams_Atom_Move{T}(max_displ, update_stepsize)
 end
 
 struct InputParameters
