@@ -2,6 +2,10 @@ module MCRun
 
 export metropolis_condition, mc_step_atom!
 
+using ..BoundaryConditions
+using ..Configurations
+using ..Input_Params
+
 ti = 2.
 tf = 40.
 n_traj = 30
@@ -9,6 +13,7 @@ n_traj = 30
 mc_cycles = 10000
 
 max_displ = 0.1 # Angstrom
+
 
 temp = TempGrid{n_traj}(ti,tf) # move to input file at a later stage ...
 
