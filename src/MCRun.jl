@@ -4,7 +4,7 @@ export metropolis_condition, mc_step_atom!
 
 using ..BoundaryConditions
 using ..Configurations
-using ..Input_Params
+using ..InputParams
 
 ti = 2.
 tf = 40.
@@ -20,9 +20,9 @@ temp = TempGrid{n_traj}(ti,tf) # move to input file at a later stage ...
 mc_params = MCParams(mc_cycles)
 #mc_params = MCParams(mc_cycles;eq_percentage=0.2)
 
-count_acc = zeros(ntraj)
+count_acc = zeros(n_traj)
 
-displ_param = DisplacementParams_Atom_Move(max_displ, temp.t_grid; update_stepsize=100)
+displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
 
 
 

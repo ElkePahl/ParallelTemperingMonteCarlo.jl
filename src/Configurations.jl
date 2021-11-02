@@ -135,18 +135,6 @@ function move_atom!(pos,delta_move)
     return pos
 end
 
-function update_max_stepsize!(displ, count_accept, NAtoms)
-    for i in 1:length(count_acc)
-        acc_rate =  count_accept[i] / (displ.update_step * NAtoms)
-        if acc_rate < 0.4
-            displ.max_displacement[i] *= 0.9
-        elseif acc_rate > 0.6
-            displ.max_displacement[i] *= 1.1
-        end
-        count_accept[i] = 0
-    end
-    return displ, count_accept
-end
 
 """
     distance2(a,b) 
