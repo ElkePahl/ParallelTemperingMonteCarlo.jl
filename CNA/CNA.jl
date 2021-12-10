@@ -1,11 +1,11 @@
 # Author: AJ Tyler
 # Date: 24/11/21
 module CommonNeighbourAnalysis # This module implements the common neighbour analysis algorithm
-export CNA # This function returns the total CNA profile
+export CNA # This function returns the total and atomic CNA profiles
 using Graphs # Use Graphs package to represent cluster structure and LongestPaths to calculate longest bond path
 
 """
-This function implements the Common Neighbour Analysis (CNA) algorithm and retuns the total CNA profile.
+This function implements the Common Neighbour Analysis (CNA) algorithm and retuns the total and atomic CNA profile.
 
 Inputs:
 configuration: (Matrix{Float64}) x,y,z positions of the cluster's atoms.
@@ -13,7 +13,8 @@ N: (Int64) Number of atoms in the cluster
 rcutSquared: (Float64) The squared cut-off radius, which determines which atoms are 'bonded'.
 
 Outputs:
-profile: (Dictionary) Maps the bond type triplet identifier (i,j,k) to their frequency
+totalProfile: (Dictionary) Maps the bond type triplet identifier (i,j,k) to their frequency for the entire cluster
+atomicProfile: (Dictionary) Maps the bond type triplet identifier (i,j,k) to their frequency for each atom
 """
 function CNA(configuration,N,rcutSquared::Float64)
 	
@@ -21,11 +22,11 @@ function CNA(configuration,N,rcutSquared::Float64)
 
 	bondGraph = SimpleGraph(N) # Constructs a SimpleGraph object with N atoms(vertices)
 	# For all pairs of atoms
-	for j in 1:N
-		for i in j:N
+	for j in 1:N-1
+		for i in j+1:N
 			diff = configuration[j,:]-configuration[i,:] # calculate vector between atoms
-			 # If the squared distance between atoms is less than squared cut-off radius and not same atom
-			if (sum(diff.*diff) < rcutSquared && i!=j)
+			 # If the squared distance between atoms is less than squared cut-off radius
+			if (sum(diff.*diff) < rcutSquared)
 				add_edge!(bondGraph,i,j) # Add bond (edge) to graph
 			end
 		end
@@ -33,7 +34,8 @@ function CNA(configuration,N,rcutSquared::Float64)
 
 	# Compute triplet identifiers for each pair of bonded atoms (neighbours)
 
-	profile = Dict{String,Int}() # Create Dictionary to store triplet frequencies
+	totalProfile = Dict{String,Int}() # Create Dictionary to store triplet frequencies
+	atomicProfile = [Dict{String,Int}() for i in 1:N] # Create vector of dictionaries to store triplet frequencies
 	for atom1 in 1:N # For all atoms
 		# neighbourhood1: The subgraph which only contains the bonds between the neighbours of atom1
 		# map1: map1[i] is the vertex number in bondgraph that vertex i in neighbourhood1 corresponds to
@@ -77,11 +79,13 @@ function CNA(configuration,N,rcutSquared::Float64)
 				end
 				
 				key = "($i,$j,$(Int(kMax)))" # Create triplet identifier key for dictionary
-				push!(profile, key => get!(profile,key,0)+1) # Increments triplet frequency by 1
+				push!(totalProfile, key => get!(totalProfile,key,0)+1) # Increments total CNA triplet frequency by 1
+				push!(atomicProfile[atom1], key => get!(atomicProfile[atom1],key,0)+1) # Increments atom1 triplet frequency by 1
+				push!(atomicProfile[atom2], key => get!(atomicProfile[atom2],key,0)+1) # Increments atom2 triplet frequency by 1
 			end
 		end
 	end
-	return profile # Return the total CNA profile
+	return totalProfile, atomicProfile # Return the total and atomic CNA profiles
 end
 
 end # End of module
