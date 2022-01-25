@@ -1,0 +1,2 @@
+Config #    classification
+1           Symmetries: Dict([43] => "ICO(Core)"); Caps: None dectected
