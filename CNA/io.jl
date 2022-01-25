@@ -27,7 +27,7 @@ B :(Bool) Whether configurations were found under a magnetic field of 0.3 au or 
 function processFileName(configDir,fileName)
 	parts = split(fileName,".xy") # Process filename to be able to tell if .xyz file
 	if (last(parts) == "z") # If is an .xyz file
-		fp = open("$configDir\\$fileName") # Open the file
+		fp = open("$configDir/$fileName") # Open the file
 		parts = split(fileName,'_') # Process filename
 		prefix = parts[1] # Get filename prefix
 		N,L = (parse.(Int64,parts[2:3]))[:] # Number of configurations in the file (part of file name)
@@ -136,7 +136,7 @@ L: (Int64) The number of configurations in the file.
 """
 function writeClassification(configDir,filename,classifications,capSymmetries,L)
 	# Write output file contatining classifications of all configurations in the file
-	open("$configDir\\classification\\$(filename)_classification.txt","a") do io # Open the output file corresponding to the input file
+	open("$configDir/classification/$(filename)_classification.txt","a") do io # Open the output file corresponding to the input file
 		# Write file headers
 		println(io,"Config #    classification")
 		for j in 1:L # all the configurations in the file
@@ -181,11 +181,11 @@ i: (Int64) The index of the current rCut value.
 L: (Int64) The number of configurations in the file. 
 """
 function writeProfiles(rCutRange,configDir,filename,energies,totalProfiles,i,L)
-	if !isdir("$configDir\\comparison\\rCut_$(rCutRange[i])")
-		mkdir("$configDir\\comparison\\rCut_$(rCutRange[i])") # Create the output directory
+	if !isdir("$configDir/comparison/rCut_$(rCutRange[i])")
+		mkdir("$configDir/comparison/rCut_$(rCutRange[i])") # Create the output directory
 	end
 	# Write output files for each rCut value
-	open("$configDir\\comparison\\rCut_$(rCutRange[i])\\profile_$(filename).txt","a") do io # Open the output file corresponding to the input file
+	open("$configDir/comparison/rCut_$(rCutRange[i])/profile_$(filename).txt","a") do io # Open the output file corresponding to the input file
 		# Write file headers
 		println(io,"Config #    Energy                 Total CNA Profile")
 		for j in 1:L # all the configurations in the file
@@ -210,7 +210,7 @@ Write out the configuration comparision results.
 	L: (Int64) The number of configurations in the file.
 """
 function writeComparison(configDir,filename, sortingArray, sortedEnergies, maxSims, similarConfigs,L) # Write comparison output file
-	open("$configDir\\comparison\\comparison_$(filename).txt","a") do io # Open the output file corresponding to the input file
+	open("$configDir/comparison/comparison_$(filename).txt","a") do io # Open the output file corresponding to the input file
 		# Write file headers
 		println(io,"Config #    Energy                 Similarity Score    $("Most similar to (Config #; rCut)")")
 		for j in 1:L # all the configurations in the file
@@ -233,7 +233,7 @@ Write out the distinguisable configuration set results.
 """
 function writeUnique(configDir,filename,numUnique,uniqueConfigs,uniqueSimilarities, uniqueEnergyStats)
 	# Write unique configurations output file
-	open("$configDir\\comparison\\unique_$(filename).txt","a") do io # Open the output file corresponding to the input file
+	open("$configDir/comparison/unique_$(filename).txt","a") do io # Open the output file corresponding to the input file
 		# Write file headers
 		println(io,"Unique Config    Similarity Score     Energy Mean            Energy Std")
 		for j in 1:numUnique # all the configurations in the file

@@ -33,8 +33,8 @@ similarityThreshold: (Float64) Similarity threshold above which two configuratio
 EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 data for Neon2).
 """
 function compare(configDir::String; rCutRange::Vector{Float64} = round.(LinRange(4/3,2,10);digits = 3), similarityMeasure = "total", similarityThreshold = 0.95,EBL=3.1227)
-	rm("$configDir\\comparison";force = true,recursive = true) # Delete comparision directory if exists from previous run
-	mkdir("$configDir\\comparison") # Make comparision directory
+	rm("$configDir/comparison";force = true,recursive = true) # Delete comparision directory if exists from previous run
+	mkdir("$configDir/comparison") # Make comparision directory
 	M = length(rCutRange) # Number of rCut values to test
 	files = readdir(configDir) # Create list of all files/directories in the configuration directory
 	for file in files # For each file
@@ -79,10 +79,10 @@ rCut: (Float64) The cut-off radii used in the CNA analysis in units of EBL. Defa
 EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 data for Neon2).
 """
 function classify(configDir::String; rCut = 4/3,EBL=3.1227)
-	rm("$configDir\\classification";force = true,recursive = true) # Delete classification directory if exists from previous run
-	mkdir("$configDir\\classification") # Create the classification directory
-	rm("$configDir\\visualisation";force = true,recursive = true) # Delete visualisation directory if exists from previous run
-	mkdir("$configDir\\visualisation") # Create the visualisation directory
+	rm("$configDir/classification";force = true,recursive = true) # Delete classification directory if exists from previous run
+	mkdir("$configDir/classification") # Create the classification directory
+	rm("$configDir/visualisation";force = true,recursive = true) # Delete visualisation directory if exists from previous run
+	mkdir("$configDir/visualisation") # Create the visualisation directory
 	files = readdir(configDir) # Create list of all files/directories in the configuration directory
 	for file in files # For each file
 		isXYZ,fileName,fp,L,N,B = processFileName(configDir,file) # Extract information from filename

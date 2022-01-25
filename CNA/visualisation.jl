@@ -20,7 +20,7 @@ function vestaFile(configDir,fileName,configurations,classifications,capSymmetri
 	oldFP = open("blueprint.vesta") # Obtain file pointer to reference .vesta file
 	lines = readlines(oldFP) # Get vector of lines of the reference file
 	for i in 1:L # For all configurations in the file
-		open("$configDir\\visualisation\\$(fileName)_$i.vesta","a") do newFP # Create new .vesta file
+		open("$configDir/visualisation/$(fileName)_$i.vesta","a") do newFP # Create new .vesta file
 			c = 1 # Initialise line counter
 			while c <= length(lines) # While have not reached eof
 				if (lines[c] == "STRUC") # If have reached structure section of the .vesta file
