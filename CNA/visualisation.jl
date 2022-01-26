@@ -13,10 +13,12 @@ fileName: (String) The unique prefix of the fileName.
 configurations: (Array{Float64}) 3D array containing the atom coordinates for each configuration in the file.
 classifications: Vector{Dict{Vector{Int64},String}} Vector of dictionaries mapping a list of atoms to their symmetry.
 capSymmetries: Vector{Dict{Dict{Int64,Vector{Int64}},String}} Vector of dictionaries mapping list of atoms forming a cap to their symmetry.
+rCut: (Float64) The cut-off radii used in the CNA analysis in units of EBL. Default is 4/3.
+EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 data for Neon2).
 L: (Int64) The number of configurations in the file.
 N: (Int64) The number of atoms in each configuration.
 """
-function vestaFile(configDir,fileName,configurations,classifications,capSymmetries,L,N)
+function vestaFile(configDir,fileName,configurations,classifications,capSymmetries,rCut,EBL,L,N)
 	oldFP = open("blueprint.vesta") # Obtain file pointer to reference .vesta file
 	lines = readlines(oldFP) # Get vector of lines of the reference file
 	for i in 1:L # For all configurations in the file
@@ -37,13 +39,16 @@ function vestaFile(configDir,fileName,configurations,classifications,capSymmetri
 						println(newFP,"  $j  $j  0.000000") # Not why this line is neccessary in the Vesta file
 					end
 					c+= 42 # Skip lines to get to next section in lines
-				elseif (lines[c] == "SITET") # If have reached colour section of the .vesta file
+				elseif (lines[c] == "SBOND") # If have reached bond section of file
+					println(newFP,"SBOND") # Print section header
+					println(newFP,"  1     1     1    0.0000    $(round(rCut*EBL;digits=5))  0  1  1  0  1  0.250  2.000 127 127 127") # Write bond information
+					println(newFP,"  0 0 0 0")
 					println(newFP,"SITET") # Write header to new file
 					for j in 1:N # For each atom in the configuration
 						atomColour = colourAtom(j,classifications[i],capSymmetries[i]) # Colour the atom according to its identified symmetries
 						println(newFP,"  $j  $j  0.8000  $atomColour  76  76  76 204 0") # Add colour to file
 					end
-					c += 14 # Skip lines to get to next section in lines
+					c += 17 # Skip lines to get to next section in lines
 				else
 					println(newFP,lines[c]) # Print same line from reference file to new file
 					c+= 1 # Increment line counter

@@ -92,7 +92,7 @@ function classify(configDir::String; rCut = 4/3,EBL=3.1227)
 			# Identify symmetries of the clusters using CNA profiles
 			classifications, capSymmetries = findSymmetries(shells,atomicProfiles,bondGraphs,L)
 			writeClassification(configDir,fileName,classifications,capSymmetries,L) # Output found symmetries
-			vestaFile(configDir,fileName,configurations,classifications,capSymmetries,L,N) # Create colourised .vesta file
+			vestaFile(configDir,fileName,configurations,classifications,capSymmetries,rCut,EBL,L,N) # Create colourised .vesta file
 		end
 	end
 end
