@@ -174,12 +174,15 @@ similarConfigs: Vector{Dict{Int64,Vector{Float64}}} A vector of dictionaries whi
 similarityThreshold: (Float64) Similarity threshold above which two configurations are considered identical.
 M: (Int64) The number of rCut values tested.
 
+Keyword Arguments:
+rCutThreshold: (Float64) Proportion of rCut values that have to meet the similarity threshold for two configs to be considered identical.
+
 Outputs:
 uniqueConfigs: Vector{Vector{Int64}} Vector of configuration numbers of the distinguisable sets of configurations.
 uniqueEnergies: Vector{Vector{Float64}} Vector of configuration energies of the distinguisable sets of configurations.
 uniqueSimilarities: Vector{Float64} Vector of similarity scores of each of the distinguiable sets.
 """
-function groupConfigs(energies,sortingArray,maxSims,similarConfigs,similarityThreshold,M)
+function groupConfigs(energies,sortingArray,maxSims,similarConfigs,similarityThreshold,M;rCutThreshold=0.9)
 	# Initialise arrays
 	uniqueConfigs = Vector{Vector{Int64}}()
 	uniqueEnergies = Vector{Vector{Float64}}()
@@ -190,7 +193,7 @@ function groupConfigs(energies,sortingArray,maxSims,similarConfigs,similarityThr
 			same = Vector{Int64}([config])
 			if (maxSims[j] > similarityThreshold) # If the maximum similarity of the configuration exceeds a threshold
 				for key in keys(similarConfigs[j])
-					if (length(get!(similarConfigs[j],key,0)) > 0.9*M && !(key in classified))
+					if (length(get!(similarConfigs[j],key,0)) > rCutThreshold*M && !(key in classified))
 						# Get vector of configuration numbers of configurations that are similar
 						push!(same,key)
 					end
