@@ -13,6 +13,8 @@ This module defines types and functions for working with atomic configurations o
 """
 module Configurations
 
+using Test
+
 using StaticArrays, LinearAlgebra
 
 using ..BoundaryConditions
@@ -150,5 +152,21 @@ distance2(a,b) = (a-b)⋅(a-b)
 Builds the matrix of squared distances between positions of configuration.
 """
 get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
+
+posarray = [SVector(rand(),rand(),rand()) for _ in 1:10]
+bc=SphericalBC(radius=10.)
+config = @inferred Config{10}(posarray,bc)
+println(config)
+println()
+#println(config.pos)
+
+max_displacement=1
+delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+
+move_atom!(config::Config, 1, delta_move)
+
+println(config)
+println()
+
 
 end

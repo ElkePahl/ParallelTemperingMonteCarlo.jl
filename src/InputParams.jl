@@ -11,9 +11,11 @@ using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 
+export pos_ne13, bc_ne13, conf_ne13
 export InputParameters
 export MCParams, TempGrid
 export AbstractDisplacementParams, DisplacementParamsAtomMove
+export update_max_stepsize!
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
@@ -42,11 +44,15 @@ function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
     else
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end
-    betagrid = 1. /(kB*tgrid)
+    betagrid = 1 ./(kB*tgrid)
     return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
 end 
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
+
+T=TempGrid(1,20,10; tdistr=:geometric)
+println(T)
+
 
 abstract type AbstractDisplacementParams{T} end
 
@@ -64,8 +70,9 @@ function DisplacementParamsAtomMove(displ,tgrid; update_stepsize=100)
 end
 
 function update_max_stepsize!(displ::DisplacementParamsAtomMove, count_accept, n_atom)
-    for i in 1:length(count_acc)
+    for i in 1:length(count_accept)
         acc_rate =  count_accept[i] / (displ.update_step * n_atom)
+        #println(acc_rate)
         if acc_rate < 0.4
             displ.max_displacement[i] *= 0.9
         elseif acc_rate > 0.6
@@ -101,11 +108,22 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [-2.033762834001679, 0.643989905095452, 2.132999911364582],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]]
 
+pos_ne13=pos_ne13*1.88973
+
 #define boundary conditions starting configuration
-bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
+#bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
+bc_ne13 = SphericalBC(radius=10.)
 
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
+
+max_displacement=1
+delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+
+move_atom!(conf_ne13::Config, 1, delta_move)
+
+println(conf_ne13)
+println()
 
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom
