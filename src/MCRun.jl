@@ -13,7 +13,7 @@ ti = 2.
 tf = 20.
 n_traj = 30
 
-mc_cycles = 1
+mc_cycles = 1000
 
 max_displ = 0.2 # Angstrom
 
@@ -32,8 +32,8 @@ println("displacement=",displ_param.max_displacement)
 
 #histograms
 Ebins=50
-Emin=-0.02
-Emax=-0.005
+Emin=-0.008
+Emax=-0.003
 dE=(Emax-Emin)/Ebins
 Ehistogram=Array{Array}(undef,n_traj) 
 for i=1:n_traj
@@ -79,15 +79,15 @@ function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max
     #println("old total energy= ",en_tot)
     #println(dimer_energy_config(dist2_mat, 13, elj_ne)[2])
     if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
-        println("accepted")
-        config.pos[i_atom] = trial_pos
+        #println("accepted")
+        config.pos[i_atom] = copy(trial_pos)
         en_tot = en_tot - en_unmoved + en_moved
-        dist2_mat[i_atom, :] = dist2_new
-        dist2_mat[:, i_atom] = dist2_new
+        dist2_mat[i_atom, :] = copy(dist2_new)
+        dist2_mat[:, i_atom] = copy(dist2_new)
         count_acc += 1
         count_acc_adj += 1
     else
-        println("rejected")
+        #println("rejected")
     end
     #println("new total energy= ",en_tot)
     #println(dimer_energy_config(dist2_mat, 13, elj_ne)[2])
@@ -135,13 +135,29 @@ en_tot = zeros(n_traj)
 #max_displacement= zeros(n_traj)
 max_displacement=displ_param.max_displacement
 for i=1:n_traj
-    config[i]=conf_ne13
-    dist2_mat[i]=dist2_mat_0
-    en_atom_mat[i]=en_atom_mat_0
+    config[i]=Config(copy(conf_ne13.pos),bc_ne13)
+    dist2_mat[i]=copy(dist2_mat_0)
+    en_atom_mat[i]=copy(en_atom_mat_0)
     en_tot[i]=en_tot_0
     #max_displacement[i]=max_displ
 end
-println(max_displacement)
+
+println("config_1=", config[1].pos)
+println("config_2=", config[2].pos)
+
+#delta_move = SVector((rand()-0.5)*max_displ,(rand()-0.5)*max_displ,(rand()-0.5)*max_displ)
+#println("delta move=",delta_move)
+#trial_pos=move_atom!(config[1].pos[1], delta_move)
+config[1].pos[1]+=[1,1,1]
+
+println("config_1=", config[1].pos)
+println("config_2=", config[2].pos)
+println("config_1=", config[1].pos[1])
+println("config_2=", config[2].pos[1])
+
+
+
+
 
 
 
@@ -149,12 +165,14 @@ println(max_displacement)
 for i=1:mc_cycles
     for j=1:13
         for k=1:n_traj
-            println(k)
+            #println(k)
             i_atom=rand(1:13)
-            println(dimer_energy_config(dist2_mat[k], 13, elj_ne)[2])
+            #println(dimer_energy_config(get_distance2_mat(config[k]), 13, elj_ne)[2])
+            #println(dimer_energy_config(dist2_mat[k], 13, elj_ne)[2])
             config[k], dist2_mat[k], en_tot[k], count_acc[k], count_acc_adj[k]=mc_step_atom!(config[k], temp.beta_grid[k], dist2_mat[k], en_atom_mat[k], en_tot[k], i_atom, displ_param.max_displacement[k], count_acc[k],count_acc_adj[k], Ehistogram[k], elj_ne)
-            println(dimer_energy_config(dist2_mat[k], 13, elj_ne)[2])
-            println()
+            #println(dimer_energy_config(get_distance2_mat(config[k]), 13, elj_ne)[2])
+            #println(dimer_energy_config(dist2_mat[k], 13, elj_ne)[2])
+            #println()
         end
         if rem(i*13+j,100)==0
             update_max_stepsize!(displ_param, count_acc_adj, 1)
