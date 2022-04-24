@@ -11,6 +11,7 @@ using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 
+export kB
 export pos_ne13, bc_ne13, conf_ne13
 export InputParameters
 export MCParams, TempGrid
@@ -49,9 +50,6 @@ function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
 end 
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
-
-T=TempGrid(1,20,10; tdistr=:geometric)
-println(T)
 
 
 abstract type AbstractDisplacementParams{T} end
@@ -117,13 +115,6 @@ bc_ne13 = SphericalBC(radius=10.)
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
 
-max_displacement=1
-delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-
-move_atom!(conf_ne13::Config, 1, delta_move)
-
-println(conf_ne13)
-println()
 
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom

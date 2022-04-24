@@ -22,7 +22,9 @@ max_displ = 0.2 # Angstrom
 
 temp = TempGrid{n_traj}(ti,tf) # move to input file at a later stage ...
 
+println("temperatures= ")
 println(temp)
+println()
 
 mc_params = MCParams(mc_cycles)
 #mc_params = MCParams(mc_cycles;eq_percentage=0.2)
@@ -34,7 +36,12 @@ count_exc_acc = zeros(n_traj)    #number of accepted exchanges
 
 displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
 
-println("displacement=",displ_param.max_displacement)
+println("displacement=")
+println(displ_param.max_displacement)
+println()
+
+
+block=5         #blocking
 
 #histograms
 Ebins=50
@@ -104,33 +111,21 @@ end
 
 
 
-println("{{{{{{{{{{{{{{{{{{{{{")
+println("initial configuration:")
 println(conf_ne13.bc,conf_ne13.pos)
 println(check_boundary(conf_ne13.bc,conf_ne13.pos[1]))
-println("}}}}}}}}}}}}}}}}}}}}}")
-
-
-
+println()
 
 dist2_mat_0=get_distance2_mat(conf_ne13)
-println(dist2_mat_0)
+#println("initial distance matrix: ", dist2_mat_0)
 
 en_atom_mat_0=dimer_energy_config(dist2_mat_0, 13, elj_ne)[1]
-
 en_tot_0=dimer_energy_config(dist2_mat_0, 13, elj_ne)[2]
 
-en_1=dimer_energy_atom(2, dist2_mat_0[2, :], elj_ne)
+println("initial total energy: ", en_tot_0)
+println()
 
-println("^^^^^^^^^^^^^^^^^^^^^^^^^")
-println("en_atom_mat_0=", en_atom_mat_0)
-println("^^^^^^^^^^^^^^^^^^^^^^^^^")
-println(en_tot_0)
-println("^^^^^^^^^^^^^^^^^^^^^^^^^")
-println(en_1)
-println("en_1^^^^^^^^^^^^^^^^^^^^^^^^^")
-dist2_new = [distance2(conf_ne13.pos[1],b) for b in conf_ne13.pos]
-println(dist2_new)
-println("^^^^^^^^^^^^^^^^^^^^^^^^^")
+
 
 config=Array{Config}(undef,n_traj)
 dist2_mat = Array{Matrix}(undef,n_traj) 
@@ -167,7 +162,8 @@ for i=1:equilibrium
     end
     c=rand()                      #exchange
     if c<0.1
-        ex=Int(1+floor((n_traj-1)*rand()))
+        #ex=Int(1+floor((n_traj-1)*rand()))
+        ex=rand(1:13)
         #count_exc[ex]+=1
         #count_exc[ex+1]+=1
         delta_beta=1/(kB*temp.t_grid[ex])-1/(kB*temp.t_grid[ex+1])
@@ -180,7 +176,7 @@ for i=1:equilibrium
     end
 end
 
-println(en_tot)
+#println(en_tot)
 
 for i=1:mc_cycles
     for j=1:13                    #number of atoms
@@ -215,34 +211,35 @@ for i=1:mc_cycles
     #println(i)
 end
 
-println(count_acc)
-println(count_acc_adj)
-println(displ_param.max_displacement)
-println(count_exc)
-println(count_exc_acc)
+println("displacement acceptance: ",count_acc)
+println()
+println("maximum displacement: ",displ_param.max_displacement)
+println()
+println("total exchange: ",count_exc)
+println()
+println("accepted exchange: ",count_exc_acc)
+println()
+println("Histogram:")
 for i=1:n_traj
     println(i)
     println(Ehistogram[i])
 end
-#println(energies)
+println()
 
 
 e_avg=zeros(n_traj)
 e2_avg=zeros(n_traj)
 for i=1:n_traj
     for j=1:mc_cycles
-        #println(energies[i].A[j])
-        #println(energies[i].B[j])
-        e_avg[i]+=energies[i].A[j]/mc_cycles
-        e2_avg[i]+=energies[i].B[j]/mc_cycles
+        if rem(j,block)==0
+            e_avg[i]+=energies[i].A[j]/floor(mc_cycles/block)
+            e2_avg[i]+=energies[i].B[j]/floor(mc_cycles/block)
+        end
     end
-    #println()
-    #println(e_avg[i])
-    #println(e2_avg[i])
     cv[i]=(e2_avg[i]-e_avg[i]^2)/(kB*temp.t_grid[i])
 end
 
-println(cv)
+println("Heat Capacity: ", cv)
 
 
 
