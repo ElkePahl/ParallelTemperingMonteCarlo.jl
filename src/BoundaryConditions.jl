@@ -6,7 +6,7 @@
 """
 module BoundaryConditions
 
-export SphericalBC, AbstractBC
+export SphericalBC, AbstractBC, CubicBC, RectangularBC, RhombicBC
 export check_boundary
 
 # include("SphericalBC.jl")
@@ -45,5 +45,11 @@ check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 Tests if whole cluster lies in the binding sphere     
 """
 test_cluster_inside(conf,bc) = sum(x->outside_of_boundary(bc,x),conf.pos) == 0
+
+
+struct CubicBC{T} <: AbstractBC{T}
+    length::T
+end
+
 
 end
