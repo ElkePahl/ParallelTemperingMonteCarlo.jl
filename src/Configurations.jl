@@ -21,6 +21,7 @@ using ..BoundaryConditions
 
 export Config
 export distance2, get_distance2_mat, move_atom!
+export distance2_cbc, get_distance2_mat_cbc
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -127,16 +128,27 @@ Base.length(::Config{N}) where N = N
 
 Moves `n_atom`-th atom in configuration by `delta_move`.  
 """
-function move_atom!(config::Config, n_atom, delta_move)
+function move_atom!(config::Config, n_atom, delta_move,bc::SphericalBC)
     config.pos[n_atom] += delta_move
     return config
 end
 
-function move_atom!(pos,delta_move)
+function move_atom!(pos,delta_move, bc::SphericalBC)
     pos += delta_move
     return pos
 end
 
+function move_atom!(config::Config, n_atom, delta_move,bc::CubicBC)
+    config.pos[n_atom] += delta_move
+    config.pos[n_atom] -= [round(config,pos[n_atom][1]/config.bc.length), round(config,pos[n_atom][2]/config.bc.length), round(config,pos[n_atom][2]/config.bc.length)]
+    return config
+end
+
+function move_atom!(pos,delta_move, bc::CubicBC)
+    pos += delta_move
+    pos -= [round(pos[1]/bc.length), round(pos[2]/bc.length), round(pos[3]/bc.length)]
+    return pos
+end
 
 """
     distance2(a,b) 
@@ -144,6 +156,18 @@ end
 Finds the distance between two positions a and b.
 """
 distance2(a,b) = (a-b)⋅(a-b)
+
+
+function distance2_cbc(a,b,l)
+    b_shift=zeros(3)
+    b_shift=b+[round((a[1]-b[1])/l), round((a[2]-b[2])/l), round((a[3]-b[3])/l)]*l
+    d2=distance2(a,b_shift)
+    return d2
+end
+
+a=[1.,1.,1.]
+b=[3.,3.,3.]
+println(distance2_cbc(a,b,3.5))
 
 #distance matrix
 """
@@ -153,9 +177,10 @@ Builds the matrix of squared distances between positions of configuration.
 """
 get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
 
-posarray = [SVector(rand(),rand(),rand()) for _ in 1:10]
-bc=SphericalBC(radius=10.)
-config = @inferred Config{10}(posarray,bc)
+get_distance2_mat_cbc(conf::Config{N}) where N = [distance2_cbc(a,b,conf.bc.length) for a in conf.pos, b in conf.pos]
+
+
+
 
 
 

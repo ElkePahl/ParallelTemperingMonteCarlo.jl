@@ -92,14 +92,22 @@ and potential information `pot` [`Abstract_Potential`](@ref)
 """
 
 function dimer_energy_config(distmat, NAtoms, pot::AbstractPotential)
+    dimer_energy_mat = zeros(NAtoms,NAtoms)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     for i in 1:NAtoms
+        for j in 1:NAtoms
+            if i!=j
+                dimer_energy_mat[i,j]=dimer_energy(pot, distmat[i,j])
+            end
+        end
         dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot)
         energy_tot += dimer_energy_vec[i]
     end 
-    return dimer_energy_vec, 0.5*energy_tot
+    return dimer_energy_mat, dimer_energy_vec, 0.5*energy_tot
 end
+
+
 
 c=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
 

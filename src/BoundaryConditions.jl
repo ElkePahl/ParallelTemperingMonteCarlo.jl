@@ -47,9 +47,13 @@ Tests if whole cluster lies in the binding sphere
 test_cluster_inside(conf,bc) = sum(x->outside_of_boundary(bc,x),conf.pos) == 0
 
 
-struct CubicBC{T} <: AbstractBC{T}
-    length::T
-end
+#struct CubicBC{T} <: AbstractBC{T}
+    #length2::T   #radius of binding sphere squared
+    #CubicBC(; length::T) where T = new{T}(length)
+#end
 
+struct CubicBC{T} <: AbstractBC{T}
+    length::T  
+end
 
 end
