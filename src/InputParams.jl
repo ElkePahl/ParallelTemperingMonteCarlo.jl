@@ -12,6 +12,8 @@ using ..Configurations
 using ..EnergyEvaluation
 
 export kB
+export JtoEh
+export A3tom3, Bohr3tom3
 export pos_ne13, bc_ne13, conf_ne13
 export pos_ne25, bc_ne25, conf_ne25
 export pos_ne32, bc_ne32, conf_ne32
@@ -22,6 +24,12 @@ export AbstractDisplacementParams, DisplacementParamsAtomMove
 export update_max_stepsize!
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
+
+const JtoEh=2.2937104486906*10^17
+
+const A3tom3=10^(-30)
+
+const Bohr3tom3=1.4818474345*10^-31
 
 struct MCParams
     mc_cycles::Int
@@ -238,6 +246,6 @@ conf_ne32_pbc = Config(pos_ne32_pbc, bc_ne32_pbc)
 
 #println("distances in neon 32 is ", get_distance2_mat_cbc(conf_ne32_pbc))
 
-println("ne32 pbc initial energy = ", dimer_energy_config(get_distance2_mat_cbc(conf_ne32_pbc), 32, elj_ne))
+#println("ne32 pbc initial energy = ", dimer_energy_config(get_distance2_mat_cbc(conf_ne32_pbc), 32, elj_ne))
 
 end

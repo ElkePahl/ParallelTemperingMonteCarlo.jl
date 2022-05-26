@@ -10,7 +10,7 @@ module EnergyEvaluation
 using StaticArrays
 
 export ELJPotential, AbstractPotential 
-export dimer_energy, dimer_energy_atom, dimer_energy_config, elj_ne
+export dimer_energy, dimer_energy_atom, dimer_energy_config, dimer_energy_config_tot, elj_ne
 
 #Dimer energies - no angle dependence
 #extended Lennard Jones, ELJ, general definition n=6 to N+6
@@ -107,6 +107,15 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractPotential)
     return dimer_energy_mat, dimer_energy_vec, 0.5*energy_tot
 end
 
+function dimer_energy_config_tot(distmat, NAtoms, pot::AbstractPotential)
+    energy_tot = 0.
+    for i in 1:NAtoms
+        for j in i+1:NAtoms
+            energy_tot += dimer_energy(pot, distmat[i,j])
+        end
+    end 
+    return energy_tot
+end
 
 
 c=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
