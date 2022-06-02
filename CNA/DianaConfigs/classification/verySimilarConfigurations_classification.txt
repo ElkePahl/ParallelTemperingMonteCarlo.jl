@@ -1,0 +1,9 @@
+Config #    classification
+1           No core or symmetries detected
+2           No core or symmetries detected
+3           No core or symmetries detected
+4           No core or symmetries detected
+5           No core or symmetries detected
+6           No core or symmetries detected
+7           No core or symmetries detected
+8           No core or symmetries detected

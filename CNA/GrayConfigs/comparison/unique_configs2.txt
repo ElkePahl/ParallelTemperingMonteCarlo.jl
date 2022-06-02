@@ -1,0 +1,3 @@
+Unique Config    Similarity Score     Energy Mean            Energy Std
+[1]              0.444                -0.022794540557        NaN
+[2]              0.444                -0.024623804289        NaN

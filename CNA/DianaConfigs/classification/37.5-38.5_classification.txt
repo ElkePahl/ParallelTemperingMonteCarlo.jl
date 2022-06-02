@@ -1,0 +1,31 @@
+Config #    classification
+1           No core or symmetries detected
+2           No core or symmetries detected
+3           No core or symmetries detected
+4           No core or symmetries detected
+5           No core or symmetries detected
+6           No core or symmetries detected
+7           No core or symmetries detected
+8           No core or symmetries detected
+9           No core or symmetries detected
+10          No core or symmetries detected
+11          No core or symmetries detected
+12          No core or symmetries detected
+13          No core or symmetries detected
+14          No core or symmetries detected
+15          No core or symmetries detected
+16          No core or symmetries detected
+17          No core or symmetries detected
+18          No core or symmetries detected
+19          No core or symmetries detected
+20          No core or symmetries detected
+21          Symmetries: Dict([1] => "OTHER(Core)"); Caps: Dict(Dict(10 => [11, 12, 13]) => "OTHER", Dict(4 => [6, 7, 9]) => "OTHER")
+22          No core or symmetries detected
+23          No core or symmetries detected
+24          No core or symmetries detected
+25          No core or symmetries detected
+26          No core or symmetries detected
+27          No core or symmetries detected
+28          No core or symmetries detected
+29          No core or symmetries detected
+30          No core or symmetries detected
