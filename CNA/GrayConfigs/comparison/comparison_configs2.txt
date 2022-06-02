@@ -1,0 +1,3 @@
+Config #    Energy                 Similarity Score    Most similar to (Config #; rCut)
+1           -0.022794540557        0.444                Dict(2 => [1.5])
+2           -0.024623804289        0.444                Dict(1 => [1.5])

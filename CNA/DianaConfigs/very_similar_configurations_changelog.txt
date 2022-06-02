@@ -1,0 +1,11 @@
+I reformatted this input file to have the same format as the original one, since my code is based off of reading in that format.
+Part of that process, meant that I had to re-number the configurations according to the following mapping.
+
+40->2
+101->1
+110->3
+163->4
+63->6
+172->5
+138->8
+197->7

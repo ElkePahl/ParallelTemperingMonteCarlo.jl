@@ -1,0 +1,30 @@
+Config #    classification
+1           Symmetries: Dict([33, 34, 35, 36, 37, 38] => "FCC(Core)"); Caps: None dectected
+2           No core or symmetries detected
+3           Symmetries: Dict([37] => "ICO"); Caps: None dectected
+4           Symmetries: Dict([33] => "ICO"); Caps: None dectected
+5           Symmetries: Dict([8, 37, 33, 34] => "ICO"); Caps: None dectected
+6           Symmetries: Dict([21] => "ICO"); Caps: None dectected
+7           Symmetries: Dict([14] => "ICO"); Caps: None dectected
+8           Symmetries: Dict([13] => "ICO"); Caps: None dectected
+9           Symmetries: Dict([13] => "ICO"); Caps: None dectected
+10          No core or symmetries detected
+11          No core or symmetries detected
+12          Symmetries: Dict([29] => "ICO"); Caps: None dectected
+13          Symmetries: Dict([22, 27, 6] => "ICO"); Caps: None dectected
+14          No core or symmetries detected
+15          No core or symmetries detected
+16          Symmetries: Dict([4, 10, 3] => "ICO"); Caps: None dectected
+17          Symmetries: Dict([26] => "ICO"); Caps: None dectected
+18          No core or symmetries detected
+19          Symmetries: Dict([34] => "ICO", [29] => "ICO"); Caps: None dectected
+20          Symmetries: Dict([38] => "ICO"); Caps: None dectected
+21          Symmetries: Dict([22, 38] => "ICO"); Caps: None dectected
+22          Symmetries: Dict([34] => "ICO"); Caps: None dectected
+23          Symmetries: Dict([34] => "ICO"); Caps: None dectected
+24          Symmetries: Dict([21] => "ICO"); Caps: None dectected
+25          Symmetries: Dict([27, 26] => "ICO"); Caps: None dectected
+26          No core or symmetries detected
+27          No core or symmetries detected
+28          Symmetries: Dict([34, 20, 22] => "ICO"); Caps: None dectected
+29          Symmetries: Dict([11, 38] => "ICO"); Caps: None dectected

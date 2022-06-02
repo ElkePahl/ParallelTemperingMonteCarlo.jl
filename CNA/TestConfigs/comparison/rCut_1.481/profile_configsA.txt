@@ -1,0 +1,2 @@
+Config #    Energy                 Total CNA Profile
+1           -44.326801             Dict("(3,2,2)" => 30, "(5,5,5)" => 12)
