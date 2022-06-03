@@ -15,5 +15,6 @@ mc_params = MCParams(mc_cycles)
 #mc_params = MCParams(mc_cycles;eq_percentage=0.2)
 
 count_acc = zeros(n_traj)
+count_acc_adj = zeros(n_traj)
 
 displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
