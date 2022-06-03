@@ -219,7 +219,7 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::StaticArrays.SVect
     Tvec = 1 ./ (kB*beta)
     dT = (last(Tvec) - 0.2)/NPoints
     T = [(i-1)*dT + 0.2 for i = 1:NPoints]
-    println(T)
+    #println(T)
     #Initialise all relevant vectors
     y = Array{Float64}(undef,NPoints,NBins)
     XP = Array{Float64}(undef,NPoints,NBins)
@@ -245,6 +245,7 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::StaticArrays.SVect
             nexp +=2
             @goto start
         end
+        println("hello")
         U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
         U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]
         r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
@@ -252,6 +253,7 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::StaticArrays.SVect
         Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
         dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
     end
+    println("hello again")
     println(Cv)
 
     return Z,Cv,dCv,T

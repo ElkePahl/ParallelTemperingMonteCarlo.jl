@@ -5,6 +5,7 @@ using DataFrames
 using Plots
 using Dates
 using BenchmarkTools
+using Profile
 
 export metropolis_condition, mc_step_atom!
 export n_traj, temp, Emin, Emax, Ebins, dE, Ehistogram
@@ -16,15 +17,15 @@ using ..EnergyEvaluation
 
 println(now())
 
-NAtoms=32
+NAtoms=13
 
 
-ti = 20.
-tf = 30.
+ti = 2.
+tf = 16.
 n_traj = 32
 
-equilibrium = 2000
-mc_cycles = 10000
+equilibrium = 1
+mc_cycles = 5
 
 max_displ = 0.5 # Angstrom
 max_vchange = zeros(n_traj)
@@ -64,8 +65,8 @@ block=5         #blocking
 
 #histograms
 Ebins=100
-Emin=-0.028
-Emax=-0.023
+Emin=-0.006
+Emax=-0.001
 dE=(Emax-Emin)/Ebins
 Ehistogram=Array{Array}(undef,n_traj)      #initialization
 for i=1:n_traj
@@ -94,14 +95,42 @@ function metropolis_condition(energy_unchanged, energy_changed, volume_unchanged
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adj,pot1)
-    #displace atom, until it fulfills boundary conditions
+function atom_displacement!(config, i_atom, max_displacement)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = move_atom!(config.pos[i_atom], delta_move, config.bc)
-    #while check_boundary(config.bc,trial_pos)         #displace the atom until it's inside the sphere
-        #delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        #trial_pos = move_atom!(config.pos[i_atom], delta_move,config.bc)
-    #end
+    while check_boundary(config.bc,trial_pos)         #displace the atom until it's inside the sphere
+        #println(trial_pos)
+        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+        trial_pos = move_atom!(config.pos[i_atom], delta_move,config.bc)
+    end
+    return trial_pos
+end
+
+function config_update!(trial_pos, en_tot, en_unmoved, en_moved, dist2_mat_col, dist2_mat_row, dist2_new, count_acc_adj, count_acc)
+    pos = copy(trial_pos)          #update position of the atom moved
+    en_tot = en_tot - en_unmoved + en_moved       #update total energy
+    dist2_mat_col = copy(dist2_new)        #distance matrix
+    #dist2_mat[:, i_atom] = dist2_mat[i_atom, :]
+    dist2_mat_row = copy(dist2_new)        #same                                
+    count_acc_adj += 1                            #for adjustement
+    count_acc += 1
+    return  pos, en_tot, dist2_mat_col, dist2_mat_row, count_acc_adj, count_acc
+end
+
+function config_update!(trial_pos, en_tot, en_unmoved, en_moved, dist2_mat_col, dist2_mat_row, dist2_new, count_acc_adj)
+    pos = copy(trial_pos)          #update position of the atom moved
+    en_tot = en_tot - en_unmoved + en_moved       #update total energy
+    dist2_mat_col = copy(dist2_new)        #distance matrix
+    #dist2_mat[:, i_atom] = dist2_mat[i_atom, :]
+    dist2_mat_row = copy(dist2_new)        #same                                
+    count_acc_adj += 1                            #for adjustement
+    return  pos, en_tot, dist2_mat_col, dist2_mat_row, count_acc_adj, count_acc
+end
+
+
+function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adj, pot1)   #for spherical boundary, main loop.
+    #displace atom, until it fulfills boundary conditions
+    trial_pos = atom_displacement!(config, i_atom, max_displacement)
     #find energy difference
     dist2_new = [distance2(trial_pos,b) for b in config.pos]
     en_moved = dimer_energy_atom(i_atom, dist2_new, pot1) 
@@ -109,30 +138,16 @@ function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max
     en_unmoved = dimer_energy_atom(i_atom, dist2_mat[i_atom, :], pot1)
     #decide acceptance
     if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
-        config.pos[i_atom] = copy(trial_pos)          #update position of the atom moved
-        en_tot = en_tot - en_unmoved + en_moved       #update total energy
-        dist2_mat[i_atom, :] = copy(dist2_new)        #distance matrix
-        #dist2_mat[:, i_atom] = dist2_mat[i_atom, :]
-        dist2_mat[:, i_atom] = copy(dist2_new)        #same                                
-        count_acc_adj += 1                            #for adjustement
-        count_acc += 1
+        config.pos[i_atom], en_tot, dist2_mat[i_atom, :], dist2_mat[:, i_atom], count_acc_adj, count_acc = config_update!(trial_pos, en_tot,  en_unmoved, en_moved, dist2_mat[i_atom, :], dist2_mat[:, i_atom], dist2_new, count_acc_adj, count_acc)
     end
     return config, dist2_mat, en_tot, count_acc, count_acc_adj
 end
 
 
 
-
-
-
 function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max_displacement, count_acc_adj, pot1)
     #displace atom, until it fulfills boundary conditions
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    trial_pos = move_atom!(config.pos[i_atom], delta_move, config.bc)
-    while check_boundary(config.bc,trial_pos)         #displace the atom until it's inside the sphere
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        trial_pos = move_atom!(config.pos[i_atom], delta_move, config.bc)
-    end
+    trial_pos = atom_displacement!(config, i_atom, max_displacement)
     #find energy difference
     dist2_new = [distance2(trial_pos,b) for b in config.pos]
     en_moved = dimer_energy_atom(i_atom, dist2_new, pot1) 
@@ -140,11 +155,7 @@ function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max
     en_unmoved = dimer_energy_atom(i_atom, dist2_mat[i_atom, :], pot1)
     #decide acceptance
     if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
-        config.pos[i_atom] = copy(trial_pos)          #update position of the atom moved
-        en_tot = en_tot - en_unmoved + en_moved       #update total energy
-        dist2_mat[i_atom, :] = copy(dist2_new)        #distance matrix
-        dist2_mat[:, i_atom] = copy(dist2_new)        #same                                
-        count_acc_adj += 1                            #for adjustement
+        config.pos[i_atom], en_tot, dist2_mat[i_atom, :], dist2_mat[:, i_atom], count_acc_adj = config_update!(trial_pos, en_tot,  en_unmoved, en_moved, dist2_mat[i_atom, :], dist2_mat[:, i_atom], dist2_new, count_acc_adj)
     end
     return config, dist2_mat, en_tot, count_acc_adj
 end
@@ -162,6 +173,21 @@ function trajectory_exchange!(config1, config2, dist2_mat1, dist2_mat2, en_atom_
     return config1, config2, dist2_mat1, dist2_mat2, en_atom_mat1, en_atom_mat2, en_tot1, en_tot2, count_exc_acc1, count_exc_acc2
 end
 
+function exchange_acceptance(count_exc_1, count_exc_2, temp_1, temp_2, en_1, en_2)
+    count_exc_1 += 1
+    count_exc_2 += 1
+    delta_beta = 1/(kB*temp_1)-1/(kB*temp_2)
+    delta_energy = en_1-en_2
+    exc_acc=min(1.0,exp(delta_beta*delta_energy))
+    return exc_acc, count_exc_1, count_exc_2
+end
+
+function exchange_acceptance(temp_1, temp_2, en_1, en_2)
+    delta_beta = 1/(kB*temp_1)-1/(kB*temp_2)
+    delta_energy = en_1-en_2
+    exc_acc=min(1.0,exp(delta_beta*delta_energy))
+    return exc_acc
+end
 
 function mc_step_atom_cbc!(config, beta, dist2_mat, en_atom_mat, en_tot, NAtoms, i_atom, max_displacement, max_vchange, count_d_acc, count_d_acc_adj, count_v_acc, count_v_acc_adj, pot1)
     #select_move=rand(1:NAtoms+1)
@@ -276,7 +302,7 @@ end
 #println(check_boundary(conf_ne13.bc,conf_ne13.pos[1]))
 #println()
 
-dist2_mat_0=get_distance2_mat(conf_ne32)
+dist2_mat_0=get_distance2_mat(conf_ne13)
 #dist2_mat_0=get_distance2_mat_cbc(conf_ne32_pbc)
 #println("initial distance matrix: ", dist2_mat_0)
 
@@ -296,7 +322,7 @@ en_atom_mat = Array{Array}(undef,n_traj)
 en_tot = zeros(n_traj)
 max_displacement=displ_param.max_displacement
 for i=1:n_traj
-    config[i]=Config(copy(conf_ne32.pos),bc_ne32)
+    config[i]=Config(copy(conf_ne13.pos),bc_ne13)
     dist2_mat[i]=copy(dist2_mat_0)
     en_atom_mat[i]=copy(en_atom_mat_0)
     en_tot[i]=en_tot_0
@@ -320,7 +346,7 @@ for i=1:equilibrium
     for j=1:n_traj                   #number of atoms
         for k=1:NAtoms            #trajetcories
             i_atom=rand(1:NAtoms)
-            config[j], dist2_mat[j], en_tot[j], count_acc_adj[j]=mc_step_atom!(config[j], temp.beta_grid[j], dist2_mat[j], en_atom_mat[j], en_tot[j], i_atom, displ_param.max_displacement[j], count_acc_adj[j], elj_ne)
+            @inbounds config[j], dist2_mat[j], en_tot[j], count_acc_adj[j]=mc_step_atom!(config[j], temp.beta_grid[j], dist2_mat[j], en_atom_mat[j], en_tot[j], i_atom, displ_param.max_displacement[j], count_acc_adj[j], elj_ne)
             #config[j], dist2_mat[j], en_tot[j], count_acc_adj[j], count_v_acc_adj[j] = mc_step_atom_cbc!(config[j], temp.beta_grid[j], dist2_mat[j], en_atom_mat[j], en_tot[j], NAtoms, i_atom, displ_param.max_displacement[j], max_vchange[j], count_acc_adj[j], count_v_acc_adj[j], elj_ne)
         end
     end
@@ -332,13 +358,8 @@ for i=1:equilibrium
     end
     c=rand()                      #exchange
     if c<0.1
-        #ex=Int(1+floor((n_traj-1)*rand()))
         ex=rand(1:n_traj-1)
-        #count_exc[ex]+=1
-        #count_exc[ex+1]+=1
-        delta_beta=1/(kB*temp.t_grid[ex])-1/(kB*temp.t_grid[ex+1])
-        delta_energy=en_tot[ex]-en_tot[ex+1]
-        exc_acc=min(1.0,exp(delta_beta*delta_energy))
+        exc_acc = exchange_acceptance(temp.t_grid[ex], temp.t_grid[ex+1], en_tot[ex], en_tot[ex+1])
         #println(ex, " , ", exc_acc)
         if exc_acc>rand()
             config[ex], config[ex+1], dist2_mat[ex], dist2_mat[ex+1], en_atom_mat[ex], en_atom_mat[ex+1], en_tot[ex], en_tot[ex+1], count_exc_acc[ex], count_exc_acc[ex+1] = trajectory_exchange!(config[ex], config[ex+1], dist2_mat[ex], dist2_mat[ex+1], en_atom_mat[ex], en_atom_mat[ex+1], en_tot[ex], en_tot[ex+1], 1, count_exc_acc[ex], count_exc_acc[ex+1])
@@ -356,7 +377,7 @@ for i=1:mc_cycles
     for j=1:n_traj                    #number of atoms
         for k=1:NAtoms            #trajetcories
             i_atom=rand(1:NAtoms)
-            config[j], dist2_mat[j], en_tot[j], count_acc[j], count_acc_adj[j]=mc_step_atom!(config[j], temp.beta_grid[j], dist2_mat[j], en_atom_mat[j], en_tot[j], i_atom, displ_param.max_displacement[j], count_acc[j],count_acc_adj[j], elj_ne)
+            @inbounds config[j], dist2_mat[j], en_tot[j], count_acc[j], count_acc_adj[j]=mc_step_atom!(config[j], temp.beta_grid[j], dist2_mat[j], en_atom_mat[j], en_tot[j], i_atom, displ_param.max_displacement[j], count_acc[j],count_acc_adj[j], elj_ne)
             #config[j], dist2_mat[j], en_tot[j], count_acc[j], count_acc_adj[j], count_v_acc[j], count_v_acc_adj[j] = mc_step_atom_cbc!(config[j], temp.beta_grid[j], dist2_mat[j], en_atom_mat[j], en_tot[j], NAtoms, i_atom, displ_param.max_displacement[j], max_vchange[j], count_acc[j], count_acc_adj[j], count_v_acc[j], count_v_acc_adj[j], elj_ne)
             #println()
         end
@@ -373,19 +394,13 @@ for i=1:mc_cycles
     c=rand()                      #exchange
     if c<0.1
         ex=rand(1:n_traj-1)
-        count_exc[ex]+=1
-        count_exc[ex+1]+=1
-        delta_beta=1/(kB*temp.t_grid[ex])-1/(kB*temp.t_grid[ex+1])
-        delta_energy=en_tot[ex]-en_tot[ex+1]
-        exc_acc=min(1.0,exp(delta_beta*delta_energy))
-        #println(ex, " , ", exc_acc)
+        exc_acc, count_exc[ex], count_exc[ex+1] = exchange_acceptance(count_exc[ex], count_exc[ex+1], temp.t_grid[ex], temp.t_grid[ex+1], en_tot[ex], en_tot[ex+1])
         if exc_acc>rand()
             config[ex], config[ex+1], dist2_mat[ex], dist2_mat[ex+1], en_atom_mat[ex], en_atom_mat[ex+1], en_tot[ex], en_tot[ex+1], count_exc_acc[ex], count_exc_acc[ex+1] = trajectory_exchange!(config[ex], config[ex+1], dist2_mat[ex], dist2_mat[ex+1], en_atom_mat[ex], en_atom_mat[ex+1], en_tot[ex], en_tot[ex+1], 0, count_exc_acc[ex], count_exc_acc[ex+1])
         end
     end
 
-    for j=1:n_traj                #energy and energy^2
-        #push!(energies[j],[en_tot[j]])
+    for j=1:n_traj                #energy
         energies[j][i]=en_tot[j]
     end
     #println(i)
@@ -433,9 +448,10 @@ plot(temp.t_grid,cv)
 println(now())
 
 
-#for i=1:10
-    #@btime mc_step_atom!(config[2], temp.beta_grid[2], dist2_mat[2], en_atom_mat[2], en_tot[2], 2, displ_param.max_displacement[2], count_acc[2],count_acc_adj[2], elj_ne)
-#end
+
+#@btime mc_step_atom!(config[2], temp.beta_grid[2], dist2_mat[2], en_atom_mat[2], en_tot[2], 2, displ_param.max_displacement[2], count_acc[2],count_acc_adj[2], elj_ne)
+
+#@btime check_boundary(conf_ne13.bc,SVector((rand()-0.5)*10,(rand()-0.5)*10,(rand()-0.5)*10))
 #for i=1:10
     #@btime mc_step_atom_eq!(config[12], temp.beta_grid[12], dist2_mat[12], en_atom_mat[12], en_tot[12], 12, displ_param.max_displacement[12],count_acc_adj[12], elj_ne)
 #end
@@ -475,7 +491,10 @@ println(now())
     #@btime move_atom!(pos_1,[1,1,1])
 #end
 
+@profile metropolis_condition(-0.006, -0.0055, 10000)
+Profile.print()
 
-#@benchmark sort(data) setup=(data=rand(10))
+@profile mc_step_atom!(config[2], temp.beta_grid[2], dist2_mat[2], en_atom_mat[2], en_tot[2], 2, displ_param.max_displacement[2], count_acc[2],count_acc_adj[2], elj_ne)
+Profile.print()
 
 end

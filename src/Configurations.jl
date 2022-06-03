@@ -20,7 +20,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance2_mat, move_atom!
+export distance2, distance2_dv, get_distance2_mat, move_atom!
 export distance2_cbc, get_distance2_mat_cbc
 
 # """
@@ -157,6 +157,22 @@ Finds the distance between two positions a and b.
 """
 distance2(a,b) = (a-b)⋅(a-b)
 
+function distance2_dv(a::SVector{3,Float64},b::SVector{3,Float64})
+    d2=0
+    for i=1:3
+        d2+=(a[i]-b[i])^2
+    end
+    return d2
+end
+
+function distance2_dv(a::Vector,b::Vector)
+    d2=0
+    for i=1:3
+        d2+=(a[i]-b[i])^2
+    end
+    return d2
+end
+
 
 function distance2_cbc(a,b,l)
     b_shift=zeros(3)
@@ -165,9 +181,9 @@ function distance2_cbc(a,b,l)
     return d2
 end
 
-a=[1.,1.,1.]
-b=[3.,3.,3.]
-println(distance2_cbc(a,b,3.5))
+#a=[1.,1.,1.]
+#b=[3.,3.,3.]
+#println(distance2_cbc(a,b,3.5))
 
 #distance matrix
 """
@@ -177,7 +193,7 @@ Builds the matrix of squared distances between positions of configuration.
 """
 get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
 
-get_distance2_mat_cbc(conf::Config{N}) where N = [distance2_cbc(a,b,conf.bc.length) for a in conf.pos, b in conf.pos]
+#get_distance2_mat_cbc(conf::Config{N}) where N = [distance2_cbc(a,b,conf.bc.length) for a in conf.pos, b in conf.pos]
 
 
 
