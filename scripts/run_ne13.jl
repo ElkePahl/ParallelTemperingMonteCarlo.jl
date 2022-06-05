@@ -43,4 +43,11 @@ count_exc_acc = zeros(n_traj)    #number of accepted exchanges
 count_v_acc = zeros(n_traj)        #total count of acceptance
 count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
 
+count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
+count_exc = zeros(n_traj)        #number of proposed exchanges
+count_exc_acc = zeros(n_traj)    #number of accepted exchanges
+
+count_v_acc = zeros(n_traj)        #total count of acceptance
+count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
+
 displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
