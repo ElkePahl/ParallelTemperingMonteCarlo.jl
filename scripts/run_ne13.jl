@@ -34,6 +34,7 @@ mc_params = MCParams(mc_cycles)
 #mc_params = MCParams(mc_cycles;eq_percentage=0.2)
 
 count_acc = zeros(n_traj)
+
 count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
 count_exc = zeros(n_traj)        #number of proposed exchanges
 count_exc_acc = zeros(n_traj)    #number of accepted exchanges
