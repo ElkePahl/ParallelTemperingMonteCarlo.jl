@@ -18,14 +18,15 @@ function metropolis_condition(energy_unmoved, energy_moved, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max_displacement, count_acc)
-    #displace atom, until it fulfills boundary conditions
+function atom_displacement(config, i_atom, max_displacement)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    trial_pos = move_atom!(config.pos[i_atom], delta_move)
-    while check_boundary(config.bc,trial_pos)
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        trial_pos = move_atom!(config.pos[i_atom], delta_move)
-    end
+    trial_pos = move_atom!(config.pos[i_atom], delta_move, config.bc)
+    return trial_pos
+end
+
+function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max_displacement, count_acc)
+    #move randomly selected atom (obeying the boundary conditions)
+    trial_pos = atom_displacement(config, i_atom, max_displacement)
     #find energy difference
     dist2_new = [distance2(trial_pos,b) for b in config.pos]
     en_moved = dimer_energy_atom(i_atom, dist2_new, pot1) 

@@ -118,23 +118,40 @@ end
 Base.length(::Config{N}) where N = N
 
 
-#?pos as matrix
+"""
+    move_atom!(pos, delta_move, bc)
+
+Moves an atom at position `pos` by `delta_move`.
+has to be defined for given boundary conditions
+implemented for:
+    - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
+    - `CubicBC`: (to be added) periodic boundary condition implemented
 
 """
-    move_atom!(config::Config, n_atom, delta_move)
+#function move_atom!(config::Config, n_atom, delta_move)
+#    config.pos[n_atom] += delta_move
+#    return config
+#end
 
-Moves `n_atom`-th atom in configuration by `delta_move`.  
-"""
-function move_atom!(config::Config, n_atom, delta_move)
-    config.pos[n_atom] += delta_move
-    return config
-end
+#function move_atom!(pos,delta_move)
+#    pos += delta_move
+#    return pos
+#end
 
-function move_atom!(pos,delta_move)
+#function move_atom!(config::Config, n_atom, delta_move,bc::SphericalBC)
+#    config.pos[n_atom] += delta_move
+#    return config
+#end
+
+function move_atom!(pos, delta_move, bc::SphericalBC)
     pos += delta_move
+    while check_boundary(bc, pos)         #displace the atom until it's inside the sphere
+        pos -= delta_move
+        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+        pos += delta_move
+    end
     return pos
 end
-
 
 """
     distance2(a,b) 
