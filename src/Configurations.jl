@@ -143,16 +143,6 @@ implemented for:
 #    return config
 #end
 
-function move_atom!(pos, delta_move, bc::SphericalBC)
-    pos += delta_move
-    while check_boundary(bc, pos)         #displace the atom until it's inside the sphere
-        pos -= delta_move
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        pos += delta_move
-    end
-    return pos
-end
-
 """
     distance2(a,b) 
     
