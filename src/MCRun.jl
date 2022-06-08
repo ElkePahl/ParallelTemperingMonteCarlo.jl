@@ -21,7 +21,6 @@ function metropolis_condition(energy_unmoved, energy_moved, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-
 """
     atom_displacement(pos, max_displacement, bc)
 
@@ -34,9 +33,12 @@ Implemented for:
 function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
+    count = 0
     while check_boundary(bc, trial_pos)         #displace the atom until it's inside the sphere
+        count += 1
         delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
         trial_pos = pos + delta_move
+        count == 100 && error("Error: too many moves out of binding sphere")
     end
     return trial_pos
 end
