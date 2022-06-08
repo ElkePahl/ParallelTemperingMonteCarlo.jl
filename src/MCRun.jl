@@ -34,7 +34,7 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     count = 0
-    while check_boundary(bc, trial_pos)         #displace the atom until it's inside the sphere
+    while check_boundary(bc, trial_pos)         #displace the atom until it's inside the binding sphere
         count += 1
         delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
         trial_pos = pos + delta_move
