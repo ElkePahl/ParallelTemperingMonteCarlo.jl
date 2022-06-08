@@ -9,7 +9,8 @@ module EnergyEvaluation
 #using Configurations
 using StaticArrays
 
-export ELJPotential, AbstractPotential 
+export AbstractPotential, AbstractDimerPotential 
+export ELJPotential
 export dimer_energy, dimer_energy_atom
 
 #Dimer energies - no angle dependence
@@ -17,21 +18,30 @@ export dimer_energy, dimer_energy_atom
 
 """   
     AbstractPotential
-Encompasses possible potentials; implemented: 
-- ELJPotential [`ELJPotential`](@ref)
-
+Abstract type for possible potentials
+implemented subtype: 
+- AbstractDimerPotential
 
 Needs method for dimer_energy [`dimer_energy`](@ref)
 """
 abstract type AbstractPotential end
 
+"""
+    AbstractDimerPotential <: AbstractPotential
+ implemented dimer potentials:   
+    - ELJPotential [`ELJPotential`](@ref)
+
+Needs method for dimer_energy [`dimer_energy`](@ref)
 """   
+abstract type AbstractDimerPotential <: AbstractPotential
+
+"""
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractPotential`](@ref);
 as sum over c_i r^(-i), starting with i=6 up to i=N+6
 field name: coeff : contains ELJ coefficients c_ifrom i=6 to i=N+6, coefficient for every power needed.
 """
-struct ELJPotential{N,T} <: AbstractPotential
+struct ELJPotential{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
 end
 
