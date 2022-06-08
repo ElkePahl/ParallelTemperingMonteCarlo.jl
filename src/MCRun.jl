@@ -1,14 +1,13 @@
 module MCRun
 
-export metropolis_condition, mc_step_atom!, atom_displacement
+export metropolis_condition, mc_step_atom!
 
 using StaticArrays
 
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
-
-
+using ..MCMoves
 
 """
     metropolis_condition(energy_unmoved, energy_moved, beta)
@@ -21,29 +20,7 @@ function metropolis_condition(energy_unmoved, energy_moved, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-"""
-    atom_displacement(pos, max_displacement, bc)
-
-Generates trial position for atom, moving it from `pos` by some random displacement 
-Random displacement determined by `max_displacement`
-Implemented for:
-    - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `CubicBC`: (to be added) periodic boundary condition enforced
-"""
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    trial_pos = pos + delta_move
-    count = 0
-    while check_boundary(bc, trial_pos)         #displace the atom until it's inside the binding sphere
-        count += 1
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        trial_pos = pos + delta_move
-        count == 100 && error("Error: too many moves out of binding sphere")
-    end
-    return trial_pos
-end
-
-function mc_step_atom!(config, beta, dist2_mat, en_atom_mat, en_tot, i_atom, max_displacement, count_acc)
+function mc_step_atom!(config, beta, en_tot, i_atom, max_displacement, count_acc)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
     #find energy difference

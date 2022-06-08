@@ -16,7 +16,10 @@ export check_boundary
     AbstractBC{T} 
 Encompasses possible boundary conditions; implemented: 
 - SphericalBC [`SphericalBC`](@ref)
-#- PeriodicBC [`PeriodicBC`](@ref)
+- PeriodicBC [`PeriodicBC`](@ref)
+
+needs methods implemented for
+    - atom_displacement [`atom_displacement`](@ref)
 """
 abstract type AbstractBC{T} end
 

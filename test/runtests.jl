@@ -45,11 +45,8 @@ using StaticArrays, LinearAlgebra
     @test_throws ErrorException atom_displacement(v1,displ,bc)
     trial_pos = atom_displacement(v3,displ,bc)
     @test norm(trial_pos-v3) < displ
-    #delta = SVector(0.,1.,2.)
     #pos = move_atom!(conf.pos[1],delta,bc)
     #pos = atom_displacement(conf.pos[1], max_displacement, bc::SphericalBC)
-    #@test pos == SVector(1.,3.,5.)
-    #@test pos == SVector(1.,3.,5.)
 
 end
 
