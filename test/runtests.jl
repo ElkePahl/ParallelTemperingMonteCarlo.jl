@@ -74,5 +74,8 @@ end
     bc = SphericalBC(radius=2.0)
     conf2 = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf2)
-    @test dimer_energy_atom(2, d2mat[2,:], pot) < 5
+    @test dimer_energy_atom(2,d2mat[2,:],pot) < 0
+    en_vec,en_tot = dimer_energy_config(d2mat,3,pot)
+    @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
+    #@test en_vec
 end
