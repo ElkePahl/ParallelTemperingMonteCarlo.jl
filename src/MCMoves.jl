@@ -1,10 +1,29 @@
 module MCMoves
 
+export AbstractMove
+export AtomMove
 export atom_displacement
 
 using StaticArrays
 
 using ..BoundaryConditions
+
+"""
+    AbstractMove
+abstract type for possible Monte Carlo moves
+implemented: 
+    - AtomMove
+"""
+abstract type AbstractMove end
+
+"""
+    AtomMove
+implements type for atom move (random displacement of randomly selected atom)
+field name: frequency: number of moves per Monte Carlo cycle
+"""
+struct AtomMove <: AbstractMove
+    frequency::Int
+end
 
 """
     atom_displacement(pos, max_displacement, bc)

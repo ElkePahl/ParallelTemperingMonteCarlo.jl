@@ -26,6 +26,7 @@ abstract type AbstractPotential end
     AbstractDimerPotential <: AbstractPotential
  implemented dimer potentials:   
     - ELJPotential [`ELJPotential`](@ref)
+    - ELJPotentialEven [`ELJPotentialEven`](@ref)
 
 Needs methods for 
     - dimer_energy_atom [`dimer_energy_atom`](@ref)
@@ -98,7 +99,7 @@ Calculates energy of dimer for given potential `pot` and squared distance `r2` b
 methods implemented for:
 
     - ELJPotential [`ELJPotential`](@ref)
-    
+
     - ELJPotentialEven [`ELJPotentialEven`](@ref)
 """
 function dimer_energy(pot::ELJPotential{N}, r2) where N
