@@ -10,7 +10,7 @@ using StaticArrays
 
 export AbstractPotential, AbstractDimerPotential 
 export ELJPotential, ELJPotentialEven
-export dimer_energy, dimer_energy_atom, dimer_energy_config
+export dimer_energy, dimer_energy_atom, dimer_energy_config, energy_update
 
 """   
     AbstractPotential
@@ -68,6 +68,11 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     end 
     return dimer_energy_vec, 0.5*energy_tot
 end    
+
+function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
+    en = dimer_energy_atom(i_atom, dist2_new, pot1) 
+    return en
+end
 
 """
     ELJPotential{N,T} 
