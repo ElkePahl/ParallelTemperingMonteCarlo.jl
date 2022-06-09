@@ -6,15 +6,11 @@ this module provides data, structs and methods for dimer energy and total energy
 
 module EnergyEvaluation
 
-#using Configurations
 using StaticArrays
 
 export AbstractPotential, AbstractDimerPotential 
 export ELJPotential
-export dimer_energy, dimer_energy_atom
-
-#Dimer energies - no angle dependence
-#extended Lennard Jones, ELJ, general definition n=6 to N+6
+export dimer_energy, dimer_energy_atom, dimer_energy_config
 
 """   
     AbstractPotential
@@ -83,7 +79,7 @@ struct ELJPotential{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
 end
 
-function ELJPotential{N}(c) where {N}
+function ELJPotential{N}(c) where N
     @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
     coeff = SVector{N}(c)
     T = eltype(c)
