@@ -10,13 +10,15 @@ max_displ = 0.1 # Angstrom
 
 #ELJpotential for neon
 #check units!!!
-c=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
-elj_ne = ELJPotential{11}(c)
+c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
+elj_ne1 = ELJPotential{11}(c1)
+
+c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+elj_ne = ELJPotentialEven{6}(c)
 
 temp = TempGrid{n_traj}(ti,tf) # move to input file at a later stage ...
 
 mc_params = MCParams(mc_cycles)
-
 
 #mc_params = MCParams(mc_cycles;eq_percentage=0.2)
 

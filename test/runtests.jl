@@ -62,6 +62,10 @@ end
     c = [-2.,0.,1.]
     pot =  ELJPotential{3}(c)
     @test dimer_energy(pot,1.) == -1.0
+    c1 = [-2.,1.]
+    pot1 = ELJPotentialEven{2}(c1)
+    @test dimer_energy(pot1,1.) == -1.0
+    @test dimer_energy(pot1,2.) == dimer_energy(pot,2.)
     c=[-1.,2.,3.,-4.,5.]
     pot =  ELJPotential{5}(c)
     @test dimer_energy(pot,1.) == sum(c)

@@ -9,7 +9,7 @@ module EnergyEvaluation
 using StaticArrays
 
 export AbstractPotential, AbstractDimerPotential 
-export ELJPotential
+export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config
 
 """   
@@ -70,7 +70,7 @@ end
 
 """
     ELJPotential{N,T} 
-Implements type for extended Lennard Jones potential; subtype of [`AbstractPotential`](@ref);
+Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
 as sum over c_i r^(-i), starting with i=6 up to i=N+6
 field name: coeff : contains ELJ coefficients c_ifrom i=6 to i=N+6, coefficient for every power needed.
 """
@@ -94,8 +94,12 @@ end
 
 """
     dimer_energy(pot::ELJPotential{N}, r2)
-Calculates energy of dimer for given potential `pot` of type ELJPotential [`ELJPotential`](@ref), 
-and squared distance `r2` between atoms
+Calculates energy of dimer for given potential `pot` and squared distance `r2` between atoms
+methods implemented for:
+
+    - ELJPotential [`ELJPotential`](@ref)
+    
+    - ELJPotentialEven [`ELJPotentialEven`](@ref)
 """
 function dimer_energy(pot::ELJPotential{N}, r2) where N
     r = sqrt(r2)
@@ -104,6 +108,40 @@ function dimer_energy(pot::ELJPotential{N}, r2) where N
     for i = 1:N
         sum1 += pot.coeff[i] * r6inv
         r6inv /= r 
+    end
+    return sum1
+end
+
+"""
+    ELJPotentialEven{N,T} 
+Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
+as sum over c_i r^(-i), starting with i=6 up to i=N+6 with only even integers i
+field name: coeff : contains ELJ coefficients c_i from i=6 to i=N+6 in steps of 2, coefficient for every even power needed.
+"""
+struct ELJPotentialEven{N,T} <: AbstractDimerPotential
+    coeff::SVector{N,T}
+end
+
+function ELJPotentialEven{N}(c) where N
+    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
+    coeff = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialEven{N,T}(coeff)
+end
+
+function ELJPotentialEven(c) 
+    N = length(c)
+    coeff = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialEven{N,T}(coeff)
+end
+
+function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
+    r6inv = 1/(r2*r2*r2)
+    sum1 = 0.
+    for i = 1:N
+        sum1 += pot.coeff[i] * r6inv
+        r6inv /= r2 
     end
     return sum1
 end
