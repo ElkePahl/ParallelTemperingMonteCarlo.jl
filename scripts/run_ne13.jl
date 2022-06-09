@@ -1,12 +1,25 @@
 using ParallelTemperingMonteCarlo
 
+# number of atoms
+n_atoms = 13
+
+# temperature grid
 ti = 2.
 tf = 40.
 n_traj = 30
 
+temp = TempGrid{n_traj}(ti,tf) 
+
+# MC details
 mc_cycles = 10000
 
+move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.1 # Angstrom
+
+mc_params = MCParams(mc_cycles) #20% equilibration is default
+displ_param = DisplacementParamsAtomMove(move_atom, max_displ, temp.t_grid; update_stepsize=100)
+
+#mc_params = MCParams(mc_cycles;eq_percentage=0.2)
 
 #ELJpotential for neon
 #check units!!!
@@ -15,13 +28,6 @@ elj_ne1 = ELJPotential{11}(c1)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 elj_ne = ELJPotentialEven{6}(c)
-
-temp = TempGrid{n_traj}(ti,tf) # move to input file at a later stage ...
-
-mc_params = MCParams(mc_cycles)
-
-#mc_params = MCParams(mc_cycles;eq_percentage=0.2)
-
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -38,6 +44,8 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [-2.023340541398004, 2.136128558801072,	-0.666071089291685],
 [-2.033762834001679, 0.643989905095452, 2.132999911364582],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]]
+
+length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #define boundary conditions starting configuration
 bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
