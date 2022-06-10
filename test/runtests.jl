@@ -41,12 +41,16 @@ using StaticArrays, LinearAlgebra
     @test d2mat[1,3] == 11.0
     @test d2mat[2,1] == d2mat[1,2]
 
-    delta = SVector(0.,1.,2.)
-    conf1 = move_atom!(conf, 1, delta)
-    @test conf.pos[1] == SVector(1.,3.,5.)
-    @test conf1.pos[1] == SVector(1.,3.,5.)
+    displ = 0.1
+    @test_throws ErrorException atom_displacement(v1,displ,bc)
+    trial_pos = atom_displacement(v3,displ,bc)
+    @test norm(trial_pos-v3) < displ
 
-    
+    move_atom=AtomMove(10)
+    @test move_atom.frequency == 10
+    #pos = move_atom!(conf.pos[1],delta,bc)
+    #pos = atom_displacement(conf.pos[1], max_displacement, bc::SphericalBC)
+
 end
 
 @testset "BoundaryConditions" begin
@@ -55,4 +59,30 @@ end
 
     @test check_boundary(bc,SVector(0,0.5,1.))
     @test check_boundary(bc,SVector(0,0.5,0.5)) == false
+end
+
+@testset "Potentials" begin
+    c = [-2.,0.,1.]
+    pot =  ELJPotential{3}(c)
+    @test dimer_energy(pot,1.) == -1.0
+    c1 = [-2.,1.]
+    pot1 = ELJPotentialEven{2}(c1)
+    @test dimer_energy(pot1,1.) == -1.0
+    @test dimer_energy(pot1,2.) == dimer_energy(pot,2.)
+    c=[-1.,2.,3.,-4.,5.]
+    pot =  ELJPotential{5}(c)
+    @test dimer_energy(pot,1.) == sum(c)
+    pot1 = ELJPotential(c)
+    @test dimer_energy(pot1,1.) == sum(c)
+    @test dimer_energy(pot,2.) == dimer_energy(pot1,2.)
+    v1 = SVector(1., 2., 3.)
+    v2 = SVector(2.,4.,6.)
+    v3 = SVector(0., 1., 0.)
+    bc = SphericalBC(radius=2.0)
+    conf2 = Config{3}([v1,v2,v3],bc)
+    d2mat = get_distance2_mat(conf2)
+    @test dimer_energy_atom(2,d2mat[2,:],pot) < 0
+    en_vec,en_tot = dimer_energy_config(d2mat,3,pot)
+    @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
+    #@test en_vec
 end
