@@ -41,3 +41,5 @@ function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement
     #restore or accept
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
+
+end
