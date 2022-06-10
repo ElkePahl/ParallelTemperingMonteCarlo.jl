@@ -70,8 +70,7 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
 end    
 
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
-    en = dimer_energy_atom(i_atom, dist2_new, pot1) 
-    return en
+    return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
 """
