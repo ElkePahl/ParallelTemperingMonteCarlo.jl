@@ -1,6 +1,6 @@
 module MCRun
 
-export metropolis_condition, mc_step_atom!, mc_step!
+export metropolis_condition, mc_step_atom!, mc_step!, ptmc_run
 
 using StaticArrays
 
@@ -70,6 +70,17 @@ function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displ
         count_acc_adjust += 1
     end 
     return config, entot, dist2mat, count_acc, count_acc_adjust
+end
+
+function ptmc_run(moves)
+    #number of moves per MC cycle
+    n_moves = 0
+    for i in eachindex(moves)
+        n_moves += moves[i].frequency
+    end
+    println(n_moves)
+    #to select a type of move for one of n_moves MC step per cycle
+    i_move = rand(1:n_moves)
 end
 
 end
