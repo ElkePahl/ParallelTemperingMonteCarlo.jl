@@ -20,6 +20,12 @@ function metropolis_condition(energy_unmoved, energy_moved, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
+function metropolis_condition(delta_en, beta, ens::NVT)
+    prob_val = exp(-delta_en*beta)
+    T = typeof(prob_val)
+    return ifelse(prob_val > 1, T(1), prob_val)
+end
+
 function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
@@ -31,6 +37,7 @@ function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement
     #one might want to store dimer energies per atom in vector?
     #decide acceptance
     if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
+        #new config accepted
         config.pos[i_atom] = copy(trial_pos)
         dist2_mat[i_atom,:] = copy(dist2_new)
         dist2_mat[:,i_atom] = copy(dist2_new)
@@ -38,7 +45,29 @@ function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement
         count_acc += 1
         count_acc_adjust += 1
     end 
-    #restore or accept
+    return config, entot, dist2mat, count_acc, count_acc_adjust
+end
+
+function mc_step!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot, ensemble, move::AtomMove)
+    #move randomly selected atom (obeying the boundary conditions)
+    trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
+    #find new distances of moved atom - might not be always needed?
+    delta_en, dist2_new = energy_update(trial_pos, i_atom, config, dist2_mat, pot)
+    #dist2_new = [distance2(trial_pos,b) for b in config.pos]
+    #en_moved = energy_update(i_atom, dist2_new, pot)
+    #recalculate old 
+    #en_unmoved = energy_update(i_atom, dist2_mat[i_atom,:], pot)
+    #one might want to store dimer energies per atom in vector?
+    #decide acceptance
+    if metropolis_condition(delta_en, beta, ensemble) >= rand()
+        #new config accepted
+        config.pos[i_atom] = copy(trial_pos)
+        dist2_mat[i_atom,:] = copy(dist2_new)
+        dist2_mat[:,i_atom] = copy(dist2_new)
+        en_tot = en_tot + delta_en
+        count_acc += 1
+        count_acc_adjust += 1
+    end 
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
