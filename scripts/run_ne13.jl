@@ -63,21 +63,13 @@ bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
 
-count_acc = zeros(n_traj)
-count_acc_adj = zeros(n_traj)
+count_acc = zeros(n_traj)       #total count of acceptance of atom moves
+count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
 
-count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
-count_exc = zeros(n_traj)        #number of proposed exchanges
+count_exc = zeros(n_traj)        #number of proposed exchanges 
 count_exc_acc = zeros(n_traj)    #number of accepted exchanges
 
-count_v_acc = zeros(n_traj)        #total count of acceptance
-count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
-
-count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
-count_exc = zeros(n_traj)        #number of proposed exchanges
-count_exc_acc = zeros(n_traj)    #number of accepted exchanges
-
-count_v_acc = zeros(n_traj)        #total count of acceptance
-count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
+count_v_acc = zeros(n_traj)        #total count of acceptance of volume moves
+count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
 
 displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
