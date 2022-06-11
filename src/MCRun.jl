@@ -20,7 +20,7 @@ function metropolis_condition(energy_unmoved, energy_moved, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function metropolis_condition(delta_en, beta, ens::NVT)
+function metropolis_condition(::NVT, delta_en, beta)
     prob_val = exp(-delta_en*beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
@@ -48,7 +48,7 @@ function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function mc_step!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot, ensemble, move::AtomMove)
+function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
     #find new distances of moved atom - might not be always needed?

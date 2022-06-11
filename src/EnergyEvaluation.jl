@@ -76,10 +76,7 @@ end
 
 function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
-    en_moved = dimer_energy_atom(i_atom, dist2_new, pot)
-    #recalculate old 
-    en_unmoved = dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
-    delta_en = energy_moved-energy_unmoved
+    delta_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
     return delta_en, dist2_new
 end
 
