@@ -1,6 +1,6 @@
 module MCRun
 
-export metropolis_condition, mc_step_atom!
+export metropolis_condition, mc_step_atom!, mc_step!
 
 using StaticArrays
 
@@ -8,6 +8,7 @@ using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
 using ..MCMoves
+using ..EnergyEvaluation
 
 """
     metropolis_condition(energy_unmoved, energy_moved, beta)
