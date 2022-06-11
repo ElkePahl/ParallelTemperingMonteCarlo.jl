@@ -20,6 +20,9 @@ max_displ = 0.1 # Angstrom
 mc_params = MCParams(mc_cycles) #20% equilibration is default
 displ_param = DisplacementParamsAtomMove(move_atom, max_displ, temp.t_grid; update_stepsize=100)
 
+#ensemble
+ensemble = NVT(n_atoms)
+
 #histograms
 Ebins = 100
 Emin = -0.006

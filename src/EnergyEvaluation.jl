@@ -11,6 +11,7 @@ using StaticArrays
 export AbstractPotential, AbstractDimerPotential 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config, energy_update
+export AbstractEnsemble, NVT, NPT
 
 """   
     AbstractPotential
