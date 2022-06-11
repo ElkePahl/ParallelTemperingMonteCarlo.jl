@@ -151,4 +151,33 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
     return sum1
 end
 
+"""
+    AbstractEnsemble
+abstract type for ensemble:
+    - NVT: canonical ensemble
+    - NPT: isothermal, isobaric
+"""
+abstract type AbstractEnsemble end
+
+"""
+    NVT
+ canonical ensemble
+ fieldname: natoms: number of atoms
+"""
+struct NVT <: AbstractEnsemble
+    natoms::Int
+end
+
+"""
+    NPT
+ isothermal, isobaric ensemble
+ fieldnames: 
+ - natoms: number of atoms
+ - pressure
+"""
+struct NPT <: AbstractEnsemble
+    natoms::Int
+    pressure::Real
+end
+
 end
