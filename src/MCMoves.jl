@@ -2,7 +2,7 @@ module MCMoves
 
 export AbstractMove
 export AtomMove
-export atom_displacement
+export atom_displacement, update_max_stepsize!
 
 using StaticArrays
 
@@ -59,6 +59,27 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
         count == 100 && error("Error: too many moves out of binding sphere")
     end
     return trial_pos
+end
+
+"""
+    update_max_stepsize!(displ, n_update, count_accept, n_atom)
+update of maximum step size of atom moves after n_update MC cyles (n_atom moves per cycle)
+depends on ratio of accepted moves - as given in count_accept - 
+for acceptance ratio < 40% max_displacement is reduced to 90% of its value,
+for acceptance ratio > 60% max_displacement is increased to 110% of its value.
+count_accept is set back to zero at end.      
+"""
+function update_max_stepsize!(displ, n_update, count_accept, n_atom)
+    for i in 1:length(count_accept)
+        acc_rate =  count_accept[i] / (n_update * n_atom)
+        if acc_rate < 0.4
+            displ[i] *= 0.9
+        elseif acc_rate > 0.6
+            displ[i] *= 1.1
+        end
+        count_accept[i] = 0
+    end
+    return displ, count_accept
 end
 
 

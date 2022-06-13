@@ -13,7 +13,7 @@ using ..EnergyEvaluation
 
 export InputParameters
 export MCParams, TempGrid
-export AbstractDisplacementParams, DisplacementParamsAtomMove
+#export AbstractDisplacementParams, DisplacementParamsAtomMove
 export StatMoves, StatMovesInit
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
@@ -49,33 +49,33 @@ end
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
-abstract type AbstractDisplacementParams{T} end
+#abstract type AbstractDisplacementParams{T} end
 
-struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
-    max_displacement::Vector{T} #maximum atom displacement in Angstrom
-    update_step::Int
-end 
+#struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
+#    max_displacement::Vector{T} #maximum atom displacement in Angstrom
+#    update_step::Int
+#end 
 
-function DisplacementParamsAtomMove(displ,tgrid; update_stepsize=100)
-    T = eltype(displ)
-    N = length(tgrid)
+#function DisplacementParamsAtomMove(displ,tgrid; update_stepsize=100)
+#    T = eltype(displ)
+#    N = length(tgrid)
     #initialize displacement vector
-    max_displ = [0.1*sqrt(displ*tgrid[i]) for i in 1:N]
-    return DisplacementParamsAtomMove{T}(max_displ, update_stepsize)
-end
+#    max_displ = [0.1*sqrt(displ*tgrid[i]) for i in 1:N]
+#    return DisplacementParamsAtomMove{T}(max_displ, update_stepsize)
+#end
 
-function update_max_stepsize!(displ::DisplacementParamsAtomMove, count_accept, n_atom)
-    for i in 1:length(count_acc)
-        acc_rate =  count_accept[i] / (displ.update_step * n_atom)
-        if acc_rate < 0.4
-            displ.max_displacement[i] *= 0.9
-        elseif acc_rate > 0.6
-            displ.max_displacement[i] *= 1.1
-        end
-        count_accept[i] = 0
-    end
-    return displ, count_accept
-end
+#function update_max_stepsize!(displ::DisplacementParamsAtomMove, count_accept, n_atom)
+#    for i in 1:length(count_acc)
+#       acc_rate =  count_accept[i] / (displ.update_step * n_atom)
+#        if acc_rate < 0.4
+#            displ.max_displacement[i] *= 0.9
+#        elseif acc_rate > 0.6
+#            displ.max_displacement[i] *= 1.1
+#        end
+#        count_accept[i] = 0
+#    end
+#    return displ, count_accept
+#end
 
 struct InputParameters
     mc_parameters::MCParams
