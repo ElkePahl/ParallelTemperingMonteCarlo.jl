@@ -20,9 +20,21 @@ abstract type AbstractMove end
     AtomMove
 implements type for atom move (random displacement of randomly selected atom)
 field name: frequency: number of moves per Monte Carlo cycle
+            max_displacement: max. displacement for move per temperature (updated during MC run)
+            n_update_stepsize: number of MC cycles between update of max. displacement
 """
-struct AtomMove <: AbstractMove
+struct AtomMove{T} <: AbstractMove
     frequency::Int
+    max_displacement::Vector{T}
+    n_update_stepsize::Int
+end
+
+function AtomMove(frequency, displ, tgrid; update_stepsize=100)
+    T = eltype(displ)
+    N = length(tgrid)
+    #initialize displacement vector
+    max_displacement = [0.1*sqrt(displ*tgrid[i]) for i in 1:N]
+    return AtomMove{T}(frequency, max_displacement, update_stepsize)
 end
 
 """

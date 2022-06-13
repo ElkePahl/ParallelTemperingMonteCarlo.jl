@@ -15,11 +15,11 @@ mc_cycles = 10000
 mc_sample = 1
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-moves = [AtomMove(n_atoms)]
 max_displ = 0.1 # Angstrom
+moves = [AtomMove(n_atoms, max_dipl, temp.t_grid)]
 
 mc_params = MCParams(mc_cycles) #20% equilibration is default
-displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
+#displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
 
 #ensemble
 ensemble = NVT(n_atoms)
