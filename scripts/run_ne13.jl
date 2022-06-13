@@ -14,11 +14,12 @@ temp = TempGrid{n_traj}(ti,tf)
 mc_cycles = 10000
 mc_sample = 1
 
+mc_params = MCParams(mc_cycles) #20% equilibration is default
+
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.1 # Angstrom
 moves = [AtomMove(n_atoms, max_dipl, temp.t_grid)]
 
-mc_params = MCParams(mc_cycles) #20% equilibration is default
 #displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
 
 #ensemble
@@ -59,13 +60,4 @@ conf_ne13 = Config(pos_ne13, bc_ne13)
 count = StatMoves(0,0,0,0,0,0)
 status_count = [count for i=1:n_traj]
 
-#count_acc = zeros(n_traj)       #total count of acceptance of atom moves
-#count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
-
-#count_exc = zeros(n_traj)        #number of proposed exchanges 
-#count_exc_acc = zeros(n_traj)    #number of accepted exchanges
-
-#count_v_acc = zeros(n_traj)        #total count of acceptance of volume moves
-#count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
-
-ptmc_run!(temp, mc_params, conf_ne13, bc_ne13, elj_ne, moves, ensemble, displ_param, status_count)
+ptmc_run!(temp, mc_params, conf_ne13, elj_ne, moves, ensemble, status_count)

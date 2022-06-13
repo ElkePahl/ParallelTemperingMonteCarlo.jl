@@ -46,10 +46,9 @@ using StaticArrays, LinearAlgebra
     trial_pos = atom_displacement(v3,displ,bc)
     @test norm(trial_pos-v3) < displ
 
-    move_atom=AtomMove(10)
+    tgrid=TempGrid{32}(2.,16.)
+    move_atom=AtomMove(10, displ, tgrid.t_grid)
     @test move_atom.frequency == 10
-    #pos = move_atom!(conf.pos[1],delta,bc)
-    #pos = atom_displacement(conf.pos[1], max_displacement, bc::SphericalBC)
 
 end
 

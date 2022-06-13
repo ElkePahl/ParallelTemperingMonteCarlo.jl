@@ -72,7 +72,7 @@ function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displ
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function ptmc_run!(temp, mc_params, conf_ne13, bc_ne13, elj_ne, moves, ensemble, displ_param, stat_param)
+function ptmc_run!(temp, mc_params, conf, pot, moves, ensemble, stat_param)
     #number of moves per MC cycle
     n_moves = 0
     for i in eachindex(moves)
@@ -94,7 +94,7 @@ function ptmc_run!(temp, mc_params, conf_ne13, bc_ne13, elj_ne, moves, ensemble,
     en_tot = zeros(n_traj)
     max_displacement=displ_param.max_displacement
     for i=1:n_traj
-        config[i]=Config(copy(conf_ne13.pos),bc_ne13)
+        config[i]=copy(conf)
         dist2_mat[i]=copy(dist2_mat_0)
         en_atom_mat[i]=copy(en_atom_mat_0)
         en_tot[i]=en_tot_0
