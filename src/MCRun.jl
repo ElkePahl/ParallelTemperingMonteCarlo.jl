@@ -81,6 +81,7 @@ function ptmc_run(moves)
     println(n_moves)
     #to select a type of move for one of n_moves MC step per cycle
     i_move = rand(1:n_moves)
+    return i_move
 end
 
 end

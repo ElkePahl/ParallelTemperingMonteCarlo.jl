@@ -14,11 +14,12 @@ temp = TempGrid{n_traj}(ti,tf)
 mc_cycles = 10000
 mc_sample = 1
 
-move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
+#move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
+moves = [AtomMove(n_atoms)]
 max_displ = 0.1 # Angstrom
 
 mc_params = MCParams(mc_cycles) #20% equilibration is default
-displ_param = DisplacementParamsAtomMove(move_atom, max_displ, temp.t_grid; update_stepsize=100)
+displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
 
 #ensemble
 ensemble = NVT(n_atoms)
@@ -66,13 +67,17 @@ bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
 
-count_acc = zeros(n_traj)       #total count of acceptance of atom moves
-count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
+stat_param = StatMovesInit(n_traj)
 
-count_exc = zeros(n_traj)        #number of proposed exchanges 
-count_exc_acc = zeros(n_traj)    #number of accepted exchanges
+#count_acc = zeros(n_traj)       #total count of acceptance of atom moves
+#count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
 
-count_v_acc = zeros(n_traj)        #total count of acceptance of volume moves
-count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
+#count_exc = zeros(n_traj)        #number of proposed exchanges 
+#count_exc_acc = zeros(n_traj)    #number of accepted exchanges
+
+#count_v_acc = zeros(n_traj)        #total count of acceptance of volume moves
+#count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
 
 displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
+
+ptmc_run(moves)

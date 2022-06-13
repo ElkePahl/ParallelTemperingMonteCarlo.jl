@@ -14,6 +14,7 @@ using ..EnergyEvaluation
 export InputParameters
 export MCParams, TempGrid
 export AbstractDisplacementParams, DisplacementParamsAtomMove
+export StatMoves, StatMovesInit
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
@@ -83,6 +84,27 @@ struct InputParameters
     random_seed::Int
     potential::AbstractPotential
     max_displacement::AbstractDisplacementParams
+end
+
+mutable struct StatMoves{N}
+    count_acc::Vector{Int}       #total count of acceptance of atom moves
+    count_acc_adj::Vector{Int}    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
+
+    count_exc::Vector{Int}       #number of proposed exchanges 
+    count_exc_acc::Vector{Int}  #number of accepted exchanges
+
+    count_v_acc::Vector{Int}     #total count of acceptance of volume moves
+    count_v_acc_adj::Vector{Int}#acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
+end
+
+function StatMovesInit(N)
+    count_acc=zeros(N)
+    count_acc_adj=zeros(N)
+    count_exc=zeros(N)
+    count_exc_acc=zeros(N)
+    count_v_acc=zeros(N)
+    count_v_acc_adj=zeros(N) 
+    return StatMoves{N}(count_acc,count_acc_adj,count_exc,count_exc_acc,count_v_acc,count_v_acc_adj)
 end
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom
