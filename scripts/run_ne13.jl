@@ -24,17 +24,6 @@ displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize
 #ensemble
 ensemble = NVT(n_atoms)
 
-#histograms
-Ebins = 100
-Emin = -0.006
-Emax = -0.001
-
-dE = (Emax-Emin)/Ebins
-Ehistogram = Array{Array}(undef,n_traj)      #initialization
-for i=1:n_traj
-    Ehistogram[i]=zeros(Ebins)
-end
-
 #ELJpotential for neon
 #check units!!!
 c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
@@ -67,7 +56,8 @@ bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
 
-stat_param = StatMovesInit(n_traj)
+count = StatMoves(0,0,0,0,0,0)
+status_count = [count for i=1:n_traj]
 
 #count_acc = zeros(n_traj)       #total count of acceptance of atom moves
 #count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
@@ -78,6 +68,4 @@ stat_param = StatMovesInit(n_traj)
 #count_v_acc = zeros(n_traj)        #total count of acceptance of volume moves
 #count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
 
-displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
-
-ptmc_run(moves)
+ptmc_run!(temp, mc_params, conf_ne13, bc_ne13, elj_ne, moves, ensemble, displ_param, status_count)

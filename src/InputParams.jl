@@ -86,25 +86,15 @@ struct InputParameters
     max_displacement::AbstractDisplacementParams
 end
 
-mutable struct StatMoves{N}
-    count_acc::Vector{Int}       #total count of acceptance of atom moves
-    count_acc_adj::Vector{Int}    #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
+mutable struct StatMoves
+    count_acc::Int       #total count of acceptance of atom moves
+    count_acc_adj::Int   #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
 
-    count_exc::Vector{Int}       #number of proposed exchanges 
-    count_exc_acc::Vector{Int}  #number of accepted exchanges
+    count_exc::Int       #number of proposed exchanges 
+    count_exc_acc::Int   #number of accepted exchanges
 
-    count_v_acc::Vector{Int}     #total count of acceptance of volume moves
-    count_v_acc_adj::Vector{Int}#acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
-end
-
-function StatMovesInit(N)
-    count_acc=zeros(N)
-    count_acc_adj=zeros(N)
-    count_exc=zeros(N)
-    count_exc_acc=zeros(N)
-    count_v_acc=zeros(N)
-    count_v_acc_adj=zeros(N) 
-    return StatMoves{N}(count_acc,count_acc_adj,count_exc,count_exc_acc,count_v_acc,count_v_acc_adj)
+    count_v_acc::Int     #total count of acceptance of volume moves
+    count_v_acc_adj::Int #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
 end
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom

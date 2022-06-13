@@ -72,7 +72,7 @@ function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displ
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function ptmc_run(moves)
+function ptmc_run!(temp, mc_params, conf_ne13, bc_ne13, elj_ne, moves, ensemble, displ_param, stat_param)
     #number of moves per MC cycle
     n_moves = 0
     for i in eachindex(moves)
@@ -81,7 +81,44 @@ function ptmc_run(moves)
     println(n_moves)
     #to select a type of move for one of n_moves MC step per cycle
     i_move = rand(1:n_moves)
-    return i_move
+    
+    #to be checked/improved ...
+    dist2_mat_0=get_distance2_mat(conf_ne13)
+
+    en_atom_mat_0=dimer_energy_config(dist2_mat_0, NAtoms, elj_ne)[1]
+    en_tot_0=dimer_energy_config(dist2_mat_0, NAtoms, elj_ne)[3]
+
+    config=Array{Config}(undef,n_traj)
+    dist2_mat = Array{Matrix}(undef,n_traj) 
+    en_atom_mat = Array{Array}(undef,n_traj) 
+    en_tot = zeros(n_traj)
+    max_displacement=displ_param.max_displacement
+    for i=1:n_traj
+        config[i]=Config(copy(conf_ne13.pos),bc_ne13)
+        dist2_mat[i]=copy(dist2_mat_0)
+        en_atom_mat[i]=copy(en_atom_mat_0)
+        en_tot[i]=en_tot_0
+    end
+    
+    energies=Array{Array}(undef,n_traj)
+    for i=1:n_traj
+        energies[i]=zeros(mc_cycles)
+    end
+    
+    cv=Array{Float64}(undef,n_traj)
+
+    #histograms
+    Ebins = 100
+    Emin = -0.006
+    Emax = -0.001
+
+    dE = (Emax-Emin)/Ebins
+    Ehistogram = Array{Array}(undef,n_traj)      #initialization
+    for i=1:n_traj
+        Ehistogram[i]=zeros(Ebins)
+    end
+
+    return 
 end
 
 end
