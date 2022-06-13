@@ -1,5 +1,5 @@
 """ 
-    module Input
+    module InputParams
 
     this module provides structs and methods to arrange input parameters
 """
@@ -14,7 +14,6 @@ using ..EnergyEvaluation
 export InputParameters
 export MCParams, TempGrid
 #export AbstractDisplacementParams, DisplacementParamsAtomMove
-export StatMoves, StatMovesInit
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
@@ -84,17 +83,6 @@ struct InputParameters
     random_seed::Int
     potential::AbstractPotential
 #    max_displacement::AbstractDisplacementParams
-end
-
-mutable struct StatMoves
-    count_acc::Int       #total count of acceptance of atom moves
-    count_acc_adj::Int   #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
-
-    count_exc::Int       #number of proposed exchanges 
-    count_exc_acc::Int   #number of accepted exchanges
-
-    count_v_acc::Int     #total count of acceptance of volume moves
-    count_v_acc_adj::Int #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
 end
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom

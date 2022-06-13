@@ -1,6 +1,7 @@
 module MCRun
 
-export metropolis_condition, mc_step_atom!, mc_step!, ptmc_run
+export MCState
+export metropolis_condition, mc_step_atom!, mc_step!, ptmc_run!
 
 using StaticArrays
 
@@ -9,6 +10,18 @@ using ..Configurations
 using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
+
+mutable struct MCState{T, NMove, NAtom, BC}
+    temp::T
+    beta::T
+    config::Config{Natom,BC,T}
+    dist2_mat::
+    en_atom_mat::Vector{NAtom}
+    en_tot::T
+    max_displacement::Vector{NMove,T}
+    stat::StatMoves
+    enhist::Vector{NAtom}
+end    
 
 """
     metropolis_condition(energy_unmoved, energy_moved, beta)
