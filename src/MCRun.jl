@@ -72,7 +72,7 @@ function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displ
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function ptmc_run!(temp, mc_params, conf, pot, moves, ensemble, stat_param)
+function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_param)
     #number of moves per MC cycle
     n_moves = 0
     for i in eachindex(moves)
@@ -83,22 +83,17 @@ function ptmc_run!(temp, mc_params, conf, pot, moves, ensemble, stat_param)
     i_move = rand(1:n_moves)
     
     #to be checked/improved ...
-    dist2_mat_0=get_distance2_mat(conf_ne13)
 
-    en_atom_mat_0=dimer_energy_config(dist2_mat_0, NAtoms, elj_ne)[1]
-    en_tot_0=dimer_energy_config(dist2_mat_0, NAtoms, elj_ne)[3]
+    n_atoms = length(starting_conf.pos)
+    dist2_mat_0 = get_distance2_mat(starting_conf)
+    
+    en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
 
-    config=Array{Config}(undef,n_traj)
-    dist2_mat = Array{Matrix}(undef,n_traj) 
-    en_atom_mat = Array{Array}(undef,n_traj) 
-    en_tot = zeros(n_traj)
-    max_displacement=displ_param.max_displacement
-    for i=1:n_traj
-        config[i]=copy(conf)
-        dist2_mat[i]=copy(dist2_mat_0)
-        en_atom_mat[i]=copy(en_atom_mat_0)
-        en_tot[i]=en_tot_0
-    end
+    n_traj = length(temp.t_grid)
+    config = [starting_conf for i=1:n_traj]
+    dist2_mat = [dist2_mat_0 for i=1:n_traj]
+    en_atom_mat = [en_atom_mat_0 for i=1:n_traj]
+    en_tot = [en_tot_0 for i=1:n_traj]
     
     energies=Array{Array}(undef,n_traj)
     for i=1:n_traj

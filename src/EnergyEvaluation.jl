@@ -61,10 +61,10 @@ calculates total energy of configuration
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
-function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
-    dimer_energy_vec = zeros(NAtoms)
+function dimer_energy_config(distmat, n_atoms, pot::AbstractDimerPotential)
+    dimer_energy_vec = zeros(n_atoms)
     energy_tot = 0.
-    for i in 1:NAtoms
+    for i in 1:n_atoms
         dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot)
         energy_tot += dimer_energy_vec[i]
     end 

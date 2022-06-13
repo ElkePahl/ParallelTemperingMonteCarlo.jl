@@ -83,7 +83,7 @@ struct InputParameters
     starting_conf::Config
     random_seed::Int
     potential::AbstractPotential
-    max_displacement::AbstractDisplacementParams
+#    max_displacement::AbstractDisplacementParams
 end
 
 mutable struct StatMoves
