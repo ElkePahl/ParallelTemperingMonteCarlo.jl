@@ -11,16 +11,16 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 
-mutable struct MCState{T, NMove, NAtom, BC}
+struct MCState{T, NMove, NATOM, BC, M}
     temp::T
     beta::T
-    config::Config{Natom,BC,T}
-    dist2_mat::
-    en_atom_mat::Vector{NAtom}
-    en_tot::T
-    max_displacement::Vector{NMove,T}
-    stat::StatMoves
-    enhist::Vector{NAtom}
+    config::Config{NATOM,BC,T}
+    dist2_mat::Matrix{T}
+    en_atom_mat::Vector{T}
+    en_tot::Ref{T}
+    enhist::Vector{T}
+    moves::M # Tuple
+    count_exc::Svector{2,Int}
 end    
 
 """

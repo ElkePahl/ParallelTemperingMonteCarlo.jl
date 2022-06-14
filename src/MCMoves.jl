@@ -22,19 +22,23 @@ implements type for atom move (random displacement of randomly selected atom)
 field name: frequency: number of moves per Monte Carlo cycle
             max_displacement: max. displacement for move per temperature (updated during MC run)
             n_update_stepsize: number of MC cycles between update of max. displacement
+            count_acc: total number of accepted atom moves
+            count_acc_adj: number of accepted moves between stepsize adjustments 
 """
-struct AtomMove{T} <: AbstractMove
+mutable struct AtomMove{T} <: AbstractMove
     frequency::Int
-    max_displacement::Vector{T}
+    max_displacement::T
     n_update_stepsize::Int
+    count_acc::Int       
+    count_acc_adj::Int 
 end
 
-function AtomMove(frequency, displ, tgrid; update_stepsize=100)
+function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_adj=0)
     T = eltype(displ)
     N = length(tgrid)
     #initialize displacement vector
     max_displacement = [0.1*sqrt(displ*tgrid[i]) for i in 1:N]
-    return AtomMove{T}(frequency, max_displacement, update_stepsize)
+    return AtomMove{T}(frequency, max_displacement, update_stepsize, count_acc, count_acc_adj)
 end
 
 """
@@ -83,9 +87,6 @@ function update_max_stepsize!(displ, n_update, count_accept, n_atom)
 end
 
 mutable struct StatMoves
-    count_acc::Int       #total count of acceptance of atom moves
-    count_acc_adj::Int   #acceptance used for stepsize adjustment for atom moves, will be reset to 0 after each adjustment
-
     count_exc::Int       #number of proposed exchanges 
     count_exc_acc::Int   #number of accepted exchanges
 
