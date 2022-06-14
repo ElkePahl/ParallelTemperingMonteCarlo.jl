@@ -46,10 +46,8 @@ using StaticArrays, LinearAlgebra
     trial_pos = atom_displacement(v3,displ,bc)
     @test norm(trial_pos-v3) < displ
 
-    tgrid=TempGrid{32}(2.,16.)
-    move_atom=AtomMove(10, displ, tgrid.t_grid)
+    move_atom=AtomMove(10, displ)
     @test move_atom.frequency == 10
-
 end
 
 @testset "BoundaryConditions" begin
