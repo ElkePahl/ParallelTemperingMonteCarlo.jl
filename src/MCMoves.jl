@@ -35,10 +35,7 @@ end
 
 function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_adj=0)
     T = eltype(displ)
-    N = length(tgrid)
-    #initialize displacement vector
-    max_displacement = [0.1*sqrt(displ*tgrid[i]) for i in 1:N]
-    return AtomMove{T}(frequency, max_displacement, update_stepsize, count_acc, count_acc_adj)
+    return AtomMove{T}(frequency, displ, update_stepsize, count_acc, count_acc_adj)
 end
 
 """

@@ -11,17 +11,31 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 
-struct MCState{T, NMove, NATOM, BC, M}
+struct MCState{T,NATOM,BC,M}
     temp::T
     beta::T
     config::Config{NATOM,BC,T}
     dist2_mat::Matrix{T}
     en_atom_mat::Vector{T}
     en_tot::Ref{T}
-    enhist::Vector{T}
+    en_hist::Vector{T}
     moves::M # Tuple
-    count_exc::Svector{2,Int}
+    count_exc::SVector{2,Int}
 end    
+
+#function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
+#    @boundscheck length(pos) == N || error("number of atoms and number of positions not the same")
+#    return Config{N,BC,T}(pos,bc)
+#end
+
+function MCState{NATOM}(temp, beta, config::Config{NATOM,BC,T}, dist2_mat, moves::M; count_exc=SVector(0,0)) where {T,NATOM,BC,M}
+    MCState{T,NATOM,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
+end
+
+function MCState{NATOM}(temp, beta, pos::Vector{SVector{3,T}}, bc::BC, dist2_mat, moves; count_exc=SVector(0,0)) where {T,NATOM,BC,M}
+    config = Config{NATOM}(pos,bc)
+    MCState{T,NATOM,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
+end
 
 """
     metropolis_condition(energy_unmoved, energy_moved, beta)
