@@ -18,7 +18,7 @@ mc_params = MCParams(mc_cycles) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.1 # Angstrom
-moves = [AtomMove(n_atoms, max_displ, temp.t_grid)]
+moves = [AtomMove(n_atoms, max_displ)]
 
 #displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
 
