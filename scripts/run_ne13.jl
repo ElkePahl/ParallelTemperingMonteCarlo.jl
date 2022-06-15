@@ -18,17 +18,14 @@ mc_params = MCParams(mc_cycles) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.1 # Angstrom
-moves = [AtomMove(n_atoms, max_displ)]
-
-#displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
-
+moves = [AtomMove(n_atoms, max_displ)] #default: update_stepsize=100, count_acc=0, count_acc_adj=0
 #ensemble
 ensemble = NVT(n_atoms)
 
 #ELJpotential for neon
 #check units!!!
-c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
-elj_ne1 = ELJPotential{11}(c1)
+#c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
+#elj_ne1 = ELJPotential{11}(c1)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 elj_ne = ELJPotentialEven{6}(c)
@@ -57,18 +54,16 @@ bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
 
-count = StatMoves(0,0,0,0,0,0)
-status_count = [count for i=1:n_traj]
+#count = StatMoves(0,0,0,0,0,0)
+#status_count = [count for i=1:n_traj]
 
 #histogram information
-Ebins = 100
-Emin = -0.006
-Emax = -0.001
+n_bin = 100
+en_min = -0.006
+en_max = -0.001
 
-dE = (Emax-Emin)/Ebins
-Ehistogram = Array{Array}(undef,n_traj)      #initialization
-for i=1:n_traj
-    Ehistogram[i]=zeros(Ebins)
-end
+en_hist = EnHist(n_bin,en_min::T,en_max::T)
+
+#construct array of MCState (for each temperature)
 
 ptmc_run!(temp, mc_params, conf_ne13, elj_ne, moves, ensemble, status_count)

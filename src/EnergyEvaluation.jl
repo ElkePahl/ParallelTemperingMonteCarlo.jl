@@ -13,6 +13,7 @@ export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config
 export energy_update
 export AbstractEnsemble, NVT, NPT
+export EnHist
 
 """   
     AbstractPotential

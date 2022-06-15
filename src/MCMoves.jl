@@ -83,13 +83,4 @@ function update_max_stepsize!(displ, n_update, count_accept, n_atom)
     return displ, count_accept
 end
 
-mutable struct StatMoves
-    count_exc::Int       #number of proposed exchanges 
-    count_exc_acc::Int   #number of accepted exchanges
-
-    count_v_acc::Int     #total count of acceptance of volume moves
-    count_v_acc_adj::Int #acceptance used for stepsize adjustment for volume moves, will be reset to 0 after each adjustment
-end
-
-
 end #module
