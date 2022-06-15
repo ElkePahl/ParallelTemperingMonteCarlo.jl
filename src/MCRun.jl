@@ -18,7 +18,7 @@ struct MCState{T,N,BC,M}
     dist2_mat::Matrix{T}
     en_atom_mat::Vector{T}
     en_tot::Ref{T}
-    en_hist::Vector{T}
+    en_hist::EnHist{T}
     moves::M # Tuple
     count_exc::SVector{2,Int}
 end    
@@ -32,6 +32,11 @@ function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_
     MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
 end
 
+function MCState(temp, beta, config::Config{N,BC,T}, en_hist, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
+    dist2_mat = get_distance2_mat(config)
+    en_atom_mat, en_tot = dimer_energy_config(dist2_mat_0, n_atoms, pot)
+    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
+end
 
 """
     metropolis_condition(energy_unmoved, energy_moved, beta)

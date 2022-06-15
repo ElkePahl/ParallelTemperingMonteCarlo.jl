@@ -198,6 +198,8 @@ end
 
 function EnHist(n_bin,en_min::T,en_max::T) where T
     delta_en_bin = (en_max-en_min)/n_bin
-    en_hist=zeros(n_bins)
+    en_hist=zeros(n_bin)
     EnHist(n_bin,en_min,en_max,delta_en_bin,en_hist)
+end
+
 end
