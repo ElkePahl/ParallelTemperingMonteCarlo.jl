@@ -1,4 +1,4 @@
-using ParallelTemperingMonteCarlo
+using Main.ParallelTemperingMonteCarlo
 
 # number of atoms
 n_atoms = 13
@@ -18,7 +18,7 @@ mc_params = MCParams(mc_cycles) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.1 # Angstrom
-moves = [AtomMove(n_atoms, max_displ)] #default: update_stepsize=100, count_acc=0, count_acc_adj=0
+moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
 #ensemble
 ensemble = NVT(n_atoms)
 
@@ -28,7 +28,7 @@ ensemble = NVT(n_atoms)
 #elj_ne1 = ELJPotential{11}(c1)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
-elj_ne = ELJPotentialEven{6}(c)
+pot_elj_ne = ELJPotentialEven{6}(c)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -62,8 +62,12 @@ n_bin = 100
 en_min = -0.006
 en_max = -0.001
 
-en_hist = EnHist(n_bin,en_min::T,en_max::T)
+en_hist = EnHist(n_bin,en_min,en_max)
 
 #construct array of MCState (for each temperature)
+dist2_mat_0 = get_distance2_mat(conf_ne13)
+en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot_elj_ne)
 
-ptmc_run!(temp, mc_params, conf_ne13, elj_ne, moves, ensemble, status_count)
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, en_hist, moves) for i in 1:n_traj]
+
+ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)

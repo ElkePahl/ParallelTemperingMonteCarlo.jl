@@ -23,11 +23,6 @@ struct MCState{T,N,BC,M}
     count_exc::SVector{2,Int}
 end    
 
-#function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
-#    @boundscheck length(pos) == N || error("number of atoms and number of positions not the same")
-#    return Config{N,BC,T}(pos,bc)
-#end
-
 function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, en_hist, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
     MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
 end
@@ -100,7 +95,9 @@ function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displ
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_param)
+
+function ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)
+#function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_param)
     #number of moves per MC cycle
     n_moves = 0
     for i in eachindex(moves)
@@ -112,16 +109,7 @@ function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_pa
     
     #to be checked/improved ...
 
-    n_atoms = length(starting_conf.pos)
-    dist2_mat_0 = get_distance2_mat(starting_conf)
-    
-    en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
-
     n_traj = length(temp.t_grid)
-    config = [starting_conf for i=1:n_traj]
-    dist2_mat = [dist2_mat_0 for i=1:n_traj]
-    en_atom_mat = [en_atom_mat_0 for i=1:n_traj]
-    en_tot = [en_tot_0 for i=1:n_traj]
     
     energies=Array{Array}(undef,n_traj)
     for i=1:n_traj
@@ -130,16 +118,7 @@ function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_pa
     
     cv=Array{Float64}(undef,n_traj)
 
-    #histograms
-    Ebins = 100
-    Emin = -0.006
-    Emax = -0.001
-
-    dE = (Emax-Emin)/Ebins
-    Ehistogram = Array{Array}(undef,n_traj)      #initialization
-    for i=1:n_traj
-        Ehistogram[i]=zeros(Ebins)
-    end
+    #MC loop ... 
 
     return 
 end
