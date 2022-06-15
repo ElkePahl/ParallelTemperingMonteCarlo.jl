@@ -60,4 +60,15 @@ conf_ne13 = Config(pos_ne13, bc_ne13)
 count = StatMoves(0,0,0,0,0,0)
 status_count = [count for i=1:n_traj]
 
+#histogram information
+Ebins = 100
+Emin = -0.006
+Emax = -0.001
+
+dE = (Emax-Emin)/Ebins
+Ehistogram = Array{Array}(undef,n_traj)      #initialization
+for i=1:n_traj
+    Ehistogram[i]=zeros(Ebins)
+end
+
 ptmc_run!(temp, mc_params, conf_ne13, elj_ne, moves, ensemble, status_count)

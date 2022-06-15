@@ -188,4 +188,16 @@ struct NPT <: AbstractEnsemble
     pressure::Real
 end
 
+struct EnHist{T}
+    n_bin::Int
+    en_min::Ref{T}
+    en_max::Ref{T}
+    delta_en_bin::Ref{T}
+    en_hist::Vector{T}
+end
+
+function EnHist(n_bin,en_min::T,en_max::T) where T
+    delta_en_bin = (en_max-en_min)/n_bin
+    en_hist=zeros(n_bins)
+    EnHist(n_bin,en_min,en_max,delta_en_bin,en_hist)
 end
