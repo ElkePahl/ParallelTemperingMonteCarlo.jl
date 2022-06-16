@@ -46,10 +46,14 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [-2.033762834001679, 0.643989905095452, 2.132999911364582],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]]
 
+#convert to Bohr
+AtoBohr = 1.88973
+pos_ne13 = pos_ne13 * AtoBohr
+
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #define boundary conditions starting configuration
-bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
+bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
@@ -59,7 +63,7 @@ conf_ne13 = Config(pos_ne13, bc_ne13)
 
 #histogram information
 n_bin = 100
-en_min = -0.006
+en_min = -0.006    #might want to update after equilibration run
 en_max = -0.001
 
 en_hist = EnHist(n_bin,en_min,en_max)
