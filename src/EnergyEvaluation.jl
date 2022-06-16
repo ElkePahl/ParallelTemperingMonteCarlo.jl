@@ -7,6 +7,7 @@ this module provides data, structs and methods for dimer energy and total energy
 module EnergyEvaluation
 
 using StaticArrays
+using ..Configurations
 
 export AbstractPotential, AbstractDimerPotential 
 export ELJPotential, ELJPotentialEven

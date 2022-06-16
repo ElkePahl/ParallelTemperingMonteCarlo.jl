@@ -1,7 +1,7 @@
 module MCRun
 
 export MCState
-export metropolis_condition, mc_step_atom!, mc_step!, ptmc_run!
+export metropolis_condition, mc_step_atom!, mc_step!, mc_cycle!, ptmc_run!
 
 using StaticArrays
 
@@ -73,42 +73,59 @@ function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement
     return config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function mc_step!(::AtomMove, config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot, ensemble)
+function mc_step!(move::AtomMove, mc_state::MCState, i_atom, pot, ensemble)
+    #println(move, mc_state, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
-    trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
+    trial_pos = atom_displacement(mc_state.config.pos[i_atom], move.max_displacement, mc_state.config.bc)
     #find new distances of moved atom - might not be always needed?
-    delta_en, dist2_new = energy_update(trial_pos, i_atom, config, dist2_mat, pot)
+    delta_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
     #dist2_new = [distance2(trial_pos,b) for b in config.pos]
     #en_moved = energy_update(i_atom, dist2_new, pot)
     #recalculate old 
     #en_unmoved = energy_update(i_atom, dist2_mat[i_atom,:], pot)
     #one might want to store dimer energies per atom in vector?
     #decide acceptance
-    if metropolis_condition(delta_en, beta, ensemble) >= rand()
+    if metropolis_condition(ensemble, delta_en, mc_state.beta) >= rand()
         #new config accepted
-        config.pos[i_atom] = copy(trial_pos)
-        dist2_mat[i_atom,:] = copy(dist2_new)
-        dist2_mat[:,i_atom] = copy(dist2_new)
-        en_tot = en_tot + delta_en
-        count_acc += 1
-        count_acc_adjust += 1
+        mc_state.config.pos[i_atom] = copy(trial_pos)
+        mc_state.dist2_mat[i_atom,:] = copy(dist2_new)
+        mc_state.dist2_mat[:,i_atom] = copy(dist2_new)
+        mc_state.en_tot[] = mc_state.en_tot[] + delta_en
+        move.count_acc += 1
+        move.count_acc_adj += 1
     end 
-    return config, entot, dist2mat, count_acc, count_acc_adjust
+    return move, mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
+function mc_cycle!(n_moves, type_moves, mc_states, mc_params, pot, ensemble)
+    for i_traj=1:mc_params.n_traj
+        for i_move=1:n_moves
+            ran = rand(1:n_moves) #choose move randomly
+            type_moves[ran][2], mc_states[i_traj] = mc_step!(type_moves[ran][2], mc_states[i_traj], type_moves[ran][1], pot, ensemble)
+        end
+        push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
+    end
+    return type_moves, mc_states
+end
 
-function ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)
-#function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_param)
+function ptmc_run!(mc_states, mc_params, pot, ensemble)
     #number of moves per MC cycle
     moves = mc_states[1].moves
     n_moves = 0
+    type_moves = []
     for i in eachindex(moves)
         n_moves += moves[i].frequency
+        for j=1:moves[i].frequency
+            push!(type_moves,[j,moves[i]])
+        end 
     end
-    println(n_moves)
-    #to select a type of move for one of n_moves MC step per cycle
-    i_move = rand(1:n_moves)
     
+    for i=1:mc_params.mc_cycles
+        type_moves,mc_states = mc_cycle!(n_moves, type_moves, mc_states, mc_params, pot, ensemble)
+    end 
+    for j=1:13
+        println(mc_states[j].ham)
+    end
     #push!(ham[i_traj],mc_states[i_traj].en_tot[]) to build up ham vector of sampled energies
     
     #cv=Array{Float64}(undef,n_traj)

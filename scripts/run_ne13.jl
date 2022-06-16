@@ -12,12 +12,13 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC details
 mc_cycles = 10000
+mc_cycles = 9
 mc_sample = 1
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-max_displ = 0.1 # Angstrom
+max_displ = 0.5 # Angstrom
 moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
 #ensemble
 ensemble = NVT(n_atoms)
