@@ -7,19 +7,22 @@ n_atoms = 13
 ti = 2.
 tf = 16.
 n_traj = 32
+n_traj=2
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC details
 mc_cycles = 10000
-mc_cycles = 9
+mc_cycles = 1
 mc_sample = 1
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.5 # Angstrom
-moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
+
+#moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
+
 #ensemble
 ensemble = NVT(n_atoms)
 
@@ -77,6 +80,6 @@ en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot_elj_ne)
 #ham = zeros(mc_cycles)
 ham = []
 
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, en_hist, ham, moves) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, en_hist, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
 
 ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)
