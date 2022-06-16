@@ -14,7 +14,7 @@ temp = TempGrid{n_traj}(ti,tf)
 mc_cycles = 10000
 mc_sample = 1
 
-mc_params = MCParams(mc_cycles) #20% equilibration is default
+mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 max_displ = 0.1 # Angstrom
@@ -72,6 +72,10 @@ en_hist = EnHist(n_bin,en_min,en_max)
 dist2_mat_0 = get_distance2_mat(conf_ne13)
 en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot_elj_ne)
 
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, en_hist, moves) for i in 1:n_traj]
+#initialize ham array (to store sampled energies)
+#ham = zeros(mc_cycles)
+ham = []
+
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, en_hist, ham, moves) for i in 1:n_traj]
 
 ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)

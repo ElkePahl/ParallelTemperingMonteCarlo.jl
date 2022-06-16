@@ -19,18 +19,19 @@ struct MCState{T,N,BC,M}
     en_atom_mat::Vector{T}
     en_tot::Ref{T}
     en_hist::EnHist{T}
+    ham::Vector{T}
     moves::M # Tuple
     count_exc::SVector{2,Int}
 end    
 
-function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, en_hist, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
-    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
+function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, en_hist, ham, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
+    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,ham,moves,count_exc)
 end
 
-function MCState(temp, beta, config::Config{N,BC,T}, en_hist, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
+function MCState(temp, beta, config::Config{N,BC,T}, en_hist, ham, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
     dist2_mat = get_distance2_mat(config)
     en_atom_mat, en_tot = dimer_energy_config(dist2_mat_0, n_atoms, pot)
-    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,moves,count_exc)
+    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,ham,moves,count_exc)
 end
 
 """
@@ -99,6 +100,7 @@ end
 function ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)
 #function ptmc_run!(temp, mc_params, starting_conf, pot, moves, ensemble, stat_param)
     #number of moves per MC cycle
+    moves = mc_states[1].moves
     n_moves = 0
     for i in eachindex(moves)
         n_moves += moves[i].frequency
@@ -107,16 +109,9 @@ function ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)
     #to select a type of move for one of n_moves MC step per cycle
     i_move = rand(1:n_moves)
     
-    #to be checked/improved ...
-
-    n_traj = length(temp.t_grid)
+    #push!(ham[i_traj],mc_states[i_traj].en_tot[]) to build up ham vector of sampled energies
     
-    energies=Array{Array}(undef,n_traj)
-    for i=1:n_traj
-        energies[i]=zeros(mc_cycles)
-    end
-    
-    cv=Array{Float64}(undef,n_traj)
+    #cv=Array{Float64}(undef,n_traj)
 
     #MC loop ... 
 
