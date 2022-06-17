@@ -62,15 +62,12 @@ bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 #starting configuration
 conf_ne13 = Config(pos_ne13, bc_ne13)
 
-#count = StatMoves(0,0,0,0,0,0)
-#status_count = [count for i=1:n_traj]
-
 #histogram information
 n_bin = 100
-en_min = -0.006    #might want to update after equilibration run
-en_max = -0.001
+#en_min = -0.006    #might want to update after equilibration run
+#en_max = -0.001
 
-en_hist = EnHist(n_bin,en_min,en_max)
+#en_hist = EnHist(n_bin,en_min,en_max)
 
 #construct array of MCState (for each temperature)
 dist2_mat_0 = get_distance2_mat(conf_ne13)
@@ -80,6 +77,6 @@ en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot_elj_ne)
 #ham = zeros(mc_cycles)
 ham = []
 
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, en_hist, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
 
-ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble)
+ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble, n_bin)
