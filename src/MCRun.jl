@@ -1,7 +1,9 @@
 module MCRun
 
 export MCState
-export metropolis_condition, mc_step_atom!, mc_step!, mc_cycle!, ptmc_run!
+export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!
+export atom_move!
+export exc_acceptance, exc_trajectories!
 
 using StaticArrays
 
@@ -53,6 +55,21 @@ function metropolis_condition(::NVT, delta_en, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
+function exc_acceptance(beta_1,beta_2,en_1,en_2)
+    delta_en = en_1 - en_2
+    delta_beta = beta_1 - beta_2
+    exc_acc=min(1.0,exp(delta_beta*delta_en))
+    return exc_acc
+end
+
+function exc_trajectories!(state_1, state_2)
+    state_1.config, state_2.config = state_2.config, state_1.config
+    state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
+    state_1.en_atom_mat, state_2.en_atom_mat = state_2.en_atom_mat, state_1.en_atom_mat
+    state_1.en_tot[], state_2.en_tot[] = state_2.en_tot[], state_1.en_tot[]
+    return state_1, state_2
+end 
+
 #function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot)
     #move randomly selected atom (obeying the boundary conditions)
     #trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
@@ -78,7 +95,7 @@ end
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
-    #find new distances of moved atom - might not be always needed?
+    #find new distances of moved atom 
     delta_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
     #dist2_new = [distance2(trial_pos,b) for b in config.pos]
     #en_moved = energy_update(i_atom, dist2_new, pot)
@@ -125,7 +142,18 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
             @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
         end
-        push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
+        #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
+    end
+    if rand()<0.1 #attempt to exchange trajectories
+        n_exc = rand(1:mc_params.n_traj-1)
+        mc_states[n_exc].count_exc[1] += 1
+        mc_states[n_exc+1].count_exc[1] += 1
+        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot[],  mc_states[n_exc+1].en_tot[])
+        if exc_acc > rand()
+            mc_states[n_exc].count_exc[2] += 1
+            mc_states[n_exc+1].count_exc[2] += 1
+            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+        end
     end
     return mc_states
 end
@@ -143,9 +171,16 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     #    end 
     #end
     
+    for i=1:mc_params.eq_cycles
+        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+    end
+
     for i=1:mc_params.mc_cycles
         @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
-    end 
+        for i_traj=1:mc_params.n_traj
+            push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
+        end 
+    end
     #TO DO
     # atom, volume moves ...
     # adjustment of step size
