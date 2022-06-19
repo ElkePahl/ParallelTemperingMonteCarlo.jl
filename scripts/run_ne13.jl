@@ -13,13 +13,14 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC details
 mc_cycles = 10000
-mc_cycles = 1
+mc_cycles = 100
 mc_sample = 1
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-max_displ = 0.5 # Angstrom
+max_displ_atom = 0.5 # Angstrom
+max_displ_vec = [max_displ_atom,0.1,1.]
 
 #moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
 move_strat = MoveStrategy(atom_moves=n_atoms)  
@@ -33,7 +34,7 @@ ensemble = NVT(n_atoms)
 #elj_ne1 = ELJPotential{11}(c1)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
-pot_elj_ne = ELJPotentialEven{6}(c)
+pot = ELJPotentialEven{6}(c)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -71,14 +72,14 @@ n_bin = 100
 #en_hist = EnHist(n_bin,en_min,en_max)
 
 #construct array of MCState (for each temperature)
-dist2_mat_0 = get_distance2_mat(conf_ne13)
-en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot_elj_ne)
+dist2_mat_0 = get_distance2_mat(start_config)
+en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
 
 #initialize ham array (to store sampled energies)
 #ham = zeros(mc_cycles)
 ham = []
 
 #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, max_displ=max_displ_vec) for i in 1:n_traj]
 
-ptmc_run!(mc_states, move_strat, mc_params, pot_elj_ne, ensemble, n_bin)
+ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)

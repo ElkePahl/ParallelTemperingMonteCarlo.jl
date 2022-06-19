@@ -11,7 +11,7 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 
-struct MCState{T,N,BC,M}
+struct MCState{T,N,BC}
     temp::T
     beta::T
     config::Config{N,BC,T}
@@ -19,21 +19,21 @@ struct MCState{T,N,BC,M}
     en_atom_mat::Vector{T}
     en_tot::Ref{T}
     ham::Vector{T}
-    max_displ::SVector{3,Int}
-    count_atom::SVector{2,Int}
-    count_vol::SVector{2,Int}
-    count_rot::SVector{2,Int}
-    count_exc::SVector{2,Int}
+    max_displ::Vector{T}
+    count_atom::Vector{Int}
+    count_vol::Vector{Int}
+    count_rot::Vector{Int}
+    count_exc::Vector{Int}
 end    
 
-function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, ham; max_displ=SVector(0.1,0.1,1.) ,count_atom=SVector(0,0), count_vol=SVector(0,0), count_rot=SVector(0,0), count_exc=SVector(0,0)) where {T,N,BC,M}
-    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,max_displ,count_atom,count_vol,count_rot,count_exc)
+function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, ham; max_displ=[0.1,0.1,1.] ,count_atom=[0,0], count_vol=[0,0], count_rot=[0,0], count_exc=[0,0]) where {T,N,BC}
+    MCState{T,N,BC}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,max_displ,count_atom,count_vol,count_rot,count_exc)
 end
 
-function MCState(temp, beta, config::Config{N,BC,T}, ham, max_displ; count_atom=SVector(0,0), count_vol=SVector(0,0), count_rot=SVector(0,0), count_exc=SVector(0,0)) where {T,N,BC,M}
+function MCState(temp, beta, config::Config{N,BC,T}, ham, max_displ; count_atom=[0,0], count_vol=[0,0], count_rot=[0,0], count_exc=[0,0]) where {T,N,BC}
     dist2_mat = get_distance2_mat(config)
     en_atom_mat, en_tot = dimer_energy_config(dist2_mat_0, n_atoms, pot)
-    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,max_displ,count_atom,count_vol,count_rot,count_exc)
+    MCState{T,N,BC}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,max_displ,count_atom,count_vol,count_rot,count_exc)
 end
 
 """
@@ -77,7 +77,7 @@ end
 
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
-    trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displacement[1], mc_state.config.bc)
+    trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
     #find new distances of moved atom - might not be always needed?
     delta_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
     #dist2_new = [distance2(trial_pos,b) for b in config.pos]
@@ -92,8 +92,8 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
         mc_state.dist2_mat[i_atom,:] = copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = copy(dist2_new)
         mc_state.en_tot[] += delta_en
-        c = mc_state.count_atom
-        mc_state.count_atom = SVector(c[1]+1,c[2]+1)
+        mc_state.count_atom[1] += 1
+        mc_state.count_atom[2] += 1
     end 
     return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
@@ -116,8 +116,12 @@ end
 
 
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+    a = atom_move_frequency(move_strat)
+    v = vol_move_frequency(move_strat)
+    r = rot_move_frequency(move_strat)
+    n_steps = a + v + r
     for i_traj=1:mc_params.n_traj
-        for i_move=1:n_moves
+        for i_move=1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
             mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
         end
