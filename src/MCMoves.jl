@@ -1,5 +1,6 @@
 module MCMoves
 
+export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
 export AbstractMove, StatMove
 export AtomMove
 export atom_displacement, update_max_stepsize!
@@ -7,6 +8,32 @@ export atom_displacement, update_max_stepsize!
 using StaticArrays
 
 using ..BoundaryConditions
+
+"""
+    MoveStrategy{A,V,R}
+struct that implements move strategy containing information of frequencies of moves in type parameters:
+    - A:  frequency of atom moves
+    - V:  frequency of volume moves
+    - R:  frequency of rotation moves
+"""
+struct MoveStrategy{A,V,R}
+end 
+
+"""
+    atom_move_frequency(ms::MoveStrategy{A,V,R})
+gives frequency of atom moves    
+"""
+atom_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = A 
+"""
+    vol_move_frequency(ms::MoveStrategy{A,V,R})
+gives frequency of volume moves    
+"""
+vol_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = V
+"""
+    rot_move_frequency(ms::MoveStrategy{A,V,R})
+gives frequency of rotation moves    
+"""
+rot_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = R
 
 """
     AbstractMove
