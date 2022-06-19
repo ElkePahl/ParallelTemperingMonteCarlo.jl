@@ -17,21 +17,22 @@ struct MCState{T,N,BC,M}
     config::Config{N,BC,T}
     dist2_mat::Matrix{T}
     en_atom_mat::Vector{T}
-    en_tot::Ref{T}
-    #en_hist::EnHist{T}
+    en_tot::ref{T}
     ham::Vector{T}
-    moves::M # Tuple
+    count_atom::SVector{2,Int}
+    count_vol::SVector{2,Int}
+    count_rot::SVector{2,Int}
     count_exc::SVector{2,Int}
 end    
 
-function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, en_hist, ham, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
-    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,ham,moves,count_exc)
+function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, ham; count_atom=SVector(0,0), count_vol=SVector(0,0), count_rot=SVector(0,0), count_exc=SVector(0,0)) where {T,N,BC,M}
+    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,count_atom,count_vol,count_rot,count_exc)
 end
 
-function MCState(temp, beta, config::Config{N,BC,T}, en_hist, ham, moves::M; count_exc=SVector(0,0)) where {T,N,BC,M}
+function MCState(temp, beta, config::Config{N,BC,T}, ham; count_atom=SVector(0,0), count_vol=SVector(0,0), count_rot=SVector(0,0), count_exc=SVector(0,0)) where {T,N,BC,M}
     dist2_mat = get_distance2_mat(config)
     en_atom_mat, en_tot = dimer_energy_config(dist2_mat_0, n_atoms, pot)
-    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,en_hist,ham,moves,count_exc)
+    MCState{T,N,BC,M}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,count_atom,count_vol,count_rot,count_exc)
 end
 
 """

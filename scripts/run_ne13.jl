@@ -22,6 +22,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 max_displ = 0.5 # Angstrom
 
 #moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
+move_strat = MoveStrategy{n_atoms,0,0}()  
 
 #ensemble
 ensemble = NVT(n_atoms)
@@ -60,7 +61,7 @@ length(pos_ne13) == n_atoms || error("number of atoms and positions not the same
 bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 
 #starting configuration
-conf_ne13 = Config(pos_ne13, bc_ne13)
+start_config = Config(pos_ne13, bc_ne13)
 
 #histogram information
 n_bin = 100
@@ -77,6 +78,7 @@ en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot_elj_ne)
 #ham = zeros(mc_cycles)
 ham = []
 
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
+#mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham]
 
-ptmc_run!(mc_states, mc_params, pot_elj_ne, ensemble, n_bin)
+ptmc_run!(mc_states, move_strat, mc_params, pot_elj_ne, ensemble, n_bin)
