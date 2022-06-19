@@ -18,7 +18,7 @@ struct MCState{T,N,BC,M}
     dist2_mat::Matrix{T}
     en_atom_mat::Vector{T}
     en_tot::Ref{T}
-    en_hist::EnHist{T}
+    #en_hist::EnHist{T}
     ham::Vector{T}
     moves::M # Tuple
     count_exc::SVector{2,Int}
@@ -111,7 +111,7 @@ function mc_cycle!(n_moves, type_moves, mc_states, mc_params, pot, ensemble)
     return mc_states
 end
 
-function ptmc_run!(mc_states, mc_params, pot, ensemble)
+function ptmc_run!(mc_states, mc_params, pot, ensemble, n_bin)
     
     #number of moves per MC cycle
     moves = mc_states[1].moves
@@ -127,14 +127,12 @@ function ptmc_run!(mc_states, mc_params, pot, ensemble)
     for i=1:mc_params.mc_cycles
         mc_states = mc_cycle!(n_moves, type_moves, mc_states, mc_params, pot, ensemble)
     end 
-    #for i_traj=1:mc_params.n_traj
-    #    println(mc_states[i_traj].moves[1].count_acc)
-    #end
-    #push!(ham[i_traj],mc_states[i_traj].en_tot[]) to build up ham vector of sampled energies
-    
-    #cv=Array{Float64}(undef,n_traj)
-
-    #MC loop ... 
+    #TO DO
+    # atom, volume moves ...
+    # adjustment of step size
+    # PT exchange
+    # do the averages, energy; cv
+    # Histograms
 
     return 
 end
