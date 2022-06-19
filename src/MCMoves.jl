@@ -10,11 +10,12 @@ using StaticArrays
 using ..BoundaryConditions
 
 """
-    MoveStrategy{A,V,R}
-struct that implements move strategy containing information of frequencies of moves in type parameters:
-    - A:  frequency of atom moves
-    - V:  frequency of volume moves
-    - R:  frequency of rotation moves
+    MoveStrategy(atom_moves, vol_moves, rot_moves)
+    MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
+Type that implements move strategy containing information of frequencies of moves:
+ - atom_moves:  frequency of atom moves
+ - vol_moves:  frequency of volume moves
+ - rot_moves:  frequency of rotation moves
 """
 struct MoveStrategy{A,V,R}
 end 

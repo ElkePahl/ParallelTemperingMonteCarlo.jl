@@ -122,11 +122,11 @@ function mc_step!(mc_state::MCState, move_strat, pot, ensemble)
 
     ran = rand(1:(a+v+r)) #choose move randomly
     if ran <= a
-        mc_state = atom_move!(mc_state, ran, pot, ensemble)
+        atom_move!(mc_state, ran, pot, ensemble)
     #else if ran <= v
-    #    mc_state = vol_move!(mc_state, pot, ensemble)
+    #    vol_move!(mc_state, pot, ensemble)
     #else if ran <= r
-    #    mc_state = rot_move!(mc_state, pot, ensemble)
+    #    rot_move!(mc_state, pot, ensemble)
     end
     return mc_state
 end 
@@ -140,7 +140,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     for i_traj=1:mc_params.n_traj
         for i_move=1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
+            @inbounds mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
         end
         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
     end
@@ -172,11 +172,11 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     #end
     
     for i=1:mc_params.eq_cycles
-        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     end
 
     for i=1:mc_params.mc_cycles
-        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
         for i_traj=1:mc_params.n_traj
             push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
         end 
