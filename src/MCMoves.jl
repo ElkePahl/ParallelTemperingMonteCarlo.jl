@@ -19,6 +19,14 @@ struct that implements move strategy containing information of frequencies of mo
 struct MoveStrategy{A,V,R}
 end 
 
+function MoveStrategy(a,v,r)
+    return MoveStrategy{a,v,r}()
+end
+
+function MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
+    return MoveStrategy(atom_moves,vol_moves,rot_moves)
+end 
+
 """
     atom_move_frequency(ms::MoveStrategy{A,V,R})
 gives frequency of atom moves    

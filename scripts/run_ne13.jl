@@ -22,7 +22,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 max_displ = 0.5 # Angstrom
 
 #moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
-move_strat = MoveStrategy{n_atoms,0,0}()  
+move_strat = MoveStrategy(atom_moves=n_atoms)  
 
 #ensemble
 ensemble = NVT(n_atoms)

@@ -53,27 +53,27 @@ function metropolis_condition(::NVT, delta_en, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot)
+#function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot)
     #move randomly selected atom (obeying the boundary conditions)
-    trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
+    #trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
     #find new distances of moved atom - might not be always needed?
-    dist2_new = [distance2(trial_pos,b) for b in config.pos]
-    en_moved = energy_update(i_atom, dist2_new, pot)
+    #dist2_new = [distance2(trial_pos,b) for b in config.pos]
+    #en_moved = energy_update(i_atom, dist2_new, pot)
     #recalculate old 
-    en_unmoved = energy_update(i_atom, dist2_mat[i_atom,:], pot)
+    #en_unmoved = energy_update(i_atom, dist2_mat[i_atom,:], pot)
     #one might want to store dimer energies per atom in vector?
     #decide acceptance
-    if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
+    #if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
         #new config accepted
-        config.pos[i_atom] = copy(trial_pos)
-        dist2_mat[i_atom,:] = copy(dist2_new)
-        dist2_mat[:,i_atom] = copy(dist2_new)
-        en_tot = en_tot - en_unmoved + en_moved
-        count_acc += 1
-        count_acc_adjust += 1
-    end 
-    return config, entot, dist2mat, count_acc, count_acc_adjust
-end
+    #    config.pos[i_atom] = copy(trial_pos)
+    #    dist2_mat[i_atom,:] = copy(dist2_new)
+    #    dist2_mat[:,i_atom] = copy(dist2_new)
+    #    en_tot = en_tot - en_unmoved + en_moved
+    #    count_acc += 1
+    #    count_acc_adjust += 1
+    #end 
+    #return config, entot, dist2mat, count_acc, count_acc_adjust
+#end
 
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
