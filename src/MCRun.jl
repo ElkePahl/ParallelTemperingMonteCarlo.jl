@@ -123,7 +123,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     for i_traj=1:mc_params.n_traj
         for i_move=1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
+            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
         end
         push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
     end
@@ -144,7 +144,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     #end
     
     for i=1:mc_params.mc_cycles
-        mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     end 
     #TO DO
     # atom, volume moves ...
