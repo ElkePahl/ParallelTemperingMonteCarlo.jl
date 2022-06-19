@@ -1,4 +1,4 @@
-using Main.ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 
 # number of atoms
 n_atoms = 13
