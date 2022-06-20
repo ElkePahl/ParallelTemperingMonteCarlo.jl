@@ -13,7 +13,7 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 
-struct MCState{T,N,BC}
+mutable struct MCState{T,N,BC}
     temp::T
     beta::T
     config::Config{N,BC,T}
@@ -70,6 +70,50 @@ function exc_trajectories!(state_1, state_2)
     return state_1, state_2
 end 
 
+function update_max_stepsize!(mc_state, n_update, a, v, r)
+    #atom moves
+    acc_rate = mc_state.count_atom[2]/ (n_update * a)
+    if acc_rate < 0.4
+        mc_state.max_displ[1] *= 0.9
+    elseif acc_rate > 0.6
+        mc_state.max_displ[1] *= 1.1
+    end
+    mc_state.count_atom[2] = 0
+    #volume moves
+    if v>0
+        acc_rate = mc_state.count_vol[2]/ (n_update * v)
+        if acc_rate < 0.4
+            mc_state.max_displ[2] *= 0.9
+        elseif acc_rate > 0.6
+            mc_state.max_displ[2] *= 1.1
+        end
+        mc_state.count_vol[2] = 0
+    end
+    #rotation moves
+    if r>0
+        acc_rate = mc_state.count_rot[2]/ (n_update * r)
+        if acc_rate < 0.4
+            mc_state.max_displ[3] *= 0.9
+        elseif acc_rate > 0.6
+            mc_state.max_displ[3] *= 1.1
+        end
+        mc_state.count_rot[2] = 0
+    end
+    return mc_state
+end
+    
+#    for i in 1:length(count_acc)
+#       acc_rate =  count_accept[i] / (displ.update_step * n_atom)
+#        if acc_rate < 0.4
+#            displ.max_displacement[i] *= 0.9
+#        elseif acc_rate > 0.6
+#            displ.max_displacement[i] *= 1.1
+#        end
+#        count_accept[i] = 0
+#    end
+#    return displ, count_accept
+#end
+
 #function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot)
     #move randomly selected atom (obeying the boundary conditions)
     #trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
@@ -115,10 +159,10 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function mc_step!(mc_state::MCState, move_strat, pot, ensemble)
-    a = atom_move_frequency(move_strat)
-    v = vol_move_frequency(move_strat)
-    r = rot_move_frequency(move_strat)
+function mc_step!(mc_state::MCState, move_strat, pot, ensemble, a, v, r)
+    #a = atom_move_frequency(move_strat)
+    #v = vol_move_frequency(move_strat)
+    #r = rot_move_frequency(move_strat)
 
     ran = rand(1:(a+v+r)) #choose move randomly
     if ran <= a
@@ -132,15 +176,15 @@ function mc_step!(mc_state::MCState, move_strat, pot, ensemble)
 end 
 
 
-function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
-    a = atom_move_frequency(move_strat)
-    v = vol_move_frequency(move_strat)
-    r = rot_move_frequency(move_strat)
-    n_steps = a + v + r
-    for i_traj=1:mc_params.n_traj
-        for i_move=1:n_steps
+function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+    #a = atom_move_frequency(move_strat)
+    #v = vol_move_frequency(move_strat)
+    #r = rot_move_frequency(move_strat)
+    #n_steps = a + v + r
+    for i_traj = 1:mc_params.n_traj
+        for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            @inbounds mc_step!(mc_states[i_traj], move_strat, pot, ensemble)
+            @inbounds mc_step!(mc_states[i_traj], move_strat, pot, ensemble, a, v, r)
         end
         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
     end
@@ -170,23 +214,44 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     #        push!(type_moves,(i,moves[i]))
     #    end 
     #end
-    
-    for i=1:mc_params.eq_cycles
-        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+    a = atom_move_frequency(move_strat)
+    v = vol_move_frequency(move_strat)
+    r = rot_move_frequency(move_strat)
+    n_steps = a + v + r
+
+    for i = 1:mc_params.eq_cycles
+        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        if rem(i, mc_params.n_adjust) == 0
+            for i_traj = 1:mc_params.n_traj
+                update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+            end 
+        end
     end
     #re-set counter variables to zero
+    for i_traj = 1:mc_params.n_traj
+        mc_states[i_traj].count_atom[1] = mc_states[i_traj].count_vol[1] = mc_states[i_traj].count_rot[1] = 0
+        mc_states[i_traj].count_atom[2] = mc_states[i_traj].count_vol[2] = mc_states[i_traj].count_rot[2] = 0
+    end 
 
-    for i=1:mc_params.mc_cycles
-        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
+    for i = 1:mc_params.mc_cycles
+        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
         for i_traj=1:mc_params.n_traj
             push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
         end 
+        if rem(i, mc_params.n_adjust) == 0
+            for i_traj = 1:mc_params.n_traj
+                update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+            end 
+        end
     end
 
     results = Output{Float64}(n_bin=n_bin)
 
+
+
+
     #TO DO
-    # atom, volume moves ...
+    # volume,rot moves ...
     # adjustment of step size
     # do the averages, energy; cv
     # Histograms

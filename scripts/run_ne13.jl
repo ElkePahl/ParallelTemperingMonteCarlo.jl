@@ -6,21 +6,23 @@ n_atoms = 13
 # temperature grid
 ti = 2.
 tf = 16.
-n_traj = 32
-n_traj=2
+n_traj = 2
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC details
 mc_cycles = 10000
-mc_cycles = 100
+#mc_cycles = 200
 mc_sample = 1
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
+#mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-max_displ_atom = 0.5 # Angstrom
+max_displ_atom = 0.01 # Angstrom
 max_displ_vec = [max_displ_atom,0.1,1.]
+n_adjust = 100
+
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, n_adjust=n_adjust)
 
 #moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
 move_strat = MoveStrategy(atom_moves=n_atoms)  

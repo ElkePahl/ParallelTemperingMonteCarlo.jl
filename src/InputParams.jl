@@ -24,12 +24,13 @@ struct MCParams
     eq_cycles::Int
     n_traj::Int
     n_atoms::Int
+    n_adjust::Int
 end 
 
-function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2)
+function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, n_adjust = 100)
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
-    return MCParams(mc_cycles,eq_cycles,n_traj,n_atoms)
+    return MCParams(mc_cycles, eq_cycles, n_traj, n_atoms, n_adjust)
 end
 
 struct TempGrid{N,T} 
@@ -74,35 +75,6 @@ function Output{T}(;n_bin=100) where T
     count_stat = zeros(Float64,8)
     return Output{T}(en_ave,heat_cap,en_hist,rdf,count_stat)
 end
-
-#function Output(;n_bin=100) where T
-#    return Output(max_displ,n_bin)
-#end
-
-#struct Results{T}
-#    ham::Vector{T}
-#    max_displ::Vector{T}
-#    count_atom::Vector{Int}
-#    count_vol::Vector{Int}
-#   count_rot::Vector{Int}
-#    count_exc::Vector{Int}
-#    en_ave::Vector{T}
-#    heat_cap::Vector{T}
-#    en_histogram::EnHist{T}
-#    rdf::Vector{T}
-#end
-
-#= function Results(;n_bin = 100,ham=[],max_displ::Vector{T}=[0.1,0.1,1.],count_atom=[0,0],count_vol=[0,0],count_rot=[0,0],count_exc=[0,0], en_ave=[], heat_cap=[],rdf=[]) where {T}
-    en_histogram = EnHist(n_bin)
-    return Results{T}(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_histogram,rdf)
-end
-
-function Results(n_bin, max_displ::Vector{T}; ham=[],count_atom=[0,0],count_vol=[0,0],count_rot=[0,0],count_exc=[0,0], en_ave=[], heat_cap=[],rdf=[]) where {T}
-    en_histogram = EnHist(n_bin)
-    return Results{T}(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_histogram,rdf)
-end
- =#
-#abstract type AbstractDisplacementParams{T} end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
 #    max_displacement::Vector{T} #maximum atom displacement in Angstrom
