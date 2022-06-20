@@ -65,8 +65,8 @@ struct Output{T}
     rdf::Vector{T}
 end
 
-function Output(;max_displ=[0.1,0.2,1.],n_bin=100)
-    T=eltype(max_displ[1])
+function Output(max_displ,n_bin)
+    T=eltype(max_displ)
     ham = en_ave = heat_cap = rdf = T[]
     count_atom = count_vol = count_rot = count_exc = [0,0]
     en_hist = EnHist(n_bin)
