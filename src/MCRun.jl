@@ -28,14 +28,19 @@ mutable struct MCState{T,N,BC}
     count_exc::Vector{Int}
 end    
 
-function MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot, ham; max_displ=[0.1,0.1,1.] ,count_atom=[0,0], count_vol=[0,0], count_rot=[0,0], count_exc=[0,0]) where {T,N,BC}
-    MCState{T,N,BC}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,max_displ,count_atom,count_vol,count_rot,count_exc)
+function MCState(
+    temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot; 
+    max_displ=[0.1,0.1,1.], count_atom=[0,0], count_vol=[0,0], count_rot=[0,0], count_exc=[0,0]
+) where {T,N,BC}
+    ham = T[]
+    MCState{T,N,BC}(temp,beta,deepcopy(config),copy(dist2_mat),copy(en_atom_mat),en_tot,ham,copy(max_displ),copy(count_atom),copy(count_vol),copy(count_rot),copy(count_exc))
 end
 
-function MCState(temp, beta, config::Config{N,BC,T}, ham, max_displ; count_atom=[0,0], count_vol=[0,0], count_rot=[0,0], count_exc=[0,0]) where {T,N,BC}
-    dist2_mat = get_distance2_mat(config)
-    en_atom_mat, en_tot = dimer_energy_config(dist2_mat_0, n_atoms, pot)
-    MCState{T,N,BC}(temp,beta,config,dist2_mat,en_atom_mat,en_tot,ham,max_displ,count_atom,count_vol,count_rot,count_exc)
+function MCState(temp, beta, config::Config, pot; kwargs...) 
+   dist2_mat = get_distance2_mat(config)
+   n_atoms = length(config.pos)
+   en_atom_mat, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
+   MCState(temp, beta, config, dist2_mat, en_atom_mat, en_tot; kwargs...)
 end
 
 """
@@ -246,8 +251,16 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
 
     results = Output{Float64}(n_bin=n_bin)
 
+    
+    en_avg = [sum(mc_states[i_traj].ham)/floor(mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj] 
+    en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham)/floor(mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
 
+    kB = 3.16681196E-6
 
+    c = [(en2_avg[i]-en_avg[i]^2)/(kB*mc_states[i].temp) for i in 1:mc_params.n_traj]
+
+    println(c)
+    println("done")
 
     #TO DO
     # volume,rot moves ...

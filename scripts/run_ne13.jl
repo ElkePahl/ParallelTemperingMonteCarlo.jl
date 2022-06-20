@@ -6,7 +6,7 @@ n_atoms = 13
 # temperature grid
 ti = 2.
 tf = 16.
-n_traj = 2
+n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -80,12 +80,9 @@ n_bin = 100
 dist2_mat_0 = get_distance2_mat(start_config)
 en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
 
-#initialize ham array (to store sampled energies)
-#ham = zeros(mc_cycles)
-ham = []
-
 #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+#dist2_mat_0, en_atom_mat_0, en_tot_0, max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 #results = Output()
