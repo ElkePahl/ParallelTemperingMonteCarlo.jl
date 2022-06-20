@@ -158,7 +158,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     return mc_states
 end
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     
     #number of moves per MC cycle
     #moves = mc_states[1].moves
@@ -182,13 +182,15 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
             push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
         end 
     end
+
+    results = Output{Float64}(n_bin=n_bin)
+
     #TO DO
     # atom, volume moves ...
     # adjustment of step size
-    # PT exchange
     # do the averages, energy; cv
     # Histograms
-    #make report struct
+    # make report struct
 
     return 
 end

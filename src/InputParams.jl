@@ -53,25 +53,31 @@ end
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
 struct Output{T}
-    ham::Vector{T}
-    max_displ::Vector{T}
-    count_atom::Vector{Int}
-    count_vol::Vector{Int}
-    count_rot::Vector{Int}
-    count_exc::Vector{Int}
+    #ham::Vector{T}
+    #max_displ::Vector{T}
+    #count_atom::Vector{Int}
+    #count_vol::Vector{Int}
+    #count_rot::Vector{Int}
+    #count_exc::Vector{Int}
     en_ave::Vector{T}
     heat_cap::Vector{T}
-    #en_histogram::EnHist{T}
+    en_histogram::EnHist{T}
     rdf::Vector{T}
+    count_stat::Vector{Int}
 end
 
-function Output(max_displ,n_bin)
-    T=eltype(max_displ)
+function Output{T}(;n_bin=100) where T
+    #T=eltype(max_displ)
     ham = en_ave = heat_cap = rdf = T[]
-    count_atom = count_vol = count_rot = count_exc = [0,0]
+    #count_atom = count_vol = count_rot = count_exc = [0,0]
     en_hist = EnHist(n_bin)
-    return Output{T}(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_hist,rdf)
+    count_stat = zeros(Float64,8)
+    return Output{T}(en_ave,heat_cap,en_hist,rdf,count_stat)
 end
+
+#function Output(;n_bin=100) where T
+#    return Output(max_displ,n_bin)
+#end
 
 #struct Results{T}
 #    ham::Vector{T}
