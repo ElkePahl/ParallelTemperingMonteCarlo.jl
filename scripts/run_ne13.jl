@@ -82,4 +82,6 @@ ham = []
 #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, max_displ=max_displ_vec) for i in 1:n_traj]
 
-ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
+results = Report(n_bin=n_bin, max_displ=max_displ_vec)
+
+ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)

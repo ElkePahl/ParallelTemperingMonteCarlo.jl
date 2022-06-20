@@ -204,5 +204,10 @@ function EnHist(n_bin,en_min::T,en_max::T) where T
     return EnHist{T}(n_bin,en_min,en_max,delta_en_bin,en_hist)
 end
 
+function EnHist(n_bin; en_min=-0.006,en_max::-0.001) where T
+    delta_en_bin = (en_max-en_min)/n_bin
+    en_hist=zeros(n_bin)
+    return EnHist{T}(n_bin,en_min,en_max,delta_en_bin,en_hist)
+end
 
 end

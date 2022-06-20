@@ -158,7 +158,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     return mc_states
 end
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     
     #number of moves per MC cycle
     #moves = mc_states[1].moves
@@ -174,6 +174,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     for i=1:mc_params.eq_cycles
         @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
     end
+    #re-set counter variables to zero
 
     for i=1:mc_params.mc_cycles
         @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble)
@@ -187,6 +188,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     # PT exchange
     # do the averages, energy; cv
     # Histograms
+    #make report struct
 
     return 
 end

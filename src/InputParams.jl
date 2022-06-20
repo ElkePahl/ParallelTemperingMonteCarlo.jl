@@ -50,6 +50,25 @@ end
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
+mutable struct Report{T}
+    ham::Vector{T}
+    max_displ::Vector{T}
+    count_atom::Vector{Int}
+    count_vol::Vector{Int}
+    count_rot::Vector{Int}
+    count_exc::Vector{Int}
+    en_ave::Vector{T}
+    heat_cap::Vector{T}
+    en_histogram::EnHist{T}
+    rdf::Vector{T}
+end
+
+function Report(;n_bin = 100,ham=[],max_displ=[0.1,0.1,1.],count_atom=[0,0],count_vol=[0,0],count_rot=[0,0],count_exc=[0,0], en_ave=[], heat_cap=[],rdf=[]) where T
+    en_histogram = EnHist(n_bin)
+    return Report(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_histogram,rdf)
+end
+
+
 #abstract type AbstractDisplacementParams{T} end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
