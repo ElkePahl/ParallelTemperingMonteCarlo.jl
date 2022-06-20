@@ -19,7 +19,7 @@ mutable struct MCState{T,N,BC}
     config::Config{N,BC,T}
     dist2_mat::Matrix{T}
     en_atom_mat::Vector{T}
-    en_tot::Ref{T}
+    en_tot::T
     ham::Vector{T}
     max_displ::Vector{T}
     count_atom::Vector{Int}
@@ -66,7 +66,7 @@ function exc_trajectories!(state_1, state_2)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
     state_1.en_atom_mat, state_2.en_atom_mat = state_2.en_atom_mat, state_1.en_atom_mat
-    state_1.en_tot[], state_2.en_tot[] = state_2.en_tot[], state_1.en_tot[]
+    state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
 end 
 
@@ -152,7 +152,7 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
         mc_state.config.pos[i_atom] = copy(trial_pos)
         mc_state.dist2_mat[i_atom,:] = copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = copy(dist2_new)
-        mc_state.en_tot[] += delta_en
+        mc_state.en_tot += delta_en
         mc_state.count_atom[1] += 1
         mc_state.count_atom[2] += 1
     end 
@@ -166,7 +166,7 @@ function mc_step!(mc_state::MCState, move_strat, pot, ensemble, a, v, r)
 
     ran = rand(1:(a+v+r)) #choose move randomly
     if ran <= a
-        atom_move!(mc_state, ran, pot, ensemble)
+        mc_state = atom_move!(mc_state, ran, pot, ensemble)
     #else if ran <= v
     #    vol_move!(mc_state, pot, ensemble)
     #else if ran <= r
@@ -184,15 +184,15 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     for i_traj = 1:mc_params.n_traj
         for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            @inbounds mc_step!(mc_states[i_traj], move_strat, pot, ensemble, a, v, r)
+            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble, a, v, r)
         end
-        #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
+        #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
     end
     if rand()<0.1 #attempt to exchange trajectories
         n_exc = rand(1:mc_params.n_traj-1)
         mc_states[n_exc].count_exc[1] += 1
         mc_states[n_exc+1].count_exc[1] += 1
-        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot[],  mc_states[n_exc+1].en_tot[])
+        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
         if exc_acc > rand()
             mc_states[n_exc].count_exc[2] += 1
             mc_states[n_exc+1].count_exc[2] += 1
@@ -220,7 +220,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     n_steps = a + v + r
 
     for i = 1:mc_params.eq_cycles
-        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
         if rem(i, mc_params.n_adjust) == 0
             for i_traj = 1:mc_params.n_traj
                 update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
@@ -229,14 +229,13 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     end
     #re-set counter variables to zero
     for i_traj = 1:mc_params.n_traj
-        mc_states[i_traj].count_atom[1] = mc_states[i_traj].count_vol[1] = mc_states[i_traj].count_rot[1] = 0
-        mc_states[i_traj].count_atom[2] = mc_states[i_traj].count_vol[2] = mc_states[i_traj].count_rot[2] = 0
+        mc_states[i_traj].count_atom = mc_states[i_traj].count_vol = mc_states[i_traj].count_rot = mc_states[i_traj].count_exc = [0,0]
     end 
 
     for i = 1:mc_params.mc_cycles
-        @inbounds mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
         for i_traj=1:mc_params.n_traj
-            push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot[]) #to build up ham vector of sampled energies
+            push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
         end 
         if rem(i, mc_params.n_adjust) == 0
             for i_traj = 1:mc_params.n_traj

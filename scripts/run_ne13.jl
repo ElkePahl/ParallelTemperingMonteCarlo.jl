@@ -11,15 +11,18 @@ n_traj = 2
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC details
-mc_cycles = 10000
+mc_cycles = 1000
 #mc_cycles = 200
 mc_sample = 1
 
 #mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-max_displ_atom = 0.01 # Angstrom
-max_displ_vec = [max_displ_atom,0.1,1.]
+displ_atom = 0.5 # Angstrom
+
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+
+#max_displ_vec = [max_displ_atom,0.01,1.]
 n_adjust = 100
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, n_adjust=n_adjust)
@@ -82,7 +85,7 @@ en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
 ham = []
 
 #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, max_displ=max_displ_vec) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 #results = Output()
