@@ -25,9 +25,9 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 #max_displ_vec = [max_displ_atom,0.01,1.]
 n_adjust = 100
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, n_adjust = n_adjust)
 
-#moves = (AtomMove(n_atoms, max_displ),) #tuple; default: update_stepsize=100, count_acc=0, count_acc_adj=0
+#moves - allowed at present: atom, volume and rotation moves (voume,rotation not yet implemented)
 move_strat = MoveStrategy(atom_moves=n_atoms)  
 
 #ensemble
@@ -71,8 +71,8 @@ start_config = Config(pos_ne13, bc_ne13)
 
 #histogram information
 n_bin = 100
-#en_min = -0.006    #might want to update after equilibration run
-#en_max = -0.001
+#en_min = -0.006    #might want to update after equilibration run if generated on the fly
+#en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #en_hist = EnHist(n_bin,en_min,en_max)
 

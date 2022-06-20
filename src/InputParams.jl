@@ -54,7 +54,7 @@ end
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
 struct Output{T}
-    #ham::Vector{T}
+    ham::Vector{T}
     #max_displ::Vector{T}
     #count_atom::Vector{Int}
     #count_vol::Vector{Int}
@@ -67,13 +67,13 @@ struct Output{T}
     count_stat::Vector{Int}
 end
 
-function Output{T}(;n_bin=100) where T
-    #T=eltype(max_displ)
-    ham = en_ave = heat_cap = rdf = T[]
-    #count_atom = count_vol = count_rot = count_exc = [0,0]
+function Output{T}(ham; n_bin=100) where T
+    en_ave = T[]
+    heat_cap = T[]
+    rdf = T[]
     en_hist = EnHist(n_bin)
     count_stat = zeros(Float64,8)
-    return Output{T}(en_ave,heat_cap,en_hist,rdf,count_stat)
+    return Output{T}(ham, en_ave, heat_cap, en_hist, rdf, count_stat)
 end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}

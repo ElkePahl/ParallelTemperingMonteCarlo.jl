@@ -28,12 +28,19 @@ mutable struct MCState{T,N,BC}
     count_exc::Vector{Int}
 end    
 
+"""
+
+"""
+
 function MCState(
     temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot; 
-    max_displ=[0.1,0.1,1.], count_atom=[0,0], count_vol=[0,0], count_rot=[0,0], count_exc=[0,0]
+    max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
-    MCState{T,N,BC}(temp,beta,deepcopy(config),copy(dist2_mat),copy(en_atom_mat),en_tot,ham,copy(max_displ),copy(count_atom),copy(count_vol),copy(count_rot),copy(count_exc))
+    MCState{T,N,BC}(
+        temp, beta, deepcopy(config), copy(dist2_mat), copy(en_atom_mat), en_tot, 
+        ham, copy(max_displ), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
+        )
 end
 
 function MCState(temp, beta, config::Config, pot; kwargs...) 
@@ -154,8 +161,8 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #decide acceptance
     if metropolis_condition(ensemble, delta_en, mc_state.beta) >= rand()
         #new config accepted
-        mc_state.config.pos[i_atom] = copy(trial_pos)
-        mc_state.dist2_mat[i_atom,:] = copy(dist2_new)
+        mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
+        mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = copy(dist2_new)
         mc_state.en_tot += delta_en
         mc_state.count_atom[1] += 1
@@ -219,6 +226,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     #        push!(type_moves,(i,moves[i]))
     #    end 
     #end
+
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
     r = rot_move_frequency(move_strat)
@@ -234,7 +242,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     end
     #re-set counter variables to zero
     for i_traj = 1:mc_params.n_traj
-        mc_states[i_traj].count_atom = mc_states[i_traj].count_vol = mc_states[i_traj].count_rot = mc_states[i_traj].count_exc = [0,0]
+        mc_states[i_traj].count_atom[1] = mc_states[i_traj].count_vol[1] = mc_states[i_traj].count_rot[1] = mc_states[i_traj].count_exc[1] = 0
+        mc_states[i_traj].count_atom[2] = mc_states[i_traj].count_vol[2] = mc_states[i_traj].count_rot[2] = mc_states[i_traj].count_exc[2] = 0
     end 
 
     for i = 1:mc_params.mc_cycles
@@ -249,9 +258,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
         end
     end
 
-    results = Output{Float64}(n_bin=n_bin)
+    #Evaluation
+    #results = Output{Float64}(n_bin=n_bin)
 
-    
     en_avg = [sum(mc_states[i_traj].ham)/floor(mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj] 
     en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham)/floor(mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
 
@@ -264,10 +273,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
 
     #TO DO
     # volume,rot moves ...
-    # adjustment of step size
-    # do the averages, energy; cv
+    # move boundary condition from config to mc_params
     # Histograms
-    # make report struct
+    # use report struct
 
     return 
 end
