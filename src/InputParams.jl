@@ -13,6 +13,8 @@ using ..EnergyEvaluation
 
 export InputParameters
 export MCParams, TempGrid
+export Output
+#export Results
 #export AbstractDisplacementParams, DisplacementParamsAtomMove
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
@@ -50,7 +52,7 @@ end
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
-mutable struct Report{T}
+struct Output{T}
     ham::Vector{T}
     max_displ::Vector{T}
     count_atom::Vector{Int}
@@ -59,16 +61,41 @@ mutable struct Report{T}
     count_exc::Vector{Int}
     en_ave::Vector{T}
     heat_cap::Vector{T}
-    en_histogram::EnHist{T}
+    #en_histogram::EnHist{T}
     rdf::Vector{T}
 end
 
-function Report(;n_bin = 100,ham=[],max_displ=[0.1,0.1,1.],count_atom=[0,0],count_vol=[0,0],count_rot=[0,0],count_exc=[0,0], en_ave=[], heat_cap=[],rdf=[]) where T
-    en_histogram = EnHist(n_bin)
-    return Report(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_histogram,rdf)
+function Output(;max_displ=[0.1,0.2,1.],n_bin=100)
+    T=eltype(max_displ[1])
+    ham = en_ave = heat_cap = rdf = T[]
+    count_atom = count_vol = count_rot = count_exc = [0,0]
+    en_hist = EnHist(n_bin)
+    return Output{T}(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_hist,rdf)
 end
 
+#struct Results{T}
+#    ham::Vector{T}
+#    max_displ::Vector{T}
+#    count_atom::Vector{Int}
+#    count_vol::Vector{Int}
+#   count_rot::Vector{Int}
+#    count_exc::Vector{Int}
+#    en_ave::Vector{T}
+#    heat_cap::Vector{T}
+#    en_histogram::EnHist{T}
+#    rdf::Vector{T}
+#end
 
+#= function Results(;n_bin = 100,ham=[],max_displ::Vector{T}=[0.1,0.1,1.],count_atom=[0,0],count_vol=[0,0],count_rot=[0,0],count_exc=[0,0], en_ave=[], heat_cap=[],rdf=[]) where {T}
+    en_histogram = EnHist(n_bin)
+    return Results{T}(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_histogram,rdf)
+end
+
+function Results(n_bin, max_displ::Vector{T}; ham=[],count_atom=[0,0],count_vol=[0,0],count_rot=[0,0],count_exc=[0,0], en_ave=[], heat_cap=[],rdf=[]) where {T}
+    en_histogram = EnHist(n_bin)
+    return Results{T}(ham,max_displ,count_atom,count_vol,count_rot,count_exc,en_ave,heat_cap,en_histogram,rdf)
+end
+ =#
 #abstract type AbstractDisplacementParams{T} end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}

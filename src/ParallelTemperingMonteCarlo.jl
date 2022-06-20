@@ -2,10 +2,10 @@ module ParallelTemperingMonteCarlo
 
 using Reexport
 
+include("InputParams.jl")
 include("BoundaryConditions.jl")
 include("Configurations.jl")
 include("EnergyEvaluation.jl")
-include("InputParams.jl")
 #include("Initialization")
 include("MCMoves.jl")
 include("MCRun.jl")
