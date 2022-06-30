@@ -77,8 +77,8 @@ n_bin = 100
 #en_hist = EnHist(n_bin,en_min,en_max)
 
 #construct array of MCState (for each temperature)
-dist2_mat_0 = get_distance2_mat(start_config)
-en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
+#dist2_mat_0 = get_distance2_mat(start_config)
+#en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
 
 #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]

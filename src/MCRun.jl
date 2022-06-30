@@ -215,22 +215,15 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 end
 
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
-    
-    #number of moves per MC cycle
-    #moves = mc_states[1].moves
-    #n_moves = 0
-    #type_moves = []
-    #for i in eachindex(moves)
-    #    n_moves += moves[i].frequency
-    #    for j=1:moves[i].frequency
-    #        push!(type_moves,(i,moves[i]))
-    #    end 
-    #end
 
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
     r = rot_move_frequency(move_strat)
+    #number of MC steps per MC cycle
     n_steps = a + v + r
+
+    println("Total number of moves per MC cycle: ", n_steps)
+    println()
 
     for i = 1:mc_params.eq_cycles
         @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
