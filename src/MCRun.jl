@@ -235,8 +235,14 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     end
     #re-set counter variables to zero
     for i_traj = 1:mc_params.n_traj
-        mc_states[i_traj].count_atom[1] = mc_states[i_traj].count_vol[1] = mc_states[i_traj].count_rot[1] = mc_states[i_traj].count_exc[1] = 0
-        mc_states[i_traj].count_atom[2] = mc_states[i_traj].count_vol[2] = mc_states[i_traj].count_rot[2] = mc_states[i_traj].count_exc[2] = 0
+        mc_states[i_traj].count_atom[1] = 0
+        mc_states[i_traj].count_vol[1] = 0
+        mc_states[i_traj].count_rot[1] = 0
+        mc_states[i_traj].count_exc[1] = 0
+        mc_states[i_traj].count_atom[2] = 0
+        mc_states[i_traj].count_vol[2] = 0
+        mc_states[i_traj].count_rot[2] = 0
+        mc_states[i_traj].count_exc[2] = 0
     end 
 
     for i = 1:mc_params.mc_cycles

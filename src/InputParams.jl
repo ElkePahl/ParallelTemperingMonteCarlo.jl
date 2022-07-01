@@ -22,15 +22,16 @@ const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 struct MCParams
     mc_cycles::Int
     eq_cycles::Int
+    mc_sample::Int
     n_traj::Int
     n_atoms::Int
     n_adjust::Int
 end 
 
-function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, n_adjust = 100)
+function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100)
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
-    return MCParams(mc_cycles, eq_cycles, n_traj, n_atoms, n_adjust)
+    return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust)
 end
 
 struct TempGrid{N,T} 

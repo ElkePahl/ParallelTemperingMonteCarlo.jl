@@ -1,4 +1,8 @@
 using ParallelTemperingMonteCarlo
+using Random
+
+#set random seed - for reproducability
+Random.seed!(1234)
 
 # number of atoms
 n_atoms = 13
@@ -10,22 +14,20 @@ n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
-# MC details
-mc_cycles = 1000
-#mc_cycles = 200
+# MC simulation details
+mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 2
 mc_sample = 1
 
-#mc_params = MCParams(mc_cycles, n_traj, n_atoms) #20% equilibration is default
-
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-displ_atom = 0.5 # Angstrom
+displ_atom = 0.1 # Angstrom
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
 #max_displ_vec = [max_displ_atom,0.01,1.]
 n_adjust = 100
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms, n_adjust = n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (voume,rotation not yet implemented)
 move_strat = MoveStrategy(atom_moves=n_atoms)  
@@ -34,7 +36,6 @@ move_strat = MoveStrategy(atom_moves=n_atoms)
 ensemble = NVT(n_atoms)
 
 #ELJpotential for neon
-#check units!!!
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
 #elj_ne1 = ELJPotential{11}(c1)
 
@@ -63,7 +64,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-#define boundary conditions starting configuration
+#boundary conditions 
 bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 
 #starting configuration
@@ -74,15 +75,8 @@ n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
-#en_hist = EnHist(n_bin,en_min,en_max)
-
 #construct array of MCState (for each temperature)
-#dist2_mat_0 = get_distance2_mat(start_config)
-#en_atom_mat_0, en_tot_0 = dimer_energy_config(dist2_mat_0, n_atoms, pot)
-
-#mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], conf_ne13, dist2_mat_0, en_atom_mat_0, en_tot_0, ham, (AtomMove(n_atoms, max_displ),)) for i in 1:n_traj]
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-#dist2_mat_0, en_atom_mat_0, en_tot_0, max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 #results = Output()
