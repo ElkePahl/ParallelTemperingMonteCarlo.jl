@@ -161,13 +161,13 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #decide acceptance
     if metropolis_condition(ensemble, delta_en, mc_state.beta) >= rand()
         #new config accepted
-        mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-        mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
+        mc_state.config.pos[i_atom] = copy(trial_pos) #copy(trial_pos)
+        mc_state.dist2_mat[i_atom,:] = copy(dist2_new) #copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = copy(dist2_new)
         mc_state.en_tot += delta_en
         mc_state.count_atom[1] += 1
         mc_state.count_atom[2] += 1
-    end 
+    end
     return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
@@ -234,7 +234,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     end 
 
     for i = 1:mc_params.mc_cycles
-        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)  
         for i_traj=1:mc_params.n_traj
             push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
         end 
@@ -248,12 +248,13 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     #Evaluation
     #results = Output{Float64}(n_bin=n_bin)
 
-    en_avg = [sum(mc_states[i_traj].ham)/floor(mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj] 
-    en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham)/floor(mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
+    en_avg = [sum(mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
+    en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj]
 
     kB = 3.16681196E-6
 
-    c = [(en2_avg[i]-en_avg[i]^2)/(kB*mc_states[i].temp) for i in 1:mc_params.n_traj]
+    #c = [(en2_avg[i]-en_avg[i]^2)/(kB*mc_states[i].temp) for i in 1:mc_params.n_traj]
+    c = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
 
     println(c)
     println("done")

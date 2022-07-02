@@ -48,7 +48,7 @@ function TempGrid{N}(ti, tf; tdistr=:geometric) where {N}
     else
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end
-    betagrid = 1. /(kB*tgrid)
+    betagrid = 1. ./ (kB .* tgrid)
     return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
 end 
 
