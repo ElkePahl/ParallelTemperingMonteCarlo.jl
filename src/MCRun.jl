@@ -13,12 +13,32 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 
+"""
+    MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
+        max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])
+    MCState(temp, beta, config::Config, pot; kwargs...) 
+Creates an MC state vector at a given temperature `T` containing temperature-dependent information
+Fieldnames:
+- `temp`: temperatures
+- `beta`: inverse temperatures
+- `config`: configuration [`Config`](@ref)  
+- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when `pot` given
+- `en_atom_vec`: vector of energy contributions per atom i_atom
+- `en_tot`: total energy of `config`
+- `ham`: vector containing sampled energies - generated in MC run
+- `max_displ`: max_diplacements for atom, volume and rotational moves; key-word argument
+- `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
+- `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
+- `count_rot`: number of accepted rotational moves - total and between adjustment of step sizes; key-word argument
+- `count_exc`: number of attempted (10%)/accepted exchanges with neighbouring trajectories; key-word argument
+"""
+
 mutable struct MCState{T,N,BC}
     temp::T
     beta::T
     config::Config{N,BC,T}
     dist2_mat::Matrix{T}
-    en_atom_mat::Vector{T}
+    en_atom_vec::Vector{T}
     en_tot::T
     ham::Vector{T}
     max_displ::Vector{T}
@@ -28,17 +48,13 @@ mutable struct MCState{T,N,BC}
     count_exc::Vector{Int}
 end    
 
-"""
-
-"""
-
 function MCState(
-    temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_mat, en_tot; 
+    temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
     max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC}(
-        temp, beta, deepcopy(config), copy(dist2_mat), copy(en_atom_mat), en_tot, 
+        temp, beta, deepcopy(config), copy(dist2_mat), copy(en_atom_vec), en_tot, 
         ham, copy(max_displ), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
         )
 end
@@ -46,8 +62,8 @@ end
 function MCState(temp, beta, config::Config, pot; kwargs...) 
    dist2_mat = get_distance2_mat(config)
    n_atoms = length(config.pos)
-   en_atom_mat, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
-   MCState(temp, beta, config, dist2_mat, en_atom_mat, en_tot; kwargs...)
+   en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
+   MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 end
 
 """
@@ -82,7 +98,7 @@ end
 function exc_trajectories!(state_1, state_2)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
-    state_1.en_atom_mat, state_2.en_atom_mat = state_2.en_atom_mat, state_1.en_atom_mat
+    state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
 end 
@@ -264,7 +280,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
 
     #TO DO
     # volume,rot moves ...
-    # move boundary condition from config to mc_params
+    # move boundary condition from config to mc_params?
     # Histograms
     # use report struct
 
