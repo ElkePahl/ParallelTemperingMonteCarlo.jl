@@ -51,15 +51,20 @@ function MCState(temp, beta, config::Config, pot; kwargs...)
 end
 
 """
-    metropolis_condition(energy_unmoved, energy_moved, beta)
+    metropolis_condition(ensemble, delta_en, beta)
 
-Determines probability to accept a MC move at inverse temperature beta, takes energies of new and old configurations
+Determines probability to accept a MC move at inverse temperature `beta` 
+and energy difference `delta_en` between new and old configuration 
+for given ensemble; implemented: 
+    - `NVT`: canonical ensemble
+Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
+Boltzmann probability otherwise
 """
-function metropolis_condition(energy_unmoved, energy_moved, beta)
-    prob_val = exp(-(energy_moved-energy_unmoved)*beta)
-    T = typeof(prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
-end
+#function metropolis_condition(energy_unmoved, energy_moved, beta)
+#    prob_val = exp(-(energy_moved-energy_unmoved)*beta)
+#    T = typeof(prob_val)
+#    return ifelse(prob_val > 1, T(1), prob_val)
+#end
 
 function metropolis_condition(::NVT, delta_en, beta)
     prob_val = exp(-delta_en*beta)
@@ -252,9 +257,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj]
 
     #c = [(en2_avg[i]-en_avg[i]^2)/(kB*mc_states[i].temp) for i in 1:mc_params.n_traj]
-    c = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
 
-    println(c)
+    println(heat_cap)
     println("done")
 
     #TO DO

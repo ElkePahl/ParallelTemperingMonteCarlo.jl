@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo
-using Random
+using Random,Plots
 
-#set random seed - for reproducability
+#set random seed - for reproducibility
 Random.seed!(1234)
 
 # number of atoms
@@ -16,21 +16,18 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 mc_cycles = 100000 #default 20% equilibration cycles on top
-#mc_cycles = 2
-mc_sample = 1
+mc_sample = 1  #sample everymc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 displ_atom = 0.1 # Angstrom
+n_adjust = 100
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
-
-#max_displ_vec = [max_displ_atom,0.01,1.]
-n_adjust = 100
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (voume,rotation not yet implemented)
-move_strat = MoveStrategy(atom_moves=n_atoms)  
+move_strat = MoveStrategy(atom_moves = n_atoms)  
 
 #ensemble
 ensemble = NVT(n_atoms)
@@ -82,3 +79,5 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 #results = Output()
 
 ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
+
+plot(temp.t_grid,heat_cap)
