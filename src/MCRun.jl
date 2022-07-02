@@ -18,12 +18,13 @@ using ..EnergyEvaluation
         max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])
     MCState(temp, beta, config::Config, pot; kwargs...) 
 Creates an MC state vector at a given temperature `T` containing temperature-dependent information
+
 Fieldnames:
 - `temp`: temperatures
 - `beta`: inverse temperatures
 - `config`: configuration [`Config`](@ref)  
 - `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when `pot` given
-- `en_atom_vec`: vector of energy contributions per atom i_atom
+- `en_atom_vec`: vector of energy contributions per atom i
 - `en_tot`: total energy of `config`
 - `ham`: vector containing sampled energies - generated in MC run
 - `max_displ`: max_diplacements for atom, volume and rotational moves; key-word argument
@@ -32,7 +33,6 @@ Fieldnames:
 - `count_rot`: number of accepted rotational moves - total and between adjustment of step sizes; key-word argument
 - `count_exc`: number of attempted (10%)/accepted exchanges with neighbouring trajectories; key-word argument
 """
-
 mutable struct MCState{T,N,BC}
     temp::T
     beta::T
@@ -76,17 +76,18 @@ for given ensemble; implemented:
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
 Boltzmann probability otherwise
 """
+function metropolis_condition(::NVT, delta_en, beta)
+    prob_val = exp(-delta_en*beta)
+    T = typeof(prob_val)
+    return ifelse(prob_val > 1, T(1), prob_val)
+end
+
 #function metropolis_condition(energy_unmoved, energy_moved, beta)
 #    prob_val = exp(-(energy_moved-energy_unmoved)*beta)
 #    T = typeof(prob_val)
 #    return ifelse(prob_val > 1, T(1), prob_val)
 #end
 
-function metropolis_condition(::NVT, delta_en, beta)
-    prob_val = exp(-delta_en*beta)
-    T = typeof(prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
-end
 
 function exc_acceptance(beta_1,beta_2,en_1,en_2)
     delta_en = en_1 - en_2
