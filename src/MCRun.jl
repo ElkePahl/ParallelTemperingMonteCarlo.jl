@@ -171,11 +171,7 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
-function mc_step!(mc_state::MCState, move_strat, pot, ensemble, a, v, r)
-    #a = atom_move_frequency(move_strat)
-    #v = vol_move_frequency(move_strat)
-    #r = rot_move_frequency(move_strat)
-
+function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
     ran = rand(1:(a+v+r)) #choose move randomly
     if ran <= a
         mc_state = atom_move!(mc_state, ran, pot, ensemble)
@@ -189,14 +185,10 @@ end
 
 
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-    #a = atom_move_frequency(move_strat)
-    #v = vol_move_frequency(move_strat)
-    #r = rot_move_frequency(move_strat)
-    #n_steps = a + v + r
     for i_traj = 1:mc_params.n_traj
         for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], move_strat, pot, ensemble, a, v, r)
+            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
         end
         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
     end
@@ -235,14 +227,10 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     end
     #re-set counter variables to zero
     for i_traj = 1:mc_params.n_traj
-        mc_states[i_traj].count_atom[1] = 0
-        mc_states[i_traj].count_vol[1] = 0
-        mc_states[i_traj].count_rot[1] = 0
-        mc_states[i_traj].count_exc[1] = 0
-        mc_states[i_traj].count_atom[2] = 0
-        mc_states[i_traj].count_vol[2] = 0
-        mc_states[i_traj].count_rot[2] = 0
-        mc_states[i_traj].count_exc[2] = 0
+        mc_states[i_traj].count_atom = [0, 0]
+        mc_states[i_traj].count_vol = [0, 0]
+        mc_states[i_traj].count_rot = [0, 0]
+        mc_states[i_traj].count_exc = [0, 0]
     end 
 
     for i = 1:mc_params.mc_cycles

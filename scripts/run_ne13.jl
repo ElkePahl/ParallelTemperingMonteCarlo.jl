@@ -10,7 +10,7 @@ n_atoms = 13
 # temperature grid
 ti = 2.
 tf = 16.
-n_traj = 32
+n_traj = 2
 
 temp = TempGrid{n_traj}(ti,tf) 
 
