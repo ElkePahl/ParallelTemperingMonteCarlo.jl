@@ -17,21 +17,21 @@ using ..EnergyEvaluation
     MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
         max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])
     MCState(temp, beta, config::Config, pot; kwargs...) 
-Creates an MC state vector at a given temperature `T` containing temperature-dependent information
+Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
 
 Fieldnames:
-- `temp`: temperatures
-- `beta`: inverse temperatures
-- `config`: configuration [`Config`](@ref)  
-- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when `pot` given
-- `en_atom_vec`: vector of energy contributions per atom i
-- `en_tot`: total energy of `config`
+- `temp`: temperature
+- `beta`: inverse temperature
+- `config`: actual configuration in Markov chain [`Config`](@ref)  
+- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
+- `en_atom_vec`: vector of energy contributions per atom i; generated automatically when `pot` given
+- `en_tot`: total energy of `config`; generated automatically when `pot` given
 - `ham`: vector containing sampled energies - generated in MC run
 - `max_displ`: max_diplacements for atom, volume and rotational moves; key-word argument
 - `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
 - `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
 - `count_rot`: number of accepted rotational moves - total and between adjustment of step sizes; key-word argument
-- `count_exc`: number of attempted (10%)/accepted exchanges with neighbouring trajectories; key-word argument
+- `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
 """
 mutable struct MCState{T,N,BC}
     temp::T
@@ -68,9 +68,8 @@ end
 
 """
     metropolis_condition(ensemble, delta_en, beta)
-
-Determines probability to accept a MC move at inverse temperature `beta` 
-and energy difference `delta_en` between new and old configuration 
+Returns probability to accept a MC move at inverse temperature `beta` 
+for energy difference `delta_en` between new and old configuration 
 for given ensemble; implemented: 
     - `NVT`: canonical ensemble
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
@@ -89,14 +88,24 @@ end
 #end
 
 
-function exc_acceptance(beta_1,beta_2,en_1,en_2)
+"""
+    exc_acceptance(beta_1, beta_2, en_1, en_2)
+Returns probability to exchange configurations of two trajectories with energies `en_1` and `en_2` 
+at inverse temperatures `beta_1` and `beta_2`. 
+"""
+function exc_acceptance(beta_1, beta_2, en_1, en_2)
     delta_en = en_1 - en_2
     delta_beta = beta_1 - beta_2
-    exc_acc=min(1.0,exp(delta_beta*delta_en))
+    exc_acc = min(1.0,exp(delta_beta * delta_en))
     return exc_acc
 end
 
-function exc_trajectories!(state_1, state_2)
+"""
+    exc_trajectories!(state_1::MCState, state_2::MCState)
+Exchanges configurations and distance and energy information between two trajectories;
+information contained in `state_1` and `state_2`, see [`MCState`](@ref)   
+"""
+function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
     state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
@@ -104,9 +113,17 @@ function exc_trajectories!(state_1, state_2)
     return state_1, state_2
 end 
 
-function update_max_stepsize!(mc_state, n_update, a, v, r)
+
+"""
+    update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
+Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
+if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
+each cycle consists of `a` atom, `v` volume and `r` rotation moves.
+Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).  
+"""
+function update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
     #atom moves
-    acc_rate = mc_state.count_atom[2]/ (n_update * a)
+    acc_rate = mc_state.count_atom[2] / (n_update * a)
     if acc_rate < 0.4
         mc_state.max_displ[1] *= 0.9
     elseif acc_rate > 0.6
@@ -114,8 +131,8 @@ function update_max_stepsize!(mc_state, n_update, a, v, r)
     end
     mc_state.count_atom[2] = 0
     #volume moves
-    if v>0
-        acc_rate = mc_state.count_vol[2]/ (n_update * v)
+    if v > 0
+        acc_rate = mc_state.count_vol[2] / (n_update * v)
         if acc_rate < 0.4
             mc_state.max_displ[2] *= 0.9
         elseif acc_rate > 0.6
@@ -124,8 +141,8 @@ function update_max_stepsize!(mc_state, n_update, a, v, r)
         mc_state.count_vol[2] = 0
     end
     #rotation moves
-    if r>0
-        acc_rate = mc_state.count_rot[2]/ (n_update * r)
+    if r > 0
+        acc_rate = mc_state.count_rot[2] / (n_update * r)
         if acc_rate < 0.4
             mc_state.max_displ[3] *= 0.9
         elseif acc_rate > 0.6
@@ -175,17 +192,12 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
     #find new distances of moved atom 
     delta_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
-    #dist2_new = [distance2(trial_pos,b) for b in config.pos]
-    #en_moved = energy_update(i_atom, dist2_new, pot)
-    #recalculate old 
-    #en_unmoved = energy_update(i_atom, dist2_mat[i_atom,:], pot)
-    #one might want to store dimer energies per atom in vector?
     #decide acceptance
     if metropolis_condition(ensemble, delta_en, mc_state.beta) >= rand()
         #new config accepted
-        mc_state.config.pos[i_atom] = copy(trial_pos) #copy(trial_pos)
-        mc_state.dist2_mat[i_atom,:] = copy(dist2_new) #copy(dist2_new)
-        mc_state.dist2_mat[:,i_atom] = copy(dist2_new)
+        mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
+        mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
+        mc_state.dist2_mat[:,i_atom] = dist2_new
         mc_state.en_tot += delta_en
         mc_state.count_atom[1] += 1
         mc_state.count_atom[2] += 1
@@ -207,6 +219,7 @@ end
 
 
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+    #perform one MC cycle
     for i_traj = 1:mc_params.n_traj
         for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
@@ -214,7 +227,8 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         end
         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
     end
-    if rand()<0.1 #attempt to exchange trajectories
+    #parallel tempering
+    if rand() < 0.1 #attempt to exchange trajectories
         n_exc = rand(1:mc_params.n_traj-1)
         mc_states[n_exc].count_exc[1] += 1
         mc_states[n_exc+1].count_exc[1] += 1
@@ -229,7 +243,6 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 end
 
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
-
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
     r = rot_move_frequency(move_strat)
@@ -239,6 +252,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     println("Total number of moves per MC cycle: ", n_steps)
     println()
 
+    #equilibration cycle
     for i = 1:mc_params.eq_cycles
         @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
         if rem(i, mc_params.n_adjust) == 0
@@ -255,11 +269,18 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
         mc_states[i_traj].count_exc = [0, 0]
     end 
 
+    println("equilibration done")
+
+    #main MC loop
     for i = 1:mc_params.mc_cycles
-        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)  
-        for i_traj=1:mc_params.n_traj
-            push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r) 
+        #sampling step
+        if rem(i, mc_params.mc_sample) == 0
+            for i_traj=1:mc_params.n_traj
+                push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+            end
         end 
+        #step adjustment
         if rem(i, mc_params.n_adjust) == 0
             for i_traj = 1:mc_params.n_traj
                 update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
@@ -267,15 +288,18 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
         end
     end
 
+    println("MC loop done.")
     #Evaluation
-    #results = Output{Float64}(n_bin=n_bin)
-
-    en_avg = [sum(mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
-    en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj]
-
+    #average energy
+    n_sample = mc_params.mc_cycles / mc_params.mc_sample
+    en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
+    en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
     results.en_avg = en_avg
+
+    #heat capacity
     results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
 
+    #acceptance statistics
     results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
     results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
 
@@ -304,9 +328,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     end
 
     #TO DO
-    # volume,rot moves ...
+    # volume (NPT ensemble),rot moves ...
     # move boundary condition from config to mc_params?
-    # Histograms
 
     println("done")
     return 

@@ -15,8 +15,8 @@ n_traj = 32
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 1000000 #default 20% equilibration cycles on top
-mc_sample = 1  #sample everymc_sample MC cycles
+mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 displ_atom = 0.1 # Angstrom
@@ -26,7 +26,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
-#moves - allowed at present: atom, volume and rotation moves (voume,rotation not yet implemented)
+#moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
 move_strat = MoveStrategy(atom_moves = n_atoms)  
 
 #ensemble
@@ -80,7 +80,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
-plot(temp.t_grid,results.heat_cap)
+#plot(temp.t_grid,results.heat_cap)
 
-data = [results.en_histogram[i].en_hist for i in 1:n_traj]
-plot(data)
+#data = [results.en_histogram[i].en_hist for i in 1:n_traj]
+#plot(data)
