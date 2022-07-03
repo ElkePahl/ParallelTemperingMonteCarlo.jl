@@ -196,19 +196,19 @@ struct EnHist{T}
     en_min::Ref{T}
     en_max::Ref{T}
     delta_en_bin::Ref{T}
-    en_hist::Vector{T}
+    en_hist::Vector{Int}
 end
 
-function EnHist(n_bin,en_min::T,en_max::T) where T
+function EnHist(n_bin, en_min::T, en_max::T) where T
     delta_en_bin = (en_max-en_min)/n_bin
-    en_hist=T[]
+    en_hist = zeros(Int, n_bin)
     return EnHist{T}(n_bin,en_min,en_max,delta_en_bin,en_hist)
 end
 
-function EnHist(n_bin; en_min=-0.006,en_max=-0.001)
+function EnHist(n_bin; en_min=-0.006, en_max=-0.001)
     T = eltype(en_min)
     delta_en_bin = (en_max-en_min)/n_bin
-    en_hist=T[]
+    en_hist = zeros(Int, n_bin)
     return EnHist{T}(n_bin,en_min,en_max,delta_en_bin,en_hist)
 end
 

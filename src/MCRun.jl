@@ -280,17 +280,35 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
 
     println(results.heat_cap)
-    println("done")
-
 
     #energy histograms
+    T = typeof(mc_states[1].ham[1])
+    en_min = T[]
+    en_max = T[]
+    for i_traj in 1:mc_params.n_traj
+        push!(en_min,minimum(mc_states[i_traj].ham))
+        push!(en_max,maximum(mc_states[i_traj].ham))
+    end 
+    global_en_min = minimum(en_min)
+    global_en_max = maximum(en_max)
+    delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
+    
+
+    for i_traj in 1:mc_params.n_traj
+        hist = EnHist(results.n_bin, global_en_min, global_en_max)
+        for en in mc_states[i_traj].ham
+            index = floor(Int,(en - global_en_min) / delta_en) + 1
+            hist.en_hist[index] += 1
+        end
+        push!(results.en_histogram, hist)
+    end
 
     #TO DO
     # volume,rot moves ...
     # move boundary condition from config to mc_params?
     # Histograms
-    # use report struct
 
+    println("done")
     return 
 end
 
