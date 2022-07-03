@@ -277,9 +277,13 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
 
     results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
+    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
 
     println(results.heat_cap)
     println("done")
+
+
+    #energy histograms
 
     #TO DO
     # volume,rot moves ...
