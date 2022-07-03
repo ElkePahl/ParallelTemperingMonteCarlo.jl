@@ -228,7 +228,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
@@ -273,10 +273,10 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
     en_avg = [sum(mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
     en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / mc_params.mc_cycles for i_traj in 1:mc_params.n_traj]
 
-    #c = [(en2_avg[i]-en_avg[i]^2)/(kB*mc_states[i].temp) for i in 1:mc_params.n_traj]
-    heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    results.en_avg = en_avg
+    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
 
-    println(heat_cap)
+    println(results.heat_cap)
     println("done")
 
     #TO DO

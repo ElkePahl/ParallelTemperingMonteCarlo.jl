@@ -76,8 +76,8 @@ n_bin = 100
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
-#results = Output()
+results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, n_bin)
+ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
-plot(temp.t_grid,heat_cap)
+plot(temp.t_grid,results.heat_cap)

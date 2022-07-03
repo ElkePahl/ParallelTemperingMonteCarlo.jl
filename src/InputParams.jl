@@ -54,27 +54,32 @@ end
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
-struct Output{T}
-    ham::Vector{T}
-    #max_displ::Vector{T}
-    #count_atom::Vector{Int}
-    #count_vol::Vector{Int}
-    #count_rot::Vector{Int}
-    #count_exc::Vector{Int}
-    en_ave::Vector{T}
+mutable struct Output{T}
+    n_bin::Int
+    en_min::T
+    max_displ::Vector{T}
+    en_avg::Vector{T}
     heat_cap::Vector{T}
-    en_histogram::EnHist{T}
+    en_histogram::Vector{EnHist}
     rdf::Vector{T}
-    count_stat::Vector{Int}
+    count_stat_atom::Vector{Int}
+    count_stat_vol::Vector{Int}
+    count_stat_rot::Vector{Int}
+    count_stat_exc::Vector{Int}
 end
 
-function Output{T}(ham; n_bin=100) where T
-    en_ave = T[]
+function Output{T}(n_bin; en_min = 0) where T
+    en_min = 0.
+    max_displ = T[]
+    en_avg = T[]
     heat_cap = T[]
+    en_histogram = EnHist[]
     rdf = T[]
-    en_hist = EnHist(n_bin)
-    count_stat = zeros(Float64,8)
-    return Output{T}(ham, en_ave, heat_cap, en_hist, rdf, count_stat)
+    count_stat_atom = Int[]
+    count_stat_vol = Int[]
+    count_stat_rot = Int[]
+    count_stat_exc = Int[]
+    return Output{T}(n_bin, en_min, max_displ, en_avg, heat_cap, en_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
