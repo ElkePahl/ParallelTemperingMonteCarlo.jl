@@ -62,10 +62,10 @@ mutable struct Output{T}
     heat_cap::Vector{T}
     en_histogram::Vector{EnHist}
     rdf::Vector{T}
-    count_stat_atom::Vector{Int}
-    count_stat_vol::Vector{Int}
-    count_stat_rot::Vector{Int}
-    count_stat_exc::Vector{Int}
+    count_stat_atom::Vector{T}
+    count_stat_vol::Vector{T}
+    count_stat_rot::Vector{T}
+    count_stat_exc::Vector{T}
 end
 
 function Output{T}(n_bin; en_min = 0) where T
@@ -75,10 +75,10 @@ function Output{T}(n_bin; en_min = 0) where T
     heat_cap = T[]
     en_histogram = EnHist[]
     rdf = T[]
-    count_stat_atom = Int[]
-    count_stat_vol = Int[]
-    count_stat_rot = Int[]
-    count_stat_exc = Int[]
+    count_stat_atom = T[]
+    count_stat_vol = T[]
+    count_stat_rot = T[]
+    count_stat_exc = T[]
     return Output{T}(n_bin, en_min, max_displ, en_avg, heat_cap, en_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
 
