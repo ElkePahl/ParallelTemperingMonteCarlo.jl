@@ -187,6 +187,13 @@ end
     #return config, entot, dist2mat, count_acc, count_acc_adjust
 #end
 
+"""
+    atom_move!(mc_state::MCState, i_atom, pot, ensemble)
+Moves selected `i_atom`'s atom randomly (max. displacement as in `mc_state`).
+Calculates energy update (depending on potential `pot`).
+Accepts move according to Metropolis criterium (asymmetric choice, depending on `ensemble`)
+Updates `mc_state` if move accepted.
+"""
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
@@ -205,6 +212,13 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
 
+"""
+    mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
+Performs an individual MC step.
+Chooses type of move randomly according to frequency of moves `a`,`v` and `r` 
+for atom, volume and rotation moves.
+Performs the selected move.   
+"""
 function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
     ran = rand(1:(a+v+r)) #choose move randomly
     if ran <= a
@@ -217,7 +231,13 @@ function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
     return mc_state
 end 
 
-
+"""
+    mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+Performs a MC cycle consisting of `n_steps` individual MC steps 
+(frequencies of moves given by `a`,`v` and `r`).
+Attempts parallel tempering step for 10% of cycles.
+Exchanges trajectories if exchange accepted.
+"""
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
     #perform one MC cycle
     for i_traj = 1:mc_params.n_traj
@@ -242,6 +262,16 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 
+"""
+    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+Main function, controlling the parallel tempering MC run.
+Calculates number of MC steps per cycle.
+Performs equilibration and main MC loop.  
+Energy is sampled after `mc_sample` MC cycles. 
+Step size adjustment is done after `n_adjust` MC cycles.    
+Evaluation: including calculation of inner energy, heat capacity, energy histograms;
+saved in `results`.
+"""
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
