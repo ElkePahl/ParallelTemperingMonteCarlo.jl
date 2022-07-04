@@ -108,14 +108,14 @@ end
 #    return displ, count_accept
 #end
 
-struct InputParameters
+#= struct InputParameters
     mc_parameters::MCParams
     temp_parameters::TempGrid
     starting_conf::Config
     random_seed::Int
     potential::AbstractPotential
 #    max_displacement::AbstractDisplacementParams
-end
+end =#
 
 #bc_ar32 = SphericalBC(radius=14.5)  #Angstrom
 

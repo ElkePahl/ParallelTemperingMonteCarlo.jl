@@ -176,7 +176,7 @@ abstract type AbstractEnsemble end
  fieldname: natoms: number of atoms
 """
 struct NVT <: AbstractEnsemble
-    natoms::Int
+    n_atoms::Int
 end
 
 """
@@ -187,7 +187,7 @@ end
  - pressure
 """
 struct NPT <: AbstractEnsemble
-    natoms::Int
+    n_atoms::Int
     pressure::Real
 end
 

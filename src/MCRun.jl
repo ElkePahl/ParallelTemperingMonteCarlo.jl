@@ -330,6 +330,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     #TO DO
     # volume (NPT ensemble),rot moves ...
     # move boundary condition from config to mc_params?
+    # rdfs
 
     println("done")
     return 
