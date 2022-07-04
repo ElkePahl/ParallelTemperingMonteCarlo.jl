@@ -19,6 +19,15 @@ export Output
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
+"""
+    MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100)
+Type that collects MC specific data: 
+- number of MC cycles `cycles`, temperatures `n_traj` and atoms `n_atom`
+- percentage of equilibration: default 20%
+- frequency of sampling energy (adding to Markov chain): 
+`mc_sample` gives number of MC cycles after which energy is saved (default: 1)
+- step size of moves is automatically adjusted after `n_adjust` MC cycles (default: 100)
+"""
 struct MCParams
     mc_cycles::Int
     eq_cycles::Int
@@ -34,6 +43,18 @@ function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n
     return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust)
 end
 
+"""
+    TempGrid{N}(ti, tf; tdistr) 
+    TempGrid(ti, tf, N; tdistr=:geometric)
+Generates grid of `N` temperatures and inverse temperatures for MC calculation
+between initial and final temperatures `ti` and `tf`
+Field names:
+- `t_grid`: temperatures (in K)
+- `beta_grid`: inverse temperatures (in atomic units)
+keyword argument `tdistr`:
+- :geometric (default): generates geometric temperature distribution
+- :equally_spaced: generates equally spaced temperature grid
+"""
 struct TempGrid{N,T} 
     t_grid::SVector{N,T}
     beta_grid::SVector{N,T}
@@ -54,6 +75,18 @@ end
 
 TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
+"""
+    Output{T}(n_bin; en_min = 0)
+Collects output of MC calculation:
+- `n_bin`: number of energy bins for histograms
+- `en_min`: minimum energy found during calculation
+- `max_displ`: final maximum displacements
+- `en_avg`: inner energy U(T) (as average over sampled energies)
+- `heat_cap`: heat capacities C(T) 
+- `rdf`: radial distribution information
+- `count_stat_*`: statistics of accepted atom, volume and rotation moves 
+and attempted and successful parallel-tempering exchanges
+"""
 mutable struct Output{T}
     n_bin::Int
     en_min::T

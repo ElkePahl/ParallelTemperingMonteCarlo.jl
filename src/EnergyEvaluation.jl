@@ -191,6 +191,16 @@ struct NPT <: AbstractEnsemble
     pressure::Real
 end
 
+"""
+    EnHist(n_bin, en_min::T, en_max::T)
+    EnHist(n_bin; en_min=-0.006, en_max=-0.001)
+Collects data for energy histograms per temperature
+Field names:    
+- `n_bins`: number of energy bins
+- `en_min`,`en_max`: minimum and maximum energy between which data is collected
+- `delta_en_bin`: energy spacing of bins
+- `en_hist`: stores number of sampled configurations per energy bins
+"""
 struct EnHist{T}
     n_bin::Int
     en_min::Ref{T}
