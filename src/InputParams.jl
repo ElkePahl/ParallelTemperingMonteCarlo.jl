@@ -90,10 +90,11 @@ and attempted and successful parallel-tempering exchanges
 mutable struct Output{T}
     n_bin::Int
     en_min::T
+    en_max::T
     max_displ::Vector{T}
     en_avg::Vector{T}
     heat_cap::Vector{T}
-    en_histogram::Vector{EnHist}
+    en_histogram::Vector{Vector{T}}
     rdf::Vector{T}
     count_stat_atom::Vector{T}
     count_stat_vol::Vector{T}
@@ -103,16 +104,17 @@ end
 
 function Output{T}(n_bin; en_min = 0) where T
     en_min = 0.
+    en_max = 0.
     max_displ = T[]
     en_avg = T[]
     heat_cap = T[]
-    en_histogram = EnHist[]
+    en_histogram = []
     rdf = T[]
     count_stat_atom = T[]
     count_stat_vol = T[]
     count_stat_rot = T[]
     count_stat_exc = T[]
-    return Output{T}(n_bin, en_min, max_displ, en_avg, heat_cap, en_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
+    return Output{T}(n_bin, en_min, en_max,max_displ, en_avg, heat_cap, en_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
