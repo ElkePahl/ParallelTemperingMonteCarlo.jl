@@ -92,11 +92,11 @@ end
     pot = ELJPotentialEven{6}(c)
     dist2_mat = get_distance2_mat(config_ne13)
     @test dist2_mat[1,1] == 0.0
-    @test dist2_mat[1,2] > 35.92 && dist2_mat[1,2] < 35.93
+    @test dist2_mat[1,2] ≈ 35.9299361917
     @test length(config_ne13.pos) == 13
     en_atom_vec, en_tot = dimer_energy_config(dist2_mat, 13, pot)
-    @test en_atom_vec[1] < -0.00081 && en_atom_vec[1] > -0.00082
-    @test en_tot < -0.00563 && en_tot > -0.005634686479115
+    @test en_atom_vec[13] ≈ -0.001511423942345
+    @test en_tot ≈ -0.005634686479114
 end
 
 #@testset "MCLoop"
