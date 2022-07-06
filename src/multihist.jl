@@ -1,17 +1,19 @@
 module Multihistogram
 
-export multihistogram,initialise,systemsolver,bvector,amatrix,Entropycalc,analysis
 
+using DelimitedFiles, LinearAlgebra
 
-using Statistics
-using BenchmarkTools
-using Plots
-using DelimitedFiles
-using LinearAlgebra
+"""
+    readfile(xdir::String)
+reads output files for the FORTRAN PTMC code written by Edison Florez.
+xdir is the directory containing the histogram information usually /path/to/output/histograms
 
-NPoints = 600
-function initialise(xdir)
-    # Read in hist.data to obtain constants
+`HistArray` is the NTrajxNBins array containing all histogram counts
+`energyvector` is an NBins length vector containing the energy value of each bin
+`beta` is an NTraj length vector of 1/(kBT)
+`NBins,NTraj,kB` are constant values required throughout
+"""
+function readfile(xdir::String)
     f = open("$(xdir)histE.data", "r+")
     datafile=readdlm(f)
     kB = datafile[1]
@@ -24,7 +26,6 @@ function initialise(xdir)
     de = (emax-emin)/(NBins-1)
     #Below we initialise the histogram array
     HistArray = Array{Float64}(undef,NTraj,NBins)
-    nsum = zeros(NBins)
     
     for i in 1:NTraj
         c = open("$(xdir)histE.$i", "r")
@@ -33,16 +34,27 @@ function initialise(xdir)
     end
 
     println("Files Read")
-    energyvector = [(j-1)*de + emin for j=1:NBins] #and the energies
+    energyvector = [(j-1)*de + emin for j=1:NBins]
+
+    return HistArray,energyvector,beta,NTraj,NBins,kB
+end
+""" 
+    processhist!(HistArray,energyvector,beta,NBins)
+This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent NaN errors when doing the required calculations.
+
+`HistArray,energyvector` are the total histograms and values of the energy bins respectively, they are only changed by normalisation and removal of unnecessary rows
+`nsum` is merely the total histogram count for each energy bin
+
+"""
+function processhist!(HistArray,energyvector,NBins)
     for i in 1:NTraj
         #NB in Florent's original code this factor of NBins*i normalised everything
         HistArray[i,:] = HistArray[i,:]./(NBins)#*i)
     end
-
+    nsum = zeros(NBins)
     for j = 1:NBins
         nsum[j] = sum(HistArray[:,j])
     end
-    
     #as it causes colossal headaches, we will now delete all rows
     #which have exactly 0 histogram counts. Trust me it's needed.
     k=1
@@ -57,10 +69,27 @@ function initialise(xdir)
             k=k+1
         end
     end
-    return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
+    return HistArray,energyvector,nsum,NBins
 end
+"""
+    initialise(xdir::String)
+function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code. We read the files with readfile, process the file with processhist! and output all relevant arrays and constants.
 
+"""
+function initialise(xdir::String)
+    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(xdir::String)
 
+    HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins)
+
+    return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
+    
+end
+"""
+    nancheck(X::Vector)
+    nancheck(X::Matrix)
+function to ensure no vector or matrix contains NaN as this ruins the linear algebra.
+
+"""
 
 function nancheck(X :: Vector)
     N = length(X)
@@ -85,8 +114,11 @@ function nancheck(X::Matrix)
     end
     return check
 end
+""" 
+    bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
+function to calculate the b vector relevant to solving the RHS of the multihistogram equation. 
 
-
+"""
 function bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
     #Below we find the matrix of values n_{ij}*(ln(n_{ij} + beta_iE_j)
     #which appears frequently
@@ -118,16 +150,14 @@ function bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vecto
         B[i] = sum( bmat[i,:] .- HistArray[i,:] .*rhvec./nsum )
     end
     println("B Vector Calculated")
-    c = nancheck(B)
-    if c == 0
-        println("Problem with B")
-    end
-
     return B,bmat
 end
-# We can now calculate the much simpler A Matrix, this has two terms
-#One for all indices and one for diagonals
-function amatrix(HistArray :: Matrix,nsum,NTraj,NBins)
+"""
+    amatrix(HistArray :: Matrix,nsum,NTraj)
+This function calculates the LHS of the multihistogram equation, the A matrix.
+"""
+
+function amatrix(HistArray :: Matrix,nsum,NTraj)
     A = Array{Float64}(undef,NTraj,NTraj)
 
     for i = 1:NTraj
@@ -141,26 +171,56 @@ function amatrix(HistArray :: Matrix,nsum,NTraj,NBins)
         end
     end
     println("A Matrix Calculated")
-    c = nancheck(A) #this function identifies any NaNs now before they cause problems
-    if c == 0
-        println("Problem with A")
-    end
 
     return A
 end
-#This function translates a solved vector alpha into Entropy
-function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins,kB)
+""" 
+    systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins,kB)
+systemsolver is used to determine the solution Alpha to the linear equation Ax = b where A and b are the A matrix and b vector described above. This is fundamentally how the multihistogram method works
+"""
+function systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
+    #solve the b vector
+    b,bmat = bvector(HistArray,energyvector,beta,nsum,NTraj,NBins)
+    #solve the A matrix
+    A = amatrix(HistArray,nsum,NTraj)
+    #Check NaN
+    c1 = nancheck(A)
+    c2 = nancheck(b)
+    if c1 == 1 && c2 == 1
+        #If there isn't NaN we solve the system and get entropy
+        alpha = A \ b
+        #alpha = alpha.- alpha[NTraj]
+        println("system solved!")
+        S = Entropycalc(alpha, bmat, HistArray,nsum,NBins)
+        println("Entropy Found")
+        return alpha, S
+    else #if NaN is present we return an error
+        println("system cannot be solved")
+    end
+
+end
+"""
+    Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
+Having determined the vector solution to Ax=b, we input alpha and the "b-matrix" the term n_{ij}*(ln(n_{ij} + beta_iE_j) we can find the entropy as a function of Energy.
+"""
+function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
     S_E = []
     for j = 1:NBins 
         var = (sum(bmat[:,j] .- HistArray[:,j].*alpha))/nsum[j]
         push!(S_E,var)
     end
-    
-
 
     return S_E
 end
-function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64,NPoints)
+"""
+    analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64; NPoints=600)
+NB: NPoints is an optional keyword expressing how dense the points should be populated. 
+
+analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
+
+Output is the partition function, heat capacity and its first derivative as a function of temperature.
+"""
+function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64; NPoints=600)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
@@ -202,63 +262,59 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64
 
 return Z,Cv,dCv,T
 end
+""" 
+    multihistogram(xdir::String)
+This function completely determines the properties of a system given in a directory xdir by Edison's program. It initalises the data, calculates the properties and outputs four files: 
 
-#Here we put it aaaaaalllll together
-function systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins,kB)
-    #initialise the values
-    #HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise()
-    #solve the b vector
-    b,bmat = bvector(HistArray,energyvector,beta,nsum,NTraj,NBins)
-    #solve the A matrix
-    A = amatrix(HistArray,nsum,NTraj,NBins)
-    #Check NaN
-    c1 = nancheck(A)
-    c2 = nancheck(b)
-    if c1 == 1 && c2 == 1
-        #If there isn't NaN we solve the system and get entropy
-        alpha = A \ b
-        #alpha = alpha.- alpha[NTraj]
-        println("system solved!")
-        S = Entropycalc(alpha, bmat, HistArray,nsum,NBins,kB)
-        println("Entropy Found")
-        return alpha, S
-    else #if NaN is present we return an error
-        println("system cannot be solved")
-    end
+    histograms.data The top line are the corresponding energy values and the next NTraj lines are the raw histogram data. This file can be used to plot the histograms if needed. 
+    
+    Sol.X containing the solution to the linear equation Ax=B, 
 
-end
-function histplot(HistArray,energyvector,NTraj)
-    histplt = plot(energyvector,HistArray[1,:], legend = false)
-    for i = 2:NTraj
-        histi = HistArray[i,:]
-        histplt = plot!(histplt,energyvector,histi)
-    end
+    S.data containing the energy values and corresponding entropies 
 
-    return histplt
-end
-
+    analysis.NVT containing the temperatures, partition function, heat capacity and its derivative
+    
+"""
 
 function multihistogram(xdir::String)
-     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
-     hist=histplot(HistArray,energyvector,NTraj)
-     png(hist,"$(xdir)histo")
-     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins,kB)
-     Z,C,dC,T = analysis(energyvector,S,beta,kB,NPoints)
-     println("Quantities found")
-     cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
-     png(cvplot,"$(xdir)Cv")
-     dcvplot = plot(T,dC,xlabel="Temperature(K)",ylabel="dCv")
-     png(dcvplot,"$(xdir)dC")
-     println("analysis complete")
-     cvfile = open("$(xdir)analysis.NVT", "w")
-     writedlm(cvfile, ["T" "Cv" "dCv"])
-     writedlm(cvfile, [T C dC])
-     close(cvfile)
-        
+    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
+    #hist=histplot(HistArray,energyvector,NTraj)
+    #png(hist,"$(xdir)histo")
+    alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
+    Z,C,dC,T = analysis(energyvector,S,beta,kB)
+    println("Quantities found")
+    #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
+    #png(cvplot,"$(xdir)Cv")
+    #dcvplot = plot(T,dC,xlabel="Temperature(K)",ylabel="dCv")
+    #png(dcvplot,"$(xdir)dC")
+    println("analysis complete")
+    histfile = open("$(xdir)histograms.data", "w")
+    writedlm(histfile,[energyvector])
+    writedlm(histfile,HistArray)
+    close(histfile)
+
+    solfile = open("$(xdir)Sol.X", "w")
+    writedlm(solfile,["alpha"])
+    writedlm(solfile,[alpha])
+    close(solfile)
+
+    entropyfile = open("$(xdir)S.data", "w")
+    writedlm(entropyfile, ["E" "Entropy"])
+    writedlm(entropyfile, [energyvector S ])
+    close(entropyfile)
+
+    cvfile = open("$(xdir)analysis.NVT", "w")
+    writedlm(cvfile, ["T" "Z" "Cv" "dCv"])
+    writedlm(cvfile, [T Z C dC])
+    close(cvfile)
+       
 end
 
 
+
+
+
+
+
+
 end
-
-
-
