@@ -99,9 +99,19 @@ end
     @test en_tot ≈ -0.005634686479114
 end
 
-#@testset "MCLoop"
-
-#end
+@testset "MCLoop"
+    temp = TempGrid{32}(5.,16.) 
+    @test length(temp.t_grid) == 32
+    const kB = 3.16681196E-6 
+    @test temp.t_grid[1] == 1. / (kB * temp.beta_grid[1])
+    atom_displ = 0.1*sqrt(displ_atom*temp.t_grid[1])
+    mc_state = MCState(temp.t_grid[1], temp.beta_grid[1], config_ne13, pot; max_displ=[atom_displ,0.01,1.])
+    @test mc_state.temp == 1. / (kB * mc_state.beta)
+    @test mc_state.en_tot ≈ -0.005634686479114
+    @test mc_state.max_displ[1] ≈ 0.0707106781186548 #atol = 0.000000001
+    @test mc_state.count_atom == [0,0]
+    @test mc_state.count_exc[1] == 0
+end
 
 # @testset "Point" begin
 #     p1 = Point(1.,1.,1.)
