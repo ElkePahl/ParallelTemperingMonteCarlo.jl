@@ -118,7 +118,7 @@ end
 Base.length(::Config{N}) where N = N
 
 
-"""
+#= """
     move_atom!(pos, delta_move, bc)
 
 Moves an atom at position `pos` by `delta_move`.
@@ -127,7 +127,7 @@ implemented for:
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
     - `CubicBC`: (to be added) periodic boundary condition implemented
 
-"""
+""" =#
 #function move_atom!(config::Config, n_atom, delta_move)
 #    config.pos[n_atom] += delta_move
 #    return config

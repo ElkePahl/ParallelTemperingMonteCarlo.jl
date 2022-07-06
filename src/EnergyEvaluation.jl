@@ -7,10 +7,14 @@ this module provides data, structs and methods for dimer energy and total energy
 module EnergyEvaluation
 
 using StaticArrays
+using ..Configurations
 
 export AbstractPotential, AbstractDimerPotential 
 export ELJPotential, ELJPotentialEven
-export dimer_energy, dimer_energy_atom, dimer_energy_config, energy_update
+export dimer_energy, dimer_energy_atom, dimer_energy_config
+export energy_update
+export AbstractEnsemble, NVT, NPT
+export EnHist
 
 """   
     AbstractPotential
@@ -62,16 +66,22 @@ and potential information `pot` [`Abstract_Potential`](@ref)
 function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
-    for i in 1:NAtoms
-        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot)
+    for i in 1:NAtoms #eachindex(),enumerate()..?
+        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot) #@view distmat[i, :]
         energy_tot += dimer_energy_vec[i]
     end 
     return dimer_energy_vec, 0.5*energy_tot
 end    
 
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
-    en = dimer_energy_atom(i_atom, dist2_new, pot1) 
-    return en
+    return dimer_energy_atom(i_atom, dist2_new, pot)
+end
+
+function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
+    dist2_new = [distance2(pos,b) for b in config.pos]
+    dist2_new[i_atom] = 0.
+    delta_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
+    return delta_en, dist2_new
 end
 
 """
@@ -150,6 +160,66 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
         r6inv /= r2 
     end
     return sum1
+end
+
+"""
+    AbstractEnsemble
+abstract type for ensemble:
+    - NVT: canonical ensemble
+    - NPT: isothermal, isobaric
+"""
+abstract type AbstractEnsemble end
+
+"""
+    NVT
+ canonical ensemble
+ fieldname: natoms: number of atoms
+"""
+struct NVT <: AbstractEnsemble
+    n_atoms::Int
+end
+
+"""
+    NPT
+ isothermal, isobaric ensemble
+ fieldnames: 
+ - natoms: number of atoms
+ - pressure
+"""
+struct NPT <: AbstractEnsemble
+    n_atoms::Int
+    pressure::Real
+end
+
+"""
+    EnHist(n_bin, en_min::T, en_max::T)
+    EnHist(n_bin; en_min=-0.006, en_max=-0.001)
+Collects data for energy histograms per temperature
+Field names:    
+- `n_bins`: number of energy bins
+- `en_min`,`en_max`: minimum and maximum energy between which data is collected
+- `delta_en_bin`: energy spacing of bins
+- `en_hist`: stores number of sampled configurations per energy bins
+"""
+struct EnHist{T}
+    n_bin::Int
+    en_min::Ref{T}
+    en_max::Ref{T}
+    delta_en_bin::Ref{T}
+    en_hist::Vector{Int}
+end
+
+function EnHist(n_bin, en_min::T, en_max::T) where T
+    delta_en_bin = (en_max-en_min)/n_bin
+    en_hist = zeros(Int, n_bin)
+    return EnHist{T}(n_bin,en_min,en_max,delta_en_bin,en_hist)
+end
+
+function EnHist(n_bin; en_min=-0.006, en_max=-0.001)
+    T = eltype(en_min)
+    delta_en_bin = (en_max-en_min)/n_bin
+    en_hist = zeros(Int, n_bin)
+    return EnHist{T}(n_bin,en_min,en_max,delta_en_bin,en_hist)
 end
 
 end

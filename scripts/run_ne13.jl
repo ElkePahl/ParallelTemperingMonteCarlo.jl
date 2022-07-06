@@ -1,43 +1,43 @@
 using ParallelTemperingMonteCarlo
+using Random,Plots
+
+#set random seed - for reproducibility
+Random.seed!(1234)
 
 # number of atoms
 n_atoms = 13
 
 # temperature grid
-ti = 2.
+ti = 5.
 tf = 16.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
-# MC details
-mc_cycles = 10000
-mc_sample = 1
+# MC simulation details
+mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_sample = 1  #sample every mc_sample MC cycles
 
-move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-max_displ = 0.1 # Angstrom
+#move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
+displ_atom = 0.1 # Angstrom
+n_adjust = 100
 
-mc_params = MCParams(mc_cycles) #20% equilibration is default
-displ_param = DisplacementParamsAtomMove(move_atom, max_displ, temp.t_grid; update_stepsize=100)
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
-#histograms
-Ebins = 100
-Emin = -0.006
-Emax = -0.001
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
-dE = (Emax-Emin)/Ebins
-Ehistogram = Array{Array}(undef,n_traj)      #initialization
-for i=1:n_traj
-    Ehistogram[i]=zeros(Ebins)
-end
+#moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
+move_strat = MoveStrategy(atom_moves = n_atoms)  
+
+#ensemble
+ensemble = NVT(n_atoms)
 
 #ELJpotential for neon
-#check units!!!
-c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
-elj_ne1 = ELJPotential{11}(c1)
+#c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
+#elj_ne1 = ELJPotential{11}(c1)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
-elj_ne = ELJPotentialEven{6}(c)
+pot = ELJPotentialEven{6}(c)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -55,29 +55,32 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [-2.033762834001679, 0.643989905095452, 2.132999911364582],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]]
 
+#convert to Bohr
+AtoBohr = 1.88973
+pos_ne13 = pos_ne13 * AtoBohr
+
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-#define boundary conditions starting configuration
-bc_ne13 = SphericalBC(radius=5.32)   #Angstrom
+#boundary conditions 
+bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 
 #starting configuration
-conf_ne13 = Config(pos_ne13, bc_ne13)
+start_config = Config(pos_ne13, bc_ne13)
 
-count_acc = zeros(n_traj)
-count_acc_adj = zeros(n_traj)
+#histogram information
+n_bin = 100
+#en_min = -0.006    #might want to update after equilibration run if generated on the fly
+#en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
-count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
-count_exc = zeros(n_traj)        #number of proposed exchanges
-count_exc_acc = zeros(n_traj)    #number of accepted exchanges
+#construct array of MCState (for each temperature)
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
-count_v_acc = zeros(n_traj)        #total count of acceptance
-count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
+#results = Output(n_bin, max_displ_vec)
+results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-count_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
-count_exc = zeros(n_traj)        #number of proposed exchanges
-count_exc_acc = zeros(n_traj)    #number of accepted exchanges
+ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
-count_v_acc = zeros(n_traj)        #total count of acceptance
-count_v_acc_adj = zeros(n_traj)    #acceptance used for stepsize adjustment, will be reset to 0 after each adjustment
+#plot(temp.t_grid,results.heat_cap)
 
-displ_param = DisplacementParamsAtomMove(max_displ, temp.t_grid; update_stepsize=100)
+#data = [results.en_histogram[i].en_hist for i in 1:n_traj]
+#plot(data)
