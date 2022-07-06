@@ -339,20 +339,24 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     T = typeof(mc_states[1].ham[1])
     en_min = T[]
     en_max = T[]
+    
     for i_traj in 1:mc_params.n_traj
         push!(en_min,minimum(mc_states[i_traj].ham))
         push!(en_max,maximum(mc_states[i_traj].ham))
     end 
     global_en_min = minimum(en_min)
     global_en_max = maximum(en_max)
-    delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
-    
+    #delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
+
+    results.en_min = global_en_min
+    results.en_max = global_en_max
+
 
     for i_traj in 1:mc_params.n_traj
-        hist = EnHist(results.n_bin, global_en_min, global_en_max)
+        hist = zeroes(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
         for en in mc_states[i_traj].ham
             index = floor(Int,(en - global_en_min) / delta_en) + 1
-            hist.en_hist[index] += 1
+            hist[index] += 1
         end
         push!(results.en_histogram, hist)
     end
