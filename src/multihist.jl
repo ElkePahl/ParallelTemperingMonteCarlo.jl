@@ -3,9 +3,15 @@ module Multihistogram
 
 using DelimitedFiles, LinearAlgebra
 
+using ..InputParams
+
+export multihistogram
+
 """
     readfile(xdir::String)
-reads output files for the FORTRAN PTMC code written by Edison Florez.
+method 1: xdir::String -reads output files for the FORTRAN PTMC code written by Edison Florez.
+method 2: Output::Output,Tvals::TempGrid - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
+
 xdir is the directory containing the histogram information usually /path/to/output/histograms
 
 `HistArray` is the NTrajxNBins array containing all histogram counts
@@ -38,6 +44,23 @@ function readfile(xdir::String)
 
     return HistArray,energyvector,beta,NTraj,NBins,kB
 end
+
+function readfile(Output::Output, Tvals::TempGrid )
+
+    const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
+
+    NTraj = length(Tvals.beta_grid)
+
+    de = ( Output.e_max - Output.e_min )/(Output.n_bin - 1)
+
+    energyvector = [(j-1)*de + Output.e_min for j=1:Output.n_bin ]
+
+    HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
+    for i in 1:NTraj
+        HistArray[i,:] = Output.en_histogram[i]
+    end
+
+    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bins ,kB
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
 This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent NaN errors when doing the required calculations.
@@ -73,7 +96,10 @@ function processhist!(HistArray,energyvector,NBins)
 end
 """
     initialise(xdir::String)
-function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code. We read the files with readfile, process the file with processhist! and output all relevant arrays and constants.
+    (Output::Output,Tvec::TempGrid)
+function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code for method one, or directly from the output data given from the Julia PTMC code.
+    
+    We read the files with readfile, process the file with processhist! and output all relevant arrays and constants as defined in the constituent functions.
 
 """
 function initialise(xdir::String)
@@ -83,6 +109,14 @@ function initialise(xdir::String)
 
     return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
     
+end
+function initialise(Output::Output,Tvec::TempGrid)
+    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output::Output,Tvec::TempGrid)
+
+    HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins)
+
+    return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
+
 end
 """
     nancheck(X::Vector)
@@ -263,8 +297,9 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64
 return Z,Cv,dCv,T
 end
 """ 
-    multihistogram(xdir::String)
-This function completely determines the properties of a system given in a directory xdir by Edison's program. It initalises the data, calculates the properties and outputs four files: 
+    runmultihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
+
+This function completely determines the properties of a system given by the output of the initialise function and a specified directory to write to. It outputs four files with the following information:
 
     histograms.data The top line are the corresponding energy values and the next NTraj lines are the raw histogram data. This file can be used to plot the histograms if needed. 
     
@@ -276,8 +311,10 @@ This function completely determines the properties of a system given in a direct
     
 """
 
-function multihistogram(xdir::String)
-    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
+function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
+
+    #HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
+
     #hist=histplot(HistArray,energyvector,NTraj)
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
@@ -288,32 +325,43 @@ function multihistogram(xdir::String)
     #dcvplot = plot(T,dC,xlabel="Temperature(K)",ylabel="dCv")
     #png(dcvplot,"$(xdir)dC")
     println("analysis complete")
-    histfile = open("$(xdir)histograms.data", "w")
+    histfile = open("$(outdir)histograms.data", "w")
     writedlm(histfile,[energyvector])
     writedlm(histfile,HistArray)
     close(histfile)
 
-    solfile = open("$(xdir)Sol.X", "w")
+    solfile = open("$(outdir)Sol.X", "w")
     writedlm(solfile,["alpha"])
     writedlm(solfile,[alpha])
     close(solfile)
 
-    entropyfile = open("$(xdir)S.data", "w")
+    entropyfile = open("$(outdir)S.data", "w")
     writedlm(entropyfile, ["E" "Entropy"])
     writedlm(entropyfile, [energyvector S ])
     close(entropyfile)
 
-    cvfile = open("$(xdir)analysis.NVT", "w")
+    cvfile = open("$(outdir)analysis.NVT", "w")
     writedlm(cvfile, ["T" "Z" "Cv" "dCv"])
     writedlm(cvfile, [T Z C dC])
     close(cvfile)
        
 end
 
+"""
+    multihistogram(xdir::String)
+    multihistogram(Output::Output,Tvec::TempGrid)
+Function has two methods which vary only in how the initialise function is called: one takes a directory and writes the output of the multihistogram analysis to that directory, the other takes the output and temperature grid and writes to the current directory unless specified otherwise.
+    
+    The output of this function are the four files defined in run_multihistogram.
 
-
-
-
+"""
+function multihistogram(xdir::String)
+    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
+    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB; outdir = xdir)
+end
+function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
+    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output::Output,Tvec::TempGrid)
+    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
 
 
 
