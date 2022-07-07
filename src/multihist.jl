@@ -61,6 +61,7 @@ function readfile(Output::Output, Tvals::TempGrid )
     end
 
     return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bins ,kB
+end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
 This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent NaN errors when doing the required calculations.
@@ -69,7 +70,7 @@ This function normalises the histograms, collates the bins into their total coun
 `nsum` is merely the total histogram count for each energy bin
 
 """
-function processhist!(HistArray,energyvector,NBins)
+function processhist!(HistArray,energyvector,NBins,NTraj)
     for i in 1:NTraj
         #NB in Florent's original code this factor of NBins*i normalised everything
         HistArray[i,:] = HistArray[i,:]./(NBins)#*i)
@@ -105,7 +106,7 @@ function to retrieve all histogram information from the histogram directory outp
 function initialise(xdir::String)
     HistArray,energyvector,beta,NTraj,NBins,kB = readfile(xdir::String)
 
-    HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins)
+    HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins,NTraj)
 
     return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
     
@@ -113,7 +114,7 @@ end
 function initialise(Output::Output,Tvec::TempGrid)
     HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output::Output,Tvec::TempGrid)
 
-    HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins)
+    HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins,NTraj)
 
     return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
 
@@ -254,7 +255,7 @@ analysis takes in the energy bin values, entropy per energy and inverse temperat
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
-function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64; NPoints=600)
+function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64, NPoints=600)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
@@ -264,9 +265,15 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64
    y = Array{Float64}(undef,NPoints,NBins)
    XP = Array{Float64}(undef,NPoints,NBins)
    nexp = 0
-   for x = [:Z, :U, :U2, :Cv, :dCv, :r2, :r3]
-       @eval $x = Array{Float64}(undef,NPoints)
-   end
+
+   
+   Z = Array{Float64}(undef,NPoints)
+   U = Array{Float64}(undef,NPoints)
+   U2 = Array{Float64}(undef,NPoints)
+   Cv = Array{Float64}(undef,NPoints)
+   dCv = Array{Float64}(undef,NPoints)
+   r2 = Array{Float64}(undef,NPoints)
+   r3 = Array{Float64}(undef,NPoints)
    #below we begin the calculation of thermodynamic quantities
    for i = 1:NPoints
        #y is a matrix of free energy
@@ -357,12 +364,14 @@ Function has two methods which vary only in how the initialise function is calle
 """
 function multihistogram(xdir::String)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
-    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB; outdir = xdir)
+    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
 end
 function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output::Output,Tvec::TempGrid)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
 
 
+
+end
 
 end
