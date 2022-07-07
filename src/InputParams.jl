@@ -19,6 +19,12 @@ export Output
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
+const JtoEh=2.2937104486906E17
+
+const A3tom3=10.0E-30
+
+const Bohr3tom3=1.4818474345E-31
+
 """
     MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100)
 Type that collects MC specific data: 
