@@ -47,7 +47,7 @@ end
 
 function readfile(Output::Output, Tvals::TempGrid )
 
-    const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
+    kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
     NTraj = length(Tvals.beta_grid)
 
@@ -60,7 +60,7 @@ function readfile(Output::Output, Tvals::TempGrid )
         HistArray[i,:] = Output.en_histogram[i]
     end
 
-    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bins ,kB
+    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bins , Outputs.kB
 end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
@@ -366,6 +366,7 @@ function multihistogram(xdir::String)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
 end
+
 function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output::Output,Tvec::TempGrid)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)

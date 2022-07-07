@@ -361,7 +361,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
 
     for i_traj in 1:mc_params.n_traj
-        hist = zeroes(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
+        hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
         for en in mc_states[i_traj].ham
             index = floor(Int,(en - global_en_min) / delta_en) + 1
             hist[index] += 1
