@@ -112,7 +112,8 @@ function initialise(xdir::String)
     
 end
 function initialise(Output::Output,Tvec::TempGrid)
-    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output::Output,Tvec::TempGrid)
+
+    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output,Tvec)
 
     HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins,NTraj)
 
@@ -368,7 +369,7 @@ function multihistogram(xdir::String)
 end
 
 function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
-    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output::Output,Tvec::TempGrid)
+    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
 
 
