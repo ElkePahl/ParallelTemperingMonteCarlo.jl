@@ -19,6 +19,6 @@ include("multihist.jl")
  #@reexport using .Initialization
  @reexport using .MCMoves
  @reexport using .MCRun
- @reexport using Multihistogram
+ @reexport using .Multihistogram
 
 end # module
