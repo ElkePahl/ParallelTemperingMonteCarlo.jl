@@ -98,6 +98,25 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     return trial_pos
 end
 
+function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+    trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
+    return trial_pos
+end
+
+
+"""
+    function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
+scale the whole configuration, including positions and the box length.
+returns the trial configuration as a struct. 
+"""
+function volume_change(conf::Config, max_vchange)
+    scale = exp((rand()-0.5)*max_vchange)^(1/3)
+    trial_config = Config(conf.pos * scale, PeriodicBC(conf.bc.box_length * scale))
+    return trial_config
+end
+
 """
     update_max_stepsize!(displ, n_update, count_accept, n_atom)
 update of maximum step size of atom moves after n_update MC cyles (n_atom moves per cycle)
