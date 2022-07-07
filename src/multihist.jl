@@ -51,16 +51,16 @@ function readfile(Output::Output, Tvals::TempGrid )
 
     NTraj = length(Tvals.beta_grid)
 
-    de = ( Output.e_max - Output.e_min )/(Output.n_bin - 1)
+    de = ( Output.en_max - Output.en_min )/(Output.n_bin - 1)
 
-    energyvector = [(j-1)*de + Output.e_min for j=1:Output.n_bin ]
+    energyvector = [(j-1)*de + Output.en_min for j=1:Output.n_bin ]
 
     HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
     for i in 1:NTraj
         HistArray[i,:] = Output.en_histogram[i]
     end
 
-    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bins , Outputs.kB
+    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , Outputs.kB
 end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
