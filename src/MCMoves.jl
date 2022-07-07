@@ -8,6 +8,7 @@ export atom_displacement, update_max_stepsize!
 using StaticArrays
 
 using ..BoundaryConditions
+using ..Configurations
 
 """
     MoveStrategy(atom_moves, vol_moves, rot_moves)
