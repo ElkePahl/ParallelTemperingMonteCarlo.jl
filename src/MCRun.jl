@@ -72,11 +72,19 @@ Returns probability to accept a MC move at inverse temperature `beta`
 for energy difference `delta_en` between new and old configuration 
 for given ensemble; implemented: 
     - `NVT`: canonical ensemble
+    - `NPT`: NPT ensemble
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
 Boltzmann probability otherwise
 """
 function metropolis_condition(::NVT, delta_en, beta)
     prob_val = exp(-delta_en*beta)
+    T = typeof(prob_val)
+    return ifelse(prob_val > 1, T(1), prob_val)
+end
+
+function metropolis_condition(::NPT, N, delta_en, volume_changed, volume_unchanged, pressure, beta)
+    delta_h = delta_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
+    prob_val = exp(-delta_h*beta + NAtoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
