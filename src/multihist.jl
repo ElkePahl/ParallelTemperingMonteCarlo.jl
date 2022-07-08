@@ -1,7 +1,7 @@
 module Multihistogram
 
 
-using DelimitedFiles, LinearAlgebra
+using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
 
@@ -155,7 +155,7 @@ end
 function to calculate the b vector relevant to solving the RHS of the multihistogram equation. 
 
 """
-function bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
+function bvector(HistArray::Matrix,energyvector,beta,nsum,NTraj,NBins)
     #Below we find the matrix of values n_{ij}*(ln(n_{ij} + beta_iE_j)
     #which appears frequently
     logmat = Array{Float64}(undef,NTraj,NBins)
