@@ -150,6 +150,14 @@ Finds the distance between two positions a and b.
 """
 distance2(a,b) = (a-b)⋅(a-b)
 
+"""
+    distance2(a,b,bc::CubicBC) 
+    
+Finds the distance between two positions a and the nearest image of b in a cubic box.
+"""
+distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
+
+
 #distance matrix
 """
     get_distance_mat(conf::Config{N})
