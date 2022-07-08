@@ -354,7 +354,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     end 
     global_en_min = minimum(en_min)
     global_en_max = maximum(en_max)
-    #delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
+    delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
 
     results.en_min = global_en_min
     results.en_max = global_en_max

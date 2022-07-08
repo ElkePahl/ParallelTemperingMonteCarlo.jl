@@ -256,7 +256,7 @@ analysis takes in the energy bin values, entropy per energy and inverse temperat
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
-function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64, NPoints=600)
+function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
