@@ -281,15 +281,24 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        y[i,:] = S_E[:] .-energyvector[:]./(T[i]*kB)
        #here we set the zero of free energy
        nexp = maximum(y)
+       count=0
        #below we calculate the partition function
        @label start
+
+       if count == 100
+        println("loop stuck")
+       end
+       
        XP[i,:] = exp.(y[i,:].-nexp)
        Z[i] = sum(XP[i,:] )
+       
        #this loop exists to make sure the scale of our partition function is sensible
         if Z[i] < 1.
+            count += 1
             nexp -=1.2
             @goto start
         elseif Z[i] > 100.
+            count += 1
             nexp +=2
             @goto start
         end
