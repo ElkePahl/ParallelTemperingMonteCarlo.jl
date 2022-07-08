@@ -60,7 +60,7 @@ function readfile(Output::Output, Tvals::TempGrid )
         HistArray[i,:] = Output.en_histogram[i]
     end
 
-    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , Outputs.kB
+    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , kB
 end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
