@@ -302,7 +302,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
             nexp +=2
             @goto start
         end
-        print("Normalised $count times")
+        
        U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
        U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]
        r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
@@ -311,7 +311,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
 
    end
-
+   print("Normalised $count times")
 return Z,Cv,dCv,T
 end
 """ 
