@@ -84,7 +84,7 @@ Random displacement determined by `max_displacement`
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `CubicBC`: (to be added) periodic boundary condition enforced
+    - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
 """
 function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
