@@ -292,8 +292,9 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        #this loop exists to make sure the scale of our partition function is sensible
        #the numbers are utterly arbitrary, they have been chosen so that they don't create a loop
        
-       
-        if Z[i] < 1.
+        if count == 10000
+            println("renormalisation failed")
+        elseif Z[i] < 1.
             count += 1
 
             nexp -=1.74  
