@@ -341,6 +341,7 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     #hist=histplot(HistArray,energyvector,NTraj)
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
+    println("beginning calculation of quantities")
     Z,C,dC,T = analysis(energyvector,S,beta,kB)
     println("Quantities found")
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
