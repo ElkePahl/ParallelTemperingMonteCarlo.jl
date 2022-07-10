@@ -290,16 +290,18 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        Z[i] = sum(XP[i,:] )
        
        #this loop exists to make sure the scale of our partition function is sensible
+       #the numbers are utterly arbitrary, they have been chosen so that they don't create a loop
+       
        
         if Z[i] < 1.
             count += 1
 
-            nexp -=1.8
+            nexp -=1.74  
             @goto start
         elseif Z[i] > 100.
 
             count += 1
-            nexp +=2
+            nexp +=1.963
             @goto start
         end
         
