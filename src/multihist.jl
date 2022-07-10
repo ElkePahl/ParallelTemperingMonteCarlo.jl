@@ -282,9 +282,10 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        y[i,:] = S_E[:] .-energyvector[:]./(T[i]*kB)
        #here we set the zero of free energy
        nexp = maximum(y)
-
+        println("max entropy = $nexp")
        count=0
        #below we calculate the partition function
+       println("begin renormalisation")
        @label start
        XP[i,:] = exp.(y[i,:].-nexp)
        Z[i] = sum(XP[i,:] )
@@ -297,12 +298,12 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
         elseif Z[i] < 1.
             count += 1
 
-            nexp -=1.74  
+            nexp -= 1.  
             @goto start
         elseif Z[i] > 100.
 
             count += 1
-            nexp +=1.963
+            nexp += 0.7
             @goto start
         end
         
