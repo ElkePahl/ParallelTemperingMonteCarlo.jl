@@ -296,7 +296,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
         if Z[i] < 1.
             count += 1
 
-            nexp -=1.74  
+            nexp -=.74  
             @goto start
         elseif Z[i] > 100.
 
