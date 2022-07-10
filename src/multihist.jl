@@ -315,6 +315,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
 
    end
+   
    print("Normalised $count times")
 return Z,Cv,dCv,T
 end
