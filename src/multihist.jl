@@ -1,7 +1,7 @@
 module Multihistogram
 
 
-using DelimitedFiles, LinearAlgebra
+using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
 
@@ -47,20 +47,20 @@ end
 
 function readfile(Output::Output, Tvals::TempGrid )
 
-    const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
+    kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
     NTraj = length(Tvals.beta_grid)
 
-    de = ( Output.e_max - Output.e_min )/(Output.n_bin - 1)
+    de = ( Output.en_max - Output.en_min )/(Output.n_bin - 1)
 
-    energyvector = [(j-1)*de + Output.e_min for j=1:Output.n_bin ]
+    energyvector = [(j-1)*de + Output.en_min for j=1:Output.n_bin ]
 
     HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
     for i in 1:NTraj
         HistArray[i,:] = Output.en_histogram[i]
     end
 
-    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bins ,kB
+    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , kB
 end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
@@ -112,7 +112,8 @@ function initialise(xdir::String)
     
 end
 function initialise(Output::Output,Tvec::TempGrid)
-    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output::Output,Tvec::TempGrid)
+
+    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output,Tvec)
 
     HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins,NTraj)
 
@@ -154,7 +155,7 @@ end
 function to calculate the b vector relevant to solving the RHS of the multihistogram equation. 
 
 """
-function bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
+function bvector(HistArray::Matrix,energyvector,beta,nsum,NTraj,NBins)
     #Below we find the matrix of values n_{ij}*(ln(n_{ij} + beta_iE_j)
     #which appears frequently
     logmat = Array{Float64}(undef,NTraj,NBins)
@@ -255,7 +256,7 @@ analysis takes in the energy bin values, entropy per energy and inverse temperat
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
-function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64, NPoints=600)
+function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
@@ -275,23 +276,33 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64
    r2 = Array{Float64}(undef,NPoints)
    r3 = Array{Float64}(undef,NPoints)
    #below we begin the calculation of thermodynamic quantities
+
    for i = 1:NPoints
        #y is a matrix of free energy
        y[i,:] = S_E[:] .-energyvector[:]./(T[i]*kB)
        #here we set the zero of free energy
        nexp = maximum(y)
+
+       count=0
        #below we calculate the partition function
        @label start
        XP[i,:] = exp.(y[i,:].-nexp)
        Z[i] = sum(XP[i,:] )
+       
        #this loop exists to make sure the scale of our partition function is sensible
+       
         if Z[i] < 1.
-            nexp -=2
+            count += 1
+
+            nexp -=1.8
             @goto start
         elseif Z[i] > 100.
+
+            count += 1
             nexp +=2
             @goto start
         end
+        
        U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
        U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]
        r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
@@ -300,7 +311,7 @@ function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
 
    end
-
+   print("Normalised $count times")
 return Z,Cv,dCv,T
 end
 """ 
@@ -366,8 +377,9 @@ function multihistogram(xdir::String)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
 end
+
 function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
-    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output::Output,Tvec::TempGrid)
+    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
 
 
