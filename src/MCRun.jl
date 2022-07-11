@@ -72,11 +72,19 @@ Returns probability to accept a MC move at inverse temperature `beta`
 for energy difference `delta_en` between new and old configuration 
 for given ensemble; implemented: 
     - `NVT`: canonical ensemble
+    - `NPT`: NPT ensemble
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
 Boltzmann probability otherwise
 """
 function metropolis_condition(::NVT, delta_en, beta)
     prob_val = exp(-delta_en*beta)
+    T = typeof(prob_val)
+    return ifelse(prob_val > 1, T(1), prob_val)
+end
+
+function metropolis_condition(::NPT, N, delta_en, volume_changed, volume_unchanged, pressure, beta)
+    delta_h = delta_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
+    prob_val = exp(-delta_h*beta + NAtoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -339,6 +347,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     T = typeof(mc_states[1].ham[1])
     en_min = T[]
     en_max = T[]
+    
     for i_traj in 1:mc_params.n_traj
         push!(en_min,minimum(mc_states[i_traj].ham))
         push!(en_max,maximum(mc_states[i_traj].ham))
@@ -346,13 +355,16 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     global_en_min = minimum(en_min)
     global_en_max = maximum(en_max)
     delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
-    
+
+    results.en_min = global_en_min
+    results.en_max = global_en_max
+
 
     for i_traj in 1:mc_params.n_traj
-        hist = EnHist(results.n_bin, global_en_min, global_en_max)
+        hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
         for en in mc_states[i_traj].ham
             index = floor(Int,(en - global_en_min) / delta_en) + 1
-            hist.en_hist[index] += 1
+            hist[index] += 1
         end
         push!(results.en_histogram, hist)
     end

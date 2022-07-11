@@ -8,6 +8,7 @@ export atom_displacement, update_max_stepsize!
 using StaticArrays
 
 using ..BoundaryConditions
+using ..Configurations
 
 """
     MoveStrategy(atom_moves, vol_moves, rot_moves)
@@ -83,7 +84,7 @@ Random displacement determined by `max_displacement`
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `CubicBC`: (to be added) periodic boundary condition enforced
+    - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
 """
 function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
@@ -96,6 +97,25 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
         count == 100 && error("Error: too many moves out of binding sphere")
     end
     return trial_pos
+end
+
+function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+    trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
+    return trial_pos
+end
+
+
+"""
+    function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
+scale the whole configuration, including positions and the box length.
+returns the trial configuration as a struct. 
+"""
+function volume_change(conf::Config, max_vchange)
+    scale = exp((rand()-0.5)*max_vchange)^(1/3)
+    trial_config = Config(conf.pos * scale, PeriodicBC(conf.bc.box_length * scale))
+    return trial_config
 end
 
 """
