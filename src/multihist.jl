@@ -279,12 +279,20 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
 
    for i = 1:NPoints
        #y is a matrix of free energy
-       y[i,:] = S_E[:] .-energyvector[:]./(T[i]*kB)
+       y[i,:] = S_E[:] .- energyvector[:]./(T[i]*kB)
        #here we set the zero of free energy
-       if maximum(y) != NaN
-        nexp = maximum(y)
+       Stest = nancheck(S_E)
+       energyvectest = nancheck(energyvector)
+       ytest = nancheck(y[i,:])
+       
+       if Stest == 0
+        println("Entropy is a problem")
+       elseif energyvectest == 0
+        println("energyvector is a problem")
+       elseif ytest == 0
+        println("vector $i at temperature $(T[i]) is a problem")
        else
-        nexp = 0
+        println("no problems with NaN")
        end
 
        count=0
