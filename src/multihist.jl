@@ -281,8 +281,12 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        #y is a matrix of free energy
        y[i,:] = S_E[:] .-energyvector[:]./(T[i]*kB)
        #here we set the zero of free energy
-       nexp = maximum(y)
-       println("max entropy = $nexp")
+       if maximum(y) != NaN
+        nexp = maximum(y)
+       else
+        nexp = 0
+       end
+
        count=0
        #below we calculate the partition function
        println("begin renormalisation")
@@ -293,9 +297,8 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        #this loop exists to make sure the scale of our partition function is sensible
        #the numbers are utterly arbitrary, they have been chosen so that they don't create a loop
        
-        if count == 10000
-            println("renormalisation failed")
-        elseif Z[i] < 1.
+        
+        if Z[i] < 1.
             count += 1
 
             nexp -= 1.  
@@ -313,7 +316,6 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        r3[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
-       print("Renormalised $count times")
    end
    
    
