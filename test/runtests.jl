@@ -58,6 +58,18 @@ end
     @test check_boundary(bc,SVector(0,0.5,0.5)) == false
 end
 
+@testset "TemperatureGrid"
+    n_traj = 32
+    temp = TempGrid{n_traj}(2, 16)
+    kB = 3.16681196E-6 
+    @test temp.t_grid[1] ≈ 2.0
+    @test length(temp.t_grid) == n_traj
+    @test length(temp.beta_grid) == n_traj
+    @test 1. /(temp.t_grid[1]*temp.beta_grid[1]) ≈ kB
+    temp1 = TempGrid{n_traj}(2, 16; tdistr = :equally_spaced)
+    @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
+end
+
 @testset "Potentials" begin
     c = [-2.,0.,1.]
     pot =  ELJPotential{3}(c)
