@@ -293,7 +293,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
         println("vector $i at temperature $(T[i]) is a problem")
        end
 
-       count=0
+       #count=0  this variable was included for bug testing and should be excluded from the main program
        #below we calculate the partition function
        
        @label start
@@ -305,13 +305,13 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        
         
         if Z[i] < 1.
-            count += 1
+            #count += 1
 
             nexp -= 1.  
             @goto start
         elseif Z[i] > 100.
 
-            count += 1
+            #count += 1
             nexp += 0.7
             @goto start
         end
