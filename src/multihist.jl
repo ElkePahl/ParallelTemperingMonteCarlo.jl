@@ -313,6 +313,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        r3[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
+       print("Renormalised $count times")
    end
    
    
