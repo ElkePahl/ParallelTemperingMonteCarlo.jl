@@ -58,7 +58,7 @@ end
     @test check_boundary(bc,SVector(0,0.5,0.5)) == false
 end
 
-@testset "TemperatureGrid"
+@testset "TemperatureGrid" begin
     n_traj = 32
     temp = TempGrid{n_traj}(2, 16)
     kB = 3.16681196E-6 
@@ -95,3 +95,4 @@ end
     @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
     #@test en_vec
 end
+
