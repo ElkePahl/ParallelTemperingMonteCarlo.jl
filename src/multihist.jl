@@ -124,9 +124,7 @@ end
     nancheck(X::Vector)
     nancheck(X::Matrix)
 function to ensure no vector or matrix contains NaN as this ruins the linear algebra.
-
 """
-
 function nancheck(X :: Vector)
     N = length(X)
     check = 1
@@ -279,29 +277,42 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
 
    for i = 1:NPoints
        #y is a matrix of free energy
-       y[i,:] = S_E[:] .-energyvector[:]./(T[i]*kB)
+       y[i,:] = S_E[:] .- energyvector[:]./(T[i]*kB)
        #here we set the zero of free energy
-       nexp = maximum(y)
 
-       count=0
+       Stest = nancheck(S_E)
+       energyvectest = nancheck(energyvector)
+       ytest = nancheck(y[i,:])
+
+       if Stest == 0
+        println("Entropy is a problem")
+       elseif energyvectest == 0
+        println("energyvector is a problem")
+       elseif ytest == 0
+        println("vector $i at temperature $(T[i]) is a problem")
+       end
+
+       #count=0  this variable was included for bug testing and should be excluded from the main program
+
        #below we calculate the partition function
+       
        @label start
        XP[i,:] = exp.(y[i,:].-nexp)
        Z[i] = sum(XP[i,:] )
        
        #this loop exists to make sure the scale of our partition function is sensible
        #the numbers are utterly arbitrary, they have been chosen so that they don't create a loop
-       
-       
+        
         if Z[i] < 1.
-            count += 1
+            #count += 1
 
-            nexp -=1.74  
+            nexp -= 1.  
             @goto start
         elseif Z[i] > 100.
 
-            count += 1
-            nexp +=1.963
+            #count += 1
+            nexp += 0.7
+
             @goto start
         end
         
@@ -311,9 +322,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        r3[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
-
    end
-   print("Normalised $count times")
 return Z,Cv,dCv,T
 end
 """ 
@@ -330,7 +339,6 @@ This function completely determines the properties of a system given by the outp
     analysis.NVT containing the temperatures, partition function, heat capacity and its derivative
     
 """
-
 function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
 
     #HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
@@ -338,6 +346,7 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     #hist=histplot(HistArray,energyvector,NTraj)
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
+
     Z,C,dC,T = analysis(energyvector,S,beta,kB)
     println("Quantities found")
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
