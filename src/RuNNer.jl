@@ -4,7 +4,9 @@ using DelimitedFiles,DataFrames,StaticArrays
 
 using ..Configurations
 #using 
-
+export initialiseconfiguration,initialisetrajectories
+export updateconfiguration!
+export getenergy,getenergy!
 #----------------------------------------------------------------------#
 #----------------------RuNNer output and read functions----------------#
 #----------------------------------------------------------------------#
