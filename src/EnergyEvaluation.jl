@@ -6,8 +6,9 @@ this module provides data, structs and methods for dimer energy and total energy
 
 module EnergyEvaluation
 
-using StaticArrays
+using StaticArrays, DataFrames
 using ..Configurations
+using ..RuNNer
 
 export AbstractPotential, AbstractDimerPotential 
 export ELJPotential, ELJPotentialEven
@@ -37,6 +38,8 @@ Needs methods for
     - dimer_energy_config [`dimer_energy_config`](@ref)
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
+
+
 
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)

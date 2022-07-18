@@ -85,21 +85,21 @@ function initialiseconfiguration(Natoms::Int64,atomtype::Vector,configuration)
     end
     return df
 end
-"""
-    initialisetrajectories(Natoms,Ntraj,atomtype,configurations)
-Function to initialise a vector of dataframes ready for output via RuNNer. This leverages the initialiseconfiguration function NTraj times and pushes the resulting frames to a vector. 
+# """
+#     initialisetrajectories(Natoms,Ntraj,atomtype,configurations)
+# Function to initialise a vector of dataframes ready for output via RuNNer. This leverages the initialiseconfiguration function NTraj times and pushes the resulting frames to a vector. 
     
-    dev note: At the moment this only works for monoatomic systems. In future I will add a field to the Config struct to include the atom type. In this way we can make systems where the atomtype field is linked to the correct line.
-"""
-function initialisetrajectories(Natoms, atomtype, configurations)
-    trajectories = []
-    for config in configurations
-        frame = initialiseconfiguration(Natoms,atomtype,config)
-        push!(trajectories,frame)
-    end
+#     dev note: At the moment this only works for monoatomic systems. In future I will add a field to the Config struct to include the atom type. In this way we can make systems where the atomtype field is linked to the correct line.
+# """
+# function initialisetrajectories(Natoms, atomtype, configurations)
+#     trajectories = []
+#     for config in configurations
+#         frame = initialiseconfiguration(Natoms,atomtype,config)
+#         push!(trajectories,frame)
+#     end
 
-    return trajectories
-end
+#     return trajectories
+# end
 """
     updateconfiguration!(df, ix::Int64, )
     updateconfiguration!(df, config, Natoms)
