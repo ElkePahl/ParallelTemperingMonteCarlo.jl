@@ -181,7 +181,7 @@ function getenergy(dir,dataframes)
 
     writefile(dir,dataframes)
     
-    E = getRuNNerenergy(dir,1)
+    E = getRuNNerenergy(dir,1)[1]
 
     return E
 end
