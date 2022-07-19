@@ -4,7 +4,7 @@ using DelimitedFiles,DataFrames,StaticArrays
 
 using ..Configurations
 #using 
-export initialiseconfiguration,initialisetrajectories
+export initialiseconfiguration #,initialisetrajectories
 export updateconfiguration!
 export getenergy,getenergy!
 #----------------------------------------------------------------------#
@@ -163,13 +163,13 @@ end
 #----------------------------RuNNer Complete---------------------------#
 #----------------------------------------------------------------------#
 """
-    getenergy!(dir,dataframes,NTraj,Natoms)
-    getenergy!(dir,dataframes,Natoms)
+    getenergy!(dir,dataframes,NTraj)
+    getenergy!(dir,dataframes)
 Two methods for the end-use get energy function. 
     -Method one accepts a directory containing RuNNer.serial.x, writes $dir/input.data containing NTraj configurations, runs the program and reads the energy.
     -Method two is much like the above except it only writes and runs a single trajectory.
 """
-function getenergy(dir,dataframes,NTraj,Natoms)
+function getenergy(dir,dataframes,NTraj)
 
     writefile(dir,NTraj,dataframes)
 
