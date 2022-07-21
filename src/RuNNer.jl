@@ -117,7 +117,7 @@ function getenergy(dir,config::Config,atomtype)
 
     writefile(dir,config,atomtype)
     
-    E = getRuNNerenergy(dir,1)[1]
+    E = getRuNNerenergy(dir,1)[1];
 
     return E
 end
