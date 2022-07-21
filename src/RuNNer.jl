@@ -24,7 +24,7 @@ end
 returns the energies given by RuNNer, accepts a directory and a number of trajectories and returns a vector of energy.
 """
 function findRuNNerenergy(inputdir::String,NTraj)
-    contents= RuNNerReader(inputdir)
+    contents= RunnerReader(inputdir)
     energyvector = Vector{Float64}(undef,NTraj)
 
     for i in 1:NTraj
