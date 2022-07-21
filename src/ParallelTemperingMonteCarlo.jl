@@ -4,6 +4,7 @@ using Reexport
 
 include("BoundaryConditions.jl")
 include("Configurations.jl")
+include("RuNNer.jl")
 include("EnergyEvaluation.jl")
 include("InputParams.jl")
 #include("Initialization")
@@ -20,5 +21,6 @@ include("multihist.jl")
  @reexport using .MCMoves
  @reexport using .MCRun
  @reexport using .Multihistogram
+ @reexport using .RuNNer
 
 end # module
