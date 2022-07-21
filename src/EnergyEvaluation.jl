@@ -10,7 +10,7 @@ using StaticArrays, DataFrames
 using ..Configurations
 using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential 
+export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config
 export energy_update
@@ -100,7 +100,7 @@ function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
 
     Evec = RuNNer.getenergy(pot.dir,config,pot.atomtype,i_atom,pos)
     delta_en = Evec[2] - Evec[1]
-    
+
     return delta_en, dist2_new
 
 end
