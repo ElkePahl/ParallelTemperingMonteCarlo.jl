@@ -44,166 +44,91 @@ function getRuNNerenergy(dir::String,NTraj)
 
     return E
 end
-#----------------------------------------------------------------------#
-#----------------------RuNNer input and write functions----------------#
-#----------------------------------------------------------------------#
+#--------------------------------------------------------------#
+#-------------------------RuNNer Input-------------------------#
+#--------------------------------------------------------------#
 """
-    initialiseconfiguration(Natoms::Int64,atomtype::String)
-    
+    writefile(dir::String, config::Config, atomtype::String)
+    writefile(dir::String, config::Config, atomtype::Vector)
+    writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
+Function to write the input file for RuNNer. This accepts the directory containing RuNNer.serial.x and the requisite trained Neural Network, the configuration in question and a string or vector named atomtype containing the type of atom, either one name for monoatomic or many for pluriatomic. 
 
-Three variations of the initialise function, this creates a dataframe designed for easy writing of the RuNNer input file. 
-    -The first method accepts one atom type and initialises a blank dataframe of Natom atoms of this type at [0,0,0].
-    -The second method accepts one atom type and a Config struct with the positions of the atoms.
-    -The third method only differs from the first in that it accepts a _vector_ of atom types, this is used for molecular systems where the atom types may vary.
-
+    The third method is used for measuring the difference in energy for a displaced configuration. It accepts an index and a position S_vector and prints the configuration itself and then the updated configuration.
 """
-function initialiseconfiguration(Natoms::Int64,atomtype::String)
-    df = DataFrame(header = String[], x=Float64[], y=Float64[], z=Float64[], type=String[] , aenergy=Float64[], acharge=Float64[] , fx=Float64[], fy=Float64[], fz=Float64[])
-
-    for i in 1:Natoms
-        push!(df, ["atom", 0., 0., 0., atomtype, 0.000, 0.000, 0., 0., 0.]) 
-        #this creates blank rows to populate the dataframe later
-    end
-    return df
-end
-function initialiseconfiguration(atomtype::String,config::Config,Natoms)
-    df = DataFrame(header = String[], x=Float64[], y=Float64[], z=Float64[], type=String[] , aenergy=Float64[], acharge=Float64[] , fx=Float64[], fy=Float64[], fz=Float64[])
-
-    for i in 1:Natoms
-        push!(df, ["atom", config.pos[i][1], config.pos[i][2], config.pos[i][3], atomtype, 0.000, 0.000, 0., 0., 0.]) 
-        #this creates blank rows to populate the dataframe later
-    end
-    return df
-end
-function initialiseconfiguration(Natoms::Int64,atomtype::Vector,configuration::Config)
-    df = DataFrame(header = String[], x=Float64[], y=Float64[], z=Float64[], type=String[] , aenergy=Float64[], acharge=Float64[] , fx=Float64[], fy=Float64[], fz=Float64[])
-
-    for i in 1:Natoms
-        push!(df, ["atom", cconfig.pos[i][1], config.pos[i][2], config.pos[i][3], atomtype[i], 0.000, 0.000, 0., 0., 0.]) 
-        #this creates blank rows to populate the dataframe later
-    end
-    return df
-end
-
-
-# """
-#     initialisetrajectories(Natoms,Ntraj,atomtype,configurations)
-# Function to initialise a vector of dataframes ready for output via RuNNer. This leverages the initialiseconfiguration function NTraj times and pushes the resulting frames to a vector. 
-    
-#     dev note: At the moment this only works for monoatomic systems. In future I will add a field to the Config struct to include the atom type. In this way we can make systems where the atomtype field is linked to the correct line.
-# """
-# function initialisetrajectories(Natoms, atomtype, configurations)
-#     trajectories = []
-#     for config in configurations
-#         frame = initialiseconfiguration(Natoms,atomtype,config)
-#         push!(trajectories,frame)
-#     end
-
-#     return trajectories
-# end
-"""
-    updateconfiguration!(df,pos::SVector,ix::Int64)
-    updateconfiguration!(df, Natoms::Int64, config::Config)
-A function to update the positions of atoms in a dataframe. Supply the dataframe to update and the configuration.
-    -Method one accepts an index ix of the moved atom as its final field and adjusts the correct row of the dataframe. Requires a static vector as input of the atomic position to be changed to
-    -Method two accepts a configuration and iterates over method one 
-
-"""
-# function updateconfiguration!(df,Natoms, config, ix::Int64)
-#     df.x[ix],df.y[ix],df.z[ix] = config[ix,1],config[ix,2],config[ix,3]
-# return df
-# end
-function updateconfiguration!(df,pos::SVector,ix::Int64)
-    df.x[ix],df.y[ix],df.z[ix] = pos[1],pos[2],pos[3]
-    return df
-end
-function updateconfiguration!(df, config::Config,Natoms)
-
-    for ix in 1:Natoms
-        updateconfiguration!(df, config.pos[ix], ix)   
-    end    
-    
-    return df
-end
-"""
-    writefile(dir::String, df)
-    writefile(dir::String,NTraj::Int64,trajframes)
-File designed to write the input for RuNNer using a dataframe. 
-    - Method one writes a single configuration df in a file input.data in directory dir
-    - Method two writes NTraj configurations {df ∈ trajframes} in $dir/input.data
-"""
-function writefile(dir::String, df)
+function writefile(dir::String, config::Config, atomtype::String)
     file = open("$(dir)input.data","w+")
     write(file, "begin \n")
-    writedlm(file,eachrow(df))
+    for atom in config.pos
+        write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+    end
     write(file, "energy  0.000 \n")
     write(file, "charge  0.000 \n")
     write(file,"end")
     close(file)
-
 end
-function writefile(dir::String, NTraj::Int64, trajframes)
+
+function writefile(dir::String,config::Config, atomtype::Vector)
+    i = 0
     file = open("$(dir)input.data","w+")
-    
-
-    for frame in trajframes
-        
-        write(file, "begin \n")
-        writedlm(file,eachrow(frame))
-        write(file, "energy 0.000 \n")
-        write(file, "charge  0.000 \n")
-        write(file,"end \n")
-
+    write(file, "begin \n")
+    for atom in config.pos
+        i += 1
+        write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $(atomtype[i])  0.0  0.0  0.0  0.0  0.0 \n")
     end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end")
     close(file)
-
 end
 
-#----------------------------------------------------------------------#
-#----------------------------RuNNer Complete---------------------------#
-#----------------------------------------------------------------------#
-"""
-    getenergy!(dir,dataframes,NTraj)
-    getenergy!(dir,dataframes)
-Two methods for the end-use get energy function. 
-    -Method one accepts a directory containing RuNNer.serial.x, writes $dir/input.data containing NTraj configurations, runs the program and reads the energy.
-    -Method two is much like the above except it only writes and runs a single trajectory.
-"""
-function getenergy(dir,dataframes,NTraj)
+function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
+    testconfig = copy(config)
+    testconfig.pos[ix] = pos
 
-    writefile(dir,NTraj,dataframes)
-
-    E = getRuNNerenergy(dir,NTraj)
-
-    return E
+    file = open("$(dir)input.data","w+")
+    #write config one
+    write(file, "begin \n")
+    for atom in config.pos
+        write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+    end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end \n")
+    #write config 2
+    write(file, "begin \n")
+    for atom in testconfig.pos
+        write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+    end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end")
+    close(file)
 end
-function getenergy(dir,dataframes)
+#--------------------------------------------------------------#
+#------------------------RuNNer Complete-----------------------#
+#--------------------------------------------------------------#
+"""
+    getenergy(dir,config::Config,atomtype)
+    getenergy(dir,config::Config,atomtype,ix,pos::SVector)
 
-    writefile(dir,dataframes)
+A function to find the energy of a configuration using RuNNer from start to finish. It writes either one configuration and returns the total energy, or it writes a configuration and a slightly perturbed version. This second method returns a vector with the UN-perturbed energy first, and the perturbed energy second.
+"""
+function getenergy(dir,config::Config,atomtype)
+
+    writefile(dir,config,atomtype)
     
     E = getRuNNerenergy(dir,1)[1]
 
     return E
 end
-"""
-    getenergy!(dir,dataframes,energyvector,configs,NTraj,Natoms)
-A function designed to accept a _new_ set of configurations configs, update the corresponding dataframes containing the old configurations, print them in $dir/input.data, run RuNNer and read the energy, storing the dataframe and the energy in energyvector.
-    -NB: because of the construction of the updateconfiguration! function this works both for a total update (by passing a Config struct in newconfig) or a single atom update (by passing an SVector)
-"""
-function getenergy!(dir,dataframe,newconfig,N)
+function getenergy(dir,config::Config,atomtype,ix,pos::SVector)
 
-    dataframe = updateconfiguration!(dataframe,N,newconfig)
-    energy = getenergy(dir,dataframe)
-    return energy
+    writefile(dir,config,atomtype,ix,pos)
+    
+    E = getRuNNerenergy(dir,1)
+
+    return E
 end
-# function getenergy!(dir,dataframes,energyvector,configs,NTraj,Natoms)
-#     for i in 1:NTraj
-#         updateconfiguration!(dataframes[i],configs[i],Natoms)
-#     end
-#     #having updated the configurations we write the input file
-#     writefile(dir,NTraj,dataframes)
 
-#     energyvector = getRuNNerenergy(dir,NTraj)
 
-#     return dataframes, energyvector
-# end
+end
