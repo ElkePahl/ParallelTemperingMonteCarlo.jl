@@ -5,11 +5,11 @@ using Random,Plots
 Random.seed!(1234)
 
 # number of atoms
-n_atoms = 55
+n_atoms = 13
 
 # temperature grid
 ti = 100
-tf = 120
+tf = 110
 n_traj = 2
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -38,6 +38,21 @@ pot = AbstractMLPotential(runnerdir,atomtype)
 
 #starting configurations
 #icosahedral ground state of Cu55 (from Cambridge cluster database) converted to angstrom
+ico_13  = [[-0.0000000049,       -0.0000000044,       -0.0000000033],
+[-0.0000007312,       -0.0000000014,        0.6554619119],
+ [0.1811648930,      -0.5575692094,        0.2931316798],
+[-0.4742970242,       -0.3445967289,        0.2931309525],
+[-0.4742970303,        0.3445967144,        0.2931309494],
+ [0.1811648830,        0.5575692066,        0.2931316748],
+ [0.5862626299,        0.0000000022,        0.2931321262],
+[-0.1811648928,       -0.5575692153,       -0.2931316813],
+[-0.5862626397,       -0.0000000109,       -0.2931321327],
+[-0.1811649028,        0.5575692007,       -0.2931316863],
+ [0.4742970144,        0.3445967202,       -0.2931309590],
+ [0.4742970205,       -0.3445967231,       -0.2931309559],
+ [0.0000007214,       -0.0000000073,       -0.6554619185]]
+
+
 ico_55 = [[0.0000006584,       -0.0000019175,        0.0000000505],
 [-0.0000005810,       -0.0000004871,        0.6678432175],
 [0.1845874248,       -0.5681026047,        0.2986701538],
@@ -97,15 +112,16 @@ ico_55 = [[0.0000006584,       -0.0000019175,        0.0000000505],
 nmtobohr = 18.8973
 copperconstant = 0.36258*nmtobohr
 pos_cu55 = copperconstant*ico_55
+pos_cu13 = copperconstant*ico_13
 AtoBohr = 1.8897259886
 
-length(pos_cu55) == n_atoms || error("number of atoms and positions not the same - check starting config")
+length(pos_cu13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
-
+bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
+bc_cu13 = SphericalBC(radius=8*AtoBohr)
 #starting configuration
-start_config = Config(pos_cu55, bc_ne13)
+start_config = Config(pos_cu13, bc_cu13)
 
 #histogram information
 n_bin = 100
@@ -118,7 +134,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
 
 #plot(temp.t_grid,results.heat_cap)
 
