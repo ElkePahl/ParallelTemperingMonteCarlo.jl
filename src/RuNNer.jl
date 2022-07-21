@@ -82,8 +82,8 @@ function writefile(dir::String,config::Config, atomtype::Vector)
 end
 
 function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
-    testconfig = copy(config)
-    testconfig.pos[ix] = pos
+    testconfig = copy(config.pos)
+    testconfig[ix] = pos
 
     file = open("$(dir)input.data","w+")
     #write config one
@@ -96,7 +96,7 @@ function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
     write(file,"end \n")
     #write config 2
     write(file, "begin \n")
-    for atom in testconfig.pos
+    for atom in testconfig
         write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
     end
     write(file, "energy  0.000 \n")
@@ -125,7 +125,7 @@ function getenergy(dir,config::Config,atomtype,ix,pos::SVector)
 
     writefile(dir,config,atomtype,ix,pos)
     
-    E = getRuNNerenergy(dir,1)
+    E = getRuNNerenergy(dir,1);
 
     return E
 end
