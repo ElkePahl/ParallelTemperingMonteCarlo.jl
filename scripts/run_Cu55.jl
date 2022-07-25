@@ -32,7 +32,10 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 #ensemble
 ensemble = NVT(n_atoms)
 #Potential
-runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+# for laptop
+#runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+#desktop
+runnerdir = "/home/grayseff/Code/RuNNer-aster/Brass Potential/"
 atomtype="Cu"
 pot = AbstractMLPotential(runnerdir,atomtype)
 

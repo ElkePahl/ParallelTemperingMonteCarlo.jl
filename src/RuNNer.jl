@@ -1,6 +1,6 @@
 module RuNNer
 
-using DelimitedFiles,DataFrames,StaticArrays
+using DelimitedFiles,StaticArrays
 
 using ..Configurations
 #using 
