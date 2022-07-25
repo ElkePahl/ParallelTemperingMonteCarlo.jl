@@ -39,7 +39,7 @@ Function to run RuNNer and read the output. This represents the total output fun
 """
 function getRuNNerenergy(dir::String,NTraj)
     cd(dir)
-    run(`./RuNNer.serial.x`);
+    run(`./RuNNer.x`);
     E = findRuNNerenergy(dir,NTraj)
 
     return E
