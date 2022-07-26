@@ -35,7 +35,7 @@ ensemble = NVT(n_atoms)
 # for laptop
 #runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
-runnerdir = "/home/grayseff/Code/RuNNer-master/Brass Potential/"
+runnerdir = "/home/grayseff/Code/Brass_potential/"
 atomtype="Cu"
 pot = AbstractMLPotential(runnerdir,atomtype)
 

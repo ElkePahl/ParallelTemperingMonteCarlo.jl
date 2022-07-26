@@ -3,6 +3,7 @@ module RuNNer
 using DelimitedFiles,StaticArrays
 
 using ..Configurations
+using ..InputParams
 #using 
 export initialiseconfiguration #,initialisetrajectories
 export updateconfiguration!
@@ -104,6 +105,24 @@ function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
     write(file,"end")
     close(file)
 end
+
+function writefile(dir::String, mc_states,atomtype)
+    # we aim to write a parallelised version, iterating over a series of configurations in an array called MCstates containing many states.
+
+    file = open("$(dir)input.data", "w+")
+
+    for state in mc_states
+        write(file, "begin \n")
+        for atom in state.config.pos
+            write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+        end
+            write(file, "energy  0.000 \n")
+            write(file, "charge  0.000 \n")
+            write(file,"end \n")
+    end
+    close(file)
+
+end
 #--------------------------------------------------------------#
 #------------------------RuNNer Complete-----------------------#
 #--------------------------------------------------------------#
@@ -131,4 +150,11 @@ function getenergy(dir,config::Config,atomtype,ix,pos::SVector)
 end
 
 
+function getenergy(dir,mc_states,atomtype,mc_params)
+# a parallelised version of getenergy which accepts a series of states rather than one perturbed state
+    writefile(dir,mc_states,atomtype)
+
+    energyvector = getRuNNerenergy(dir,mc_params.n_traj)
+
+    return energyvector
 end
