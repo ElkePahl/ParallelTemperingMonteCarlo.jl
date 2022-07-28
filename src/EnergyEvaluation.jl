@@ -47,6 +47,18 @@ end
 function AbstractMLPotential(dir::String,atomtype::String)
     return AbstractMLPotential(dir,atomtype)
 end
+
+# struct MLPotential <: AbstractPotential
+#     mlpot::AbstractMLPotential
+#     energyvector::Vector
+# end
+# function MLPotential(dir::String,atomtype::String,mcstates,mcparams)
+#     mlpot = AbstractMLPotential(dir,atomtype)
+#     energyvector = RuNNer.getenergy(dir,mcstates,atomtype,mcparams)
+
+#     return MLPotential(mlpot,energyvector)
+# end
+
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
 Sums the dimer energies for atom `i` with all other atoms

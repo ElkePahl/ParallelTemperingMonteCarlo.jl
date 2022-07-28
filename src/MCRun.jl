@@ -279,6 +279,19 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 
+# function mc_cycle!(mc_states, move_strat, mc_params, pot::MLPotential,ensemble,n_steps,a,v,r)
+#     trial_configs=[]
+#     indices = []
+#     #this for loop creates n_traj perturbed atoms
+#     for mc_state in mc_states
+#         for i_step = 1:n_steps
+#             ran = rand(1:(a+v+r))
+#             trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
+#             push!(indices,ran)
+#             push!(trial_configs,trial_pos)
+#         end
+#     end
+    #after which we require energy evaluations of the n_traj new configurations
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.

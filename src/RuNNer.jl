@@ -123,6 +123,35 @@ function writefile(dir::String, mc_states,atomtype)
     close(file)
 
 end
+
+function writeinit(dir::String)
+    file = open("$(dir)input.data","w+")
+
+    return file
+end
+function writeconfig(file::IOStream,config::Config,atomtype)
+    write(file,"begin \n")
+    for atom in config.pos
+        write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+    end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end \n")
+
+end
+function writeconfig(file::IOStream,config::Config,index,test_pos)
+    write(file,"begin \n")
+    for atom in config.pos
+        if i == index
+            write(file, "atom  $(test_pos[1])  $(test_pos[2])  $(test_pos[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+        else
+            write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+        end
+    end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end \n")
+end
 #--------------------------------------------------------------#
 #------------------------RuNNer Complete-----------------------#
 #--------------------------------------------------------------#
@@ -149,10 +178,13 @@ function getenergy(dir,config::Config,atomtype,ix,pos::SVector)
     return E
 end
 
-
 function getenergy(dir,mc_states,atomtype,mc_params)
 # a parallelised version of getenergy which accepts a series of states rather than one perturbed state
-    writefile(dir,mc_states,atomtype)
+    file = writeinit(dir)
+    for state in mc_states
+        writeconfig(file, state.config,atomtype)
+    end
+    close(file)
 
     energyvector = getRuNNerenergy(dir,mc_params.n_traj)
 
