@@ -125,7 +125,9 @@ function writeconfig(file::IOStream,config::Config,atomtype)
 end
 function writeconfig(file::IOStream,config::Config,index,test_pos)
     write(file,"begin \n")
+    i=0
     for atom in config.pos
+        i+=1
         if i == index
             write(file, "atom  $(test_pos[1])  $(test_pos[2])  $(test_pos[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
         else
