@@ -288,7 +288,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
         for i_step = 1:n_steps
             ran = rand(1:(a+v+r))
             trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
-            writeconfig(file,mc_state.config,ran,trial_pos)
+            writeconfig(file,mc_state.config,ran,trial_pos,pot.atomtype)
             push!(indices,ran)
             push!(trials,trial_pos)
         end

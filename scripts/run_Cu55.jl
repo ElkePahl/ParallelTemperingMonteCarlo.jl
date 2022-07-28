@@ -8,14 +8,14 @@ Random.seed!(1234)
 n_atoms = 13
 
 # temperature grid
-ti = 100
-tf = 110
+ti = 400
+tf = 460
 n_traj = 2
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 10#000 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -33,9 +33,9 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms)
 #Potential
 # for laptop
-#runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
-runnerdir = "/home/grayseff/Code/Brass_potential/"
+#runnerdir = "/home/grayseff/Code/Brass_potential/"
 atomtype="Cu"
 pot = AbstractMLPotential(runnerdir,atomtype)
 
