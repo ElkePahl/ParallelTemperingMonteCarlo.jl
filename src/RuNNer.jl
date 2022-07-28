@@ -3,7 +3,7 @@ module RuNNer
 using DelimitedFiles,StaticArrays
 
 using ..Configurations
-using ..InputParams
+
 #using 
 export initialiseconfiguration #,initialisetrajectories
 export updateconfiguration!
@@ -106,23 +106,7 @@ function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
     close(file)
 end
 
-function writefile(dir::String, mc_states,atomtype)
-    # we aim to write a parallelised version, iterating over a series of configurations in an array called MCstates containing many states.
 
-    file = open("$(dir)input.data", "w+")
-
-    for state in mc_states
-        write(file, "begin \n")
-        for atom in state.config.pos
-            write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
-        end
-            write(file, "energy  0.000 \n")
-            write(file, "charge  0.000 \n")
-            write(file,"end \n")
-    end
-    close(file)
-
-end
 
 function writeinit(dir::String)
     file = open("$(dir)input.data","w+")
