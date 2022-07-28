@@ -5,7 +5,7 @@ using DelimitedFiles,StaticArrays
 using ..Configurations
 
 #using 
-export initialiseconfiguration #,initialisetrajectories
+export initialiseconfiguration,writeinit,writeconfig #,initialisetrajectories
 export updateconfiguration!
 export getenergy,getenergy!
 #----------------------------------------------------------------------#
