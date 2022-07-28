@@ -190,3 +190,5 @@ function getenergy(dir,mc_states,atomtype,mc_params)
 
     return energyvector
 end
+
+end
