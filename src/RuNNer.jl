@@ -7,7 +7,7 @@ using ..Configurations
 #using 
 export initialiseconfiguration,writeinit,writeconfig #,initialisetrajectories
 export updateconfiguration!
-export getenergy,getenergy!
+export getenergy,getenergy!,getRuNNerenergy
 #----------------------------------------------------------------------#
 #----------------------RuNNer output and read functions----------------#
 #----------------------------------------------------------------------#
@@ -123,7 +123,7 @@ function writeconfig(file::IOStream,config::Config,atomtype)
     write(file,"end \n")
 
 end
-function writeconfig(file::IOStream,config::Config,index,test_pos,atomtype)
+function writeconfig(file::IOStream,config::Config,index,test_pos, atomtype)
     write(file,"begin \n")
     i=0
     for atom in config.pos
