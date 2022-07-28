@@ -279,19 +279,49 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 
-# function mc_cycle!(mc_states, move_strat, mc_params, pot::MLPotential,ensemble,n_steps,a,v,r)
-#     trial_configs=[]
-#     indices = []
-#     #this for loop creates n_traj perturbed atoms
-#     for mc_state in mc_states
-#         for i_step = 1:n_steps
-#             ran = rand(1:(a+v+r))
-#             trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
-#             push!(indices,ran)
-#             push!(trial_configs,trial_pos)
-#         end
-#     end
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+    file = RuNNer.writeinit(pot.dir)
+    #this for loop creates n_traj perturbed atoms
+    indices = []
+    trials = []
+    for mc_state in mc_states
+        for i_step = 1:n_steps
+            ran = rand(1:(a+v+r))
+            trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
+            writeconfig(file,mc_state.config,ran,trial_pos)
+            push!(indices,ran)
+            push!(trials,trial_pos)
+        end
+    end
     #after which we require energy evaluations of the n_traj new configurations
+    energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)
+
+    #this replaces the atom_move! function
+
+    for i in 1:mc_params.n_traj
+        if metropolis_condition(ensemble, (mc_states[i].en_tot - energyvec[i]), mc_states[i].beta ) >=rand()
+            mc_states[i].config.pos[indices[i]] = trials[i]
+            mc_states[i].en_tot = energyvec[i]
+            mc_states[i].count_atom[1] +=1
+            mc_states[i].count_atom[2] += 1
+        end
+    end
+
+    if rand() < 0.1 #attempt to exchange trajectories
+        n_exc = rand(1:mc_params.n_traj-1)
+        mc_states[n_exc].count_exc[1] += 1
+        mc_states[n_exc+1].count_exc[1] += 1
+        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+        if exc_acc > rand()
+            mc_states[n_exc].count_exc[2] += 1
+            mc_states[n_exc+1].count_exc[2] += 1
+            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+        end
+    end
+
+
+    return mc_states
+end
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.

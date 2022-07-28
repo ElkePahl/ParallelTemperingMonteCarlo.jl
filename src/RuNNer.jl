@@ -162,17 +162,17 @@ function getenergy(dir,config::Config,atomtype,ix,pos::SVector)
     return E
 end
 
-function getenergy(dir,mc_states,atomtype,mc_params)
-# a parallelised version of getenergy which accepts a series of states rather than one perturbed state
-    file = writeinit(dir)
-    for state in mc_states
-        writeconfig(file, state.config,atomtype)
-    end
-    close(file)
+# function getenergy(dir,mc_states,atomtype,mc_params)
+# # a parallelised version of getenergy which accepts a series of states rather than one perturbed state
+#     file = writeinit(dir)
+#     for state in mc_states
+#         writeconfig(file, state.config,atomtype)
+#     end
+#     close(file)
 
-    energyvector = getRuNNerenergy(dir,mc_params.n_traj)
+#     energyvector = getRuNNerenergy(dir,mc_params.n_traj)
 
-    return energyvector
-end
+#     return energyvector
+# end
 
 end
