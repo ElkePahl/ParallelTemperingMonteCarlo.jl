@@ -39,8 +39,9 @@ end
 Function to run RuNNer and read the output. This represents the total output function. Point to a directory dir containing the RuNNer.serial.x and input files, and specify the number of trajectories NTraj. Output is an NTraj vector of energies
 """
 function getRuNNerenergy(dir::String,NTraj)
+    cd(dir)
+    run(`./RuNNer.x`);
     
-    run(`$(dir)RuNNer.x`);
     E = findRuNNerenergy(dir,NTraj)
 
     return E
