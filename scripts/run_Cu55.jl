@@ -10,12 +10,12 @@ n_atoms = 13
 # temperature grid
 ti = 400
 tf = 460
-n_traj = 2
+n_traj = 4
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 10#000 #default 20% equilibration cycles on top
+mc_cycles = 20#000 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
