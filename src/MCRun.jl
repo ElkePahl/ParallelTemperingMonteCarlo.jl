@@ -294,9 +294,10 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
         end
     end
     #after which we require energy evaluations of the n_traj new configurations
-    
+
     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)
 
+    close(file)
     #this replaces the atom_move! function
 
     for i in 1:mc_params.n_traj
