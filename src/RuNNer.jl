@@ -6,6 +6,8 @@ using ..Configurations
 
 #using 
 export initialiseconfiguration,writeinit,writeconfig #,initialisetrajectories
+export edit_init,write_init
+
 export updateconfiguration!
 export getenergy,getenergy!,getRuNNerenergy
 #----------------------------------------------------------------------#
@@ -111,7 +113,6 @@ end
 
 function writeinit(dir::String)
     file = open("$(dir)input.data","w+")
-
     return file
 end
 function writeconfig(file::IOStream,config::Config,atomtype)
@@ -138,6 +139,22 @@ function writeconfig(file::IOStream,config::Config,index,test_pos, atomtype)
     write(file, "energy  0.000 \n")
     write(file, "charge  0.000 \n")
     write(file,"end \n")
+end
+
+function edit_init(dir::String)
+    editfile = open("$(dir)edit.sh", "w+")
+    write(editfile, "#! /usr/bin/bash \n")
+    # for j = 1:3
+    #     write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])\" ")
+    # end
+    close(editfile)
+    editfile = open("$(dir)edit.sh", "a")
+    return editfile
+end
+function writeedit(editfile::IOStream,line_number_vec_old,vec_new)
+    for j = 1:3
+        write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])\" ")
+    end
 end
 #--------------------------------------------------------------#
 #------------------------RuNNer Complete-----------------------#

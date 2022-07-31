@@ -74,7 +74,7 @@ ico_55 = [[0.0000006584,       -0.0000019175,        0.0000000505],
  n_traj = 10
 
  index = 5
- vec_shift = SVector(5 , 2, 3)
+ vec_shift = SVector(1,1,1)
  runnerdir = "/home/grayseff/Code/Brass_potential/"
  atomtype="Cu"
  pot = AbstractMLPotential(runnerdir,atomtype)
