@@ -151,7 +151,7 @@ function edit_init(dir::String)
     editfile = open("$(dir)edit.sh", "a")
     return editfile
 end
-function writeedit(editfile::IOStream,line_number_vec_old,vec_new)
+function writeedit(editfile::IOStream,line_number,vec_old,vec_new)
     for j = 1:3
         write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])\" ")
     end
