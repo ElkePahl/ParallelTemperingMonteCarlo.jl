@@ -2,7 +2,7 @@ using ParallelTemperingMonteCarlo
 using Random,Plots
 
 #set random seed - for reproducibility
-Random.seed!()
+Random.seed!(1234)
 
 # number of atoms
 n_atoms = 13
