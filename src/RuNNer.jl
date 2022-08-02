@@ -6,7 +6,7 @@ using ..Configurations
 
 #using 
 export initialiseconfiguration,writeinit,writeconfig #,initialisetrajectories
-export edit_init,write_init
+#export edit_init,write_init
 
 export updateconfiguration!
 export getenergy,getenergy!,getRuNNerenergy
@@ -84,7 +84,6 @@ function writefile(dir::String,config::Config, atomtype::Vector)
     write(file,"end")
     close(file)
 end
-
 function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
     testconfig = copy(config.pos)
     testconfig[ix] = pos
@@ -110,11 +109,21 @@ function writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
 end
 
 
+"""
+    writeinit(dir::String)
+for writing a series of trajectories in a single runner input.data file. Output is an IOStream for use in writing configs.
 
+"""
 function writeinit(dir::String)
-    file = open("$(dir)input.data","w+")
-    return file
+    inputfile = open("$(dir)input.data","w+")
+    return inputfile
 end
+"""
+    writeconfig(file::IOStream,config::Config,atomtype)
+    writeconfig(file::IOStream,config::Config,index,test_pos,atomtype)
+two methods for a function to write out a configuration into an open IOStream called file. Both inputs require a configuration and string labelled atomtype which is written in the standard RuNNer format. 
+    The second method also requires an index (integer) and SVector containing a new atomic position. It writes out config, but exchanges atom [index] with this new atomic position [test_pos]
+"""
 function writeconfig(file::IOStream,config::Config,atomtype)
     write(file,"begin \n")
     for atom in config.pos
@@ -141,23 +150,23 @@ function writeconfig(file::IOStream,config::Config,index,test_pos, atomtype)
     write(file,"end \n")
 end
 
-function edit_init(dir::String)
-    editfile = open("$(dir)edit.sh", "w+")
-    write(editfile, "#! /usr/bin/bash \n")
-    # for j = 1:3
-    #     write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])\" ")
-    # end
-    close(editfile)
-    editfile = open("$(dir)edit.sh", "a")
+# function edit_init(dir::String)
+#     editfile = open("$(dir)edit.sh", "w+")
+#     write(editfile, "#! /usr/bin/bash \n")
+#     # for j = 1:3
+#     #     write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])\" ")
+#     # end
+#     close(editfile)
+#     editfile = open("$(dir)edit.sh", "a")
 
-    return editfile
-end
-function writeedit(editfile::IOStream,line_number,vec_old,vec_new)
-    for j = 1:3
-        write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])/\" input.data \n")
-    end
+#     return editfile
+# end
+# function writeedit(editfile::IOStream,line_number,vec_old,vec_new)
+#     for j = 1:3
+#         write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])/\" input.data \n")
+#     end
 
-end
+# end
 #--------------------------------------------------------------#
 #------------------------RuNNer Complete-----------------------#
 #--------------------------------------------------------------#
