@@ -9,7 +9,7 @@ n_atoms = 13
 
 # temperature grid
 ti = 30.
-tf = 50.
+tf = 60.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -78,3 +78,5 @@ ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
 #plot script
 plot(temp.t_grid, results.heat_cap)
+
+
