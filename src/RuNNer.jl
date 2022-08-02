@@ -18,8 +18,8 @@ export getenergy,getenergy!,getRuNNerenergy
 Opens the energy.out file produced by the RuNNer program. Input is a directory containing the energy.out file.
 """
 function RunnerReader(inputdir::String)
-    file = open("$(inputdir)energy.out") #reads the energy out file from RuNNer
-    contents = readdlm(file,skipstart=1) #ignores the header
+    readfile = open("$(inputdir)energy.out") #reads the energy out file from RuNNer
+    contents = readdlm(readfile,skipstart=1) #ignores the header
     return contents
 end
 """
