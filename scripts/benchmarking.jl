@@ -75,7 +75,8 @@ ico_55 = [[0.0000006584,       -0.0000019175,        0.0000000505],
 
  index = 5
  vec_shift = SVector(8,8,8)
- runnerdir = "/home/grayseff/Code/Brass_potential/"
+ # for desktop runnerdir = "/home/grayseff/Code/Brass_potential/"
+ runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
  atomtype="Cu"
  pot = AbstractMLPotential(runnerdir,atomtype)
 
@@ -181,19 +182,7 @@ newvec = SVector(8,8,8)
 
 #function trialrun_55_50()
 ##
-function trialrun_5_50()
-    editfile = edit_init(runnerdir)
-    for i_tr=1:n_traj
-        linenumber = line_number(i_tr,38)
-        RuNNer.writeedit(editfile,linenumber,pos_cu55[38],newvec)
-    end
-    close(editfile)
-    cd(runnerdir)
-    run(`./edit.sh`)
-    energyvec = getRuNNerenergy(runnerdir,n_traj)
-end
-##
-newenergytrial = @benchmark trialrun_5_50()
+
 ##
 println(
 thirteen_ten_single,
@@ -201,7 +190,7 @@ thirteen_ten_multiple,
 fiftyfive_ten_single,
 fiftyfive_ten_multiple,
 fiftyfive_fifty_single,
-fiftyfive_fifty_multiple,newenergytrial)
+fiftyfive_fifty_multiple)
 ##
 
 function writingtest()
@@ -214,18 +203,18 @@ function writingtest()
 
 end
 
-function editingtest()
-    for j_test in 1:50
-        linenumber = line_number(j_test,38)
-        RuNNer.writeedit(editfile,linenumber,pos_cu55[38],newvec)
-    end
-    close(editfile)
-    cd(runnerdir)
-    run(`./edit.sh`)
-end
+# function editingtest()
+#     for j_test in 1:50
+#         linenumber = line_number(j_test,38)
+#         RuNNer.writeedit(editfile,linenumber,pos_cu55[38],newvec)
+#     end
+#     close(editfile)
+#     cd(runnerdir)
+#     run(`./edit.sh`)
+# end
 ##
 test_writetime = @benchmark writingtest()
-test_edittime = @benchmark editingtest()
+#test_edittime = @benchmark editingtest()
 ##
 
 function edittest()
@@ -619,7 +608,51 @@ Larger_cluster =[   -6.8855333875        5.8560999049       -5.2084094698
  1.3383105214      -11.8249759875       -8.3566182300
 -4.3181646401       -5.2467968313        0.9804184982
 -1.1731723267       -3.3925756343        0.8471566011]
-
 arraytesting = [SVector{3}(Larger_cluster[i,:]) for i=1:380]
-
 ##
+bc_380 = SphericalBC(radius=20*AtoBohr)
+#starting configuration
+start_config380 = Config(arraytesting, bc_380)
+states380=[]
+for i = 1:5*n_traj
+    push!(states380,start_config380)
+end
+##
+testfile_2 = writeinit(runnerdir)
+
+
+for config in states380
+    writeconfig(testfile_2,config,atomtype)
+end
+close(testfile_2)
+##
+
+function line_number(traj::Int64,atom::Int64)
+    zeroline = 1 + (traj-1)*(4+380)
+    lineno = atom + zeroline
+    return lineno
+end
+
+function writingtest()
+    testfile = writeinit(runnerdir)
+
+    for config in states380
+        writeconfig(testfile,config,index,vec_shift,atomtype)
+    end
+    close(testfile)
+
+end
+function edittest()
+    testfile = "$(runnerdir)input.data"
+    for j_test in 1:50
+        linenumber = line_number(j_test,38)
+        run(`sed -i "$(linenumber)s/.*/atom $(vec_shift[1]) $(vec_shift[2]) $(vec_shift[3]) Cu 0.0 0.0 0.0 0.0 0.0/" $(testfile) `)
+    end
+    #energyvec = getRuNNerenergy(runnerdir,n_traj)
+end
+##
+test_writetime_large = @benchmark writingtest()
+test_newedit_large = @benchmark edittest()
+##
+
+println(test_writetime,test_writetime_large,test_newedit,test_newedit_large)
