@@ -8,9 +8,9 @@ Random.seed!(1234)
 n_atoms = 13
 
 # temperature grid
-ti = 460
-tf = 600
-n_traj = 12
+ti = 540
+tf = 650
+n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -115,7 +115,7 @@ ico_55 = [[0.0000006584,       -0.0000019175,        0.0000000505],
 nmtobohr = 18.8973
 copperconstant = 0.36258*nmtobohr
 pos_cu55 = copperconstant*ico_55
-pos_cu13 = copperconstant*ico_13
+pos_cu13 = copperconstant*ico_13*1.5
 AtoBohr = 1.8897259886
 
 length(pos_cu13) == n_atoms || error("number of atoms and positions not the same - check starting config")
@@ -138,8 +138,8 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
-
-#plot(temp.t_grid,results.heat_cap)
-
-#data = [results.en_histogram[i].en_hist for i in 1:n_traj]
-#plot(data)
+##
+plot(temp.t_grid,results.heat_cap)
+##
+data = [results.en_histogram[i] for i in 1:n_traj]
+plot(data)

@@ -29,9 +29,16 @@ returns the energies given by RuNNer, accepts a directory and a number of trajec
 function findRuNNerenergy(inputdir::String,NTraj)
     contents= RunnerReader(inputdir)
     energyvector = Vector{Float64}(undef,NTraj)
-
-    for i in 1:NTraj
-        energyvector[i] = contents[i,4] # the fourth column is the output energy of the NN
+    ###------This is a bugfix that ultimately needs a more elegant solution---------###
+    if length(contents[:,4]) < NTraj
+        #RuNNer couldn't find one or more energy wtihout saying which
+        println("error in RuNNer")
+        #So we set the energy too high to accept
+        energyvector[:] = 1000*ones(NTraj)
+    else
+        for i in 1:NTraj
+            energyvector[i] = contents[i,4] # the fourth column is the output energy of the NN
+        end
     end
     
     return energyvector
