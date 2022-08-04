@@ -289,6 +289,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
     #this for loop creates n_traj perturbed atoms
     indices = []
     trials = []
+    #we require parallelisation here, but will need to avoid a race condition
     for mc_state in mc_states
         #for i_step = 1:n_steps
             ran = rand(1:(a+v+r))
@@ -302,8 +303,8 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
     close(file)    
     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)    
     #this replaces the atom_move! function
-
-    for i in 1:mc_params.n_traj
+    #parallelisation here is fine
+    Threads.@threads for i in 1:mc_params.n_traj
         if metropolis_condition(ensemble, (mc_states[i].en_tot - energyvec[i]), mc_states[i].beta ) >=rand()
             mc_states[i].config.pos[indices[i]] = trials[i]
             mc_states[i].en_tot = energyvec[i]
