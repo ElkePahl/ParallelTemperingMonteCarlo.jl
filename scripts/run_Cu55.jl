@@ -1,4 +1,5 @@
 using ParallelTemperingMonteCarlo
+##
 using Random,Plots
 
 #set random seed - for reproducibility
@@ -33,9 +34,9 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms)
 #Potential
 # for laptop
-#runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
-runnerdir = "/home/grayseff/Code/Brass_potential/"
+#runnerdir = "/home/grayseff/Code/Brass_potential/"
 atomtype="Cu"
 pot = AbstractMLPotential(runnerdir,atomtype)
 
