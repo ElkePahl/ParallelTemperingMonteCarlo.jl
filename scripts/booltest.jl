@@ -68,7 +68,7 @@ function booltest(variable::Bool)
     end
 end
 ##
-function sampling_step(mc_params,mc_states,i, saveham::Bool = true)
+function sampling_step(mc_params,mc_states,i, saveham::Bool)
     if saveham == true
         if rem(i, mc_params.mc_sample) == 0
             for i_traj=1:mc_params.n_traj
@@ -83,9 +83,25 @@ function sampling_step(mc_params,mc_states,i, saveham::Bool = true)
         end 
     end
 end
+function sampling_step(mc_params,mc_states,i)
+    # if saveham == true
+        if rem(i, mc_params.mc_sample) == 0
+            for i_traj=1:mc_params.n_traj
+            push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+            end
+        end 
+    #end
+    #step adjustment
+    if rem(i, mc_params.n_adjust) == 0
+        for i_traj = 1:mc_params.n_traj
+            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+        end 
+    end
+end
 ##
 time1 = @benchmark sampling_step(mc_params,mc_states,1,false)
 
 time2 = @benchmark sampling_step(mc_params,mc_states,1,true)
 
-println(time1,time2)
+time3 = @benchmark sampling_step(mc_params,mc_states,1)
+println(time1,time2,time3)
