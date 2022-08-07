@@ -341,6 +341,7 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
                     mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
                     #add E,E**2 to the correct positions in the hamiltonian
                     mc_states[i_traj].ham[1] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
+                end
             end
         end 
 end
@@ -413,7 +414,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     #Evaluation
     #average energy
     n_sample = mc_params.mc_cycles / mc_params.mc_sample
-    
+
     if save_ham == true
         en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
         en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
