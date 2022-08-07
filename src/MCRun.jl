@@ -419,8 +419,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
         en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
     else
-        en_avg = [mc_states[i_traj].ham[1]  for i_traj in 1:mc_params.n_traj]
-        en2_avg = [mc_states[i_traj].ham[2]  for i_traj in 1:mc_params.n_traj]
+        en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+        en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
     end
 
 
