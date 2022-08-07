@@ -329,6 +329,22 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
     return mc_states
 end
 """
+    sampling_step(mc_params,mc_states,i, saveham::Bool)
+A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
+"""
+function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
+        if rem(i, mc_params.mc_sample) == 0
+            for i_traj=1:mc_params.n_traj
+                if saveham == true
+                    push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+                else
+                    mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
+                    #add E,E**2 to the correct positions in the hamiltonian
+                    mc_states[i_traj].ham[1] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
+            end
+        end 
+end
+"""
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.
 Calculates number of MC steps per cycle.
@@ -338,7 +354,15 @@ Step size adjustment is done after `n_adjust` MC cycles.
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
 """
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true)
+    if save_ham == false
+        #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
+        for i_traj = 1:mc_params.n_traj
+            push!(mc_states[i_traj].ham, 0)
+            push!(mc_states[i_traj].ham, 0)
+        end
+    end
+
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
     r = rot_move_frequency(move_strat)
@@ -371,11 +395,12 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     for i = 1:mc_params.mc_cycles
         @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r) 
         #sampling step
-        if rem(i, mc_params.mc_sample) == 0
-            for i_traj=1:mc_params.n_traj
-                push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
-            end
-        end 
+        sampling_step!(mc_params,mc_states,i,save_ham)
+        # if rem(i, mc_params.mc_sample) == 0
+        #     for i_traj=1:mc_params.n_traj
+        #         push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+        #     end
+        # end 
         #step adjustment
         if rem(i, mc_params.n_adjust) == 0
             for i_traj = 1:mc_params.n_traj
@@ -388,8 +413,16 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
     #Evaluation
     #average energy
     n_sample = mc_params.mc_cycles / mc_params.mc_sample
-    en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
-    en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
+    
+    if save_ham == true
+        en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
+        en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
+    else
+        en_avg = [mc_states[i_traj].ham[1]  for i_traj in 1:mc_params.n_traj]
+        en2_avg = [mc_states[i_traj].ham[2]  for i_traj in 1:mc_params.n_traj]
+    end
+
+
     results.en_avg = en_avg
 
     #heat capacity
