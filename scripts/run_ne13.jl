@@ -80,6 +80,8 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = true)
 
+
+
 #plot(temp.t_grid,results.heat_cap)
 
 #data = [results.en_histogram[i].en_hist for i in 1:n_traj]
