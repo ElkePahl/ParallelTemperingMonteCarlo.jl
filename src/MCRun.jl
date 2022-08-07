@@ -340,7 +340,7 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
                 else
                     mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
                     #add E,E**2 to the correct positions in the hamiltonian
-                    mc_states[i_traj].ham[1] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
+                    mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
                 end
             end
         end 
