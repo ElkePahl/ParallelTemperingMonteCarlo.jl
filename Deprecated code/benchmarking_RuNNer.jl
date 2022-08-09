@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo
-using BenchmarkTools, StaticArrays
+#using BenchmarkTools, StaticArrays
 
 ico_13  = [[-0.0000000049,       -0.0000000044,       -0.0000000033],
 [-0.0000007312,       -0.0000000014,        0.6554619119],
