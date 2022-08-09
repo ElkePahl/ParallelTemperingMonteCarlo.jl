@@ -232,7 +232,7 @@ function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
     if ran <= a
         mc_state = atom_move!(mc_state, ran, pot, ensemble)
     #else if ran <= v
-    #    vol_move!(mc_state, pot, ensemble)
+    #    vol_move!(mc_state, pot, ensem#reset countersble)
     #else if ran <= r
     #    rot_move!(mc_state, pot, ensemble)
     end
@@ -268,7 +268,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         end
     end
     return mc_states
-end
+end#reset counters
 
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
