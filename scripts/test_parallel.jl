@@ -15,7 +15,7 @@ n_traj = 32
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 300000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -85,10 +85,7 @@ ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 #data = [results.en_histogram[i].en_hist for i in 1:n_traj]
 #plot(data)
 ##
-#------------------------------------------------------------------------#
-#------------------------Initialising a little----------------------------#
-#------------------------------------------------------------------------#
-mc_cycles = 5000
+#------------------------------------------------------------------------#mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
@@ -166,3 +163,36 @@ end
 testhist = results.en_histogram .- globalhist
 
 plot(testhist ./ globalhist)
+
+##
+# Let's test out whether four parallel runs are faster than four runs on their own. 
+vec_states = []
+vec_results = []
+mc_cycles = 10000
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
+#create five mc_states and make a vector of them
+
+for i in 1:8
+    mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+    push!(vec_states,mc_states)
+    results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
+    push!(vec_results,results)
+end
+
+function timing_test_noparallel()
+    for idx = 1:8
+        ptmc_run!(vec_states[idx], move_strat, mc_params, pot, ensemble, vec_results[idx])
+    end
+end
+function timing_test_parallel()
+Threads.@threads for idx=1:8
+            ptmc_run!(vec_states[idx], move_strat, mc_params, pot, ensemble, vec_results[idx])
+    end
+end
+##
+using BenchmarkTools
+
+b_single_thread = @benchmark timing_test_noparallel()
+b_eight_thread = @benchmark timing_test_parallel()
+println(b_single_thread)
+println(b_eight_thread)
