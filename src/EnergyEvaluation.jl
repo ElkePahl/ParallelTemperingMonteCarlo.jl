@@ -8,8 +8,9 @@ module EnergyEvaluation
 
 using StaticArrays
 using ..Configurations
+using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential 
+export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config
 export energy_update
@@ -37,6 +38,16 @@ Needs methods for
     - dimer_energy_config [`dimer_energy_config`](@ref)
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
+
+struct AbstractMLPotential <: AbstractPotential 
+    dir::String
+    atomtype::String
+end
+
+# function AbstractMLPotential(dir::String,atomtype::String)
+#     return AbstractMLPotential(dir,atomtype)
+# end
+
 
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
@@ -84,6 +95,17 @@ function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotenti
     return delta_en, dist2_new
 end
 
+function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
+
+    dist2_new = [distance2(pos,b) for b in config.pos]
+    dist2_new[i_atom] = 0.
+
+    Evec = RuNNer.getenergy(pot.dir,config,pot.atomtype,i_atom,pos)
+    delta_en = Evec[2] - Evec[1]
+
+    return delta_en, dist2_new
+
+end
 """
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);

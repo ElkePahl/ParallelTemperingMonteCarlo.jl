@@ -12,6 +12,7 @@ using ..Configurations
 using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
+using ..RuNNer
 
 """
     MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
@@ -59,13 +60,21 @@ function MCState(
         )
 end
 
-function MCState(temp, beta, config::Config, pot; kwargs...) 
+function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs...) 
    dist2_mat = get_distance2_mat(config)
    n_atoms = length(config.pos)
    en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 end
 
+function MCState(temp,beta, config::Config, pot::AbstractMLPotential;kwargs...)
+    dist2_mat = get_distance2_mat(config)
+    n_atoms = length(config.pos)
+    en_atom_vec = zeros(n_atoms)
+    en_tot = RuNNer.getenergy(pot.dir, config,pot.atomtype)
+
+    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
+end
 """
     metropolis_condition(ensemble, delta_en, beta)
 Returns probability to accept a MC move at inverse temperature `beta` 
@@ -269,7 +278,56 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     end
     return mc_states
 end
+"""
+    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
 
+    We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
+"""
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+    file = RuNNer.writeinit(pot.dir)
+    #this for loop creates n_traj perturbed atoms
+    indices = []
+    trials = []
+    #we require parallelisation here, but will need to avoid a race condition
+    for mc_state in mc_states
+        #for i_step = 1:n_steps
+            ran = rand(1:(a+v+r))
+            trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
+            writeconfig(file,mc_state.config,ran,trial_pos, pot.atomtype)
+            push!(indices,ran)
+            push!(trials,trial_pos)
+        #end
+    end
+    #after which we require energy evaluations of the n_traj new configurations
+    close(file)    
+    energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)    
+    #this replaces the atom_move! function
+    #parallelisation here is fine
+    Threads.@threads for i in 1:mc_params.n_traj
+        if metropolis_condition(ensemble, (mc_states[i].en_tot - energyvec[i]), mc_states[i].beta ) >=rand()
+            mc_states[i].config.pos[indices[i]] = trials[i]
+            mc_states[i].en_tot = energyvec[i]
+            mc_states[i].count_atom[1] +=1
+            mc_states[i].count_atom[2] += 1
+        end
+    end
+
+    if rand() < 0.1 #attempt to exchange trajectories
+        n_exc = rand(1:mc_params.n_traj-1)
+        mc_states[n_exc].count_exc[1] += 1
+        mc_states[n_exc+1].count_exc[1] += 1
+        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+        if exc_acc > rand()
+            mc_states[n_exc].count_exc[2] += 1
+            mc_states[n_exc+1].count_exc[2] += 1
+            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+        end
+    end
+
+
+    return mc_states
+end
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.
