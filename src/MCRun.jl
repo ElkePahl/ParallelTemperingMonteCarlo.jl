@@ -284,7 +284,7 @@ Method for the MC cycle when using a machine learning potential. While functiona
 
     We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
 """
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, ensemble, n_steps, a, v, r)
     file = RuNNer.writeinit(pot.dir)
     #this for loop creates n_traj perturbed atoms
     indices = []
@@ -313,6 +313,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
         end
     end
 
+
     if rand() < 0.1 #attempt to exchange trajectories
         n_exc = rand(1:mc_params.n_traj-1)
         mc_states[n_exc].count_exc[1] += 1
@@ -328,8 +329,9 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,en
 
     return mc_states
 end
+
 """
-    sampling_step(mc_params,mc_states,i, saveham::Bool)
+    sampling_step(mc_params, mc_states, i, saveham::Bool)
 A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
 """
 function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
@@ -345,6 +347,7 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
             end
         end 
 end
+
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.
