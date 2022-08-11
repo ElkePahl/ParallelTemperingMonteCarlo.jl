@@ -14,10 +14,12 @@ export getenergy,getenergy!,getRuNNerenergy
 #----------------------RuNNer output and read functions----------------#
 #----------------------------------------------------------------------#
 """
+
     read_RuNNer(inputdir::String)
 Opens the energy.out file produced by the RuNNer program. Input is a directory containing the energy.out file.
 """
 function read_RuNNer(inputdir::String)
+
     readfile = open("$(inputdir)energy.out") #reads the energy out file from RuNNer
     contents = readdlm(readfile,skipstart=1) #ignores the header
     return contents
@@ -27,11 +29,13 @@ end
 returns the energies given by RuNNer, accepts a directory and a number of trajectories and returns a vector of energy.
 """
 function findRuNNerenergy(inputdir::String,NTraj)
+
     contents= read_RuNNer(inputdir)
+
     energyvector = Vector{Float64}(undef,NTraj)
     ###------This is a bugfix that ultimately needs a more elegant solution---------###
     if length(contents[:,4]) < NTraj
-        #RuNNer couldn't find one or more energy wtihout saying which
+        #RuNNer couldn't find one or more energy without saying which
         println("error in RuNNer")
         #So we set the energy too high to accept
         energyvector[:] = 1000*ones(NTraj)
@@ -43,6 +47,7 @@ function findRuNNerenergy(inputdir::String,NTraj)
     
     return energyvector
 end
+
 """
     getRuNNerenergy(dir::String,NTraj)]
 Function to run RuNNer and read the output. This represents the total output function. Point to a directory dir containing the RuNNer.serial.x and input files, and specify the number of trajectories NTraj. Output is an NTraj vector of energies
@@ -60,10 +65,9 @@ end
 #--------------------------------------------------------------#
 """
     writefile(dir::String, config::Config, atomtype::String)
-    
+
     writefile(dir::String, config::Config, atomtype::Vector)
-    
-    writefile(dir::String,config::Config,atomtype::String,ix,pos::SVector)
+    writefile(dir::String, config::Config, atomtype::String, ix, pos::SVector)
 
 Function to write the input file for RuNNer. This accepts the directory containing RuNNer.serial.x and the requisite trained Neural Network, the configuration in question and a string or vector named atomtype containing the type of atom, either one name for monoatomic or many for pluriatomic. 
 
@@ -129,9 +133,10 @@ function writeinit(dir::String)
     return inputfile
 end
 """
-    writeconfig(file::IOStream,config::Config,atomtype)
+    writeconfig(file::IOStream, config::Config, atomtype)
+
+    writeconfig(file::IOStream, config::Config,index, test_pos, atomtype)
     
-    writeconfig(file::IOStream,config::Config,index, test_pos,atomtype)
 
 two methods for a function to write out a configuration into an open IOStream called file. Both inputs require a configuration and string labelled atomtype which is written in the standard RuNNer format. 
     The second method also requires an index (integer) and SVector containing a new atomic position. It writes out config, but exchanges atom [index] with this new atomic position [test_pos]

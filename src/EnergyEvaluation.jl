@@ -44,9 +44,10 @@ struct AbstractMLPotential <: AbstractPotential
     atomtype::String
 end
 
-# function AbstractMLPotential(dir::String,atomtype::String)
-#     return AbstractMLPotential(dir,atomtype)
-# end
+
+function AbstractMLPotential(dir::String,atomtype::String)
+    return AbstractMLPotential(dir,atomtype)
+end
 
 
 """
