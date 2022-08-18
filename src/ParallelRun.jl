@@ -83,7 +83,7 @@ end
 # end
 @everywhere function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, parallel_run::Bool)
     #perform one MC cycle
-    @threads for i_traj = 1:mc_params.n_traj
+    Threads.@threads for i_traj = 1:mc_params.n_traj
         for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
             @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
