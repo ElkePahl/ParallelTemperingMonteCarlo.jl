@@ -1,7 +1,7 @@
 module ParallelRun
 using Base.Threads
 using Distributed
-addprocs(nthreads())
+
 
 @everywhere begin
     using ..BoundaryConditions
