@@ -393,7 +393,7 @@ function save_states(mc_params,mc_states,trial_index; directory = pwd())
         i += 1
         write(savefile, "config $i")
         save_state(savefile,state)
-        write(savefile"end")
+        write(savefile,"end")
     end
     close(savefile)
 end
