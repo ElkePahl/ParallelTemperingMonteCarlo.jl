@@ -348,6 +348,13 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
         end 
 end
 
+# function save_state(mc_params, mc_states)
+#     savefile = open("savefile.data","w+")
+
+#     write
+
+#     close(savefile)
+# end
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.
@@ -358,7 +365,7 @@ Step size adjustment is done after `n_adjust` MC cycles.
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
 """
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true)
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, restart::Bool=false)
     if save_ham == false
         #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
         for i_traj = 1:mc_params.n_traj
@@ -376,26 +383,30 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     println("Total number of moves per MC cycle: ", n_steps)
     println()
 
+    
     #equilibration cycle
-    for i = 1:mc_params.eq_cycles
-        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-        if rem(i, mc_params.n_adjust) == 0
-            for i_traj = 1:mc_params.n_traj
-                update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-            end 
+    if restart == false
+        for i = 1:mc_params.eq_cycles
+            @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+            if rem(i, mc_params.n_adjust) == 0
+                for i_traj = 1:mc_params.n_traj
+                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+                end 
+            end
         end
-    end
     #re-set counter variables to zero
-    for i_traj = 1:mc_params.n_traj
-        mc_states[i_traj].count_atom = [0, 0]
-        mc_states[i_traj].count_vol = [0, 0]
-        mc_states[i_traj].count_rot = [0, 0]
-        mc_states[i_traj].count_exc = [0, 0]
-    end 
+        for i_traj = 1:mc_params.n_traj
+            mc_states[i_traj].count_atom = [0, 0]
+            mc_states[i_traj].count_vol = [0, 0]
+            mc_states[i_traj].count_rot = [0, 0]
+            mc_states[i_traj].count_exc = [0, 0]
+        end 
 
-    println("equilibration done")
+        println("equilibration done")
+    end
 
     #main MC loop
+
     for i = 1:mc_params.mc_cycles
         @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r) 
         #sampling step
