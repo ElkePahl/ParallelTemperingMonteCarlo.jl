@@ -15,7 +15,7 @@ begin
 #using ..RuNNer #this is essential for after the pull request
 end
 
-s
+
 # """
 #     store_config(mc_states,mc_params)
 # A function that finds the lowest energy configuration in a series of MC_State configs and returns it. 
