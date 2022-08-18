@@ -1,3 +1,4 @@
 {
-    "julia.NumThreads": "auto"
+    "julia.NumThreads": "auto",
+    "julia.environmentPath": "/Users/paocarnate/HonoursMonteCarlo/ParallelTemperingMonteCarlo.jl"
 }
