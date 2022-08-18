@@ -387,7 +387,7 @@ end
 function save_states(mc_params,mc_states,trial_index; directory = pwd())
     i = 0 
     savefile = open("$(directory)/save.data","w+")
-    write(savefile,"Save made at step $trial_index at $(Base.Dates.format(now(),"HH:MM") )\n")
+    write(savefile,"Save made at step $trial_index at $(Dates.format(now(),"HH:MM") )\n")
     save_params(savefile,mc_params)
     for state in mc_states
         i += 1
