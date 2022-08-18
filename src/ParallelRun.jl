@@ -1,5 +1,5 @@
 module ParallelRun
-using Threads
+using Base.Threads
 using Distributed
 addprocs(nthreads())
 
