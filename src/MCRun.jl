@@ -349,25 +349,21 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
 end
 
  function save_params(savefile::IOStream, mc_params::MCParams)
-    #  savefile = open("savefile.data","w+")
-    #  write(savefile,"Save made at step $step at $(Base.Dates.format(now(),"HH:MM") )\n")
-
      write(savefile,"MC_Params")
-     write(savefile,"total cycles = $(mc_params.mc_cycles)\n")
-     write(savefile,"mc_samples = $(mc_params.mc_sample)\n")
-     write(savefile,"n_traj = $(mc_params.n_traj)\n")
-     write(savefile, "n_atoms = $(mc_params.n_atoms)\n")
-     write(savefile,"n_adjust = $(mc_params.n_adjust)\n")
+     write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
+     write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
+     write(savefile,"n_traj: $(mc_params.n_traj)\n")
+     write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
+     write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
 
     #  close(savefile)
  end
 
 function save_state(savefile::IOStream,mc_state::MCState)
-    write(savefile,"MC state")
-    write(savefile,"temp = $(mc_state.temp)\n")
-    write(savefile,"total energy = $(mc_state.en_tot)\n")
-    write(savefile,"max displacement = $(mc_state.max_displ)\n")
-    write(savefile, "counts a/v/r/ex = ", mc_state.count_atom, mc_state.count_vol, mc_state.count_rot, mc_state.count_exc)
+    write(savefile,"temp: $(mc_state.temp)\n")
+    write(savefile,"total_energy: $(mc_state.en_tot)\n")
+    write(savefile,"max_displacement: $(mc_state.max_displ)\n")
+    write(savefile, "counts_a/v/r/ex: ", mc_state.count_atom, mc_state.count_vol, mc_state.count_rot, mc_state.count_exc)
     if length(mc_state.ham) > 2
         ham1 = sum(ham)
         ham2 = sum( ham .* ham)
@@ -375,8 +371,32 @@ function save_state(savefile::IOStream,mc_state::MCState)
         ham1 = mc_state.ham[1]
         ham2 = mc_state.ham[2]
     end
-    write(savefile, "E, E2 = ", ham1 , ham2 )
-    write(savefile, "Boundary = " )
+    write(savefile, "E,E2: ", ham1 , ham2 )
+    if typeof(mc_state.config.bc) == SphericalBC
+        write(savefile, "Boundary: ",typeof(mc_state.config.bc),mc_state.config.bc.radius2 )
+    elseif typeof(mc_state.config.bc) == PeriodicBC
+        write(savefile, "Boundary: ",typeof(mc_state.config.bc),mc_state.config.bc.box_length )
+    end
+    write(savefile,"configuration \n")
+    for row in mc_state.config.pos
+        write(savefile,row)
+    end
+
+end
+
+function save_states(mc_params,mc_states,trial_index; directory = pwd())
+    i = 0 
+    savefile = open("$(directory)/save.data","w+")
+    write(savefile,"Save made at step $trial_index at $(Base.Dates.format(now(),"HH:MM") )\n")
+    save_params(savefile,mc_params)
+    for state in mc_states
+        i += 1
+        write(savefile, "config $i")
+        save_state(savefile,state)
+        write(savefile"end")
+    end
+    close(savefile)
+end
 
 
 """
