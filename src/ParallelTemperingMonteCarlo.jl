@@ -11,7 +11,7 @@ include("InputParams.jl")
 include("MCMoves.jl")
 include("MCRun.jl")
 include("multihist.jl")
-
+include("ParallelRun.jl")
 
  @reexport using .BoundaryConditions
  @reexport using .Configurations
@@ -22,5 +22,6 @@ include("multihist.jl")
  @reexport using .MCRun
  @reexport using .Multihistogram
  @reexport using .RuNNer
+ @reexport using .ParallelRun
 
 end # module
