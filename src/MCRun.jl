@@ -348,13 +348,37 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
         end 
 end
 
-# function save_state(mc_params, mc_states)
-#     savefile = open("savefile.data","w+")
+ function save_params(savefile::IOStream, mc_params::MCParams)
+    #  savefile = open("savefile.data","w+")
+    #  write(savefile,"Save made at step $step at $(Base.Dates.format(now(),"HH:MM") )\n")
 
-#     write
+     write(savefile,"MC_Params")
+     write(savefile,"total cycles = $(mc_params.mc_cycles)\n")
+     write(savefile,"mc_samples = $(mc_params.mc_sample)\n")
+     write(savefile,"n_traj = $(mc_params.n_traj)\n")
+     write(savefile, "n_atoms = $(mc_params.n_atoms)\n")
+     write(savefile,"n_adjust = $(mc_params.n_adjust)\n")
 
-#     close(savefile)
-# end
+    #  close(savefile)
+ end
+
+function save_state(savefile::IOStream,mc_state::MCState)
+    write(savefile,"MC state")
+    write(savefile,"temp = $(mc_state.temp)\n")
+    write(savefile,"total energy = $(mc_state.en_tot)\n")
+    write(savefile,"max displacement = $(mc_state.max_displ)\n")
+    write(savefile, "counts a/v/r/ex = ", mc_state.count_atom, mc_state.count_vol, mc_state.count_rot, mc_state.count_exc)
+    if length(mc_state.ham) > 2
+        ham1 = sum(ham)
+        ham2 = sum( ham .* ham)
+    else
+        ham1 = mc_state.ham[1]
+        ham2 = mc_state.ham[2]
+    end
+    write(savefile, "E, E2 = ", ham1 , ham2 )
+    write(savefile, "Boundary = " )
+
+
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.
@@ -411,11 +435,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r) 
         #sampling step
         sampling_step!(mc_params,mc_states,i,save_ham)
-        # if rem(i, mc_params.mc_sample) == 0
-        #     for i_traj=1:mc_params.n_traj
-        #         push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
-        #     end
-        # end 
+        
         #step adjustment
         if rem(i, mc_params.n_adjust) == 0
             for i_traj = 1:mc_params.n_traj
