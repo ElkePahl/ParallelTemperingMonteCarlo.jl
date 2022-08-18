@@ -3,7 +3,7 @@ using Base.Threads
 using Distributed
 
 
-@everywhere begin
+begin
     using ..BoundaryConditions
     using ..Configurations
     using ..InputParams
