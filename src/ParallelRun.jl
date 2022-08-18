@@ -11,7 +11,7 @@ addprocs(nthreads())
     using ..EnergyEvaluation
     using ..MCRun
     using SharedArrays
-    using StaticArray
+    using StaticArrays
 #using ..RuNNer #this is essential for after the pull request
 end
 
