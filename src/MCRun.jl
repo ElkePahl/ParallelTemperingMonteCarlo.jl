@@ -367,9 +367,12 @@ function save_state(savefile::IOStream,mc_state::MCState)
     if length(mc_state.ham) > 2
         ham1 = sum(ham)
         ham2 = sum( ham .* ham)
-    else
+    elseif length(mc_state.ham) == 2
         ham1 = mc_state.ham[1]
         ham2 = mc_state.ham[2]
+    else
+        ham1 = 0
+        ham2 = 0
     end
     write(savefile, "E,E2: ", ham1 , ham2 )
     if typeof(mc_state.config.bc) == SphericalBC
