@@ -1,6 +1,5 @@
 {
-    "julia.environmentPath": "d:\\ParallelTemperingMonteCarlo.jl",
-    "julia.environmentPath": "A:\\repositories\\ParallelTemperingMonteCarlo.jl", 
-    "julia.executablePath": "A:\\Program Files (x86)\\Julia-1.7.3\\bin\\julia.exe",
-    "julia.executablePath": "D:\\julia-1.7.3\\bin\\julia.exe"
+    "julia.environmentPath": "A:\\repositories\\ParallelTemperingMonteCarlo.jl",
+     
+    "julia.executablePath": "A:\\Program Files (x86)\\Julia-1.7.3\\bin\\julia.exe"
 }
