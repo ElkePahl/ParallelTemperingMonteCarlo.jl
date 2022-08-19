@@ -363,7 +363,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile,"temp: $(mc_state.temp)\n")
     write(savefile,"total_energy: $(mc_state.en_tot)\n")
     write(savefile,"max_displacement: $(mc_state.max_displ)\n")
-    write(savefile, "counts_a/v/r/ex: ", mc_state.count_atom, mc_state.count_vol, mc_state.count_rot, mc_state.count_exc)
+    write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom) $(mc_state.count_vol) $(mc_state.count_rot) $(mc_state.count_exc) \n")
     if length(mc_state.ham) > 2
         ham1 = sum(ham)
         ham2 = sum( ham .* ham)
@@ -374,15 +374,15 @@ function save_state(savefile::IOStream,mc_state::MCState)
         ham1 = 0
         ham2 = 0
     end
-    write(savefile, "E,E2: ", ham1 , ham2 )
+    write(savefile, "E,E2: $ham1 $ham2 \n")
     if typeof(mc_state.config.bc) == SphericalBC
-        write(savefile, "Boundary: ",typeof(mc_state.config.bc),mc_state.config.bc.radius2 )
+        write(savefile, "Boundary: $(typeof(mc_state.config.bc)),$(mc_state.config.bc.radius2) \n")
     elseif typeof(mc_state.config.bc) == PeriodicBC
-        write(savefile, "Boundary: ",typeof(mc_state.config.bc),mc_state.config.bc.box_length )
+        write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
     end
     write(savefile,"configuration \n")
     for row in mc_state.config.pos
-        write(savefile,row)
+        write(savefile,"$row \n")
     end
 
 end
