@@ -349,7 +349,7 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
 end
 
  function save_params(savefile::IOStream, mc_params::MCParams)
-     write(savefile,"MC_Params")
+     write(savefile,"MC_Params \n")
      write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
      write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
      write(savefile,"n_traj: $(mc_params.n_traj)\n")
