@@ -382,7 +382,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
     write(savefile,"configuration \n")
     for row in mc_state.config.pos
-        write(savefile,"$row \n")
+        write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
     end
 
 end
@@ -390,7 +390,7 @@ end
 function save_states(mc_params,mc_states,trial_index; directory = pwd())
     i = 0 
     savefile = open("$(directory)/save.data","w+")
-    #write(savefile,"Save made at step $trial_index at $(format(now(),"HH:MM") )\n")
+    write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
     save_params(savefile,mc_params)
     for state in mc_states
         i += 1
