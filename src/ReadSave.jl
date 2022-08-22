@@ -11,7 +11,10 @@ using ..Configurations
 using ..InputParams
 using ..MCRun
 
-
+"""
+    readinput(savedata)
+takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
+"""
 function readinput(savedata)
     step = savedata[1,5]
 
@@ -21,14 +24,20 @@ function readinput(savedata)
     return step,paramdata,configdata
 end
 
-
+"""
+    initialiseparams(paramdata)
+accepts an array of the delimited paramdata and returns an MCParam struct based on saved data
+"""
 function initialiseparams(paramdata)
 
     MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
 
     return MC_param
 end
-
+"""
+    readconfig(oneconfigvec,n_atoms, potential)
+reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
+"""
 function readconfig(oneconfigvec,n_atoms, potential)
     positions = []
     coord_atom = zeros(3)
@@ -48,7 +57,10 @@ function readconfig(oneconfigvec,n_atoms, potential)
 
     return mcstate
 end
-
+"""
+    readconfigs(configvecs,n_atoms,n_traj,potential)
+takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
+"""
 function readconfigs(configvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
@@ -62,16 +74,21 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
 
     return states
 end
-
+"""
+    function restart(potential ;directory = pwd())
+function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
+"""
 function restart(potential ;directory = pwd())
     readfile = open("$(directory)/save.data ","r+")
 
-    filecontents=readdlm(readingfile)
+    filecontents=readdlm(readfile)
 
     step,paramdata,configdata = readinput(filecontents)
     mc_params = initialiseparams(paramdata)
     mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
 
     return mc_params,mc_states,step
+
+end
 
 end
