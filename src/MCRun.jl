@@ -360,7 +360,7 @@ end
  end
 
 function save_state(savefile::IOStream,mc_state::MCState)
-    write(savefile,"temp: $(mc_state.temp)\n")
+    write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
     write(savefile,"total_energy: $(mc_state.en_tot)\n")
     write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
     write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
