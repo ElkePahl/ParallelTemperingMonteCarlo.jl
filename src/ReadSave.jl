@@ -53,7 +53,14 @@ function readconfig(oneconfigvec,n_atoms, potential)
     countr = [oneconfigvec[5,6], oneconfigvec[5,7]]
     countx = [oneconfigvec[5,8], oneconfigvec[5,9]]
     
-    mcstate = MCState(oneconfigvec[2,2], oneconfigvec[2,3],Config(positions,boundarycondition), potential ; max_displ=[oneconfigvec[4,2], oneconfigvec[4,3], oneconfigvec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx)
+    mcstate = MCState(oneconfigvec[2,2], oneconfigvec[2,3],Config(positions,boundarycondition), potential ; max_displ=[oneconfigvec[4,2], oneconfigvec[4,3], oneconfigvec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
+
+    mcstate.en_tot = oneconfigvec[3,2] #incl current energy
+
+    push!(mcstate.ham,oneconfigvec[6,2])
+    push!(mcstate.ham,oneconfigvec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
+
+    
 
     return mcstate
 end
@@ -90,5 +97,7 @@ function restart(potential ;directory = pwd())
     return mc_params,mc_states,step
 
 end
+
+
 
 end

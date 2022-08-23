@@ -347,7 +347,10 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
             end
         end 
 end
-
+"""
+    function save_params(savefile::IOStream, mc_params::MCParams)
+writes the MCParam struct to a savefile
+"""
  function save_params(savefile::IOStream, mc_params::MCParams)
      write(savefile,"MC_Params \n")
      write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
@@ -358,7 +361,10 @@ end
 
     #  close(savefile)
  end
-
+"""
+    function save_state(savefile::IOStream,mc_state::MCState)
+saves a single mc_state struct to a savefile
+"""
 function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
     write(savefile,"total_energy: $(mc_state.en_tot)\n")
@@ -387,7 +393,10 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
 
 end
-
+"""
+    function save_states(mc_params,mc_states,trial_index; directory = pwd())
+opens a savefile, writes the mc params and states and the trial at which it was run. 
+"""
 function save_states(mc_params,mc_states,trial_index; directory = pwd())
     i = 0 
     savefile = open("$(directory)/save.data","w+")
@@ -413,7 +422,7 @@ Step size adjustment is done after `n_adjust` MC cycles.
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
 """
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, restart::Bool=false)
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
     if save_ham == false
         #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
         for i_traj = 1:mc_params.n_traj
@@ -451,23 +460,52 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         end 
 
         println("equilibration done")
-    end
-
-    #main MC loop
-
-    for i = 1:mc_params.mc_cycles
-        @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r) 
-        #sampling step
-        sampling_step!(mc_params,mc_states,i,save_ham)
-        
-        #step adjustment
-        if rem(i, mc_params.n_adjust) == 0
-            for i_traj = 1:mc_params.n_traj
-                update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-            end 
+        if save == true
+            save_states(mc_params,mc_states,0)
         end
     end
 
+    #main MC loop
+    if restart == false
+        for i = 1:mc_params.mc_cycles
+       
+            @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+            #sampling step
+            sampling_step!(mc_params,mc_states,i,save_ham)
+        
+            #step adjustment
+            if rem(i, mc_params.n_adjust) == 0
+                for i_traj = 1:mc_params.n_traj
+                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+                end 
+            end
+            #save file
+            if save == true
+                if rem(i,1000) == 0
+                    save_states(mc_params,mc_states,i)
+                end
+            end
+        end
+    else
+        for i = restartindex:mc_params.mc_cycles
+            @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+            #sampling step
+            sampling_step!(mc_params,mc_states,i,save_ham)
+        
+            #step adjustment
+            if rem(i, mc_params.n_adjust) == 0
+                for i_traj = 1:mc_params.n_traj
+                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+                end 
+            end
+            #save file
+            if save == true
+                if rem(i,1000) == 0
+                    save_states(mc_params,mc_states,i)
+                end
+            end
+        end 
+    end
     println("MC loop done.")
     #Evaluation
     #average energy
