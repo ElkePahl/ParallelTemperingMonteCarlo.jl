@@ -423,6 +423,12 @@ Evaluation: including calculation of inner energy, heat capacity, energy histogr
 saved in `results`.
 """
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
+    #restart isn't compatible with saving the hamiltonian at the moment
+
+    if restart == true
+        save_ham = false
+    end
+    
     if save_ham == false
         #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
         for i_traj = 1:mc_params.n_traj
