@@ -86,7 +86,7 @@ end
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
 function restart_ptmc(potential ;directory = pwd())
-    readfile = open("$(directory)/save.data ","r+")
+    readfile = open("$(directory)/save.data","r+")
 
     filecontents=readdlm(readfile)
 
