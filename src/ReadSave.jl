@@ -72,7 +72,7 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
     for idx=1:n_traj
-        oneconfig = configvecs( (idx - 1)*lines:(idx*lines), : )
+        oneconfig = configvecs[(idx - 1)*lines:(idx*lines), :]
         onestate = readconfig(oneconfig,n_atoms,potential)
 
         push!(states,onestate)
