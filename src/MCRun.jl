@@ -413,7 +413,7 @@ end
 
 
 """
-    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
 Main function, controlling the parallel tempering MC run.
 Calculates number of MC steps per cycle.
 Performs equilibration and main MC loop.  
@@ -421,6 +421,11 @@ Energy is sampled after `mc_sample` MC cycles.
 Step size adjustment is done after `n_adjust` MC cycles.    
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
+
+The booleans control:
+save_ham: whether or not to save every energy in a vector, or calculate averages on the fly.
+save: whether or not to save the parameters and configurations every 1000 steps
+restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
     if save_ham == false
