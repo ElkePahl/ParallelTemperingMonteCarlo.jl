@@ -414,7 +414,8 @@ end
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  
 """
-function initialise_histograms!(mc_params,mc_states,results,T; full_ham = true,e_bounds = [0,0])    
+function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
+    T = typeof(mc_states[1].en_tot)
     en_min = T[]
     en_max = T[]
     if full_ham == true
@@ -542,7 +543,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         end
         #initialise histogram for non-saving hamiltonian 
         if save_ham == false
-            global_en_min,delta_en = initialise_histograms!(mc_params,mc_states,results,typeof(ebounds[1]), full_ham=false,e_bounds=ebounds)
+            global_en_min,delta_en = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds)
         end
 
         println("equilibration done")
@@ -626,8 +627,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
     #energy histograms
     if save_ham == true
-        T = typeof(mc_states[1].ham[1])
-        global_en_min, delta_en= initialise_histograms!(mc_params,results,T)
+        # T = typeof(mc_states[1].ham[1])
+        global_en_min, delta_en= initialise_histograms!(mc_params,mc_states,results)
         updatehistogram!(mc_params,mc_states,results,global_en_min,delta_en)
     else
         for i_traj = 1:mc_params.n_traj
