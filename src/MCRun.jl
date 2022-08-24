@@ -372,8 +372,8 @@ function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
 
     if length(mc_state.ham) > 2
-        ham1 = sum(ham)
-        ham2 = sum( ham .* ham)
+        ham1 = sum(mc_state.ham)
+        ham2 = sum( mc_state.ham .* mc_state.ham)
     elseif length(mc_state.ham) == 2
         ham1 = mc_state.ham[1]
         ham2 = mc_state.ham[2]
