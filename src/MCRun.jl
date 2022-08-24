@@ -463,6 +463,7 @@ function updatehistogram!(mc_params,mc_states,results,global_en_min,delta_en ; f
 
         else #this is done throughout the simulation
             en = mc_states[i_traj].en_tot
+
             index = floor(Int,(en - global_en_min) / delta_en) + 1 
             results.en_histogram[i_traj][index] += 1
         end
@@ -547,6 +548,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         end
 
         println("equilibration done")
+        #this is for testing
+        println(ebounds)
+        
         if save == true
             save_states(mc_params,mc_states,0)
         end
@@ -630,10 +634,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         # T = typeof(mc_states[1].ham[1])
         global_en_min, delta_en= initialise_histograms!(mc_params,mc_states,results)
         updatehistogram!(mc_params,mc_states,results,global_en_min,delta_en)
-    else
-        for i_traj = 1:mc_params.n_traj
-            push!(results.en_histogram,hist_vec[i_traj])
-        end
+    
     end
     #     for i_traj in 1:mc_params.n_traj
     #         hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
