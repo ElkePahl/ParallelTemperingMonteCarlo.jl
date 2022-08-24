@@ -427,8 +427,9 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
         global_en_min = minimum(en_min)
         global_en_max = maximum(en_max)
     else
-        global_en_min = e_bounds[1]
-        global_en_max = e_bounds[2]
+        #we'll give ourselves a 10% leeway here
+        global_en_min = e_bounds[1] - abs(0.05*e_bounds[1])
+        global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
         
         for i_traj = 1:mc_params.n_traj
             histogram = zeros(results.n_bin)
@@ -511,7 +512,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     if restart == false
         #this initialises the max and min energies for histograms
         if save_ham == false
-            ebounds = [100 , -100] #emin,emax
+            ebounds = [100. , -100.] #emin,emax
         end
       
         for i = 1:mc_params.eq_cycles
@@ -520,11 +521,11 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
             if save_ham == false
                 for i_traj = 1:mc_params.n_traj
                     if mc_states[i_traj].en_tot < ebounds[1]
-                        ebounds[1] == mc_states[i_traj].en_tot
+                        ebounds[1] = mc_states[i_traj].en_tot
                     end
 
                     if mc_states[i_traj].en_tot > ebounds[2]
-                        ebounds[2] == mc_states[i_traj].en_tot
+                        ebounds[2] = mc_states[i_traj].en_tot
                     end
                 end
             end
@@ -548,9 +549,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         end
 
         println("equilibration done")
-        #this is for testing
-        println(ebounds)
         
+
         if save == true
             save_states(mc_params,mc_states,0)
         end
