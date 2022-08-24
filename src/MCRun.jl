@@ -372,8 +372,8 @@ function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
 
     if length(mc_state.ham) > 2
-        ham1 = sum(ham)
-        ham2 = sum( ham .* ham)
+        ham1 = sum(mc_state.ham)
+        ham2 = sum( mc_state.ham .* mc_state.ham)
     elseif length(mc_state.ham) == 2
         ham1 = mc_state.ham[1]
         ham2 = mc_state.ham[2]
@@ -428,6 +428,12 @@ save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
+    #restart isn't compatible with saving the hamiltonian at the moment
+
+    if restart == true
+        save_ham = false
+    end
+    
     if save_ham == false
         #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
         for i_traj = 1:mc_params.n_traj
