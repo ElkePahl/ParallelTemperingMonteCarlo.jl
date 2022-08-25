@@ -410,6 +410,11 @@ function save_states(mc_params,mc_states,trial_index; directory = pwd())
     end
     close(savefile)
 end
+
+function save_results(savefile::IOStream,results::Output)
+
+    
+end
 """
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  
@@ -470,7 +475,10 @@ function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
     end
 
 end
-
+"""
+    function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
+functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
+"""
 function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
 
     @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
@@ -493,6 +501,7 @@ function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a 
             save_states(mc_params,mc_states,i)
         end
     end
+
 end
 
 
