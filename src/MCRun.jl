@@ -471,7 +471,7 @@ function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
 
 end
 
-function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save;delta_en=0. )
+function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
 
     @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
@@ -591,9 +591,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     if restart == false
         for i = 1:mc_params.mc_cycles
             if save_ham == false
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save;delta_en=delta_en)
+                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save)
+                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
             # @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
             # #sampling step
@@ -622,9 +622,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
         for i = restartindex:mc_params.mc_cycles
             if save_ham == false
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save;delta_en=delta_en)
+                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save)
+                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
             # @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
             # #sampling step
