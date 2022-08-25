@@ -394,6 +394,19 @@ function save_state(savefile::IOStream,mc_state::MCState)
 
 end
 """
+    save_results(results::Output; directory = pwd())
+Saves the on the fly results and histogram information for re-reading.
+"""
+function save_results(results::Output; directory = pwd())
+    resultsfile =  open("$(directory)/results.data","w+")
+    write(resultsfile,"emin,emax,nbins = $(results.en_min) $(results.en_max) $(results.n_bins) \n")
+    write(resultsfile, "Histograms \n")
+    writedlm(histfile,results.en_histogram)
+    close(resultsfile)
+    #requires: en_min,en_max,n_bin,en_hist
+    #reading doesn't require the rest as that is handled as a post-process
+end
+"""
     function save_states(mc_params,mc_states,trial_index; directory = pwd())
 opens a savefile, writes the mc params and states and the trial at which it was run. 
 """
@@ -411,19 +424,7 @@ function save_states(mc_params,mc_states,trial_index; directory = pwd())
     close(savefile)
 end
 
-function save_results(resultsfile::IOStream,results::Output)
-    write(resultsfile,"emin,emax,nbins = $(results.en_min) $(results.en_max) $(results.n_bins) \n")
-    write(resultsfile, "Histograms \n")
 
-    for hist in results.en_histogram
-        
-    end
-
-
-    #requires: en_min,en_max,n_bin,en_hist
-    #reading doesn't require the rest as that is handled as a post-process
-
-end
 """
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  
@@ -508,6 +509,9 @@ function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a 
     if save == true
         if rem(i,1000) == 0
             save_states(mc_params,mc_states,i)
+            if save_ham == false
+                save_results(results)
+            end
         end
     end
 
