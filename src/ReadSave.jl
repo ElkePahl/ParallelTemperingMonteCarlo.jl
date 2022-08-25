@@ -81,6 +81,9 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
 
     return states
 end
+
+function read_results()
+end
 """
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.

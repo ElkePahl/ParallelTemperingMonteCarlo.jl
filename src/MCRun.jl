@@ -5,7 +5,7 @@ export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!
 export atom_move!
 export exc_acceptance, exc_trajectories!
 
-using StaticArrays
+using StaticArrays,DelimitedFiles
 
 using ..BoundaryConditions
 using ..Configurations
@@ -399,9 +399,9 @@ Saves the on the fly results and histogram information for re-reading.
 """
 function save_results(results::Output; directory = pwd())
     resultsfile =  open("$(directory)/results.data","w+")
-    write(resultsfile,"emin,emax,nbins = $(results.en_min) $(results.en_max) $(results.n_bins) \n")
+    write(resultsfile,"emin,emax,nbins = $(results.en_min) $(results.en_max) $(results.n_bin) \n")
     write(resultsfile, "Histograms \n")
-    writedlm(histfile,results.en_histogram)
+    writedlm(resultsfile,results.en_histogram)
     close(resultsfile)
     #requires: en_min,en_max,n_bin,en_hist
     #reading doesn't require the rest as that is handled as a post-process
@@ -489,7 +489,7 @@ end
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
 """
-function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
+function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
 
     @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
@@ -616,9 +616,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
         for i = 1:mc_params.mc_cycles
             if save_ham == false
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
+                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
             
         end
@@ -627,9 +627,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
         for i = restartindex:mc_params.mc_cycles
             if save_ham == false
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
+                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
-                ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
             
         end 
