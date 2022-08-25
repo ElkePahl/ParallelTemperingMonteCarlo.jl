@@ -411,9 +411,18 @@ function save_states(mc_params,mc_states,trial_index; directory = pwd())
     close(savefile)
 end
 
-function save_results(savefile::IOStream,results::Output)
+function save_results(resultsfile::IOStream,results::Output)
+    write(resultsfile,"emin,emax,nbins = $(results.en_min) $(results.en_max) $(results.n_bins) \n")
+    write(resultsfile, "Histograms \n")
 
-    
+    for hist in results.en_histogram
+        
+    end
+
+
+    #requires: en_min,en_max,n_bin,en_hist
+    #reading doesn't require the rest as that is handled as a post-process
+
 end
 """
     initialise_histograms!(mc_params,results,T)
