@@ -1,10 +1,10 @@
 # Author: AJ Tyler
 # Date: 24/01/22
 module main # This module contains the two callable functions, compare() and classify().
-include("io.jl") # This file contains the IO module.
-include("comparison.jl") # This file contains the Comparison module
-include("visualisation.jl") # This file contains the Visualisation module.
-include("classify.jl") # This file contains the Classification module.
+include("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/io.jl") # This file contains the IO module.
+include("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/comparison.jl") # This file contains the Comparison module
+include("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/visualisation.jl") # This file contains the Visualisation module.
+include("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/classify.jl") # This file contains the Classification module.
 using .Comparison # This module the contains functions which compare configurations.
 using .IO # This module contains functions that read in and write out files.
 using .Visualisation # This module contains functions which create a .vesta file with helpful colourisations.

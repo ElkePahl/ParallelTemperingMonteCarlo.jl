@@ -3,7 +3,7 @@
 
 # This script calls the compare and classify function from the main module.
 
-include("main.jl")
+include("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/main.jl")
 using .main
-compare("DianaConfigs")
-classify("DianaConfigs")
+compare("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/DianaConfigs")
+classify("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-2/CNA/DianaConfigs")
