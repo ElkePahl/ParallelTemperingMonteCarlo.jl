@@ -500,6 +500,7 @@ end
 #    for i =1:pot.cycle
 #       ptmc_cycle!( pot::LJ)
 # end
+
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 Main function, controlling the parallel tempering MC run.
@@ -588,34 +589,16 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
 
     #main MC loop
+
     if restart == false
+
         for i = 1:mc_params.mc_cycles
             if save_ham == false
                 ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
                 ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
-            # @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-            # #sampling step
-            # sampling_step!(mc_params,mc_states,i,save_ham)
-
-            # if save_ham == false
-            #     updatehistogram!(mc_params,mc_states,results,global_en_min,delta_en,fullham=false)
-            # end
-
-            # #step adjustment
-            # if rem(i, mc_params.n_adjust) == 0
-            #     for i_traj = 1:mc_params.n_traj
-            #         update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-            #     end 
-            # end
-            # #save file
-
-            # if save == true
-            #     if rem(i,1000) == 0
-            #         save_states(mc_params,mc_states,i)
-            #     end
-            # end
+            
         end
 
     else #if restarting
@@ -626,24 +609,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
             else
                 ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
-            # @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-            # #sampling step
-            # sampling_step!(mc_params,mc_states,i,save_ham)
-            # if save_ham == false
-            #     updatehistogram!(mc_params,mc_states,results,global_en_min,delta_en,fullham=false)
-            # end
-            # #step adjustment
-            # if rem(i, mc_params.n_adjust) == 0
-            #     for i_traj = 1:mc_params.n_traj
-            #         update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-            #     end 
-            # end
-            # #save file
-            # if save == true
-            #     if rem(i,1000) == 0
-            #         save_states(mc_params,mc_states,i)
-            #     end
-            # end
+            
         end 
     end
     println("MC loop done.")
