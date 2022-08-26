@@ -347,6 +347,7 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
             end
         end 
 end
+
 """
     function save_params(savefile::IOStream, mc_params::MCParams)
 writes the MCParam struct to a savefile
@@ -511,6 +512,7 @@ Step size adjustment is done after `n_adjust` MC cycles.
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
 """
+
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
     #restart isn't compatible with saving the hamiltonian at the moment
 
@@ -525,6 +527,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
                 push!(mc_states[i_traj].ham, 0)
                 push!(mc_states[i_traj].ham, 0)
             end
+
         end
     end
 
@@ -590,6 +593,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
     #main MC loop
 
+
     if restart == false
 
         for i = 1:mc_params.mc_cycles
@@ -598,7 +602,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
             else
                 ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
-            
+        
         end
 
     else #if restarting
