@@ -45,10 +45,10 @@ struct AbstractMLPotential <: AbstractPotential
 end
 
 
+
 function AbstractMLPotential(dir::String,atomtype::String)
     return AbstractMLPotential(dir,atomtype)
 end
-
 
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
