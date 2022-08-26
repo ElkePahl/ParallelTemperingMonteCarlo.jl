@@ -44,9 +44,10 @@ struct AbstractMLPotential <: AbstractPotential
     atomtype::String
 end
 
+function AbstractMLPotential(dir::String,atomtype::String)
+    return AbstractMLPotential(dir,atomtype)
+end
 
-
-"""
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
 Sums the dimer energies for atom `i` with all other atoms
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
