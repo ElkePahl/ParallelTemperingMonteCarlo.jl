@@ -91,6 +91,7 @@ function restart_ptmc(potential ;directory = pwd())
     filecontents=readdlm(readfile)
 
     step,paramdata,configdata = readinput(filecontents)
+
     close(readfile)
     
     mc_params = initialiseparams(paramdata)
@@ -99,7 +100,5 @@ function restart_ptmc(potential ;directory = pwd())
     return mc_params,mc_states,step
 
 end
-
-
 
 end

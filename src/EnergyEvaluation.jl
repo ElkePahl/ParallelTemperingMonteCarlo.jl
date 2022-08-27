@@ -3,7 +3,6 @@
 
 this module provides data, structs and methods for dimer energy and total energy evaluation
 """    
-
 module EnergyEvaluation
 
 using StaticArrays
@@ -43,8 +42,6 @@ struct AbstractMLPotential <: AbstractPotential
     dir::String
     atomtype::String
 end
-
-
 
 function AbstractMLPotential(dir::String,atomtype::String)
     return AbstractMLPotential(dir,atomtype)
@@ -107,6 +104,7 @@ function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
     return delta_en, dist2_new
 
 end
+
 """
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);

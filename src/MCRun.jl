@@ -411,6 +411,7 @@ function save_states(mc_params,mc_states,trial_index; directory = pwd())
     end
     close(savefile)
 end
+
 """
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  
@@ -496,14 +497,13 @@ function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a 
     end
 end
 
-
 # function ptmc_cycle( pot::nested)
 #    for i =1:pot.cycle
 #       ptmc_cycle!( pot::LJ)
 # end
 
 """
-    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
 Main function, controlling the parallel tempering MC run.
 Calculates number of MC steps per cycle.
 Performs equilibration and main MC loop.  
@@ -511,8 +511,12 @@ Energy is sampled after `mc_sample` MC cycles.
 Step size adjustment is done after `n_adjust` MC cycles.    
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
-"""
 
+The booleans control:
+save_ham: whether or not to save every energy in a vector, or calculate averages on the fly.
+save: whether or not to save the parameters and configurations every 1000 steps
+restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
+"""
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
     #restart isn't compatible with saving the hamiltonian at the moment
 
@@ -521,13 +525,10 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     end
     
     if save_ham == false
-        if restart == false
-            #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
-            for i_traj = 1:mc_params.n_traj
-                push!(mc_states[i_traj].ham, 0)
-                push!(mc_states[i_traj].ham, 0)
-            end
-
+        #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
+        for i_traj = 1:mc_params.n_traj
+            push!(mc_states[i_traj].ham, 0)
+            push!(mc_states[i_traj].ham, 0)
         end
     end
 
@@ -564,6 +565,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
                 end
             end
             #update stepsizes
+
             if rem(i, mc_params.n_adjust) == 0
                 for i_traj = 1:mc_params.n_traj
                     update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
@@ -613,7 +615,6 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
             else
                 ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
-            
         end 
     end
     println("MC loop done.")
