@@ -39,8 +39,6 @@ ensemble = NVT(n_atoms)
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
 
-pot_nested = ELJPotentialEven{6}(c)
-
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
 pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
@@ -69,6 +67,17 @@ bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
 
+# info for nested MC
+#epsilon_Ne = -28.62 cm^-1 = 0.0001304 Hartree, r_HS = 2.77 Angstrom;  1cm^-1 = 4.55634 × 10-6 Hartree
+# r_HS = 5.234540988422 # Bohr
+# c_6 = -4*epsilon_Ne * r_HS^6 = -10.730234464936597
+# c_12 = 4*epsilon_Ne * r_HS^12 = 220739.89967889801
+#c=[-10.730234464936597, 220739.89967889801]
+#pot_nested = LJPotential(c)
+nested = true
+pot_nested = ELJPotentialEven{6}(c)
+cycles_nested = 2
+ 
 #histogram information
 n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
