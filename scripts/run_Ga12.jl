@@ -33,7 +33,8 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms) 
 
 #potential 
-a = 14.44 #b
+c = [265682.2899854795, -4.441948849660487e6, 2.954956463280794e7, -1.019551994374658e8, 1.940867564608051e8, -1.9409753310956642e8, 7.98420805167911e7]
+a = 14.44 #box length in Bohrs
 pot = DFTPotential(a, n_atoms) 
 
 #initial configration 
