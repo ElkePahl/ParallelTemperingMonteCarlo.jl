@@ -3,9 +3,9 @@ module ReadSave
 
 export restart_ptmc
 
-
 using StaticArrays
 using DelimitedFiles
+
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
