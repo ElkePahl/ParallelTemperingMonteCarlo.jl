@@ -43,9 +43,9 @@ struct AbstractMLPotential <: AbstractPotential
     atomtype::String
 end
 
-function AbstractMLPotential(dir::String,atomtype::String)
-    return AbstractMLPotential(dir,atomtype)
-end
+#function AbstractMLPotential(dir::String,atomtype::String)
+#    return AbstractMLPotential(dir,atomtype)
+#end
 
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
@@ -180,6 +180,22 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
         sum1 += pot.coeff[i] * r6inv
         r6inv /= r2 
     end
+    return sum1
+end
+
+"""
+    LJPotential{T} 
+Implements Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
+as c_6 r^(-6) + c_12 r^(-12)
+field name: coeff : contains LJ coefficients c_6 and c_12
+"""
+struct LJPotential{T} <: AbstractDimerPotential
+    coeff::SVector{2,T}
+end
+
+function dimer_energy(pot::LJPotential, r2)
+    r6inv = 1/(r2*r2*r2)
+    sum1 = pot.coeff[1] * r6inv + pot.coeff[2] * r6inv * r6inv
     return sum1
 end
 
