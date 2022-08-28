@@ -26,3 +26,4 @@ Manifest.toml
 scripts-elke/
 workspace*
 .DS_Store
+save.data
