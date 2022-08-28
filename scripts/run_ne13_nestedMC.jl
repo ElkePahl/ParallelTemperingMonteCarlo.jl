@@ -72,11 +72,15 @@ start_config = Config(pos_ne13, bc_ne13)
 # r_HS = 5.234540988422 # Bohr
 # c_6 = 4*epsilon_Ne * r_HS^6 = -10.730234464936597
 # c_12 = -4*epsilon_Ne * r_HS^12 = 220739.89967889801
-c=[-10.730234464936597, 220739.89967889801]
-pot_nested = LJPotential(c)
+
+c1=[-10.730234464936597, 220739.89967889801]
+#pot1 = LJPotential(c)
+pot_nested = LJPotential(c1)
 nested = true
-pot_nested = ELJPotentialEven{6}(c)
+#pot_nested = ELJPotentialEven{6}(c)
 cycles_nested = 2
+
+nested_params = MCNested(pot_nested, cycles_nested)
  
 #histogram information
 n_bin = 100

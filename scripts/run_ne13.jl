@@ -38,6 +38,8 @@ ensemble = NVT(n_atoms)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
+c1=[-10.730234464936597, 220739.89967889801]
+pot1 = LJPotential(c1)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -73,12 +75,12 @@ n_bin = 100
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot1; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = true)
+ptmc_run!(mc_states, move_strat, mc_params, pot1, ensemble, results; save_ham = true)
 
 
 

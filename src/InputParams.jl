@@ -12,7 +12,7 @@ using ..Configurations
 using ..EnergyEvaluation
 
 export InputParameters
-export MCParams, TempGrid
+export MCParams, MCNested, TempGrid
 export Output
 #export Results
 #export AbstractDisplacementParams, DisplacementParamsAtomMove
@@ -47,6 +47,11 @@ function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
     return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust)
+end
+
+struct MCNested
+    pot_nested :: AbstractPotential
+    cycles_nested :: Int
 end
 
 """
