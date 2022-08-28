@@ -197,12 +197,12 @@ function LJPotential(c)
     @boundscheck length(c) == 2 || error("exactly 2 LJ coefficients (c_6 and c_12) needed")
     coeff = SVector{2}(c)
     T = eltype(c)
-    return ELJPotential{N,T}(coeff)
+    return LJPotential{T}(coeff)
 end
 
 function dimer_energy(pot::LJPotential, r2)
     r6inv = 1/(r2*r2*r2)
-    sum1 = pot.coeff[1] * r6inv + pot.coeff[2] * r6inv * r6inv
+    sum1 = pot.coeff[1] * r6inv + pot.coeff[2] * r6inv^2
     return sum1
 end
 

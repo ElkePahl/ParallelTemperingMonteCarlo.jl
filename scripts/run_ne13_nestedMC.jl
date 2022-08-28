@@ -70,10 +70,10 @@ start_config = Config(pos_ne13, bc_ne13)
 # info for nested MC
 #epsilon_Ne = -28.62 cm^-1 = 0.0001304 Hartree, r_HS = 2.77 Angstrom;  1cm^-1 = 4.55634 × 10-6 Hartree
 # r_HS = 5.234540988422 # Bohr
-# c_6 = -4*epsilon_Ne * r_HS^6 = -10.730234464936597
-# c_12 = 4*epsilon_Ne * r_HS^12 = 220739.89967889801
-#c=[-10.730234464936597, 220739.89967889801]
-#pot_nested = LJPotential(c)
+# c_6 = 4*epsilon_Ne * r_HS^6 = -10.730234464936597
+# c_12 = -4*epsilon_Ne * r_HS^12 = 220739.89967889801
+c=[-10.730234464936597, 220739.89967889801]
+pot_nested = LJPotential(c)
 nested = true
 pot_nested = ELJPotentialEven{6}(c)
 cycles_nested = 2
