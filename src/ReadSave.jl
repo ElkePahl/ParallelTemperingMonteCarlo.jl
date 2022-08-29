@@ -117,7 +117,7 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
     
     mc_params = initialiseparams(paramdata)
     mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
-    if save_ham = true
+    if save_ham == true
         results  = read_results(directory = directory)
         return results,mc_params,mc_states,step
     else
