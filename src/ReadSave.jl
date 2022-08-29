@@ -1,7 +1,7 @@
 module ReadSave
 
 
-export restart_ptmc
+export restart_ptmc,read_results
 
 
 using StaticArrays
@@ -82,7 +82,7 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
     return states
 end
 
-function read_results(directory)
+function read_results(;directory=pwd())
     resfile = open("$(directory)/results.data")
     histinfo=readdlm(resfile)
     close(resfile)
@@ -107,7 +107,7 @@ end
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
-function restart_ptmc(potential ;directory = pwd())
+function restart_ptmc(potential ;directory = pwd(),save_ham = false)
     readfile = open("$(directory)/save.data","r+")
 
     filecontents=readdlm(readfile)
@@ -117,9 +117,12 @@ function restart_ptmc(potential ;directory = pwd())
     
     mc_params = initialiseparams(paramdata)
     mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
-
-    return mc_params,mc_states,step
-
+    if save_ham = true
+        results  = read_results(directory = directory)
+        return results,mc_params,mc_states,step
+    else
+        return mc_params,mc_states,step
+    end
 end
 
 
