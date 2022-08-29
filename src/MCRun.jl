@@ -399,7 +399,7 @@ Saves the on the fly results and histogram information for re-reading.
 """
 function save_results(results::Output; directory = pwd())
     resultsfile =  open("$(directory)/results.data","w+")
-    write(resultsfile,"emin,emax,nbins = $(results.en_min) $(results.en_max) $(results.n_bin) \n")
+    write(resultsfile,"emin,emax,nbins= $(results.en_min) $(results.en_max) $(results.n_bin) \n")
     write(resultsfile, "Histograms \n")
     writedlm(resultsfile,results.en_histogram)
     close(resultsfile)

@@ -82,7 +82,26 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
     return states
 end
 
-function read_results()
+function read_results(directory)
+    resfile = open("$(directory)/results.data")
+    histinfo=readdlm(resfile)
+    close(resfile)
+
+    emin,emax,nbins = histinfo[1,2:4]
+    histograms = []
+
+    for i in 3:size(histinfo,1)
+        hist = histinfo[i,:]
+        push!(histograms,hist)
+    end
+
+    results = Output{Float64}(nbins; en_min = emin)
+    results.en_min = emin
+    results.en_max = emax
+    results.en_histogram = histograms
+
+    return results
+
 end
 """
     function restart(potential ;directory = pwd())
