@@ -8,12 +8,15 @@ module EnergyEvaluation
 
 using StaticArrays 
 using DFTK 
+using LinearAlgebra
 using ..Configurations
 using ..RuNNer 
 
 export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
+export DFTPotential
 export ELJPotential, ELJPotentialEven
-export dimer_energy, dimer_energy_atom, dimer_energy_config
+export dimer_energy, dimer_energy_atom, dimer_energy_config 
+export getenergy_DFT
 export energy_update
 export AbstractEnsemble, NVT, NPT
 export EnHist
@@ -217,9 +220,9 @@ function DFTPotential(a, n_atoms)
     return DFTPotential(a, lattice, El, atoms, functional, n_atoms, kgrid, Ecut)
 end  
 
-function get_energy(config::Config, pot::DFTPotential) 
-    config = config / pot.a 
-    model = model_DFT(pot.lattice, pot.atoms, config, pot.functional)
+function getenergy_DFT(pos1, pot::DFTPotential) 
+    pos1 = pos1 / pot.a 
+    model = model_DFT(pot.lattice, pot.atoms, pos1, pot.functional)
     basis = PlaneWaveBasis(model; pot.Ecut, pot.kgrid) 
     scfres = self_consistent_field(basis; tol = 1e-7, callback=info->nothing) 
     return scfres.energies.total 
@@ -228,9 +231,9 @@ end
 function energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTPotential) #pos is SVector, i_atom is integer 
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.  
-    config.pos[i] = copy(trial_pos)
-    config_new = copy(config) 
-    delta_en = get_energy(config_new, pot) - en_old
+    config.pos[i_atom] = copy(pos)
+    pos_new = copy(config.pos) 
+    delta_en = getenergy_DFT(pos_new, pot) - en_old
     return delta_en, dist2_new
 end   
 """
