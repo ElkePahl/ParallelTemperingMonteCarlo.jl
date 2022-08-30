@@ -1,8 +1,6 @@
 module ReadSave
 
-
-export restart_ptmc
-
+export restart_ptmc,read_results
 
 using StaticArrays
 using DelimitedFiles
@@ -34,6 +32,7 @@ function initialiseparams(paramdata)
 
     return MC_param
 end
+
 """
     readconfig(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
@@ -60,10 +59,9 @@ function readconfig(oneconfigvec,n_atoms, potential)
     push!(mcstate.ham,oneconfigvec[6,2])
     push!(mcstate.ham,oneconfigvec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
 
-    
-
     return mcstate
 end
+
 """
     readconfigs(configvecs,n_atoms,n_traj,potential)
 takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
@@ -81,11 +79,35 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
 
     return states
 end
+
+function read_results(;directory=pwd())
+    resfile = open("$(directory)/results.data")
+    histinfo=readdlm(resfile)
+    close(resfile)
+
+    emin,emax,nbins = histinfo[1,2:4]
+    histograms = []
+
+    for i in 3:size(histinfo,1)
+        hist = histinfo[i,:]
+        push!(histograms,hist)
+    end
+
+    results = Output{Float64}(nbins; en_min = emin)
+    results.en_min = emin
+    results.en_max = emax
+    results.en_histogram = histograms
+
+    return results
+
+end
+
 """
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
-function restart_ptmc(potential ;directory = pwd())
+function restart_ptmc(potential ;directory = pwd(),save_ham = false)
+
     readfile = open("$(directory)/save.data","r+")
 
     filecontents=readdlm(readfile)
@@ -97,8 +119,12 @@ function restart_ptmc(potential ;directory = pwd())
     mc_params = initialiseparams(paramdata)
     mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
 
-    return mc_params,mc_states,step
-
+    if save_ham == true
+        results  = read_results(directory = directory)
+        return results,mc_params,mc_states,step
+    else
+        return mc_params,mc_states,step
+    end
 end
 
 end
