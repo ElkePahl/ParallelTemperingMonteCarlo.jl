@@ -1,9 +1,6 @@
 module ReadSave
 
-
 export restart_ptmc,read_results
-
-
 
 using StaticArrays
 using DelimitedFiles
@@ -35,6 +32,7 @@ function initialiseparams(paramdata)
 
     return MC_param
 end
+
 """
     readconfig(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
@@ -61,10 +59,9 @@ function readconfig(oneconfigvec,n_atoms, potential)
     push!(mcstate.ham,oneconfigvec[6,2])
     push!(mcstate.ham,oneconfigvec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
 
-    
-
     return mcstate
 end
+
 """
     readconfigs(configvecs,n_atoms,n_traj,potential)
 takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
@@ -72,7 +69,7 @@ takes the entirety of the configuration information, splits it into n_traj confi
 function readconfigs(configvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
-    for idx=1:n_traj<<<<<<< feature/save_onthefly
+    for idx=1:n_traj
         oneconfig = configvecs[1+ (idx - 1)*lines:(idx*lines), :]
         onestate = readconfig(oneconfig,n_atoms,potential)
 
@@ -82,7 +79,6 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
 
     return states
 end
-
 
 function read_results(;directory=pwd())
     resfile = open("$(directory)/results.data")
@@ -110,9 +106,7 @@ end
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
-
 function restart_ptmc(potential ;directory = pwd(),save_ham = false)
-
 
     readfile = open("$(directory)/save.data","r+")
 
@@ -132,8 +126,5 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
         return mc_params,mc_states,step
     end
 end
-
-
-
 
 end
