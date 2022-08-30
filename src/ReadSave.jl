@@ -4,6 +4,7 @@ module ReadSave
 export restart_ptmc,read_results
 
 
+
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
@@ -71,7 +72,7 @@ takes the entirety of the configuration information, splits it into n_traj confi
 function readconfigs(configvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
-    for idx=1:n_traj
+    for idx=1:n_traj<<<<<<< feature/save_onthefly
         oneconfig = configvecs[1+ (idx - 1)*lines:(idx*lines), :]
         onestate = readconfig(oneconfig,n_atoms,potential)
 
@@ -81,6 +82,7 @@ function readconfigs(configvecs,n_atoms,n_traj,potential)
 
     return states
 end
+
 
 function read_results(;directory=pwd())
     resfile = open("$(directory)/results.data")
@@ -103,20 +105,26 @@ function read_results(;directory=pwd())
     return results
 
 end
+
 """
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
+
 function restart_ptmc(potential ;directory = pwd(),save_ham = false)
+
+
     readfile = open("$(directory)/save.data","r+")
 
     filecontents=readdlm(readfile)
 
     step,paramdata,configdata = readinput(filecontents)
+
     close(readfile)
     
     mc_params = initialiseparams(paramdata)
     mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
+
     if save_ham == true
         results  = read_results(directory = directory)
         return results,mc_params,mc_states,step
@@ -124,6 +132,7 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
         return mc_params,mc_states,step
     end
 end
+
 
 
 

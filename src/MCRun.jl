@@ -347,6 +347,7 @@ function sampling_step!(mc_params,mc_states,i, saveham::Bool)
             end
         end 
 end
+
 """
     function save_params(savefile::IOStream, mc_params::MCParams)
 writes the MCParam struct to a savefile
@@ -394,6 +395,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
 
 end
 """
+
     save_results(results::Output; directory = pwd())
 Saves the on the fly results and histogram information for re-reading.
 """
@@ -423,8 +425,6 @@ function save_states(mc_params,mc_states,trial_index; directory = pwd())
     end
     close(savefile)
 end
-
-
 """
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  
@@ -529,8 +529,99 @@ end
 #       ptmc_cycle!( pot::LJ)
 # end
 
+
 """
-    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
+    initialise_histograms!(mc_params,results,T)
+functionalised the step in which we build the energy histograms  
+"""
+function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
+    T = typeof(mc_states[1].en_tot)
+    en_min = T[]
+    en_max = T[]
+    if full_ham == true
+        for i_traj in 1:mc_params.n_traj
+            push!(en_min,minimum(mc_states[i_traj].ham))
+            push!(en_max,maximum(mc_states[i_traj].ham))
+        end
+    
+        global_en_min = minimum(en_min)
+        global_en_max = maximum(en_max)
+    else
+        #we'll give ourselves a 10% leeway here
+        global_en_min = e_bounds[1] - abs(0.05*e_bounds[1])
+        global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
+        
+        for i_traj = 1:mc_params.n_traj
+            histogram = zeros(results.n_bin)
+            push!(results.en_histogram, histogram)
+        end
+    end
+
+    delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
+
+    results.en_min = global_en_min
+    results.en_max = global_en_max
+    
+    if full_ham == true
+        return  delta_en
+    else
+        return  delta_en
+    end
+
+end
+
+function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
+
+    for i_traj in 1:mc_params.n_traj
+        if fullham == true #this is done at the end of the cycle
+            hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
+            for en in mc_states[i_traj].ham
+                index = floor(Int,(en - results.en_min) / delta_en) + 1
+                hist[index] += 1
+            end
+        push!(results.en_histogram, hist)
+
+        else #this is done throughout the simulation
+            en = mc_states[i_traj].en_tot
+
+            index = floor(Int,(en - results.en_min) / delta_en) + 1 
+            results.en_histogram[i_traj][index] += 1
+        end
+    end
+
+end
+
+function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
+
+    @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+    #sampling step
+    sampling_step!(mc_params,mc_states,i,save_ham)
+
+    if save_ham == false
+        updatehistogram!(mc_params,mc_states,results,delta_en,fullham=save_ham)
+    end
+
+    #step adjustment
+    if rem(i, mc_params.n_adjust) == 0
+        for i_traj = 1:mc_params.n_traj
+            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+        end 
+    end
+
+    if save == true
+        if rem(i,1000) == 0
+            save_states(mc_params,mc_states,i)
+        end
+    end
+end
+
+# function ptmc_cycle( pot::nested)
+#    for i =1:pot.cycle
+#       ptmc_cycle!( pot::LJ)
+# end
+
+"""
+    ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
 Main function, controlling the parallel tempering MC run.
 Calculates number of MC steps per cycle.
 Performs equilibration and main MC loop.  
@@ -538,6 +629,11 @@ Energy is sampled after `mc_sample` MC cycles.
 Step size adjustment is done after `n_adjust` MC cycles.    
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
+
+The booleans control:
+save_ham: whether or not to save every energy in a vector, or calculate averages on the fly.
+save: whether or not to save the parameters and configurations every 1000 steps
+restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
     #restart isn't compatible with saving the hamiltonian at the moment
@@ -553,6 +649,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
                 push!(mc_states[i_traj].ham, 0)
                 push!(mc_states[i_traj].ham, 0)
             end
+
         end
     end
 
@@ -589,6 +686,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
                 end
             end
             #update stepsizes
+
             if rem(i, mc_params.n_adjust) == 0
                 for i_traj = 1:mc_params.n_traj
                     update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
@@ -618,26 +716,30 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
     #main MC loop
 
+
     if restart == false
 
         for i = 1:mc_params.mc_cycles
             if save_ham == false
+
                 ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
                 ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
             
+
         end
 
     else #if restarting
 
         for i = restartindex:mc_params.mc_cycles
             if save_ham == false
+
                 ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
                 ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
-            
+
         end 
     end
     println("MC loop done.")
