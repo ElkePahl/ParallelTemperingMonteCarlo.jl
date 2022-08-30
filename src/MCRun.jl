@@ -447,7 +447,7 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
         global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
         
         for i_traj = 1:mc_params.n_traj
-            histogram = zeros(results.n_bin)
+            histogram = zeros(results.n_bin + 2)
             push!(results.en_histogram, histogram)
         end
     end
