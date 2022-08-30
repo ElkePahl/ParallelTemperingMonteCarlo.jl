@@ -447,7 +447,7 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
         global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
         
         for i_traj = 1:mc_params.n_traj
-            histogram = zeros(results.n_bin)
+            histogram = zeros(results.n_bin + 2 ) #bin 1 is too small bin nbin+2 is too large
             push!(results.en_histogram, histogram)
         end
     end
@@ -457,11 +457,9 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
     results.en_min = global_en_min
     results.en_max = global_en_max
     
-    if full_ham == true
-        return  delta_en
-    else
-        return  delta_en
-    end
+   
+    return  delta_en
+    
 
 end
 
@@ -469,6 +467,7 @@ function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
 
     for i_traj in 1:mc_params.n_traj
         if fullham == true #this is done at the end of the cycle
+
             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
             for en in mc_states[i_traj].ham
                 index = floor(Int,(en - results.en_min) / delta_en) + 1
@@ -480,7 +479,14 @@ function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
             en = mc_states[i_traj].en_tot
 
             index = floor(Int,(en - results.en_min) / delta_en) + 1 
-            results.en_histogram[i_traj][index] += 1
+
+            if index < 1 #if energy too low
+                results.en_histogram[i_traj][1] += 1 #add to place 1
+            elseif index > results.n_bin #if energy too high
+                results.en_histogram[i_traj][(results.n_bin +2)] += 1 #add to place n_bin +2
+            else
+                results.en_histogram[i_traj][(index+1)] += 1
+            end
         end
     end
 
