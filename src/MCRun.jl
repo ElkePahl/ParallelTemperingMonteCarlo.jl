@@ -593,7 +593,7 @@ end
 
 function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
 
-    @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
     sampling_step!(mc_params,mc_states,i,save_ham)
 
@@ -615,10 +615,6 @@ function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a 
     end
 end
 
-# function ptmc_cycle( pot::nested)
-#    for i =1:pot.cycle
-#       ptmc_cycle!( pot::LJ)
-# end
 
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0)
@@ -713,18 +709,15 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         end
     end
 
-
     #main MC loop
-
 
     if restart == false
 
         for i = 1:mc_params.mc_cycles
             if save_ham == false
-
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
             
 
@@ -734,10 +727,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
         for i = restartindex:mc_params.mc_cycles
             if save_ham == false
-
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i;delta_en=delta_en)
             else
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
             end
 
         end 
