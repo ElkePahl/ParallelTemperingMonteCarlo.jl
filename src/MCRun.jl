@@ -103,7 +103,13 @@ end
 #    T = typeof(prob_val)
 #    return ifelse(prob_val > 1, T(1), prob_val)
 #end
-
+"""
+    metropolis_condition_nested(ensemble, delta_en1, delta_en2, beta)
+Returns probability to accept a configuration after nested MC loop at inverse temperature `beta`
+by comparing energy differences `deta_en1` and `delta_en2`` for the different potentials 
+(better and approximate one used in nested MC loop)
+only implemented for NVT ensemble
+"""
 function metropolis_condition_nested(::NVT, delta_en1, delta_en2, beta)
     prob_val =  exp(-delta_en1*beta)/ exp(-delta_en2*beta)
     T = typeof(prob_val)
