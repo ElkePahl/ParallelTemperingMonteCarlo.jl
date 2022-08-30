@@ -499,7 +499,7 @@ functionalised the main body of the ptmc_run! code. Runs a single mc_state, samp
 """
 function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
 
-    @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
     sampling_step!(mc_params,mc_states,i,save_ham)
 
