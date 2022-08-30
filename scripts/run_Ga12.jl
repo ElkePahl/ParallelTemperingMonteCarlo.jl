@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo 
-using Random,Plots
+using Random
 
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -9,13 +9,13 @@ n_atoms = 12
 
 # temperature grid, which is in Kelvin
 ti = 150
-tf = 300
-n_traj = 16
+tf = 500
+n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 2  #default 20% equilibration cycles on top
+mc_cycles = 100000  #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -33,7 +33,7 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms) 
 
 #potential 
-c = [265682.2899854795, -4.441948849660487e6, 2.954956463280794e7, -1.019551994374658e8, 1.940867564608051e8, -1.9409753310956642e8, 7.98420805167911e7]
+#c = [265682.2899854795, -4.441948849660487e6, 2.954956463280794e7, -1.019551994374658e8, 1.940867564608051e8, -1.9409753310956642e8, 7.98420805167911e7]   
 a = 14.44 #box length in Bohrs
 pot = DFTPotential(a, n_atoms) 
 
@@ -73,9 +73,9 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
+@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 ##
-plot(temp.t_grid,results.heat_cap)
+#plot(temp.t_grid,results.heat_cap)
 ##
-data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
+#data = [results.en_histogram[i] for i in 1:n_traj]
+#plot(data)

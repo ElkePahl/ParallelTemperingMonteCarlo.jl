@@ -219,7 +219,12 @@ function DFTPotential(a, n_atoms)
     functional = [:gga_x_pbe, :gga_c_pbe] 
     return DFTPotential(a, lattice, El, atoms, functional, n_atoms, kgrid, Ecut)
 end  
-
+""" 
+    getenergy_DFT(pos1, pot) 
+Calculates total energy of a given configuration for an arbitrary number of gallium atoms; 
+note that this function depends only on the positions of the atoms within the configuration, 
+so no bc's are to be included. 
+"""
 function getenergy_DFT(pos1, pot::DFTPotential) 
     pos1 = pos1 / pot.a 
     model = model_DFT(pot.lattice, pot.atoms, pos1, pot.functional)
