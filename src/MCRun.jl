@@ -304,7 +304,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, e
     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)    
     #this replaces the atom_move! function
     #parallelisation here is fine
-    Threads.@threads for i in 1:mc_params.n_traj
+    for i in 1:mc_params.n_traj
         if metropolis_condition(ensemble, (mc_states[i].en_tot - energyvec[i]), mc_states[i].beta ) >=rand()
             mc_states[i].config.pos[indices[i]] = trials[i]
             mc_states[i].en_tot = energyvec[i]
