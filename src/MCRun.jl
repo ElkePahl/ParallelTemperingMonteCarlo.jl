@@ -2,7 +2,7 @@ module MCRun
 
 export MCState
 export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!
-export atom_move!
+export atom_move!,update_max_stepsize!
 export exc_acceptance, exc_trajectories!
 
 using StaticArrays,DelimitedFiles
