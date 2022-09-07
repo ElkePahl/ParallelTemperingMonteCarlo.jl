@@ -410,7 +410,7 @@ end
     function save_states(mc_params,mc_states,trial_index; directory = pwd())
 opens a savefile, writes the mc params and states and the trial at which it was run. 
 """
-function save_states(mc_params,mc_states,trial_index; directory = pwd())
+function save_states(mc_params,mc_states,trial_index, directory)
     i = 0 
     savefile = open("$(directory)/save.data","w+")
     write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
@@ -497,7 +497,7 @@ end
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
 """
-function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
+function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ,save_dir = pwd())
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
@@ -516,7 +516,7 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 
     if save == true
         if rem(i,1000) == 0
-            save_states(mc_params,mc_states,i)
+            save_states(mc_params,mc_states,i,save_dir)
             if save_ham == false
                 save_results(results)
             end
