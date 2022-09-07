@@ -3,7 +3,7 @@ module MCMoves
 export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
 export AbstractMove, StatMove
 export AtomMove
-export atom_displacement, update_max_stepsize!
+export atom_displacement #, update_max_stepsize!
 
 using StaticArrays
 
