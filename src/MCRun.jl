@@ -71,7 +71,7 @@ function MCState(temp,beta, config::Config, pot::AbstractMLPotential;kwargs...)
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config.pos)
     en_atom_vec = zeros(n_atoms)
-    en_tot = RuNNer.getenergy(pot.dir, config,pot.atomtype)
+    en_tot = RuNNer.getenergy(pot.dir, config, pot.atomtype)
 
     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 end
@@ -346,17 +346,15 @@ end
 A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
 """
 function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
-    if rem(i, mc_params.mc_sample) == 0
-        for i_traj=1:mc_params.n_traj
-            if saveham == true
-                push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
-            else
-                mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
-                #add E,E**2 to the correct positions in the hamiltonian
-                mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
-            end
+    for i_traj=1:mc_params.n_traj
+        if saveham == true
+            push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+        else
+            mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
+            #add E,E**2 to the correct positions in the hamiltonian
+            mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
         end
-    end 
+    end
 end
 
 """
@@ -489,7 +487,9 @@ function ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps , 
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
-    sampling_step!(mc_params,mc_states,i,save_ham)
+    if rem(i, mc_params.mc_sample) == 0
+        sampling_step!(mc_params,mc_states,i,save_ham)
+    end
 
     if save_ham == false
         updatehistogram!(mc_params, mc_states, results, delta_en, fullham=save_ham)
@@ -525,7 +525,8 @@ save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; 
-                  save_ham::Bool = true, save::Bool=true, restart::Bool=false, restartindex::Int64=0, nested = false, pot_nested = pot, cycles_nested = 0)
+                    save_ham::Bool = true, save::Bool=true, restart::Bool=false, restartindex::Int64=0, 
+                    nested = false, pot_nested = pot, cycles_nested = 1, mc_states_nested = mc_states)
 
     #restart isn't compatible with saving the hamiltonian at the moment
     if restart == true
@@ -549,7 +550,6 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
     println("Total number of moves per MC cycle: ", n_steps)
     println()
 
-    
     #equilibration cycle
     if restart == false
         #this initialises the max and min energies for histograms
@@ -557,8 +557,10 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
             ebounds = [100. , -100.] #emin,emax
         end
         
-        for i = 1:mc_params.eq_cycles
-            @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        for i = 1:mc_params.eq_cycles/cycles_nested
+            for j = 1:cycles_nested
+                @inbounds mc_states = mc_cycle!(mc_states_nested, move_strat, mc_params, pot_nested, ensemble, n_steps, a, v, r)
+            end
             #verbose way to save the highest and lowest energies
 
             if save_ham == false
@@ -593,7 +595,6 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
         end
 
         println("equilibration done")
-        
 
         if save == true
             save_states(mc_params,mc_states,0)
@@ -604,21 +605,25 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
 
     if restart == false
 
-        for i = 1:mc_params.mc_cycles
-            if save_ham == false
-                @inbounds ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
-            else
-                @inbounds ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+        for i = 1:mc_params.mc_cycles/cycles_nested
+            for j = 1:cycles_nested
+                if save_ham == false
+                    @inbounds ptmc_cycle!(mc_states_nested, move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
+                else
+                    @inbounds ptmc_cycle!(mc_states_nested, move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                end
             end
         end
 
     else #if restarting
 
-        for i = restartindex:mc_params.mc_cycles
-            if save_ham == false
-                @inbounds ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
-            else
-                @inbounds ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+        for i = restartindex:mc_params.mc_cycles/cycles_nested
+            for j = 1:cycles_nested
+                if save_ham == false
+                     @inbounds ptmc_cycle!(mc_states_nested,move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
+                else
+                    @inbounds ptmc_cycle!(mc_states_nested,move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                end
             end
         end 
     end
