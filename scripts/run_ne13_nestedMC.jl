@@ -15,7 +15,7 @@ n_traj = 32
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 60000 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -37,8 +37,23 @@ ensemble = NVT(n_atoms)
 #elj_ne1 = ELJPotential{11}(c1)
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
-pot = ELJPotentialEven{6}(c)
+pot_acc = ELJPotentialEven{6}(c)
 
+# info for nested MC
+#epsilon_Ne = -28.62 cm^-1 = 0.0001304 Hartree, r_HS = 2.77 Angstrom;  1cm^-1 = 4.55634 × 10-6 Hartree
+# r_HS = 5.234540988422 # Bohr
+# c_6 = 4*epsilon_Ne * r_HS^6 = -10.730234464936597
+# c_12 = -4*epsilon_Ne * r_HS^12 = 220739.89967889801
+
+c1=[-10.730234464936597, 220739.89967889801]
+#pot1 = LJPotential(c)
+pot = LJPotential(c1)
+nested = true
+#pot_nested = ELJPotentialEven{6}(c)
+cycles_nested = 2
+
+nested_params = MCNested(pot, cycles_nested)
+ 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
 pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
@@ -67,21 +82,6 @@ bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
 
-# info for nested MC
-#epsilon_Ne = -28.62 cm^-1 = 0.0001304 Hartree, r_HS = 2.77 Angstrom;  1cm^-1 = 4.55634 × 10-6 Hartree
-# r_HS = 5.234540988422 # Bohr
-# c_6 = 4*epsilon_Ne * r_HS^6 = -10.730234464936597
-# c_12 = -4*epsilon_Ne * r_HS^12 = 220739.89967889801
-
-c1=[-10.730234464936597, 220739.89967889801]
-#pot1 = LJPotential(c)
-pot_nested = LJPotential(c1)
-nested = true
-#pot_nested = ELJPotentialEven{6}(c)
-cycles_nested = 2
-
-nested_params = MCNested(pot_nested, cycles_nested)
- 
 #histogram information
 n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
@@ -89,14 +89,14 @@ n_bin = 100
 
 #construct array of MCState (for each temperature)
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-
-mc_states_nested = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot_nested; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+#for nested MC run
+mc_states_acc = [MCState_Acc(start_config, pot_acc) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; 
-            save_ham = true, nested = true, pot_nested = pot_nested, cycles_nested = cycles_nested, mc_states_nested = mc_states_nested)
+            save_ham = true, nested = true, pot_acc = pot_acc, cycles_nested = cycles_nested, mc_states_acc = mc_states_acc)
 
 
 

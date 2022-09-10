@@ -1,6 +1,6 @@
 module MCRun
 
-export MCState
+export MCState, MCState_Acc
 export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!
 export atom_move!
 export exc_acceptance, exc_trajectories!
@@ -74,6 +74,34 @@ function MCState(temp,beta, config::Config, pot::AbstractMLPotential;kwargs...)
     en_tot = RuNNer.getenergy(pot.dir, config, pot.atomtype)
 
     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
+end
+
+mutable struct MCState_Acc{T,N,BC}
+    config::Config{N,BC,T}
+    dist2_mat::Matrix{T}
+    en_atom_vec::Vector{T}
+    en_tot::T
+    count_acc::Int
+end  
+
+function MCState_Acc(config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; count_acc = 0) where {T,N,BC}
+    MCState_Acc{T,N,BC}(deepcopy(config), copy(dist2_mat), copy(en_atom_vec), en_tot, count_acc)
+end
+
+function MCState_Acc(config::Config, pot::AbstractDimerPotential) 
+    dist2_mat = get_distance2_mat(config)
+    n_atoms = length(config.pos)
+    en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
+    MCState_Acc(config, dist2_mat, en_atom_vec, en_tot)
+ end
+
+ function MCState_Acc(config::Config, pot::AbstractMLPotential)
+    dist2_mat = get_distance2_mat(config)
+    n_atoms = length(config.pos)
+    en_atom_vec = zeros(n_atoms)
+    en_tot = RuNNer.getenergy(pot.dir, config, pot.atomtype)
+    MCState_Acc(config, dist2_mat, en_atom_vec, en_tot)
+
 end
 """
     metropolis_condition(ensemble, delta_en, beta)
@@ -526,7 +554,7 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 """
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; 
                     save_ham::Bool = true, save::Bool=true, restart::Bool=false, restartindex::Int64=0, 
-                    nested = false, pot_nested = pot, cycles_nested = 1, mc_states_nested = mc_states)
+                    nested = false, pot_acc = pot, cycles_nested = 1, mc_states_acc = mc_states)
 
     #restart isn't compatible with saving the hamiltonian at the moment
     if restart == true
@@ -550,7 +578,14 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
     println("Total number of moves per MC cycle: ", n_steps)
     println()
 
-    #equilibration cycle
+    if nested == true
+        println("nested MC run performed.")
+        println()
+        mc_states_old = deepcopy(mc_states) 
+    end 
+
+    # -------------------------- equilibration cycle -------------------------- 
+
     if restart == false
         #this initialises the max and min energies for histograms
         if save_ham == false
@@ -559,10 +594,10 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
         
         for i = 1:mc_params.eq_cycles/cycles_nested
             for j = 1:cycles_nested
-                @inbounds mc_states = mc_cycle!(mc_states_nested, move_strat, mc_params, pot_nested, ensemble, n_steps, a, v, r)
+                @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
             end
-            #verbose way to save the highest and lowest energies
 
+            #verbose way to save the highest and lowest energies
             if save_ham == false
                 for i_traj = 1:mc_params.n_traj
                     if mc_states[i_traj].en_tot < ebounds[1]
@@ -574,21 +609,23 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
                     end
                 end
             end
-            #update stepsizes
 
+            #update stepsizes
             if rem(i, mc_params.n_adjust) == 0
                 for i_traj = 1:mc_params.n_traj
                     update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
                 end 
             end
         end
-    #re-set counter variables to zero
+
+        #re-set counter variables to zero
         for i_traj = 1:mc_params.n_traj
             mc_states[i_traj].count_atom = [0, 0]
             mc_states[i_traj].count_vol = [0, 0]
             mc_states[i_traj].count_rot = [0, 0]
             mc_states[i_traj].count_exc = [0, 0]
         end
+
         #initialise histogram for non-saving hamiltonian 
         if save_ham == false
             delta_en = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds)
@@ -601,16 +638,16 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
         end
     end
 
-    #main MC loop
+    # ------------------------------- MC loop -------------------------------
 
     if restart == false
 
         for i = 1:mc_params.mc_cycles/cycles_nested
             for j = 1:cycles_nested
                 if save_ham == false
-                    @inbounds ptmc_cycle!(mc_states_nested, move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
+                    @inbounds ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
                 else
-                    @inbounds ptmc_cycle!(mc_states_nested, move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                    @inbounds ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
                 end
             end
         end
@@ -620,9 +657,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
         for i = restartindex:mc_params.mc_cycles/cycles_nested
             for j = 1:cycles_nested
                 if save_ham == false
-                     @inbounds ptmc_cycle!(mc_states_nested,move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
+                     @inbounds ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
                 else
-                    @inbounds ptmc_cycle!(mc_states_nested,move_strat, mc_params, pot_nested, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                    @inbounds ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
                 end
             end
         end 
