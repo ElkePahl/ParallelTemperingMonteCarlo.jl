@@ -12,7 +12,7 @@ using ..RuNNer
 export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
 export ELJPotential, ELJPotentialEven, LJPotential
 export dimer_energy, dimer_energy_atom, dimer_energy_config
-export energy_update
+export energy_update, get_energy
 export AbstractEnsemble, NVT, NPT
 export EnHist
 
@@ -80,7 +80,17 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
         energy_tot += dimer_energy_vec[i]
     end 
     return dimer_energy_vec, 0.5*energy_tot
-end    
+end  
+
+function get_energy(distmat, NAtoms, pot::AbstractDimerPotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    for i in 1:NAtoms #eachindex(),enumerate()..?
+        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot) #@view distmat[i, :]
+        energy_tot += dimer_energy_vec[i]
+    end 
+    return 0.5*energy_tot
+end
 
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)

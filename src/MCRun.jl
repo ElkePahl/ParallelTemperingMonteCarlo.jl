@@ -2,6 +2,7 @@ module MCRun
 
 export MCState, MCState_Acc
 export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!
+export metropolis_condition_nested
 export atom_move!
 export exc_acceptance, exc_trajectories!
 
@@ -52,7 +53,7 @@ end
 function MCState(
     temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
     max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
-) where {T,N,BC}
+    ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC}(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(en_atom_vec), en_tot, 
@@ -569,6 +570,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
         end
     end
 
+    n_atoms = length(mc_states[1].config.pos)
+
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
     r = rot_move_frequency(move_strat)
@@ -581,7 +584,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
     if nested == true
         println("nested MC run performed.")
         println()
-        mc_states_old = deepcopy(mc_states) 
+        en_old = [mc_states[i].en_tot for i in 1:mc_params.n_traj] # energies of start of nested loop
     end 
 
     # -------------------------- equilibration cycle -------------------------- 
@@ -595,6 +598,28 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
         for i = 1:mc_params.eq_cycles/cycles_nested
             for j = 1:cycles_nested
                 @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+            end
+
+            if nested == true
+                for i_traj = 1:mc_params.n_traj
+                    #computation of energy for more accurate potential with last configuration
+                    en = get_energy(mc_states[i_traj].dist2_mat, n_atoms, pot_acc)
+                    # ... and energy differences
+                    delta_en_acc = en - mc_states_acc[i_traj].en_tot
+                    delta_en = mc_states[i_traj].en_tot - en_old[i_traj]
+                    if metropolis_condition_nested(ensemble, delta_en_acc, delta_en, mc_states[i_traj].beta) >= rand()
+                    #nested loop accepted 
+                        mc_states_acc[i_traj].count_acc += 1
+                        en_old[i_traj] = mc_states[i_traj].en_tot
+                        mc_states_acc[i_traj].en_tot = en
+                    else
+                    #not accepted: swapping around ...
+                        mc_states[i_traj].en_tot = en_old[i_traj]
+                        mc_states[i_traj].config = deepcopy(mc_states_acc[i_traj].config)
+                        mc_states[i_traj].dist2_mat = deepcopy(mc_states_acc[i_traj].dist2_mat)
+                        # note: en_atom_vec not used presently, so it's not updated
+                    end
+                end
             end
 
             #verbose way to save the highest and lowest energies
@@ -648,6 +673,27 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
                     @inbounds ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i; delta_en=delta_en)
                 else
                     @inbounds ptmc_cycle!(mc_states, move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i)
+                end
+            end
+            if nested == true
+                for i_traj = 1:mc_params.n_traj
+                    #computation of energy for more accurate potential with last configuration
+                    en = get_energy(mc_states[i_traj].dist2_mat, n_atoms, pot_acc)
+                    # ... and energy differences
+                    delta_en_acc = en - mc_states_acc[i_traj].en_tot
+                    delta_en = mc_states[i_traj].en_tot - en_old[i_traj]
+                    if metropolis_condition_nested(ensemble, delta_en_acc, delta_en, mc_states[i_traj].beta) >= rand()
+                    #nested loop accepted 
+                        mc_states_acc[i_traj].count_acc += 1
+                        en_old[i_traj] = mc_states[i_traj].en_tot
+                        mc_states_acc[i_traj].en_tot = en
+                    else
+                    #not accepted: swapping around ...
+                        mc_states[i_traj].en_tot = en_old[i_traj]
+                        mc_states[i_traj].config = deepcopy(mc_states_acc[i_traj].config)
+                        mc_states[i_traj].dist2_mat = deepcopy(mc_states_acc[i_traj].dist2_mat)
+                        # note: en_atom_vec not used presently, so it's not updated
+                    end
                 end
             end
         end

@@ -15,7 +15,7 @@ n_traj = 32
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 60000 #default 20% equilibration cycles on top
+mc_cycles = 200000 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -97,8 +97,6 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; 
             save_ham = true, nested = true, pot_acc = pot_acc, cycles_nested = cycles_nested, mc_states_acc = mc_states_acc)
-
-
 
 #plot(temp.t_grid,results.heat_cap)
 
