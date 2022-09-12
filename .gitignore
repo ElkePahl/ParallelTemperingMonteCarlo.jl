@@ -27,3 +27,4 @@ scripts-elke/
 workspace*
 .DS_Store 
 Trial.jl
+.vscode/
