@@ -5,13 +5,17 @@ this module provides data, structs and methods for dimer energy and total energy
 """    
 module EnergyEvaluation
 
-using StaticArrays
+using StaticArrays 
+using DFTK 
+using LinearAlgebra
 using ..Configurations
-using ..RuNNer
+using ..RuNNer 
 
 export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
+export DFTPotential
 export ELJPotential, ELJPotentialEven
-export dimer_energy, dimer_energy_atom, dimer_energy_config
+export dimer_energy, dimer_energy_atom, dimer_energy_config 
+export getenergy_DFT
 export energy_update
 export AbstractEnsemble, NVT, NPT
 export EnHist
@@ -80,18 +84,18 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     return dimer_energy_vec, 0.5*energy_tot
 end    
 
-function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
+function energy_update(i_atom, dist2_new, en_old, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
-function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
+function energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
     delta_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
     return delta_en, dist2_new
 end
 
-function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
+function energy_update(pos,i_atom,config,dist2_mat, en_old, pot::AbstractMLPotential)
 
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
@@ -179,8 +183,60 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
         r6inv /= r2 
     end
     return sum1
-end
+end 
 
+""" 
+    DFTPotential 
+Implements type for a "density functional theory" potential (calcuate energies in DFT); subtype of AbstractPotential 
+field names: a: specifies the box length, lattice: specifies the 3x3 cube/box from a, El: specifies the atom type,
+pseudopotential and functional, atoms: a vector containing the atom type from El, functional: specifies the functional, 
+n_atoms:: specifies the number of atoms, kgrid: is the k-point sampling grid, Ecut: is energy cutoff. 
+""" 
+struct DFTPotential <:AbstractPotential
+    a::Float64                     
+    lattice::Mat3                  
+    El::ElementPsp                
+    atoms::Vector                 
+    functional::Vector{Symbol}    
+    n_atoms::Int                  
+    kgrid::Vector                 
+    Ecut::Int                      
+end  
+
+function DFTPotential(a, n_atoms) 
+    kgrid = [1, 1, 1] 
+    Ecut = 6
+    lattice = a * I(3) 
+    El = ElementPsp(:Ga, psp=load_psp("hgh/pbe/ga-q3")) 
+    atoms = Vector{ElementPsp}(undef,n_atoms)
+    for i in 1:n_atoms 
+        atoms[i] = El 
+    end  
+    functional = [:gga_x_pbe, :gga_c_pbe] 
+    return DFTPotential(a, lattice, El, atoms, functional, n_atoms, kgrid, Ecut)
+end  
+""" 
+    getenergy_DFT(pos1, pot) 
+Calculates total energy of a given configuration for an arbitrary number of gallium atoms; 
+note that this function depends only on the positions of the atoms within the configuration, 
+so no bc's are to be included. 
+"""
+function getenergy_DFT(pos1, pot::DFTPotential) 
+    pos1 = pos1 / pot.a 
+    model = model_DFT(pot.lattice, pot.atoms, pos1, pot.functional)
+    basis = PlaneWaveBasis(model; pot.Ecut, pot.kgrid) 
+    scfres = self_consistent_field(basis; tol = 1e-7, callback=info->nothing) 
+    return scfres.energies.total 
+end  
+
+function energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTPotential) #pos is SVector, i_atom is integer 
+    dist2_new = [distance2(pos,b) for b in config.pos]
+    dist2_new[i_atom] = 0.  
+    config.pos[i_atom] = copy(pos)
+    pos_new = copy(config.pos) 
+    delta_en = getenergy_DFT(pos_new, pot) - en_old
+    return delta_en, dist2_new
+end   
 """
     AbstractEnsemble
 abstract type for ensemble:
