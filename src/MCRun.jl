@@ -75,6 +75,16 @@ function MCState(temp,beta, config::Config, pot::AbstractMLPotential;kwargs...)
 
     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 end
+function MCState(temp,beta, config::Config, pot::AbstractMLPotential,input_index;kwargs...)
+    dist2_mat = get_distance2_mat(config)
+    n_atoms = length(config.pos)
+    en_atom_vec = zeros(n_atoms)
+    
+    en_tot = RuNNer.getenergy(pot.dir, config,pot.atomtype,input_index)
+
+
+    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
+end
 """
     metropolis_condition(ensemble, delta_en, beta)
 Returns probability to accept a MC move at inverse temperature `beta` 

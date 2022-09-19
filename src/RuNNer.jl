@@ -110,7 +110,17 @@ function writefile(dir::String, config::Config, atomtype::String)
     write(file,"end")
     close(file)
 end
-
+function writefile(dir::String, config::Config, atomtype::String,input_index)
+    file = open("$(dir)input$(input_index).data","w+")
+    write(file, "begin \n")
+    for atom in config.pos
+        write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+    end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end")
+    close(file)
+end
 function writefile(dir::String,config::Config, atomtype::Vector)
     i = 0
     file = open("$(dir)input.data","w+")
@@ -229,6 +239,14 @@ function getenergy(dir,config::Config,atomtype)
     writefile(dir,config,atomtype)
     
     E = getRuNNerenergy(dir,1)[1];
+
+    return E
+end
+function getenergy(dir,config::Config,atomtype,input_index)
+
+    writefile(dir,config,atomtype,input_index)
+    
+    E = getRuNNerenergy(dir,1,input_idx=input_index)[1];
 
     return E
 end
