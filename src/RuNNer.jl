@@ -47,16 +47,42 @@ function findRuNNerenergy(inputdir::String,NTraj)
     
     return energyvector
 end
+function findRuNNerenergy(inputdir,NTraj,input_idx)
+
+    readfile = open("$(inputdir)energy$(input_idx).out") #reads the energy out file from RuNNer
+    contents = readdlm(readfile,skipstart=1)
+
+    energyvector = Vector{Float64}(undef,NTraj)
+    ###------This is a bugfix that ultimately needs a more elegant solution---------###
+    if length(contents[:,4]) < NTraj
+        #RuNNer couldn't find one or more energy without saying which
+        println("error in RuNNer")
+        #So we set the energy too high to accept
+        energyvector[:] = 1000*ones(NTraj)
+    else
+        for i in 1:NTraj
+            energyvector[i] = contents[i,4] # the fourth column is the output energy of the NN
+        end
+    end
+    
+    return energyvector
+end
 
 """
     getRuNNerenergy(dir::String,NTraj)]
 Function to run RuNNer and read the output. This represents the total output function. Point to a directory dir containing the RuNNer.serial.x and input files, and specify the number of trajectories NTraj. Output is an NTraj vector of energies
 """
-function getRuNNerenergy(dir::String,NTraj)
+function getRuNNerenergy(dir::String,NTraj; input_idx = 0)
     cd(dir)
-    run(`./RuNNer.x`);
+    if input_idx == 0
+        run(`./RuNNer.x`);
     
-    E = findRuNNerenergy(dir,NTraj)
+        E = findRuNNerenergy(dir,NTraj)
+    else
+        run(`./RuNNer.x $input_idx`)
+
+        E = findRuNNerenergy(dir,NTraj,input_idx)
+    end
 
     return E
 end
@@ -128,8 +154,13 @@ end
 for writing a series of trajectories in a single runner input.data file. Output is an IOStream for use in writing configs.
 
 """
-function writeinit(dir::String)
-    inputfile = open("$(dir)input.data","w+")
+function writeinit(dir::String;input_idx=0)
+    if input_idx == 0
+        inputfile = open("$(dir)input.data","w+")
+    else
+        inputfile = open("$(dir)input$(input_idx).data","w+")
+    end
+
     return inputfile
 end
 """

@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo
-##
+
 using Random,Plots
 
 #set random seed - for reproducibility
@@ -125,8 +125,7 @@ length(pos_cu13) == n_atoms || error("number of atoms and positions not the same
 bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
 bc_cu13 = SphericalBC(radius=8*AtoBohr)
 #starting configuration
-start_config = Config(pos_cu13, bc_cu13)
-
+start_config = Config(pos_cu55, bc_cu55)
 #histogram information
 n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
@@ -138,7 +137,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
+# @time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
 ##
 plot(temp.t_grid,results.heat_cap)
 ##
