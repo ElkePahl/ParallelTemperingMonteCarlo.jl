@@ -10,7 +10,7 @@ using StaticArrays
 using ..Configurations
 using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
+export AbstractPotential, AbstractDimerPotential, AbstractMLPotential , ParallelMLPotential
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config
 export energy_update
@@ -43,7 +43,11 @@ struct AbstractMLPotential <: AbstractPotential
     dir::String
     atomtype::String
 end
-
+struct ParallelMLPotential <: AbstractPotential
+    dir::String
+    atomtype::String
+    index::Int64
+end
 
 
 """
