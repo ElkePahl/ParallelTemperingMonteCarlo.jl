@@ -537,10 +537,7 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 end
 
 
-# function ptmc_cycle( pot::nested)
-#    for i =1:pot.cycle
-#       ptmc_cycle!( pot::LJ)
-# end
+
 
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
