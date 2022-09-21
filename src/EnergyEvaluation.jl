@@ -20,25 +20,34 @@ export energy_update
 export AbstractEnsemble, NVT, NPT
 export EnHist
 
+#[`AbstractDimerPotential`](@ref)
+#[`DFTPotential`](@ref)
 """   
     AbstractPotential
-Abstract type for possible potentials
-implemented subtype: 
-- AbstractDimerPotential
+Abstract type for possible potentials;
+implemented subtypes: 
+- AbstractDimerPotential 
+- DFTPotential
+- AbstractMLPotential
 
-Needs method for dimer_energy [`dimer_energy`](@ref)
+Needs methods for:
+- get_energy
+- energy_update
 """
 abstract type AbstractPotential end
 
 """
     AbstractDimerPotential <: AbstractPotential
- implemented dimer potentials:   
-    - ELJPotential [`ELJPotential`](@ref)
-    - ELJPotentialEven [`ELJPotentialEven`](@ref)
+ implemented dimer potentials:  
 
-Needs methods for 
-    - dimer_energy_atom [`dimer_energy_atom`](@ref)
-    - dimer_energy_config [`dimer_energy_config`](@ref)
+    - ELJPotential 
+    - ELJPotentialEven 
+    - LJPotential 
+
+Needs methods for:
+
+    - dimer_energy_atom 
+    - dimer_energy_config 
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
 
@@ -47,14 +56,12 @@ struct AbstractMLPotential <: AbstractPotential
     atomtype::String
 end
 
-
-
 """
-    dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
+    dimer_energy_atom(i, pos, d2vec, pot::AbstractDimerPotential)
 Sums the dimer energies for atom `i` with all other atoms
+
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
 see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
-and potential information `pot` [`Abstract_Potential`](@ref) 
 """
 function dimer_energy_atom(i, d2vec, pot::AbstractDimerPotential)
     sum1 = 0.
@@ -88,6 +95,12 @@ function energy_update(i_atom, dist2_new, en_old, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
+"""
+    energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDimerPotential)
+Returns energy difference between new and old configuration and new (squared) distance matrix 
+for a configuration `config` where `i_atom`-th position `pos` was changed
+for a dimer potential.
+"""
 function energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
@@ -95,6 +108,12 @@ function energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDime
     return delta_en, dist2_new
 end
 
+"""
+    energy_update(pos,i_atom,config,dist2_mat, en_old, pot::AbstractMLPotential)
+Returns energy difference between new and old configuration and new (squared) distance matrix 
+for a configuration `config` where `i_atom`-th position `pos` was changed
+for a machine-learning potential.
+"""
 function energy_update(pos,i_atom,config,dist2_mat, en_old, pot::AbstractMLPotential)
 
     dist2_new = [distance2(pos,b) for b in config.pos]
@@ -109,8 +128,12 @@ end
 
 """
     ELJPotential{N,T} 
-Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
-as sum over c_i r^(-i), starting with i=6 up to i=N+6
+Implements type for extended Lennard Jones potential; 
+
+Subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref)
+
+Sum over c_i r^(-i), starting with i=6 up to i=N+6
+
 field name: coeff : contains ELJ coefficients c_ifrom i=6 to i=N+6, coefficient for every power needed.
 """
 struct ELJPotential{N,T} <: AbstractDimerPotential
@@ -228,7 +251,12 @@ function getenergy_DFT(pos1, pot::DFTPotential)
     scfres = self_consistent_field(basis; tol = 1e-7, callback=info->nothing) 
     return scfres.energies.total 
 end  
-
+"""
+    energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTPotential)
+Returns energy difference between new and old configuration and new (squared) distance matrix 
+for a configuration `config` where `i_atom`-th position `pos` was changed
+for a DFT potential.
+"""
 function energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTPotential) #pos is SVector, i_atom is integer 
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.  
