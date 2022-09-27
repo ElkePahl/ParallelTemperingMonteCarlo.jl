@@ -6,12 +6,12 @@ using Random,Plots
 Random.seed!(0)
 
 # number of atoms
-n_atoms = 13
+n_atoms = 55
 
 # temperature grid
 ti = 540
 tf = 650
-n_traj = 24
+n_traj = 15
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -119,7 +119,7 @@ pos_cu55 = copperconstant*ico_55
 pos_cu13 = copperconstant*ico_13*1.5
 AtoBohr = 1.8897259886
 
-length(pos_cu13) == n_atoms || error("number of atoms and positions not the same - check starting config")
+length(pos_cu55) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
 bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
@@ -137,9 +137,11 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-# @time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
-##
+@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
+
 plot(temp.t_grid,results.heat_cap)
-##
+
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
+histplot = plot(data)
+savefig(histplot,"histograms.png")
