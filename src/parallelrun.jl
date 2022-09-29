@@ -86,10 +86,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
     return parallel_states,pot_vector,a,v,r,delta_en,n_threads
 
 end
-"""
-    threadexchange!(parallel_states,n_threads,idx)
-function takes a series of parallel states along with a number of threads and exchanges two of them randomly. 
-"""
+
 @everywhere function threadexchange!(parallel_states,n_threads,idx)
     if rand() < 0.2  #20% change per trajectory of an attempted exchange
         thrid = rand(1:n_threads,2)
