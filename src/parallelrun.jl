@@ -1,7 +1,7 @@
 module ParallelRun
 
 using Distributed
-@everywhere begin
+
     using StaticArrays,DelimitedFiles
 
     using ..BoundaryConditions
@@ -16,7 +16,7 @@ using Distributed
     import .MCRun.mc_cycle!
 
     export ParallelRun,mc_cycle!,pptmc_cycle
-end
+
 
 """
     parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
