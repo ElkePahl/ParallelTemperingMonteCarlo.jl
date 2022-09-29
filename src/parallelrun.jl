@@ -15,7 +15,7 @@ using Distributed
     import ..MCRun: initialise_histograms!,updatehistogram!,update_max_stepsize!,sampling_step!,save_results,save_states
     import .MCRun.mc_cycle!
 
-    export ParallelRun,mc_cycle!,pptmc_cycle
+    export ParallelRun,mc_cycle!,pptmc_cycle,parallel_equilibration
 
 
 """
