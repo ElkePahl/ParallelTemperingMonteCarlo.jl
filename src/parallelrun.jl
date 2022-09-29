@@ -155,14 +155,17 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
 end
 
 @everywhere function pptmc_cycle(parallel_states,results,move_strat,pot_vector,n_threads,delta_en)
-    for i = 1:500
+    # for i = 1:500
 
         Threads.@threads for threadindex = 1:n_threads
-            ptmc_cycle!(parallel_states[thread_index],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
+            
+            for i = 1:500
+                ptmc_cycle!(parallel_states[thread_index],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
+            end
 
         end
         #we run 500 mc cycles per thread
-    end
+    #end
 
     for idx = 1:mc_params.n_traj
         threadexchange!(parallel_states,n_threads,idx)

@@ -39,11 +39,13 @@ Needs methods for
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
 
-struct AbstractMLPotential <: AbstractPotential 
+abstract type AbstractMachineLearningPotential <: AbstractPotential end
+
+struct AbstractMLPotential <: AbstractMachineLearningPotential #remove the Abstract from the name
     dir::String
     atomtype::String
 end
-struct ParallelMLPotential <: AbstractPotential
+struct ParallelMLPotential <: AbstractMachineLearningPotential
     dir::String
     atomtype::String
     index::Int64
