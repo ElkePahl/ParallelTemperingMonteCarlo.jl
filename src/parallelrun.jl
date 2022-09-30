@@ -154,7 +154,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     return mc_states
 end
 
-function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,n_threads,delta_en)
+function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,a,v,r)
     # for i = 1:500
 
         Threads.@threads for threadindex = 1:n_threads
