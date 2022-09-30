@@ -75,11 +75,11 @@ Function to run RuNNer and read the output. This represents the total output fun
 function getRuNNerenergy(dir::String,NTraj; input_idx = 0)
     cd(dir)
     if input_idx == 0
-        run(`./RuNNer.x ">"/dev/null`);
+        run(`./RuNNer.x`,devnull);
     
         E = findRuNNerenergy(dir,NTraj)
     else
-        run(`./RuNNer$input_idx.x $input_idx ">"/dev/null`);
+        run(`./RuNNer$input_idx.x $input_idx`,devnull);
 
         E = findRuNNerenergy(dir,NTraj,input_idx)
     end
