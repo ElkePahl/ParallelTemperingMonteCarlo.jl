@@ -1,6 +1,6 @@
 using ParallelTemperingMonteCarlo
 
-using Random,Plots
+using Random
 
 #set random seed - for reproducibility
 Random.seed!(0)
