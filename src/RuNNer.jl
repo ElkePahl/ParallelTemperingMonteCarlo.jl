@@ -79,7 +79,7 @@ function getRuNNerenergy(dir::String,NTraj; input_idx = 0)
     
         E = findRuNNerenergy(dir,NTraj)
     else
-        run((pipeline`./RuNNer$input_idx.x $input_idx`,devnull));
+        run(pipeline(`./RuNNer$input_idx.x $input_idx`,devnull));
 
         E = findRuNNerenergy(dir,NTraj,input_idx)
     end
