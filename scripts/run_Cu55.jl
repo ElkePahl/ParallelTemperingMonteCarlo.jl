@@ -141,7 +141,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 # plot(temp.t_grid,results.heat_cap)
 
-# data = [results.en_histogram[i] for i in 1:n_traj]
+ data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)
 # histplot = plot(data)
 # savefig(histplot,"histograms.png")

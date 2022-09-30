@@ -1,7 +1,7 @@
 module MCRun
 
 export MCState
-export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!
+export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results
 export atom_move!,update_max_stepsize!
 export exc_acceptance, exc_trajectories!
 
