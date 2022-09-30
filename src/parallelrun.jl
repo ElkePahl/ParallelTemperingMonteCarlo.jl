@@ -160,7 +160,7 @@ function pptmc_cycle(parallel_states,results,move_strat,pot_vector,n_threads,del
         Threads.@threads for threadindex = 1:n_threads
 
             for i = 1:500
-                ptmc_cycle!(parallel_states[thread_index],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
+                ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
             end
 
         end
