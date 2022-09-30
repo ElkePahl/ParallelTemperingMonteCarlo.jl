@@ -16,7 +16,7 @@ n_traj = 15
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 10 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -38,7 +38,7 @@ runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
 #runnerdir = "/home/grayseff/Code/Brass_potential/"
 atomtype="Cu"
-pot = AbstractMLPotential(runnerdir,atomtype)
+pot = AbstractMLPotential(runnerdir,atomtype);
 
 #starting configurations
 #icosahedral ground state of Cu55 (from Cambridge cluster database) converted to angstrom
@@ -132,16 +132,16 @@ n_bin = 100
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj];
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
 
-plot(temp.t_grid,results.heat_cap)
+# plot(temp.t_grid,results.heat_cap)
 
-data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
-histplot = plot(data)
-savefig(histplot,"histograms.png")
+# data = [results.en_histogram[i] for i in 1:n_traj]
+# plot(data)
+# histplot = plot(data)
+# savefig(histplot,"histograms.png")

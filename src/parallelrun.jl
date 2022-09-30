@@ -87,7 +87,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
 end
 
-@everywhere function threadexchange!(parallel_states,n_threads,idx)
+ function threadexchange!(parallel_states,n_threads,idx)
     if rand() < 0.2  #20% change per trajectory of an attempted exchange
         thrid = rand(1:n_threads,2)
         if thrid[1] == thrid[2] && thrid[2] == n_threads
@@ -154,11 +154,11 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     return mc_states
 end
 
-@everywhere function pptmc_cycle(parallel_states,results,move_strat,pot_vector,n_threads,delta_en)
+function pptmc_cycle(parallel_states,results,move_strat,pot_vector,n_threads,delta_en)
     # for i = 1:500
 
         Threads.@threads for threadindex = 1:n_threads
-            
+
             for i = 1:500
                 ptmc_cycle!(parallel_states[thread_index],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
             end
