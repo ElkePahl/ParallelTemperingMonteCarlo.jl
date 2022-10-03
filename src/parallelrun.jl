@@ -178,12 +178,13 @@ end
 function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
 
     parallel_states,pot_vector,a,v,r,delta_en,n_threads=parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
+    n_steps = a+v+r
     println("equilibration complete")
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 500)) #this gives us the number of pptmc threads to run, 500 per thread per cycle
     n_sample = 500*n_run_per_thread
 
     for run_index = 1:n_run_per_thread
-        parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,n_threads,delta_en)
+        parallel_states = pptmc_cycle(pparallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r)
 
         
     end
