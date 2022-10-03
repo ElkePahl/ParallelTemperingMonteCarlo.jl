@@ -38,7 +38,7 @@ function findRuNNerenergy(inputdir::String,NTraj)
         #RuNNer couldn't find one or more energy without saying which
         println("error in RuNNer")
         #So we set the energy too high to accept
-        energyvector[:] = 1000*ones(NTraj)
+        energyvector[:] = 10000*ones(NTraj)
     else
         for i in 1:NTraj
             energyvector[i] = contents[i,4] # the fourth column is the output energy of the NN
