@@ -182,7 +182,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
 
     parallel_states,pot_vector,a,v,r,delta_en,n_threads=parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
     n_steps = a+v+r
-    println("equilibration complete")
+    println("equilibration completen\n")
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 500)) #this gives us the number of pptmc threads to run, 500 per thread per cycle
     n_sample = 500*n_run_per_thread
 
@@ -191,9 +191,9 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
 
         
     end
-    println("main loop complete")
+    println("main loop complete\n")
 
-    println("beginning statistics")
+    println("beginning statistics\n")
 
     total_en_avg = zeros(mc_params.n_traj)
     total_en2_avg = zeros(mc_params.n_traj)
