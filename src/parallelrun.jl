@@ -41,11 +41,15 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
     
     for i_thread = 1:n_threads
+
+        temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
+        push!(pot_vector,temp_pot)
+
         for i_eq = 1:sample_index
             
             i = i_thread*sample_index + i_eq
 
-            mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)#mc cycle
+            mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot_vector[i_thread], ensemble, n_steps, a, v, r)#mc cycle
             
             for i_traj = 1:mc_params.n_traj#check energy bounds
                 if mc_states[i_traj].en_tot < ebounds[1]
@@ -65,8 +69,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
             end
 
         end
-        temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
-        push!(pot_vector,temp_pot)
+        
 
         states_vec = [MCState(mc_states[i_traj].temp,mc_states[i_traj].beta,mc_states[i_traj].config,pot_vector[i_thread];max_displ = mc_states[i_traj].max_displ ) for i_traj in 1:mc_params.n_traj] #initialise a new mc_states vector based on current state
 
