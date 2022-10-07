@@ -210,7 +210,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
     total_en2_avg = total_en2_avg ./ n_threads
     results.en_avg = total_en_avg
 
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    results.heat_cap = [(total_en2_avg[i]-total_en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
 
     println("done")
     return 
