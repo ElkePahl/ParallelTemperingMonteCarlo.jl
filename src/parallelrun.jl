@@ -187,7 +187,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
     n_sample = 500*n_run_per_thread
 
     for run_index = 1:n_run_per_thread
-        parallel_states = pptmc_cycle(pparallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r)
+        parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r)
 
         
     end
