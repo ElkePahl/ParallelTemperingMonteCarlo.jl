@@ -584,7 +584,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
     if nested == true
         println("nested MC run performed.")
         println()
-        en_old = [mc_states[i].en_tot for i in 1:mc_params.n_traj] # energies of start of nested loop
+        en_old = [mc_states[i].en_tot for i in 1:mc_params.n_traj] # energies at start of nested loop
     end 
 
     # -------------------------- equilibration cycle -------------------------- 
@@ -600,7 +600,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results;
                 @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
             end
 
-            if nested == true
+            if nested == true #could be replaced by cycles_nested>1
                 for i_traj = 1:mc_params.n_traj
                     #computation of energy for more accurate potential with last configuration
                     en = get_energy(mc_states[i_traj].dist2_mat, n_atoms, pot_acc)
