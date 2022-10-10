@@ -71,6 +71,7 @@ function check_boundary(bc::AdjacencyBC,dist2_matrix)
     for col in eachcol(find_adjmat(dist2_matrix, bc.r2_cut))
 
       dummysum = sum(col)
+      
         if dummysum < 4
             bcflag = true
              # break
