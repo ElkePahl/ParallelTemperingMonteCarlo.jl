@@ -111,13 +111,15 @@ function atom_displacement(config, i_atom,max_displacement, bc::PeriodicBC)
 end
 
 function atom_displacement(config, i_atom,max_displacement, bc::AdjacencyBC)
+
     pos = config.pos[i_atom]
+
     dis2_matrix = get_distance2_mat(config)
 
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     count = 0
-    while check_boundary(bc, dis2_matrix)         #displace the atom until it's inside the binding sphere
+    while check_boundary(bc, dis2_matrix) == true        #displace the atom until it's inside the binding sphere
         count += 1
         delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
         trial_pos = pos + delta_move
