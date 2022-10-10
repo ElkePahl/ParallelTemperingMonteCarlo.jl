@@ -86,7 +86,10 @@ Implemented for:
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
     - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
 """
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
+
+function atom_displacement(config,i_atom, max_displacement, bc::SphericalBC)
+    pos = config.pos[i_atom]
+
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     count = 0
@@ -99,14 +102,31 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     return trial_pos
 end
 
-function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+function atom_displacement(config, i_atom,max_displacement, bc::PeriodicBC)
+    pos = config.pos[i_atom]
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
 
+function atom_displacement(config, i_atom,max_displacement, bc::AdjacencyBC)
+    pos = config.pos[i_atom]
+    dis2_matrix = get_distance2_mat(config)
 
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+    count = 0
+    while check_boundary(bc, dis2_matrix)         #displace the atom until it's inside the binding sphere
+        count += 1
+        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+        trial_pos = pos + delta_move
+        count == 100 && error("Error: too many moves out of binding sphere")
+    end
+
+
+    return trial_pos
+end
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.

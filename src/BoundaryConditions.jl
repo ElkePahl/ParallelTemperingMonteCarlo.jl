@@ -41,6 +41,7 @@ end
 struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
 end
+
 """
     check_boundary(bc::SpericalBC,pos)
 
@@ -55,5 +56,29 @@ check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 Tests if whole cluster lies in the binding sphere     
 """
 test_cluster_inside(conf,bc) = sum(x->outside_of_boundary(bc,x),conf.pos) == 0
+
+function find_adjmat(dist2_matrix, r2_cut)
+    adjmat = map(dist2_matrix -> ifelse(dist2_matrix <= r2_cut, 1, 0), dist2_matrix )
+    
+    return adjmat
+end
+
+
+function check_boundary(bc::AdjacencyBC,dist2_matrix)
+
+    bcflag = false
+
+    for col in eachcol(find_adjmat(dist2_matrix, bc.r2_cut))
+
+      dummysum = sum(col)
+        if dummysum < 4
+            bcflag = true
+             # break
+        end
+        #push!(SumVec, dummysum)
+    end
+    return bcflag
+end
+
 
 end
