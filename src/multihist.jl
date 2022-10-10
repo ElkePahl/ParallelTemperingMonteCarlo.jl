@@ -322,8 +322,8 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
        r3[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
-   end
-return Z,Cv,dCv,T
+    end
+    return Z,Cv,dCv,T
 end
 """ 
     runmultihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
@@ -373,7 +373,7 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     writedlm(cvfile, ["T" "Z" "Cv" "dCv"])
     writedlm(cvfile, [T Z C dC])
     close(cvfile)
-       
+    return Z,C,dC,T   
 end
 
 """
