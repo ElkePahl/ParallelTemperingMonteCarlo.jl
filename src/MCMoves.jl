@@ -114,7 +114,7 @@ function atom_displacement(config, i_atom,max_displacement, bc::AdjacencyBC)
 
     # pos = config.pos[i_atom]
     test_config = copy(config.pos)
-    count = 0
+    movecount = 0
     # dis2_matrix = get_distance2_mat(config)
 
     @label start
