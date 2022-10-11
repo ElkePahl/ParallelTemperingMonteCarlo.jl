@@ -532,72 +532,7 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 end
 
 
-# function ptmc_cycle( pot::nested)
-#    for i =1:pot.cycle
-#       ptmc_cycle!( pot::LJ)
-# end
 
-
-# """
-#     initialise_histograms!(mc_params,results,T)
-# functionalised the step in which we build the energy histograms  
-# """
-# function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
-#     T = typeof(mc_states[1].en_tot)
-#     en_min = T[]
-#     en_max = T[]
-#     if full_ham == true
-#         for i_traj in 1:mc_params.n_traj
-#             push!(en_min,minimum(mc_states[i_traj].ham))
-#             push!(en_max,maximum(mc_states[i_traj].ham))
-#         end
-    
-#         global_en_min = minimum(en_min)
-#         global_en_max = maximum(en_max)
-#     else
-#         #we'll give ourselves a 10% leeway here
-#         global_en_min = e_bounds[1] - abs(0.05*e_bounds[1])
-#         global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
-        
-#         for i_traj = 1:mc_params.n_traj
-#             histogram = zeros(results.n_bin)
-#             push!(results.en_histogram, histogram)
-#         end
-#     end
-
-#     delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
-
-#     results.en_min = global_en_min
-#     results.en_max = global_en_max
-    
-#     if full_ham == true
-#         return  delta_en
-#     else
-#         return  delta_en
-#     end
-
-# end
-
-# function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
-
-#     for i_traj in 1:mc_params.n_traj
-#         if fullham == true #this is done at the end of the cycle
-#             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
-#             for en in mc_states[i_traj].ham
-#                 index = floor(Int,(en - results.en_min) / delta_en) + 1
-#                 hist[index] += 1
-#             end
-#         push!(results.en_histogram, hist)
-
-#         else #this is done throughout the simulation
-#             en = mc_states[i_traj].en_tot
-
-#             index = floor(Int,(en - results.en_min) / delta_en) + 1 
-#             results.en_histogram[i_traj][index] += 1
-#         end
-#     end
-
-# end
 
 function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
 
