@@ -112,20 +112,34 @@ end
 
 function atom_displacement(config, i_atom,max_displacement, bc::AdjacencyBC)
 
-    pos = config.pos[i_atom]
+    # pos = config.pos[i_atom]
+    test_config = copy(config.pos)
+    count = 0
+    # dis2_matrix = get_distance2_mat(config)
 
-    dis2_matrix = get_distance2_mat(config)
+    @label start
 
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    trial_pos = pos + delta_move
-    count = 0
-    while check_boundary(bc, dis2_matrix) == true        #displace the atom until it's inside the binding sphere
-        count += 1
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        trial_pos = pos + delta_move
-        count == 100 && error("Error: too many moves out of binding sphere")
-    end
 
+    test_config[i_atom] += delta_move
+
+    movecount = 0
+
+    dis2_matrix = get_distance2_mat(config)
+    if check_boundary(bc,dis2_matrix) == true
+        movecount += 1
+
+        count == 100 && error("Error: too many moves out of binding sphere")
+
+        @goto start
+    end
+    # while check_boundary(bc, dis2_matrix) == true        #displace the atom until it's inside the binding sphere
+    #     count += 1
+    #     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    #     trial_pos = pos + delta_move
+    #     count == 100 && error("Error: too many moves out of binding sphere")
+    # end
+    trial_pos = test_config[i_atom]
 
     return trial_pos
 end
