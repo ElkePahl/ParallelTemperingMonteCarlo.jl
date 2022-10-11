@@ -166,4 +166,5 @@ Builds the matrix of squared distances between positions of configuration.
 """
 get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
 
+get_distance2_mat(positions::Vector) where N = [distance2(a,b) for a in positions, b in positions]
 end
