@@ -72,7 +72,7 @@ function find_adjmat(dist2_matrix::Matrix, r2_cut)
     return adjmat
 end
 
-find_adjmat(pos::Vector,r2_cut) = [ifelse(distance2(a,b)<=r2_cut,1,0) for a in pos, b in pos]
+find_adjmat(pos::Vector,r2_cut) = [ifelse(((a-b)⋅(a-b))<=r2_cut,1,0) for a in pos, b in pos]
 
 # function check_boundary(bc::AdjacencyBC,dist2_matrix)
 
