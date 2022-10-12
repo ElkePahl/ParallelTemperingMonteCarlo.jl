@@ -9,7 +9,7 @@ module BoundaryConditions
 using LinearAlgebra
 
 export SphericalBC, AbstractBC, PeriodicBC,AdjacencyBC
-export check_boundary
+export check_boundary,init_AdjacencyBC
 
 # include("SphericalBC.jl")
 # could be named SphericalBC.jl
@@ -44,7 +44,7 @@ mutable struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
     adj_mat::Matrix{T}
 end
-function AdjacencyBC(pos, r2_cut)
+function init_AdjacencyBC(pos, r2_cut)
     adj_mat = find_adjmat(pos,r2_cut)
 
     AdjacencyBC(r2_cut,adj_mat)
