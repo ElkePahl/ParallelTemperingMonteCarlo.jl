@@ -79,7 +79,7 @@ end
     atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC)
 function to take most of the job of the atom_displacement function in the case we use the adjacency BC
 """
-function atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC)
+function atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC,pot)
     pos = config.pos[i_atom]
     flag_counter = 0
     @label restart

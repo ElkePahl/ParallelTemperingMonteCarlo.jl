@@ -225,7 +225,7 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
 
     else
         #move randomly selected atom (obeying the boundary conditions)
-        trial_pos = atom_displacement(mc_state.config,i_atom, mc_state.max_displ[1], mc_state.config.bc)
+        trial_pos = atom_displacement(mc_state.config,i_atom, mc_state.max_displ[1], mc_state.config.bc,pot)
     #find new distances of moved atom 
         delta_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, mc_state.en_tot, pot)
     end
@@ -235,7 +235,7 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
         if typeof(mc_state.config.bc) == AdjacencyBC{Float64}
             mc_state.config.bc.adj_mat = temp_adj
         end
-        
+
         #new config accepted
         mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
         mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
