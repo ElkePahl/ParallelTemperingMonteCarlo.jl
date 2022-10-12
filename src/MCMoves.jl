@@ -9,6 +9,7 @@ using StaticArrays
 
 using ..BoundaryConditions
 using ..Configurations
+using ..EnergyEvaluation
 
 """
     MoveStrategy(atom_moves, vol_moves, rot_moves)
@@ -74,6 +75,34 @@ function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_
     T = eltype(displ)
     return AtomMove{T}(frequency, displ, update_stepsize, count_acc, count_acc_adj)
 end
+"""
+    atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC)
+function to take most of the job of the atom_displacement function in the case we use the adjacency BC
+"""
+function atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC)
+    pos = config.pos[i_atom]
+    flag_counter = 0
+    @label restart
+
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+
+    bc_flag, temp_adj , dist2_new = check_bc(config,trial_pos,i_atom)
+
+    if bc_flag == true
+
+        flag_counter +=1
+        flag_counter == 100 && error("Error: too many moves out of binding sphere")
+
+        @goto restart
+
+    else
+        delta_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
+
+        return temp_adj,trial_pos,dist2_new,delta_en
+    end
+
+end
 
 """
     atom_displacement(pos, max_displacement, bc)
@@ -88,6 +117,7 @@ Implemented for:
 """
 
 function atom_displacement(config,i_atom, max_displacement, bc::SphericalBC)
+
     pos = config.pos[i_atom]
 
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
@@ -110,37 +140,37 @@ function atom_displacement(config, i_atom,max_displacement, bc::PeriodicBC)
     return trial_pos
 end
 
-function atom_displacement(config, i_atom,max_displacement, bc::AdjacencyBC)
+# function atom_displacement(config, i_atom,max_displacement, bc::AdjacencyBC)
 
-    # pos = config.pos[i_atom]
-    test_config = copy(config.pos)
-    movecount = 0
-    # dis2_matrix = get_distance2_mat(config)
+#     # pos = config.pos[i_atom]
+#     test_config = copy(config.pos)
+#     movecount = 0
+#     # dis2_matrix = get_distance2_mat(config)
 
-    @label start
+#     @label start
 
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+#     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
 
-    test_config[i_atom] += delta_move
+#     test_config[i_atom] += delta_move
 
-    movecount = 0
+#     movecount = 0
 
-    dis2_matrix = get_distance2_mat(test_config)
-    if check_boundary(bc,dis2_matrix) == true
-        movecount += 1
+#     dis2_matrix = get_distance2_mat(test_config)
+#     if check_boundary(bc,dis2_matrix) == true
+#         movecount += 1
 
-        movecount == 100 && error("Error: too many moves out of binding sphere")
+#         movecount == 100 && error("Error: too many moves out of binding sphere")
 
-        @goto start
-    else
-        trial_pos = test_config[i_atom]
+#         @goto start
+#     else
+#         trial_pos = test_config[i_atom]
 
-        return trial_pos
+#         return trial_pos
     
-    end
+#     end
    
     
-end
+# end
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
