@@ -42,10 +42,10 @@ mutable struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
     adj_mat::Matrix{T}
 end
-function AdjacencyBC(r2_cut, pos)
+function AdjacencyBC(pos, r2_cut)
     adj_mat = find_adjmat(pos,r2_cut)
 
-    AdjacencyBC(adj_mat,r2_cut)
+    AdjacencyBC(r2_cut,adj_mat)
 end
 """
     check_boundary(bc::SpericalBC,pos)
