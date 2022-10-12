@@ -176,7 +176,7 @@ function check_bc(config, trialpos ,atom_index)
     bc_flag  = false
 
     dist2_new = [distance2(trialpos,b) for b in config.pos]
-    dist2_new[i_atom] = 0.
+    dist2_new[atom_index] = 0.
 
     new_adj = [ifelse(a <=config.bc.r2_cut ,1,0) for a in dist2_new]
 
