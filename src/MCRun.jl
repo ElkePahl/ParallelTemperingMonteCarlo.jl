@@ -221,7 +221,7 @@ Updates `mc_state` if move accepted.
 """
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     if typeof(mc_state.config.bc) == AdjacencyBC{Float64}
-        temp_adj,trial_pos,dist2_new,delta_en = atom_displacement(mc_state.config,i_atom,mc_state.max_displ[1],mc_state.config.bc,pot)
+        temp_adj,trial_pos,dist2_new,delta_en = atom_displacement(mc_state.config,i_atom,mc_state.max_displ[1],mc_state.config.bc,pot,mc_state.dist2_mat)
 
     else
         #move randomly selected atom (obeying the boundary conditions)
