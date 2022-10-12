@@ -6,6 +6,8 @@
 """
 module BoundaryConditions
 
+using LinearAlgebra
+
 export SphericalBC, AbstractBC, PeriodicBC,AdjacencyBC
 export check_boundary
 
