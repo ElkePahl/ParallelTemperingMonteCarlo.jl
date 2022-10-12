@@ -47,7 +47,7 @@ end
 function init_AdjacencyBC(pos, r2_cut)
     adj_mat = find_adjmat(pos,r2_cut)
 
-    AdjacencyBC(r2_cut,adj_mat)
+    return AdjacencyBC(r2_cut,adj_mat)
 end
 """
     check_boundary(bc::SpericalBC,pos)
