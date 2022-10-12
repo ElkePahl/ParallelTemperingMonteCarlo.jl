@@ -18,7 +18,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance2_mat, move_atom!
+export distance2, get_distance2_mat, move_atom!, check_bc
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -167,4 +167,31 @@ Builds the matrix of squared distances between positions of configuration.
 get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
 
 get_distance2_mat(positions::Vector) where N = [distance2(a,b) for a in positions, b in positions]
+"""
+    checker(adjmat, config, trialpos ,atom_index,r2_cut)
+This checks the boundary of Adjacency BC types 
+"""
+function check_bc(config, trialpos ,atom_index)
+    adj_temp = copy(config.bc.adj_mat)
+    bc_flag  = false
+
+    dist2_new = [distance2(trialpos,b) for b in config.pos]
+    dist2_new[i_atom] = 0.
+
+    new_adj = [ifelse(a <=config.bc.r2_cut ,1,0) for a in dist2_new]
+
+    adj_temp[:,atom_index] = new_adj
+    adj_temp[atom_index,:] = new_adj
+
+    for col in eachcol(adj_temp)
+        dummysum = sum(col)
+        if dummysum < 4
+            bc_flag = true
+
+            break
+        end
+    end
+    
+    return bc_flag, adj_temp, dist2_new
+end
 end
