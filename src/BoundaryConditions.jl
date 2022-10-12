@@ -43,7 +43,7 @@ mutable struct AdjacencyBC{T} <: AbstractBC{T}
     adj_mat::Matrix{T}
 end
 function AdjacencyBC(r2_cut, pos)
-    adj_mat = find_adjmat(config,r2_cut)
+    adj_mat = find_adjmat(pos,r2_cut)
 
     AdjacencyBC(r2_cut,adj_mat)
 end
@@ -66,12 +66,12 @@ test_cluster_inside(conf,bc) = sum(x->outside_of_boundary(bc,x),conf.pos) == 0
     find_adjmat(config::Config{N},r2_cut)
 creates an Adjacency Matrix from either a matrix of distance squared or from a configuration. Both require a fieldname r2_cut, the square distace of the bonding radius
 """
-function find_adjmat(dist2_matrix, r2_cut)
+function find_adjmat(dist2_matrix::Matrix, r2_cut)
     adjmat = map(dist2_matrix -> ifelse(dist2_matrix <= r2_cut, 1, 0), dist2_matrix )
     
     return adjmat
 end
-find_adjmat(pos,r2_cut) = [ifelse(distance2(a,b)<=r2_cut,1,0) for a in pos, b in pos]
+find_adjmat(pos::Vector{SVector},r2_cut) = [ifelse(distance2(a,b)<=r2_cut,1,0) for a in pos, b in pos]
 
 # function check_boundary(bc::AdjacencyBC,dist2_matrix)
 
