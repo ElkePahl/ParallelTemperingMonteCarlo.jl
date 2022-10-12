@@ -42,7 +42,7 @@ mutable struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
     adj_mat::Matrix{T}
 end
-function AdjacencyBC(r2_cut, config::Config)
+function AdjacencyBC(r2_cut, pos)
     adj_mat = find_adjmat(config,r2_cut)
 
     AdjacencyBC(r2_cut,adj_mat)
@@ -71,7 +71,7 @@ function find_adjmat(dist2_matrix, r2_cut)
     
     return adjmat
 end
-find_adjmat(config::Config{N},r2_cut) where N = [ifelse(distance2(a,b)<=r2_cut,1,0) for a in config.pos, b in config.pos]
+find_adjmat(pos,r2_cut) = [ifelse(distance2(a,b)<=r2_cut,1,0) for a in pos, b in pos]
 
 # function check_boundary(bc::AdjacencyBC,dist2_matrix)
 
