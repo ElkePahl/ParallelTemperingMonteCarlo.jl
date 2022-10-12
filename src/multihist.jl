@@ -389,7 +389,7 @@ function multihistogram(xdir::String)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
 end
 
-function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
+function multihistogram(Output::Output,Tvec::TempGrid; outdir = "$pwd()/")
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
 
