@@ -9,6 +9,7 @@ using StaticArrays
 
 using ..BoundaryConditions
 using ..Configurations
+using ..EnergyEvaluation
 
 """
     MoveStrategy(atom_moves, vol_moves, rot_moves)
@@ -74,6 +75,34 @@ function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_
     T = eltype(displ)
     return AtomMove{T}(frequency, displ, update_stepsize, count_acc, count_acc_adj)
 end
+"""
+    atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC)
+function to take most of the job of the atom_displacement function in the case we use the adjacency BC
+"""
+function atom_displacement(config,i_atom,max_displacement,bc::AdjacencyBC,pot,dist2_mat)
+    pos = config.pos[i_atom]
+    flag_counter = 0
+    @label restart
+
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+
+    bc_flag, temp_adj , dist2_new = check_bc(config,trial_pos,i_atom)
+
+    if bc_flag == true
+
+        flag_counter +=1
+        flag_counter == 100 && error("Error: too many moves out of binding sphere")
+
+        @goto restart
+
+    else
+        delta_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
+
+        return temp_adj,trial_pos,dist2_new,delta_en
+    end
+
+end
 
 """
     atom_displacement(pos, max_displacement, bc)
@@ -86,7 +115,11 @@ Implemented for:
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
     - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
 """
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
+
+function atom_displacement(config,i_atom, max_displacement, bc::SphericalBC)
+
+    pos = config.pos[i_atom]
+
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     count = 0
@@ -99,13 +132,13 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     return trial_pos
 end
 
-function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+function atom_displacement(config, i_atom,max_displacement, bc::PeriodicBC)
+    pos = config.pos[i_atom]
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
-
 
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
