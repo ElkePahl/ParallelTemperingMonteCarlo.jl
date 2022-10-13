@@ -258,8 +258,8 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
-    dT = (last(Tvec) - 0.2)/NPoints
-    T = [(i-1)*dT + 0.2 for i = 1:NPoints]
+    dT = (last(Tvec) - first(Tvec))/NPoints
+    T = [(i-1)*dT + first(Tvec) for i = 1:NPoints]
    #Initialise all relevant vectors
    y = Array{Float64}(undef,NPoints,NBins)
    XP = Array{Float64}(undef,NPoints,NBins)
