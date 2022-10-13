@@ -316,7 +316,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, e
     #this replaces the atom_move! function
     #parallelisation here is fine
 
-    for indx in 1:mc_params.n_traj
+    Threads.@threads for indx in 1:mc_params.n_traj
         if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
             mc_states[indx].config.pos[indices[indx]] = trials[indx]
             mc_states[indx].en_tot = energyvec[indx]
