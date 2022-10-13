@@ -6,14 +6,12 @@
 """
 module BoundaryConditions
 
-using LinearAlgebra
-
-export SphericalBC, AbstractBC, PeriodicBC,AdjacencyBC
-export check_boundary,init_AdjacencyBC
+export SphericalBC, AbstractBC, PeriodicBC
+export check_boundary
 
 # include("SphericalBC.jl")
 # could be named SphericalBC.jl
-
+#this is a test for vscode
 """   
     AbstractBC{T} 
 Encompasses possible boundary conditions; implemented: 
