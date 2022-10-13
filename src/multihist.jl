@@ -354,22 +354,22 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     #dcvplot = plot(T,dC,xlabel="Temperature(K)",ylabel="dCv")
     #png(dcvplot,"$(xdir)dC")
     println("analysis complete")
-    histfile = open("$(outdir)histograms.data", "w")
+    histfile = open("$(outdir)/histograms.data", "w")
     writedlm(histfile,[energyvector])
     writedlm(histfile,HistArray)
     close(histfile)
 
-    solfile = open("$(outdir)Sol.X", "w")
+    solfile = open("$(outdir)/Sol.X", "w")
     writedlm(solfile,["alpha"])
     writedlm(solfile,[alpha])
     close(solfile)
 
-    entropyfile = open("$(outdir)S.data", "w")
+    entropyfile = open("$(outdir)/S.data", "w")
     writedlm(entropyfile, ["E" "Entropy"])
     writedlm(entropyfile, [energyvector S ])
     close(entropyfile)
 
-    cvfile = open("$(outdir)analysis.NVT", "w")
+    cvfile = open("$(outdir)/analysis.NVT", "w")
     writedlm(cvfile, ["T" "Z" "Cv" "dCv"])
     writedlm(cvfile, [T Z C dC])
     close(cvfile)
@@ -389,7 +389,7 @@ function multihistogram(xdir::String)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
 end
 
-function multihistogram(Output::Output,Tvec::TempGrid; outdir = "$pwd()/")
+function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
 
