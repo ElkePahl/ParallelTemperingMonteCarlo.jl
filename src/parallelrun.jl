@@ -131,12 +131,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj; input_idx=pot.index)    
     #this replaces the atom_move! function
     #parallelisation here is fine
-    for i in 1:mc_params.n_traj
-        if metropolis_condition(ensemble, (mc_states[i].en_tot - energyvec[i]), mc_states[i].beta ) >=rand()
-            mc_states[i].config.pos[indices[i]] = trials[i]
-            mc_states[i].en_tot = energyvec[i]
-            mc_states[i].count_atom[1] +=1
-            mc_states[i].count_atom[2] += 1
+    for indx in 1:mc_params.n_traj
+        if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
+            mc_states[indx].config.pos[indices[indx]] = trials[indx]
+            mc_states[indx].en_tot = energyvec[indx]
+            mc_states[indx].count_atom[1] +=1
+            mc_states[indx].count_atom[2] += 1
         end
     end
 
@@ -162,7 +162,7 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
 
         Threads.@threads for threadindex = 1:n_threads
 
-            for i = 1:500
+            for i = 1:50#0 for testing
                 ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
             end
 
