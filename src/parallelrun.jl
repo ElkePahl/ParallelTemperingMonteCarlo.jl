@@ -74,10 +74,11 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         states_vec = [MCState(mc_states[i_traj].temp,mc_states[i_traj].beta,mc_states[i_traj].config,pot_vector[i_thread];max_displ = mc_states[i_traj].max_displ ) for i_traj in 1:mc_params.n_traj] #initialise a new mc_states vector based on current state
 
         for i_traj = 1:mc_params.n_traj
-            push!(states_vec[i_traj].ham, 0)
-            push!(states_vec[i_traj].ham, 0)
+            push!(states_vec[i_thread][i_traj].ham, 0)
+            push!(states_vec[i_thread][i_traj].ham, 0)
+            states_vec[i_thread][i_traj].max_displ = mc_states[i_traj].max_displ
         end
-
+        
         push!(parallel_states,states_vec) #add to vector of parallel states
 
 
