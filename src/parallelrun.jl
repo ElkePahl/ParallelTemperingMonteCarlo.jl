@@ -186,19 +186,24 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
     n_steps = a+v+r
     
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 500)) 
+
     println("$n_run_per_thread cycles of 500 per $n_threads thread")
+    println()
+
     #this gives us the number of pptmc threads to run, 500 per thread per cycle
     n_sample = 500*n_run_per_thread
 
     for run_index = 1:n_run_per_thread
         parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
         println("cycle $run_index of $n_run_per_thread complete")
+        flush(stdout)
         
     end
     println("main loop complete\n")
+    println()
 
     println("beginning statistics\n")
-
+    println()
     total_en_avg = zeros(mc_params.n_traj)
     total_en2_avg = zeros(mc_params.n_traj)
     for states in parallel_states
