@@ -159,13 +159,13 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     return mc_states
 end
 
-function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r)
+function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
     # for i = 1:500
 
         Threads.@threads for threadindex = 1:n_threads
 
             for i = 1:500 #for testing
-                ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,pwd();delta_en=delta_en) #force save = false
+                ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,save_dir;delta_en=delta_en) #force save = false
             end
 
         end
@@ -176,11 +176,11 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
         threadexchange!(parallel_states,n_threads,idx)
     end
     #then run n_traj exchanges
-
+    save_results(results,directory=save_dir)
     return parallel_states
 end
 
-function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
+function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd())
 
     parallel_states,pot_vector,a,v,r,delta_en,n_threads=parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
     n_steps = a+v+r
@@ -191,8 +191,8 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results)
     n_sample = 500*n_run_per_thread
 
     for run_index = 1:n_run_per_thread
-        parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r)
-
+        parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
+        println("cycle $run_index of $n_run_per_thread complete")
         
     end
     println("main loop complete\n")
