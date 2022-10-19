@@ -25,7 +25,8 @@ function takes as input a vector of mc_states and the standard MC parameters. It
 function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
     parallel_states = []
     pot_vector = []
-
+    println("Beginning Equilibration")
+    println()
      #initialise state and potentials
 
     n_threads = Threads.nthreads()
@@ -41,7 +42,8 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
     
     for i_thread = 1:n_threads
-
+        println("Initialising Thread $i_thread")
+        flush(stdout)
         temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
         push!(pot_vector,temp_pot)
 
