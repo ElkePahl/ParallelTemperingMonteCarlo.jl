@@ -457,29 +457,27 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
         #we'll give ourselves a 10% leeway here
         global_en_min = e_bounds[1] - abs(0.05*e_bounds[1])
         global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
-        
-        for i_traj = 1:mc_params.n_traj
-            histogram = zeros(results.n_bin + 2)
-            push!(results.en_histogram, histogram)
-        end
     end
+
+    for i_traj = 1:mc_params.n_traj
+        histogram = zeros(results.n_bin + 2)
+        push!(results.en_histogram, histogram)
+    end
+    
 
     delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
 
     results.en_min = global_en_min
     results.en_max = global_en_max
     
-    if full_ham == true
+  
         return  delta_en
-    else
-        return  delta_en
-    end
-
 end
 
 function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
 
     for i_traj in 1:mc_params.n_traj
+        
         if fullham == true #this is done at the end of the cycle
 
             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
