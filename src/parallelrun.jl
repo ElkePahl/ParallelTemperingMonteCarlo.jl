@@ -1,6 +1,6 @@
 module ParallelRun
 
-using Distributed
+    using Distributed
 
     using StaticArrays,DelimitedFiles
 
@@ -18,6 +18,37 @@ using Distributed
     export pptmc_run!,mc_cycle!,pptmc_cycle,parallel_equilibration
 
 
+
+
+
+function equilibration_cycle!(mc_states,move_strat, mc_params, potential, ensemble, n_steps, a, v, r, i)
+
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, potential, ensemble, n_steps, a, v, r)#mc cycle
+            
+    for i_traj = 1:mc_params.n_traj#check energy bounds
+        if mc_states[i_traj].en_tot < ebounds[1]
+             ebounds[1] = mc_states[i_traj].en_tot
+        end
+
+        if mc_states[i_traj].en_tot > ebounds[2]
+            ebounds[2] = mc_states[i_traj].en_tot
+        end
+
+    end
+
+    if rem(i, mc_params.n_adjust) == 0 #adjust stepsize
+        for i_traj = 1:mc_params.n_traj
+            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+        end 
+    end
+
+end
+function update_potential!(pot_vector,pot,i_thread)
+    temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
+    push!(pot_vector,temp_pot)
+
+    return pot_vector
+end
 """
     parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
 function takes as input a vector of mc_states and the standard MC parameters. It runs n_eq times saving one configuration as an initial state for one entire thread's vector of states. It returns parallel_states, a vector of vectors of states all initialised with the same energies and parameters, but sharing a common histogram and results vector. 
@@ -44,31 +75,33 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
     for i_thread = 1:n_threads
         println("Initialising Thread $i_thread")
         flush(stdout)
-        temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
-        push!(pot_vector,temp_pot)
+        pot_vector = update_potential!(pot_vector,pot,i_thread)
+        # temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
+        # push!(pot_vector,temp_pot)
 
         for i_eq = 1:sample_index
             
             i = i_thread*sample_index + i_eq
 
-            mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot_vector[i_thread], ensemble, n_steps, a, v, r)#mc cycle
+            equilibration_cycle!(mc_states,move_strat, mc_params, pot_vector[i_thread], ensemble, n_steps, a, v, r, i)
+            # mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot_vector[i_thread], ensemble, n_steps, a, v, r)#mc cycle
             
-            for i_traj = 1:mc_params.n_traj#check energy bounds
-                if mc_states[i_traj].en_tot < ebounds[1]
-                    ebounds[1] = mc_states[i_traj].en_tot
-                end
+            # for i_traj = 1:mc_params.n_traj#check energy bounds
+            #     if mc_states[i_traj].en_tot < ebounds[1]
+            #         ebounds[1] = mc_states[i_traj].en_tot
+            #     end
 
-                if mc_states[i_traj].en_tot > ebounds[2]
-                    ebounds[2] = mc_states[i_traj].en_tot
-                end
+            #     if mc_states[i_traj].en_tot > ebounds[2]
+            #         ebounds[2] = mc_states[i_traj].en_tot
+            #     end
 
-            end
+            # end
 
-            if rem(i, mc_params.n_adjust) == 0 #adjust stepsize
-                for i_traj = 1:mc_params.n_traj
-                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-                end 
-            end
+            # if rem(i, mc_params.n_adjust) == 0 #adjust stepsize
+            #     for i_traj = 1:mc_params.n_traj
+            #         update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+            #     end 
+            # end
 
         end
         
@@ -86,6 +119,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
 
     end
+
     delta_en = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds) #start histogram
 
     println("equilibration done")
