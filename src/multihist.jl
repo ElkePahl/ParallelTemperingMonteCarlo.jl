@@ -56,13 +56,13 @@ function readfile(Output::Output, Tvals::TempGrid )
     energyvector = [(j-1)*de + Output.en_min for j=1:Output.n_bin ]
 
     HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
-    nbin_actual = length(Output.en_histogram)
+    nbin_actual = length(Output.en_histogram[1])
     for i in 1:NTraj
 
         if nbin_actual == Output.n_bin
             HistArray[i,:] = Output.en_histogram[i]
         else
-            HistArray[i,:] = Output.en_histogram[i][2:(nbin_actual-1)]
+            HistArray[i,:] = Output.en_histogram[i][2:end-1]
         end
     end
 
