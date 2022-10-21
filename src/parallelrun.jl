@@ -44,7 +44,7 @@ function equilibration_cycle!(mc_states,move_strat, mc_params, potential, ensemb
 
 end
 
-function update_potential!(pot_vector,pot,i_thread)
+function update_potential!(pot_vector,pot::ParallelMLPotential,i_thread)
     temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
     push!(pot_vector,temp_pot)
 
