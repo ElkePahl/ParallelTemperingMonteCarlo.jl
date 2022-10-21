@@ -56,8 +56,14 @@ function readfile(Output::Output, Tvals::TempGrid )
     energyvector = [(j-1)*de + Output.en_min for j=1:Output.n_bin ]
 
     HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
+    nbin_actual = length(Output.en_histogram)
     for i in 1:NTraj
-        HistArray[i,:] = Output.en_histogram[i]
+
+        if nbin_actual == Output.n_bin
+            HistArray[i,:] = Output.en_histogram[i]
+        else
+            HistArray[i,:] = Output.en_histogram[i][2:(nbin_actual-1)]
+        end
     end
 
     return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , kB
