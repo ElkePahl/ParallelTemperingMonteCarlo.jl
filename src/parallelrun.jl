@@ -21,7 +21,7 @@ module ParallelRun
 
 
 
-function equilibration_cycle!(mc_states,move_strat, mc_params, potential, ensemble, n_steps, a, v, r, i)
+function equilibration_cycle!(mc_states,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r, i)
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, potential, ensemble, n_steps, a, v, r)#mc cycle
             
@@ -83,7 +83,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
             
             i = i_thread*sample_index + i_eq
 
-            equilibration_cycle!(mc_states,move_strat, mc_params, pot_vector[i_thread], ensemble, n_steps, a, v, r, i)
+            equilibration_cycle!(mc_states,move_strat, mc_params, pot_vector[i_thread], ensemble,ebounds, n_steps, a, v, r, i)
             # mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot_vector[i_thread], ensemble, n_steps, a, v, r)#mc cycle
             
             # for i_traj = 1:mc_params.n_traj#check energy bounds
