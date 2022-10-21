@@ -52,7 +52,8 @@ function update_potential!(pot_vector,pot::ParallelMLPotential,i_thread)
 end
 
 function update_potential!(pot_vector,pot::ELJPotentialEven,i_thread)
-    temp_pot = copy(pot)
+    N = length(pot.coeff)
+    temp_pot = ELJPotentialEven{N}(pot.coeff)
     push!(pot_vector,temp_pot)
 
     return pot_vector
