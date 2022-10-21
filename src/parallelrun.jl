@@ -43,8 +43,16 @@ function equilibration_cycle!(mc_states,move_strat, mc_params, potential, ensemb
     end
 
 end
+
 function update_potential!(pot_vector,pot,i_thread)
     temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
+    push!(pot_vector,temp_pot)
+
+    return pot_vector
+end
+
+function update_potential!(pot_vector,pot::ELJPotentialEven,i_thread)
+    temp_pot = copy(pot)
     push!(pot_vector,temp_pot)
 
     return pot_vector
