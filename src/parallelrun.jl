@@ -98,7 +98,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         # push!(pot_vector,temp_pot)
         @sync begin
                 @async thermalise!(mc_states,move_strat,mc_params,pot_vector[i_thread],ensemble,ebounds, n_steps, a, v, r,sample_index)
-                
+
                 if i_thread > 1 
                 Threads.@threads for j_therm =1:(i_thread-1) #introducing equilibration to all threads
                     thermalise!(parallel_states[j_therm],move_strat,mc_params,pot_vector[j_therm],ensemble,ebounds, n_steps, a, v, r,sample_index)
@@ -203,7 +203,7 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
 
         Threads.@threads for threadindex = 1:n_threads
 
-            for i = 1:1000 #for testing
+            for thousand_runs = 1:1000 #for testing
                 ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,save_dir;delta_en=delta_en) #force save = false
             end
 
@@ -226,7 +226,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
     
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
 
-    println("$n_run_per_thread cycles of 500 per $n_threads thread")
+    println("$n_run_per_thread cycles of 1000 per $n_threads thread")
     println()
 
     #this gives us the number of pptmc threads to run, 500 per thread per cycle
@@ -234,8 +234,8 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
 
     for run_index = 1:n_run_per_thread
         parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
-        println("cycle $run_index of $n_run_per_thread complete")
-        flush(stdout)
+        # println("cycle $run_index of $n_run_per_thread complete")
+        # flush(stdout)
         
     end
     println("main loop complete\n")
