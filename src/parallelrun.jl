@@ -116,7 +116,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         
 
          states_vec = copy(mc_states)
-        #[MCState(mc_states[i_traj].temp,mc_states[i_traj].beta,mc_states[i_traj].config,pot_vector[i_thread];max_displ = mc_states[i_traj].max_displ ) for i_traj in 1:mc_params.n_traj] #initialise a new mc_states vector based on current state
+        
 
         for i_traj = 1:mc_params.n_traj
             push!(states_vec[i_traj].ham, 0)
@@ -209,7 +209,7 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
 
         Threads.@threads for threadindex = 1:n_threads
 
-            for i = 1:500 #for testing
+            for i = 1:1000 #for testing
                 ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,i,save_dir;delta_en=delta_en) #force save = false
             end
 
@@ -230,13 +230,13 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
     parallel_states,pot_vector,a,v,r,delta_en,n_threads=parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
     n_steps = a+v+r
     
-    n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 500)) 
+    n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
 
     println("$n_run_per_thread cycles of 500 per $n_threads thread")
     println()
 
     #this gives us the number of pptmc threads to run, 500 per thread per cycle
-    n_sample = 500*n_run_per_thread
+    n_sample = 1000*n_run_per_thread
 
     for run_index = 1:n_run_per_thread
         parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
