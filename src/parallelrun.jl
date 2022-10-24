@@ -78,7 +78,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
      #initialise state and potentials
 
     n_threads = Threads.nthreads()
-    sample_index = Int64(floor(mc_params.eq_cycles / 2 /n_threads)) #number of eq cycles per thread
+    sample_index = Int64(floor(mc_params.eq_cycles /n_threads)) #number of eq cycles per thread
 
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
