@@ -226,14 +226,14 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
     #find new distances of moved atom 
-    delta_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
+    d_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
     #decide acceptance
-    if metropolis_condition(ensemble, delta_en, mc_state.beta) >= rand()
+    if metropolis_condition(ensemble, d_en, mc_state.beta) >= rand()
         #new config accepted
         mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
         mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = dist2_new
-        mc_state.en_tot += delta_en
+        mc_state.en_tot += d_en
         mc_state.count_atom[1] += 1
         mc_state.count_atom[2] += 1
     end
@@ -348,13 +348,13 @@ A function to store the information at the end of an MC_Cycle, replacing the man
 """
 function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
         if rem(i, mc_params.mc_sample) == 0
-            for i_traj=1:mc_params.n_traj
+            for indx_traj=1:mc_params.n_traj
                 if saveham == true
-                    push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+                    push!(mc_states[indx_traj].ham, mc_states[indx_traj].en_tot) #to build up ham vector of sampled energies
                 else
-                    mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
+                    mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
                     #add E,E**2 to the correct positions in the hamiltonian
-                    mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
+                    mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)
                 end
             end
         end 
