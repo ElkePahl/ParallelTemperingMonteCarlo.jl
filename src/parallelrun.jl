@@ -59,9 +59,9 @@ function update_potential!(pot_vector,pot::ELJPotentialEven,i_thread)
     return pot_vector
 end
 
-function thermalise!(state ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r,)
+function thermalise!(state ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r,sample_index)
      #this is a thermalisation procedure
-        for i_therm = i:sample_index
+        for i_therm = 1:sample_index
             equilibration_cycle!(state ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r, i_therm)
         end
     
@@ -96,18 +96,15 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         pot_vector = update_potential!(pot_vector,pot,i_thread)
         # temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
         # push!(pot_vector,temp_pot)
-        if i_thread == 1
-            thermalise!(mc_states,move_strat,mc_params,pot_vector[i_thread],ensemble,ebounds, n_steps, a, v, r)
-            # for i_eq = 1:sample_index
-            #     equilibration_cycle!(mc_states,move_strat, mc_params, pot_vector[i_thread], ensemble,ebounds, n_steps, a, v, r, i_eq)
-            # end
-        else
-            thermalise!(mc_states,move_strat,mc_params,pot_vector[i_thread],ensemble,ebounds, n_steps, a, v, r)
-
-            Threads.@threads for j_therm =1:(i_thread-1) #introducing equilibration to all threads
-                thermalise!(parallel_states[j_therm],move_strat,mc_params,pot_vector[j_therm],ensemble,ebounds, n_steps, a, v, r)
+        @sync begin
+                @async thermalise!(mc_states,move_strat,mc_params,pot_vector[i_thread],ensemble,ebounds, n_steps, a, v, r,sample_index)
+                
+                if i_thread > 1 
+                Threads.@threads for j_therm =1:(i_thread-1) #introducing equilibration to all threads
+                    thermalise!(parallel_states[j_therm],move_strat,mc_params,pot_vector[j_therm],ensemble,ebounds, n_steps, a, v, r,sample_index)
+                end
             end
-        end
+        end 
         
         states_vec = copy(mc_states)
         
