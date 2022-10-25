@@ -70,7 +70,7 @@ function copy_state!(states,states_vector,mc_params)
     temp_state = copy(states)
     
     for traj_index  = 1:mc_params.n_traj
-        push!(temp_state.ham,[0, 0])
+        push!(temp_state[traj_index].ham,[0, 0])
     end
 
     push!(states_vector,temp_state)
