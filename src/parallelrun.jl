@@ -25,23 +25,23 @@ function equilibration_cycle!(states,move_strat, mc_params, potential, ensemble,
 
     states = mc_cycle!(states, move_strat, mc_params, potential, ensemble, n_steps, a, v, r)#mc cycle
             
-    for i_traj = 1:mc_params.n_traj#check energy bounds
-        if states[i_traj].en_tot < ebounds[1]
-             ebounds[1] = states[i_traj].en_tot
+    for i_check = 1:mc_params.n_traj#check energy bounds
+        if states[i_check].en_tot < ebounds[1]
+             ebounds[1] = states[i_check].en_tot
         end
 
-        if states[i_traj].en_tot > ebounds[2]
-            ebounds[2] = states[i_traj].en_tot
+        if states[i_check].en_tot > ebounds[2]
+            ebounds[2] = states[i_check].en_tot
         end
 
     end
 
     if rem(dindex, mc_params.n_adjust) == 0 #adjust stepsize
-        for i_traj = 1:mc_params.n_traj
-            update_max_stepsize!(states[i_traj], mc_params.n_adjust, a, v, r)
+        for i_update = 1:mc_params.n_traj
+            update_max_stepsize!(states[i_update], mc_params.n_adjust, a, v, r)
         end 
     end
-
+    return states,ebounds
 end
 
 function update_potential!(pot_vector,pot::ParallelMLPotential,i_thread)
@@ -59,10 +59,10 @@ function update_potential!(pot_vector,pot::ELJPotentialEven,i_thread)
     return pot_vector
 end
 
-function thermalise!(state ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r,sample_index)
+function thermalise!(states ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r,sample_index)
      #this is a thermalisation procedure
         for i_therm = 1:sample_index
-            equilibration_cycle!(state ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r, i_therm)
+            states,ebounds = equilibration_cycle!(states ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r, i_therm)
         end
     
 end
