@@ -104,9 +104,9 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         flush(stdout)
 
         if i_thread == 1
-            parallel_states = copy_states!(mc_states,parallel_states,mc_params)
+            parallel_states = copy_state!(mc_states,parallel_states,mc_params)
         else
-            parallel_states = copy_states!(parallel_states[i_thread-1],parallel_states,mc_params)
+            parallel_states = copy_state!(parallel_states[i_thread-1],parallel_states,mc_params)
         end
 
         
