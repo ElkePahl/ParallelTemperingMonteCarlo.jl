@@ -127,7 +127,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
 end
 
- function threadexchange!(parallel_states,n_threads,idx)
+ function threadexchange!(parallel_states,n_threads,exch_idx)
     if rand() < 0.2  #20% change per trajectory of an attempted exchange
         thrid = rand(1:n_threads,2)
         if thrid[1] == thrid[2] && thrid[2] == n_threads
@@ -136,10 +136,10 @@ end
             thrid[2] +=1
         end #which threads are talking
 
-        exc_acc = exc_acceptance(parallel_states[thrid[1]][idx].beta,parallel_states[thrid[2]][idx].beta,parallel_states[thrid[1]][idx].en_tot,parallel_states[thrid[2]][idx].en_tot) #calc acceptance
+        exc_acc = exc_acceptance(parallel_states[thrid[1]][exch_idx].beta,parallel_states[thrid[2]][exch_idx].beta,parallel_states[thrid[1]][exch_idx].en_tot,parallel_states[thrid[2]][exch_idx].en_tot) #calc acceptance
         
         if exc_acc > rand() #if exchange is likely
-            exc_trajectories!(parallel_states[thrid[1]][idx] ,parallel_states[thrid[2]][idx] )#swap
+            exc_trajectories!(parallel_states[thrid[1]][exch_idx] ,parallel_states[thrid[2]][exch_idx] )#swap
         end
      end
     
