@@ -59,14 +59,23 @@ function update_potential!(pot_vector,pot::ELJPotentialEven,i_thread)
     return pot_vector
 end
 
-function thermalise!(states ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r,sample_index)
+function thermalise!(states ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r, sample_index)
      #this is a thermalisation procedure
         for i_therm = 1:sample_index
             states,ebounds = equilibration_cycle!(states ,move_strat, mc_params, potential, ensemble,ebounds, n_steps, a, v, r, i_therm)
         end
     
 end
+function copy_state!(states,states_vector,mc_params)
+    temp_state = copy(states)
+    
+    for traj_index  = 1:mc_params.n_traj
+        push!(temp_state.ham,[0, 0])
+    end
 
+    push!(states_vector,temp_state)
+    return states_vector
+end
 """
     parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
 function takes as input a vector of mc_states and the standard MC parameters. It runs n_eq times saving one configuration as an initial state for one entire thread's vector of states. It returns parallel_states, a vector of vectors of states all initialised with the same energies and parameters, but sharing a common histogram and results vector. 
@@ -91,32 +100,26 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
     
     for i_thread = 1:n_threads
-
-        if i_thread == 1
-            states_vec = copy(mc_states)
-        else
-            states_vec = copy(parallel_states[i_thread-1])
-        end
         println("Initialising Thread $i_thread")
         flush(stdout)
 
-        pot_vector = update_potential!(pot_vector,pot,i_thread)
+        if i_thread == 1
+            parallel_states = copy_states!(mc_states,parallel_states,mc_params)
+        else
+            parallel_states = copy_states!(parallel_states[i_thread-1],parallel_states,mc_params)
+        end
 
-        for i_traj = 1:mc_params.n_traj
-            push!(states_vec[i_traj].ham, 0)
-            push!(states_vec[i_traj].ham, 0)    
-        end    
-        push!(parallel_states,states_vec) 
+        
+
+        pot_vector = update_potential!(pot_vector, pot, i_thread)   
         
         @sync begin
-                Threads.@threads for j_therm =1:i_thread #introducing equilibration to all threads
+                Threads.@threads for j_therm = 1:i_thread #introducing equilibration to all threads
                     thermalise!(parallel_states[j_therm],move_strat,mc_params,pot_vector[j_therm],ensemble,ebounds, n_steps, a, v, r,sample_index)
                 end
         end 
               
-    end
-
-    
+    end   
 
     delta_en = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds) #start histogram
     
