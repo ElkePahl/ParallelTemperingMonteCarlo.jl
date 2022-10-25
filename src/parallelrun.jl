@@ -26,14 +26,15 @@ function equilibration_cycle!(states,move_strat, mc_params, potential, ensemble,
     states = mc_cycle!(states, move_strat, mc_params, potential, ensemble, n_steps, a, v, r)#mc cycle
             
     for i_check = 1:mc_params.n_traj#check energy bounds
-        if states[i_check].en_tot < ebounds[1]
-             ebounds[1] = states[i_check].en_tot
-        end
 
-        if states[i_check].en_tot > ebounds[2]
-            ebounds[2] = states[i_check].en_tot
-        end
+        temp_energy = copy(states[i_check].en_tot)
 
+        if temp_energy < ebounds[1]
+             ebounds[1] = temp_energy
+        end
+        if temp_energy > ebounds[2]
+            ebounds[2] = temp_energy
+        end
     end
 
     if rem(dindex, mc_params.n_adjust) == 0 #adjust stepsize
@@ -42,6 +43,7 @@ function equilibration_cycle!(states,move_strat, mc_params, potential, ensemble,
         end 
     end
     return states,ebounds
+
 end
 
 function update_potential!(pot_vector,pot::ParallelMLPotential,i_thread)
@@ -107,7 +109,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         if i_thread == 1
             parallel_states = copy_state!(mc_states,parallel_states,mc_params)
         else
-            parallel_states = copy_state!(parallel_states[i_thread-1],parallel_states,mc_params)
+            parallel_states = copy_state!(parallel_states[1],parallel_states,mc_params)
         end
 
         

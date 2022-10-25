@@ -280,10 +280,13 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         n_exc = rand(1:mc_params.n_traj-1)
         mc_states[n_exc].count_exc[1] += 1
         mc_states[n_exc+1].count_exc[1] += 1
+
         exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+
         if exc_acc > rand()
             mc_states[n_exc].count_exc[2] += 1
             mc_states[n_exc+1].count_exc[2] += 1
+            
             mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
         end
     end
