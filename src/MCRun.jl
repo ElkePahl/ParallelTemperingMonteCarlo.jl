@@ -96,13 +96,13 @@ for given ensemble; implemented:
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
 Boltzmann probability otherwise
 """
-function metropolis_condition(::NVT, delta_en, beta)
-    prob_val = exp(-delta_en*beta)
+function metropolis_condition(::NVT, del_en, beta)
+    prob_val = exp(-del_en*beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function metropolis_condition(::NPT, N, delta_en, volume_changed, volume_unchanged, pressure, beta)
+function metropolis_condition(::NPT, N, d_en, volume_changed, volume_unchanged, pressure, beta)
     delta_h = delta_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
     prob_val = exp(-delta_h*beta + NAtoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
@@ -122,9 +122,9 @@ Returns probability to exchange configurations of two trajectories with energies
 at inverse temperatures `beta_1` and `beta_2`. 
 """
 function exc_acceptance(beta_1, beta_2, en_1, en_2)
-    delta_en = en_1 - en_2
+    d_en_acc = en_1 - en_2
     delta_beta = beta_1 - beta_2
-    exc_acc = min(1.0,exp(delta_beta * delta_en))
+    exc_acc = min(1.0,exp(delta_beta * d_en_acc))
     return exc_acc
 end
 
