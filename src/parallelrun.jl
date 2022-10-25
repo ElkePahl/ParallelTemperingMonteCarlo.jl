@@ -112,7 +112,6 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
                 Threads.@threads for j_therm =1:i_thread #introducing equilibration to all threads
                     thermalise!(parallel_states[j_therm],move_strat,mc_params,pot_vector[j_therm],ensemble,ebounds, n_steps, a, v, r,sample_index)
                 end
-            end
         end 
         
         # states_vec = copy(mc_states)
