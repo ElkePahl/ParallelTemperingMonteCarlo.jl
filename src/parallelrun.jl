@@ -87,7 +87,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
     n_steps = a + v + r
     println()
 
-    ebounds = [100. , -100.]
+    ebounds=[100. , -100.]
 
     
     for i_thread = 1:n_threads
