@@ -468,16 +468,16 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
     end
     
 
-    delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
+    delta_en_hist = (global_en_max - global_en_min) / (results.n_bin - 1)
 
     results.en_min = global_en_min
     results.en_max = global_en_max
     
   
-        return  delta_en
+        return  delta_en_hist
 end
 
-function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
+function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
 
     for i_traj in 1:mc_params.n_traj
         
@@ -485,7 +485,7 @@ function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
 
             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
             for en in mc_states[i_traj].ham
-                index = floor(Int,(en - results.en_min) / delta_en) + 1
+                index = floor(Int,(en - results.en_min) / delta_en_hist) + 1
                 hist[index] += 1
             end
         push!(results.en_histogram, hist)
@@ -493,7 +493,7 @@ function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
         else #this is done throughout the simulation
             en = mc_states[i_traj].en_tot
 
-            index = floor(Int,(en - results.en_min) / delta_en) + 1 
+            index = floor(Int,(en - results.en_min) / delta_en_hist) + 1 
 
             if index < 1 #if energy too low
                 results.en_histogram[i_traj][1] += 1 #add to place 1
@@ -510,14 +510,14 @@ end
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
 """
-function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir ;delta_en=0.)
+function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir ;delta_en_hist=0.)
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
     sampling_step!(mc_params,mc_states,i,save_ham)
 
     if save_ham == false
-        updatehistogram!(mc_params,mc_states,results,delta_en,fullham=save_ham)
+        updatehistogram!(mc_params,mc_states,results,delta_en_hist,fullham=save_ham)
     end
 
     #step adjustment
@@ -616,7 +616,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         end
         #initialise histogram for non-saving hamiltonian 
         if save_ham == false
-            delta_en = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds)
+            delta_en_hist = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds)
         end
 
         println("equilibration done")
@@ -634,7 +634,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
         for i = 1:mc_params.mc_cycles
             if save_ham == false
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en=delta_en)
+                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
             else
                 ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
             end
@@ -645,7 +645,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
         for i = restartindex:mc_params.mc_cycles
             if save_ham == false
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en=delta_en)
+                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
             else
                 ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
             end
@@ -680,8 +680,8 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     #energy histograms
     if save_ham == true
         # T = typeof(mc_states[1].ham[1])
-        delta_en= initialise_histograms!(mc_params,mc_states,results)
-        updatehistogram!(mc_params,mc_states,results,delta_en)
+        delta_en_hist= initialise_histograms!(mc_params,mc_states,results)
+        updatehistogram!(mc_params,mc_states,results,delta_en_hist)
     
     end
     #     for i_traj in 1:mc_params.n_traj
