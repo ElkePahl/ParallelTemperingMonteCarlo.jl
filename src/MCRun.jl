@@ -248,9 +248,9 @@ for atom, volume and rotation moves.
 Performs the selected move.   
 """
 function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
-    ran = rand(1:(a+v+r)) #choose move randomly
-    if ran <= a
-        mc_state = atom_move!(mc_state, ran, pot, ensemble)
+    ran_atom = rand(1:(a+v+r)) #choose move randomly
+    if ran_atom <= a
+        mc_state = atom_move!(mc_state, ran_atom, pot, ensemble)
     #else if ran <= v
     #    vol_move!(mc_state, pot, ensemble)
     #else if ran <= r
@@ -271,7 +271,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     for i_traj = 1:mc_params.n_traj
         for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
+            mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
         end
         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
     end
@@ -286,7 +286,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         if exc_acc > rand()
             mc_states[n_exc].count_exc[2] += 1
             mc_states[n_exc+1].count_exc[2] += 1
-            
+
             mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
         end
     end

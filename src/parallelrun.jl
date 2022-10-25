@@ -223,7 +223,7 @@ end
 
 function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd())
 
-    parallel_states,pot_vector,a,v,r,delta_en,n_threads=parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
+    parallel_states,pot_vector,a,v,r,delta_en,n_threads =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
     n_steps = a+v+r
     
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
