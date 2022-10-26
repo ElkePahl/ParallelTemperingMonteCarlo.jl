@@ -102,25 +102,18 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
     ebounds=[100. , -100.]
 
     
-    for i_thread = 1:n_threads
-        # println("Initialising Thread $i_thread")
-        # flush(stdout)
-
-        #if i_thread == 1
+    for i_thread = 1:n_threads       
         parallel_states = copy_state!(mc_states,parallel_states,mc_params)
-        # else
-        #     parallel_states = copy_state!(parallel_states[1],parallel_states,mc_params)
-        # end
         pot_vector = update_potential!(pot_vector, pot, i_thread)  
 
     end
 
-    #for i_thread = 1:n_threads  
+     
     begin
-        #ebounds=[100. , -100.]  
+         
         
         Threads.@threads for j_thread = 1:n_threads #introducing equilibration to all threads    
-            println(a,sample_index,ebounds)   
+              
             thermalise!(parallel_states[j_thread],move_strat,mc_params,pot_vector[j_thread],ensemble, ebounds, n_steps, a, v, r,sample_index)
         end
          
