@@ -96,14 +96,14 @@ for given ensemble; implemented:
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
 Boltzmann probability otherwise
 """
-function metropolis_condition(::NVT, del_en, beta)
-    prob_val = exp(-del_en*beta)
+function metropolis_condition(::NVT, d_en, beta)
+    prob_val = exp(-d_en*beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
 function metropolis_condition(::NPT, N, d_en, volume_changed, volume_unchanged, pressure, beta)
-    delta_h = delta_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
+    delta_h = d_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
     prob_val = exp(-delta_h*beta + NAtoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
@@ -290,6 +290,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
             mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
         end
     end
+
     return mc_states
 end
 """
@@ -349,8 +350,8 @@ end
     sampling_step(mc_params, mc_states, i, saveham::Bool)
 A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
 """
-function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
-        if rem(i, mc_params.mc_sample) == 0
+function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)  
+        if rem(save_index, mc_params.mc_sample) == 0
             for indx_traj=1:mc_params.n_traj
                 if saveham == true
                     push!(mc_states[indx_traj].ham, mc_states[indx_traj].en_tot) #to build up ham vector of sampled energies
@@ -479,28 +480,28 @@ end
 
 function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
 
-    for i_traj in 1:mc_params.n_traj
+    for update_traj_index in 1:mc_params.n_traj
         
         if fullham == true #this is done at the end of the cycle
 
             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
-            for en in mc_states[i_traj].ham
-                index = floor(Int,(en - results.en_min) / delta_en_hist) + 1
-                hist[index] += 1
+            for en in mc_states[update_traj_index].ham
+                hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1
+                hist[hist_index] += 1
             end
         push!(results.en_histogram, hist)
 
         else #this is done throughout the simulation
-            en = mc_states[i_traj].en_tot
+            en = mc_states[update_traj_index].en_tot
 
-            index = floor(Int,(en - results.en_min) / delta_en_hist) + 1 
+            hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1 
 
-            if index < 1 #if energy too low
-                results.en_histogram[i_traj][1] += 1 #add to place 1
+            if hist_index < 1 #if energy too low
+                results.en_histogram[update_traj_index][1] += 1 #add to place 1
             elseif index > results.n_bin #if energy too high
-                results.en_histogram[i_traj][(results.n_bin +2)] += 1 #add to place n_bin +2
+                results.en_histogram[update_traj_index][(results.n_bin +2)] += 1 #add to place n_bin +2
             else
-                results.en_histogram[i_traj][(index+1)] += 1
+                results.en_histogram[update_traj_index][(hist_index+1)] += 1
             end
         end
     end

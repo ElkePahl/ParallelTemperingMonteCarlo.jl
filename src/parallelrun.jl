@@ -133,7 +133,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
 end
 
- function threadexchange!(parallel_states,n_threads,exch_idx)
+ function threadexchange!(parallel_states,n_threads,threxch_idx)
     if rand() < 0.2  #20% change per trajectory of an attempted exchange
         thrid = rand(1:n_threads,2)
         if thrid[1] == thrid[2] && thrid[2] == n_threads
@@ -142,10 +142,10 @@ end
             thrid[2] +=1
         end #which threads are talking
 
-        exc_acc = exc_acceptance(parallel_states[thrid[1]][exch_idx].beta,parallel_states[thrid[2]][exch_idx].beta,parallel_states[thrid[1]][exch_idx].en_tot,parallel_states[thrid[2]][exch_idx].en_tot) #calc acceptance
+        exc_acc = exc_acceptance(parallel_states[thrid[1]][threxch_idx].beta,parallel_states[thrid[2]][threxch_idx].beta,parallel_states[thrid[1]][threxch_idx].en_tot,parallel_states[thrid[2]][threxch_idx].en_tot) #calc acceptance
         
         if exc_acc > rand() #if exchange is likely
-            exc_trajectories!(parallel_states[thrid[1]][exch_idx] ,parallel_states[thrid[2]][exch_idx] )#swap
+            exc_trajectories!(parallel_states[thrid[1]][threxch_idx] ,parallel_states[thrid[2]][threxch_idx] )#swap
         end
      end
     
@@ -213,8 +213,8 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
         #we run 500 mc cycles per thread
     #end
 
-    for idx = 1:mc_params.n_traj
-        threadexchange!(parallel_states,n_threads,idx)
+    for idx_thr_ex = 1:mc_params.n_traj
+        threadexchange!(parallel_states,n_threads,idx_thr_ex)
     end
     #then run n_traj exchanges
     save_results(results,directory=save_dir)
