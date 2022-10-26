@@ -69,7 +69,7 @@ function thermalise!(states ,move_strat, mc_params, potential, ensemble,ebounds,
     
 end
 function copy_state!(states,states_vector,mc_params)
-    temp_state = copy(states)
+    temp_state = deepcopy(states)
     
     for traj_index  = 1:mc_params.n_traj
         # push!(temp_state[traj_index].ham,[0, 0])
