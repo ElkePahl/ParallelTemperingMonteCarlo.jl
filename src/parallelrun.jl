@@ -111,16 +111,13 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         else
             parallel_states = copy_state!(parallel_states[1],parallel_states,mc_params)
         end
-
-        
-
         pot_vector = update_potential!(pot_vector, pot, i_thread)   
         
-        @sync begin
-                Threads.@threads for j_therm = 1:i_thread #introducing equilibration to all threads
-                    thermalise!(parallel_states[j_therm],move_strat,mc_params,pot_vector[j_therm],ensemble,ebounds, n_steps, a, v, r,sample_index)
-                end
-        end 
+        
+        Threads.@threads for (pstate,ppot) in zip(parallel_states,pot_vector) #introducing equilibration to all threads
+            thermalise!(pstate,move_strat,mc_params,ppot,ensemble,ebounds, n_steps, a, v, r,sample_index)
+        end
+         
               
     end   
 
@@ -235,6 +232,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
     n_sample = 1000*n_run_per_thread
 
     for run_index = 1:n_run_per_thread
+
         parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
         # println("cycle $run_index of $n_run_per_thread complete")
         # flush(stdout)
