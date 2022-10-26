@@ -114,8 +114,9 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
         pot_vector = update_potential!(pot_vector, pot, i_thread)   
         
         
-        Threads.@threads for (pstate,ppot) in zip(parallel_states,pot_vector) #introducing equilibration to all threads
-            thermalise!(pstate,move_strat,mc_params,ppot,ensemble,ebounds, n_steps, a, v, r,sample_index)
+        Threads.@threads j_thread = 1:i_thread #introducing equilibration to all threads
+        
+            thermalise!(parallel_states[j_thread],move_strat,mc_params,pot_vector[j_thread],ensemble,ebounds, n_steps, a, v, r,sample_index)
         end
          
               
