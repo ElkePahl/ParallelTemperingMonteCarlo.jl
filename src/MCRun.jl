@@ -498,7 +498,7 @@ function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=tr
 
             if hist_index < 1 #if energy too low
                 results.en_histogram[update_traj_index][1] += 1 #add to place 1
-            elseif index > results.n_bin #if energy too high
+            elseif hist_index > results.n_bin #if energy too high
                 results.en_histogram[update_traj_index][(results.n_bin +2)] += 1 #add to place n_bin +2
             else
                 results.en_histogram[update_traj_index][(hist_index+1)] += 1
