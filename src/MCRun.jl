@@ -226,14 +226,14 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
     trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
     #find new distances of moved atom 
-    d_en, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
+    d_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
     #decide acceptance
-    if metropolis_condition(ensemble, d_en, mc_state.beta) >= rand()
+    if metropolis_condition(ensemble, d_en_move, mc_state.beta) >= rand()
         #new config accepted
         mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
         mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = dist2_new
-        mc_state.en_tot += d_en
+        mc_state.en_tot += d_en_move
         mc_state.count_atom[1] += 1
         mc_state.count_atom[2] += 1
     end
