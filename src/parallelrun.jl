@@ -115,10 +115,10 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
     end
 
-    Threads.@threads for i_thread = 1:n_threads  
+    for i_thread = 1:n_threads  
         
-        #Threads.@threads for j_thread = 1:i_thread #introducing equilibration to all threads       
-            thermalise!(parallel_states[i_thread],move_strat,mc_params,pot_vector[i_thread],ensemble,ebounds, n_steps, a, v, r,sample_index)
+        Threads.@threads for j_thread = 1:i_thread #introducing equilibration to all threads       
+            thermalise!(parallel_states[j_thread],move_strat,mc_params,pot_vector[j_thread],ensemble, ebounds, n_steps, a, v, r,sample_index)
         end
          
               
