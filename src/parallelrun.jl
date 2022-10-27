@@ -83,14 +83,14 @@ end
     parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
 function takes as input a vector of mc_states and the standard MC parameters. It runs n_eq times saving one configuration as an initial state for one entire thread's vector of states. It returns parallel_states, a vector of vectors of states all initialised with the same energies and parameters, but sharing a common histogram and results vector. 
 """
-function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
+function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
     parallel_states = []
     pot_vector = []
     println("Beginning Equilibration")
     println()
      #initialise state and potentials
 
-    n_threads = Threads.nthreads()
+    # n_threads = Threads.nthreads()
     sample_index = Int64(floor(mc_params.eq_cycles / n_threads)) #number of eq cycles per thread
 
     a = atom_move_frequency(move_strat)
@@ -211,9 +211,9 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
     return parallel_states
 end
 
-function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd())
+function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.n_threads())
 
-    parallel_states,pot_vector,a,v,r,delta_en,n_threads =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
+    parallel_states,pot_vector,a,v,r,delta_en,n_threads =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
     n_steps = a+v+r
     
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
