@@ -211,7 +211,7 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
     return parallel_states
 end
 
-function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.n_threads())
+function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads())
 
     parallel_states,pot_vector,a,v,r,delta_en,n_threads =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
     n_steps = a+v+r
