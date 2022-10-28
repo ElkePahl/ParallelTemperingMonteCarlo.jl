@@ -137,7 +137,7 @@ end
         if exc_acc > rand() #if exchange is likely
             exc_trajectories!(parallel_states[thrid[1]][threxch_idx] ,parallel_states[thrid[2]][threxch_idx] )#swap
         end
-     end
+    end
     
 end
 """
@@ -164,28 +164,28 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj; input_idx=pot.index)    
     for i=1:n_threads
     
-    for indx in 1:mc_params.n_traj
-        if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
-            mc_states[indx].config.pos[indices[indx]] = trials[indx]
-            mc_states[indx].en_tot = energyvec[indx]
-            mc_states[indx].count_atom[1] +=1
-            mc_states[indx].count_atom[2] += 1
+        for indx in 1:mc_params.n_traj
+            if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
+                mc_states[indx].config.pos[indices[indx]] = trials[indx]
+                mc_states[indx].en_tot = energyvec[indx]
+                mc_states[indx].count_atom[1] +=1
+                mc_states[indx].count_atom[2] += 1
+            end
+        end
+
+
+        if rand() < 0.1 #attempt to exchange trajectories
+            n_exc = rand(1:mc_params.n_traj-1)
+            mc_states[n_exc].count_exc[1] += 1
+            mc_states[n_exc+1].count_exc[1] += 1
+            exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+            if exc_acc > rand()
+                mc_states[n_exc].count_exc[2] += 1
+                mc_states[n_exc+1].count_exc[2] += 1
+                mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+            end
         end
     end
-
-
-    if rand() < 0.1 #attempt to exchange trajectories
-        n_exc = rand(1:mc_params.n_traj-1)
-        mc_states[n_exc].count_exc[1] += 1
-        mc_states[n_exc+1].count_exc[1] += 1
-        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
-        if exc_acc > rand()
-            mc_states[n_exc].count_exc[2] += 1
-            mc_states[n_exc+1].count_exc[2] += 1
-            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
-        end
-    end
-
 
     return mc_states
 end
