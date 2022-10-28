@@ -162,8 +162,8 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     #after which we require energy evaluations of the n_traj new configurations
     close(file)    
     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj; input_idx=pot.index)    
-    #this replaces the atom_move! function
-    #parallelisation here is fine
+    for i=1:n_threads
+    
     for indx in 1:mc_params.n_traj
         if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
             mc_states[indx].config.pos[indices[indx]] = trials[indx]
