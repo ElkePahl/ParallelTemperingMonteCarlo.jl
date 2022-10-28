@@ -49,6 +49,7 @@ struct ParallelMLPotential <: AbstractMachineLearningPotential
     dir::String
     atomtype::String
     index::Int64
+    total::Int64
 end
 
 

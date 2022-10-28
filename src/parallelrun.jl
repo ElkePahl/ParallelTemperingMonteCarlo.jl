@@ -47,7 +47,7 @@ function equilibration_cycle!(states,move_strat, mc_params, potential, ensemble,
 end
 
 function update_potential!(pot_vector,pot::ParallelMLPotential,i_thread)
-    temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread)
+    temp_pot = ParallelMLPotential(pot.dir,pot.atomtype,i_thread,pot.total)
     push!(pot_vector,temp_pot)
 
     return pot_vector
@@ -119,7 +119,7 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
 
     println("equilibration done")
     
-    return parallel_states,pot_vector,a,v,r,delta_en,n_threads
+    return parallel_states,pot_vector,a,v,r,delta_en
 
 end
 
@@ -149,6 +149,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
     #this for loop creates n_traj perturbed atoms
     indices = []
     trials = []
+    n_threads= pot.total
     #we require parallelisation here, but will need to avoid a race condition
     for mc_state in mc_states
         #for i_step = 1:n_steps
@@ -213,7 +214,7 @@ end
 
 function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads())
 
-    parallel_states,pot_vector,a,v,r,delta_en,n_threads =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
+    parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
     n_steps = a+v+r
     
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
