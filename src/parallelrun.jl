@@ -255,7 +255,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
 
         parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
 
-        if rem(run_index,100) == 0
+        if rem(run_index,10) == 0
             println("cycle $run_index of $n_run_per_thread complete")
             println()
 
