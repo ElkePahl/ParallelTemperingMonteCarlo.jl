@@ -262,7 +262,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
             if save_configs == true
                 for j_traj in 1:mc_params.n_traj
                     write(save_files[j_traj],"cycle $run_index of $n_run_per_thread complete \n")
-                    parallelstatesave(parallel_states,save_state,j_traj)
+                    parallelstatesave(parallel_states,save_files[j_traj],j_traj)
                 end
             end
         end
