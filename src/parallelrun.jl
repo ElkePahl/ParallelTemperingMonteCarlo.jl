@@ -233,9 +233,9 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
 
     if save_configs == true
         save_files = []
-        mkdir("save_configs")
+        mkdir("$save_dir/save_configs")
         for i_traj = 1:mc_params.n_traj
-            temp_save = open("save$i_traj.data","w+")
+            temp_save = open("$save_dir/save_configs/save$i_traj.data","w+")
             push!(save_files,temp_save)
         end
     end
