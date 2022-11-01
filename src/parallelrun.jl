@@ -2,7 +2,7 @@ module ParallelRun
 
     using Distributed
 
-    using StaticArrays,DelimitedFiles
+    using StaticArrays,DelimitedFiles,Random
 
     using ..BoundaryConditions
     using ..Configurations
@@ -83,7 +83,7 @@ end
     parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
 function takes as input a vector of mc_states and the standard MC parameters. It runs n_eq times saving one configuration as an initial state for one entire thread's vector of states. It returns parallel_states, a vector of vectors of states all initialised with the same energies and parameters, but sharing a common histogram and results vector. 
 """
-function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
+function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
     parallel_states = []
     pot_vector = []
     println("Beginning Equilibration")
@@ -99,20 +99,24 @@ function parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,resu
     n_steps = a + v + r
     println()
 
-    ebounds=[100. , -100.]
-
+    if restart == false
+        ebounds=[100. , -100.]
+    else
+        ebounds = [results.en_min,results.en_max]
+    end
     
     for i_thread = 1:n_threads       
         parallel_states = copy_state!(mc_states,parallel_states,mc_params)
         pot_vector = update_potential!(pot_vector, pot, i_thread)  
     end
 
-     
-    begin       
-        Threads.@threads for j_thread = 1:n_threads #introducing equilibration to all threads             
-            thermalise!(parallel_states[j_thread],move_strat,mc_params,pot_vector[j_thread],ensemble, ebounds, n_steps, a, v, r,sample_index)
-        end             
-    end   
+    if restart == false 
+        begin       
+            Threads.@threads for j_thread = 1:n_threads #introducing equilibration to all threads             
+                thermalise!(parallel_states[j_thread],move_strat,mc_params,pot_vector[j_thread],ensemble, ebounds, n_steps, a, v, r,sample_index)
+            end             
+        end   
+    end
 
     delta_en = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds) #start histogram
     
@@ -212,9 +216,31 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
     return parallel_states
 end
 
-function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads())
+function parallelstatesave(parallel_states,save_file::IOStream,j_traj)
+    
+        thread_save_index = rand(1:length(parallel_states))
+        tempstate = parallel_states[thread_save_index][j_traj]
 
-    parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads)
+        write(save_file,"temp $(tempstate.temp)\n")
+        write(save_file,"E,E2 $(tempstate.ham[1]) $(tempstate.ham[2]) \n")
+        for row in tempstate.config.pos
+            write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
+        end
+    
+end
+
+function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads(),restart=false,save_configs=false)
+
+    if save_configs == true
+        save_files = []
+        mkdir("save_configs")
+        for i_traj = 1:mc_params.n_traj
+            temp_save = open("save$i_traj.data","w+")
+            push!(save_files,temp_save)
+        end
+    end
+
+    parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
     n_steps = a+v+r
     
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
@@ -228,12 +254,27 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
     for run_index = 1:n_run_per_thread
 
         parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
-        # println("cycle $run_index of $n_run_per_thread complete")
-        # flush(stdout)
+
+        if rem(run_index,100) == 0
+            
+
+            if save_configs == true
+                for j_traj in 1:mc_params.n_traj
+                    write(save_state[j_traj],"cycle $run_index of $n_run_per_thread complete \n")
+                    parallelstatesave(parallel_states,save_state,j_traj)
+                end
+            end
+        end
         
     end
     println("main loop complete\n")
     println()
+
+    if save_configs==true
+        for save_file in save_files
+            close(save_file)
+        end
+    end 
 
     println("beginning statistics\n")
     println()
