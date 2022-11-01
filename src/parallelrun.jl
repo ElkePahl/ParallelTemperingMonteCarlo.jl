@@ -231,18 +231,23 @@ end
 
 function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads(),restart=false,save_configs=false)
 
-    if save_configs == true
+    # if save_configs == true
         save_files = []
         mkdir("$save_dir/save_configs")
         for i_traj = 1:mc_params.n_traj
             temp_save = open("$save_dir/save_configs/save$i_traj.data","w+")
             push!(save_files,temp_save)
         end
-    end
-
+    # end
+    
     parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
     n_steps = a+v+r
-    
+
+    for j_traj in 1:mc_params.n_traj
+        write(save_files[j_traj],"equilibrated states \n")
+        parallelstatesave(parallel_states,save_files[j_traj],j_traj)
+    end
+
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
 
     println("$n_run_per_thread cycles of 1000 per $n_threads thread")
@@ -271,11 +276,16 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
     println("main loop complete\n")
     println()
 
-    if save_configs==true
+    for j_traj in 1:mc_params.n_traj
+        write(save_files[j_traj],"final states \n")
+        parallelstatesave(parallel_states,save_files[j_traj],j_traj)
+    end
+
+    # if save_configs==true
         for save_file in save_files
             close(save_file)
         end
-    end 
+    # end 
 
     println("beginning statistics\n")
     println()
