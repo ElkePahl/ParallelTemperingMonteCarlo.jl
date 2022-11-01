@@ -224,7 +224,7 @@ function parallelstatesave(parallel_states,save_file::IOStream,j_traj)
         write(save_file,"temp $(tempstate.temp)\n")
         write(save_file,"E,E2 $(tempstate.ham[1]) $(tempstate.ham[2]) \n")
         for row in tempstate.config.pos
-            write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
+            write(save_file,"$(row[1]) $(row[2]) $(row[3]) \n")
         end
     
 end
