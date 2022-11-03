@@ -415,10 +415,13 @@ Saves the on the fly results and histogram information for re-reading.
 """
 function save_results(results::Output; directory = pwd())
     resultsfile =  open("$(directory)/results.data","w+")
+    rdf_file = open("$directory/RDF.data","w+")
     write(resultsfile,"emin,emax,nbins= $(results.en_min) $(results.en_max) $(results.n_bin) \n")
     write(resultsfile, "Histograms \n")
     writedlm(resultsfile,results.en_histogram)
     close(resultsfile)
+    writedlm(rdf_file,results.rdf)
+    close(rdf_file)
     #requires: en_min,en_max,n_bin,en_hist
     #reading doesn't require the rest as that is handled as a post-process
 end
@@ -449,6 +452,8 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
     T = typeof(mc_states[1].en_tot)
     en_min = T[]
     en_max = T[]
+    r_max = 4*mc_states[1].Config.BC.radius2 #we will work in d^2
+    delta_r = r_max/results.n_bin/5 #we want more bins for the RDFs
     if full_ham == true
         for i_traj in 1:mc_params.n_traj
             push!(en_min,minimum(mc_states[i_traj].ham))
@@ -458,14 +463,16 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
         global_en_min = minimum(en_min)
         global_en_max = maximum(en_max)
     else
-        #we'll give ourselves a 10% leeway here
-        global_en_min = e_bounds[1] - abs(0.05*e_bounds[1])
-        global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
+        #we'll give ourselves a 6% leeway here
+        global_en_min = e_bounds[1] - abs(0.03*e_bounds[1])
+        global_en_max = e_bounds[2] + abs(0.03*e_bounds[2])
     end
 
     for i_traj = 1:mc_params.n_traj
         histogram = zeros(results.n_bin + 2)
         push!(results.en_histogram, histogram)
+        RDF = zeros(results.n_bin*5)
+        push!(results.rdf,RDF)
     end
     
 
@@ -476,6 +483,15 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
     
   
         return  delta_en_hist
+end
+# rdfcalc(distance2,delta_r) = floor(Int,(distance2)/delta_r)
+function updaterdf!(mc_states,results,delta_r2)
+    for j_traj in eachindex(mc_states)
+        for element in mc_states[j_traj].dist2_mat 
+            rdf_index=floor(Int,(distance2)/delta_r2)
+            results[j_traj][rdf_index] +=1
+        end
+    end
 end
 
 function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
@@ -516,9 +532,9 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
     #sampling step
     sampling_step!(mc_params,mc_states,i,save_ham)
-
     if save_ham == false
         updatehistogram!(mc_params,mc_states,results,delta_en_hist,fullham=save_ham)
+        updaterdf!(mc_states,results,(2*mc_states[1].Config.BC.radius2))
     end
 
     #step adjustment
@@ -538,9 +554,6 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
     end
 
 end
-
-
-
 
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
