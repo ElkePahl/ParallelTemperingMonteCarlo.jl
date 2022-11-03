@@ -488,8 +488,8 @@ end
 function updaterdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
-            rdf_index=floor(Int,(element)/delta_r2)
-            results[j_traj][rdf_index] +=1
+            rdf_index=floor(Int,(element/delta_r2))
+            results[j_traj].rdf[rdf_index] +=1
         end
     end
 end
