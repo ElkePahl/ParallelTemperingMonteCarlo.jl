@@ -452,7 +452,7 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
     T = typeof(mc_states[1].en_tot)
     en_min = T[]
     en_max = T[]
-    r_max = 4*mc_states[1].config.BC.radius2 #we will work in d^2
+    r_max = 4*mc_states[1].config.bc.radius2 #we will work in d^2
     delta_r = r_max/results.n_bin/5 #we want more bins for the RDFs
     if full_ham == true
         for i_traj in 1:mc_params.n_traj
