@@ -78,7 +78,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_d
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-time1 = @benchmark ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false)
+@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false)
 
 
 
