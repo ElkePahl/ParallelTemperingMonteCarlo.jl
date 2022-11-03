@@ -534,7 +534,7 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
     sampling_step!(mc_params,mc_states,i,save_ham)
     if save_ham == false
         updatehistogram!(mc_params,mc_states,results,delta_en_hist,fullham=save_ham)
-        updaterdf!(mc_states,results,(2*mc_states[1].config.bc.radius2/(results.n_bin*5)))
+        updaterdf!(mc_states,results,(4*mc_states[1].config.bc.radius2/(results.n_bin*5)))
     end
 
     #step adjustment
