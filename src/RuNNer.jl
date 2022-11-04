@@ -38,6 +38,7 @@ function findRuNNerenergy(inputdir::String,NTraj)
         #RuNNer couldn't find one or more energy without saying which
         println("error in RuNNer")
         #So we set the energy too high to accept
+
         energyvector[:] = 10000*ones(NTraj)
     else
         for i in 1:NTraj
@@ -58,6 +59,7 @@ function findRuNNerenergy(inputdir,NTraj,input_idx)
         #RuNNer couldn't find one or more energy without saying which
         println("error in RuNNer")
         #So we set the energy too high to accept
+
         energyvector[:] = 1000*ones(NTraj)
     else
         for i in 1:NTraj
@@ -72,6 +74,7 @@ end
     getRuNNerenergy(dir::String,NTraj)]
 Function to run RuNNer and read the output. This represents the total output function. Point to a directory dir containing the RuNNer.serial.x and input files, and specify the number of trajectories NTraj. Output is an NTraj vector of energies
 """
+
 function getRuNNerenergy(dir::String,NTraj; input_idx = 0)
     cd(dir)
     if input_idx == 0
@@ -83,6 +86,7 @@ function getRuNNerenergy(dir::String,NTraj; input_idx = 0)
 
         E = findRuNNerenergy(dir,NTraj,input_idx)
     end
+
 
     return E
 end
@@ -110,6 +114,7 @@ function writefile(dir::String, config::Config, atomtype::String)
     write(file,"end")
     close(file)
 end
+
 function writefile(dir::String, config::Config, atomtype::String,input_index)
     file = open("$(dir)input$(input_index).data","w+")
     write(file, "begin \n")
@@ -121,6 +126,7 @@ function writefile(dir::String, config::Config, atomtype::String,input_index)
     write(file,"end")
     close(file)
 end
+
 function writefile(dir::String,config::Config, atomtype::Vector)
     i = 0
     file = open("$(dir)input.data","w+")
@@ -164,12 +170,14 @@ end
 for writing a series of trajectories in a single runner input.data file. Output is an IOStream for use in writing configs.
 
 """
+
 function writeinit(dir::String;input_idx=0)
     if input_idx == 0
         inputfile = open("$(dir)input.data","w+")
     else
         inputfile = open("$(dir)input$(input_idx).data","w+")
     end
+
 
     return inputfile
 end
@@ -242,6 +250,7 @@ function getenergy(dir,config::Config,atomtype)
 
     return E
 end
+
 function getenergy(dir,config::Config,atomtype,input_index)
 
     writefile(dir,config,atomtype,input_index)
@@ -250,6 +259,7 @@ function getenergy(dir,config::Config,atomtype,input_index)
 
     return E
 end
+
 function getenergy(dir,config::Config,atomtype,ix,pos::SVector)
 
     writefile(dir,config,atomtype,ix,pos)
