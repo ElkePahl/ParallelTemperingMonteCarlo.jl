@@ -484,7 +484,10 @@ function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_b
   
         return  delta_en_hist
 end
-# rdfcalc(distance2,delta_r) = floor(Int,(distance2)/delta_r)
+"""
+    updaterdf!(mc_states,results,delta_r2)
+For each state in a vector of mc_states, we use the distance squared matrix to determine which bin (between zero and 2*r_bound) the distance falls into, we then update results.rdf[bin] to build the radial distribution function
+"""
 function updaterdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
@@ -495,7 +498,10 @@ function updaterdf!(mc_states,results,delta_r2)
         end
     end
 end
-
+"""
+    updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
+Performed either at the end or during the mc run according to fullham=true/false (saved all datapoints or calculated on the fly). Uses the energy bounds and the previously defined delta_en_hist to calculate the bin in which te current energy value falls for each trajectory. This is used to build up the energy histograms for post-analysis.
+"""
 function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
 
     for update_traj_index in 1:mc_params.n_traj
