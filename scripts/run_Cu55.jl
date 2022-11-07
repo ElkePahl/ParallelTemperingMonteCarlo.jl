@@ -2,21 +2,28 @@ using ParallelTemperingMonteCarlo
 
 using Random
 
+
 #set random seed - for reproducibility
 Random.seed!(0)
 
 # number of atoms
+
 n_atoms = 55
+
 
 # temperature grid
 ti = 540
 tf = 650
+
 n_traj = 15
+
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-mc_cycles = 10 #default 20% equilibration cycles on top
+
+mc_cycles = 1000 #default 20% equilibration cycles on top
+
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -38,7 +45,9 @@ runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
 #runnerdir = "/home/grayseff/Code/Brass_potential/"
 atomtype="Cu"
+
 pot = AbstractMLPotential(runnerdir,atomtype);
+
 
 #starting configurations
 #icosahedral ground state of Cu55 (from Cambridge cluster database) converted to angstrom
@@ -119,20 +128,26 @@ pos_cu55 = copperconstant*ico_55
 pos_cu13 = copperconstant*ico_13*1.5
 AtoBohr = 1.8897259886
 
+
 length(pos_cu55) == n_atoms || error("number of atoms and positions not the same - check starting config")
+
 
 #boundary conditions 
 bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
 bc_cu13 = SphericalBC(radius=8*AtoBohr)
 #starting configuration
+
 start_config = Config(pos_cu55, bc_cu55)
+
 #histogram information
 n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
+
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj];
+
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
@@ -145,3 +160,4 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 # plot(data)
 # histplot = plot(data)
 # savefig(histplot,"histograms.png")
+

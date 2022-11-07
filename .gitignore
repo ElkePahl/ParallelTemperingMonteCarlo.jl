@@ -25,4 +25,6 @@ Manifest.toml
 
 scripts-elke/
 workspace*
-.DS_Store
+.DS_Store 
+Trial.jl
+.vscode/
