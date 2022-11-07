@@ -79,6 +79,17 @@ function copy_state!(states,states_vector,mc_params)
     push!(states_vector,temp_state)
     return states_vector
 end
+
+function checkpoint(parallelstates,mc_params,checkpoint_keyword,save_dir)
+    if isdir("$save_dir/checkpoint") == false
+        mkdir("$save_dir/checkpoint")
+    end
+
+    for j_checkpoint in eachindex(parallelstates)
+        save_states(mc_params,parallelstates[j_checkpoint],checkpoint_keyword,save_dir,filename="save$(j_checkpoint).data")
+    end
+
+end
 """
     parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results)
 function takes as input a vector of mc_states and the standard MC parameters. It runs n_eq times saving one configuration as an initial state for one entire thread's vector of states. It returns parallel_states, a vector of vectors of states all initialised with the same energies and parameters, but sharing a common histogram and results vector. 
@@ -213,6 +224,7 @@ function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ens
     end
     #then run n_traj exchanges
     save_results(results,directory=save_dir)
+    
     return parallel_states
 end
 
@@ -232,21 +244,22 @@ end
 function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads(),restart=false,save_configs=false)
 
     # if save_configs == true
-        save_files = []
-        mkdir("$save_dir/save_configs")
-        for i_traj = 1:mc_params.n_traj
-            temp_save = open("$save_dir/save_configs/save$i_traj.data","w+")
-            push!(save_files,temp_save)
-        end
+        # save_files = []
+        # mkdir("$save_dir/save_configs")
+        # for i_traj = 1:mc_params.n_traj
+        #     temp_save = open("$save_dir/save_configs/save$i_traj.data","w+")
+        #     push!(save_files,temp_save)
+        # end
     # end
     
     parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
     n_steps = a+v+r
 
-    for j_traj in 1:mc_params.n_traj
-        write(save_files[j_traj],"equilibrated states \n")
-        parallelstatesave(parallel_states,save_files[j_traj],j_traj)
-    end
+    # for j_traj in 1:mc_params.n_traj
+    #     write(save_files[j_traj],"equilibrated states \n")
+    #     parallelstatesave(parallel_states,save_files[j_traj],j_traj)
+    # end
+    checkpoint(parallel_states,mc_params,"equilibration complete",save_dir)
 
     n_run_per_thread = Int64(floor(mc_params.mc_cycles / n_threads / 1000)) 
 
@@ -263,28 +276,29 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
         if rem(run_index,10) == 0
             println("cycle $run_index of $n_run_per_thread complete")
             println()
-
-            if save_configs == true
-                for j_traj in 1:mc_params.n_traj
-                    write(save_files[j_traj],"cycle $run_index of $n_run_per_thread complete \n")
-                    parallelstatesave(parallel_states,save_files[j_traj],j_traj)
-                end
-            end
+            
+            checkpoint(parallel_states,mc_params,"$run_index of $n_run_per_thread",save_dir)
+            # if save_configs == true
+            #     for j_traj in 1:mc_params.n_traj
+            #         write(save_files[j_traj],"cycle $run_index of $n_run_per_thread complete \n")
+            #         parallelstatesave(parallel_states,save_files[j_traj],j_traj)
+            #     end
+            # end
         end
         
     end
     println("main loop complete\n")
     println()
-
-    for j_traj in 1:mc_params.n_traj
-        write(save_files[j_traj],"final states \n")
-        parallelstatesave(parallel_states,save_files[j_traj],j_traj)
-    end
+    checkpoint(parallel_states,mc_params,"final states",save_dir)
+    # for j_traj in 1:mc_params.n_traj
+    #     write(save_files[j_traj],"final states \n")
+    #     parallelstatesave(parallel_states,save_files[j_traj],j_traj)
+    # end
 
     # if save_configs==true
-        for save_file in save_files
-            close(save_file)
-        end
+        # for save_file in save_files
+        #     close(save_file)
+        # end
     # end 
 
     println("beginning statistics\n")
