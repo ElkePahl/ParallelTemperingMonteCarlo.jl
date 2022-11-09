@@ -1,6 +1,10 @@
 module ReadSave
 
+
+
 export restart_ptmc,read_results
+
+
 
 using StaticArrays
 using DelimitedFiles
@@ -58,6 +62,9 @@ function readconfig(oneconfigvec,n_atoms, potential)
 
     push!(mcstate.ham,oneconfigvec[6,2])
     push!(mcstate.ham,oneconfigvec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
+
+
+    
 
     return mcstate
 end
@@ -126,5 +133,6 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
         return mc_params,mc_states,step
     end
 end
+
 
 end

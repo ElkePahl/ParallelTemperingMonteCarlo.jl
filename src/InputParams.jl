@@ -101,7 +101,7 @@ mutable struct Output{T}
     en_avg::Vector{T}
     heat_cap::Vector{T}
     en_histogram::Vector{Vector{T}}
-    rdf::Vector{T}
+    rdf::Vector{Vector{T}}
     count_stat_atom::Vector{T}
     count_stat_vol::Vector{T}
     count_stat_rot::Vector{T}

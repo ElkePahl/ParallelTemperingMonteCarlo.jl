@@ -9,10 +9,13 @@ using StaticArrays
 using DFTK 
 using LinearAlgebra
 using ..Configurations
-using ..RuNNer 
 
-export AbstractPotential, AbstractDimerPotential, AbstractMLPotential 
+using ..RuNNer
+
+export AbstractPotential, AbstractDimerPotential, AbstractMLPotential , ParallelMLPotential
+
 export DFTPotential
+
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
 export getenergy_DFT
@@ -42,9 +45,18 @@ Needs methods for
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
 
-struct AbstractMLPotential <: AbstractPotential 
+
+abstract type AbstractMachineLearningPotential <: AbstractPotential end
+
+struct AbstractMLPotential <: AbstractMachineLearningPotential #remove the Abstract from the name
     dir::String
     atomtype::String
+end
+struct ParallelMLPotential <: AbstractMachineLearningPotential
+    dir::String
+    atomtype::String
+    index::Int64
+    total::Int64
 end
 
 
@@ -91,19 +103,21 @@ end
 function energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
-    delta_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
-    return delta_en, dist2_new
+    d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
+    return d_en, dist2_new
 end
 
-function energy_update(pos,i_atom,config,dist2_mat, en_old, pot::AbstractMLPotential)
+function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
+
 
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
 
     Evec = RuNNer.getenergy(pot.dir,config,pot.atomtype,i_atom,pos)
-    delta_en = Evec[2] - Evec[1]
 
-    return delta_en, dist2_new
+    d_en = Evec[2] - Evec[1]
+
+    return d_en, dist2_new
 
 end
 

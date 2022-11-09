@@ -13,6 +13,9 @@ include("MCRun.jl")
 include("multihist.jl")
 include("ReadSave.jl")
 
+include("parallelrun.jl")
+
+
  @reexport using .BoundaryConditions
  @reexport using .Configurations
  @reexport using .EnergyEvaluation
@@ -23,6 +26,9 @@ include("ReadSave.jl")
  @reexport using .Multihistogram
  @reexport using .RuNNer
  @reexport using .ReadSave
+
+ @reexport using .ParallelRun
+
 
 
 end # module

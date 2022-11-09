@@ -56,8 +56,14 @@ function readfile(Output::Output, Tvals::TempGrid )
     energyvector = [(j-1)*de + Output.en_min for j=1:Output.n_bin ]
 
     HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
+    nbin_actual = length(Output.en_histogram[1])
     for i in 1:NTraj
-        HistArray[i,:] = Output.en_histogram[i]
+
+        if nbin_actual == Output.n_bin
+            HistArray[i,:] = Output.en_histogram[i]
+        else
+            HistArray[i,:] = Output.en_histogram[i][2:end-1]
+        end
     end
 
     return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , kB
@@ -258,8 +264,8 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
-    dT = (last(Tvec) - 0.2)/NPoints
-    T = [(i-1)*dT + 0.2 for i = 1:NPoints]
+    dT = (last(Tvec) - first(Tvec))/NPoints
+    T = [(i-1)*dT + first(Tvec) for i = 1:NPoints]
    #Initialise all relevant vectors
    y = Array{Float64}(undef,NPoints,NBins)
    XP = Array{Float64}(undef,NPoints,NBins)
@@ -354,22 +360,22 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     #dcvplot = plot(T,dC,xlabel="Temperature(K)",ylabel="dCv")
     #png(dcvplot,"$(xdir)dC")
     println("analysis complete")
-    histfile = open("$(outdir)histograms.data", "w")
+    histfile = open("$(outdir)/histograms.data", "w")
     writedlm(histfile,[energyvector])
     writedlm(histfile,HistArray)
     close(histfile)
 
-    solfile = open("$(outdir)Sol.X", "w")
+    solfile = open("$(outdir)/Sol.X", "w")
     writedlm(solfile,["alpha"])
     writedlm(solfile,[alpha])
     close(solfile)
 
-    entropyfile = open("$(outdir)S.data", "w")
+    entropyfile = open("$(outdir)/S.data", "w")
     writedlm(entropyfile, ["E" "Entropy"])
     writedlm(entropyfile, [energyvector S ])
     close(entropyfile)
 
-    cvfile = open("$(outdir)analysis.NVT", "w")
+    cvfile = open("$(outdir)/analysis.NVT", "w")
     writedlm(cvfile, ["T" "Z" "Cv" "dCv"])
     writedlm(cvfile, [T Z C dC])
     close(cvfile)
