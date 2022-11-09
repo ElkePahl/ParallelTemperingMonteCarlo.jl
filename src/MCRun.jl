@@ -76,6 +76,14 @@ function MCState(temp,beta, config::Config, pot::AbstractMLPotential;kwargs...)
     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 
 end
+function MCState(temp,beta, config::Config, pot::DFTPotential;kwargs...)
+    dist2_mat = get_distance2_mat(config)
+    n_atoms = length(config.pos)
+    en_atom_vec = zeros(n_atoms)
+    en_tot = getenergy_DFT(config.pos, pot)
+
+    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
+end
 function MCState(temp,beta, config::Config, pot::ParallelMLPotential;kwargs...)
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config.pos)
@@ -98,8 +106,8 @@ for given ensemble; implemented:
 Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
 Boltzmann probability otherwise
 """
-function metropolis_condition(::NVT, d_en, beta)
-    prob_val = exp(-d_en*beta)
+function metropolis_condition(::NVT, delta_energy, beta)
+    prob_val = exp(-delta_energy*beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -275,7 +283,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     for i_traj = 1:mc_params.n_traj
         for i_step = 1:n_steps
             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
+            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
         end
         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
     end
@@ -944,9 +952,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         for i = 1:mc_params.mc_cycles
             if save_ham == false
 
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
             else
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
             end
 
         end
@@ -956,9 +964,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         for i = restartindex:mc_params.mc_cycles
             if save_ham == false
 
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
             else
-                ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
+                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
             end
             
 
