@@ -698,7 +698,7 @@ function save_states(mc_params,mc_states,trial_index, directory; filename="save.
     savefile = open("$(directory)/$(filename)","w+")
 
     if isfile("$directory/params.data") == false
-        paramsfile = open("$directory/params.data")
+        paramsfile = open("$directory/params.data","w+")
         save_params(paramsfile,mc_params)
         close(paramsfile)
     end
