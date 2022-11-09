@@ -132,9 +132,9 @@ Returns probability to exchange configurations of two trajectories with energies
 at inverse temperatures `beta_1` and `beta_2`. 
 """
 function exc_acceptance(beta_1, beta_2, en_1, en_2)
-    d_en_acc = en_1 - en_2
+    delta_energy_acc = en_1 - en_2
     delta_beta = beta_1 - beta_2
-    exc_acc = min(1.0,exp(delta_beta * d_en_acc))
+    exc_acc = min(1.0,exp(delta_beta * delta_energy_acc))
     return exc_acc
 end
 
@@ -183,7 +183,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
         acc_rate = mc_state.count_rot[2] / (n_update * r)
         if acc_rate < min_acc
             mc_state.max_displ[3] *= 0.9
-        elseif acc_rate > mac_acc
+        elseif acc_rate > max_acc
             mc_state.max_displ[3] *= 1.1
         end
         mc_state.count_rot[2] = 0
@@ -237,15 +237,15 @@ function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
     #find new distances of moved atom 
 
-    d_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
+    delta_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
 
     #decide acceptance
-    if metropolis_condition(ensemble, d_en_move, mc_state.beta) >= rand()
+    if metropolis_condition(ensemble, delta_en_move, mc_state.beta) >= rand()
         #new config accepted
         mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
         mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
         mc_state.dist2_mat[:,i_atom] = dist2_new
-        mc_state.en_tot += d_en_move
+        mc_state.en_tot += delta_en_move
         mc_state.count_atom[1] += 1
         mc_state.count_atom[2] += 1
     end
