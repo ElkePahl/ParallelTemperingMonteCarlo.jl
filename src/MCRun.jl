@@ -491,9 +491,9 @@ end
     function save_states(mc_params,mc_states,trial_index; directory = pwd())
 opens a savefile, writes the mc params and states and the trial at which it was run. 
 """
-function save_states(mc_params,mc_states,trial_index; directory = pwd())
+function save_states(mc_params,mc_states,trial_index; filename = "$(pwd())/save.data")
     i = 0 
-    savefile = open("$(directory)/save.data","w+")
+    savefile = open("$filename","w+")
     write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
     save_params(savefile,mc_params)
     for state in mc_states
