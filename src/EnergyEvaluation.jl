@@ -242,7 +242,7 @@ function getenergy_DFT(pos1, pot::DFTPotential)
     scfres = self_consistent_field(basis; tol = 1e-7, callback=info->nothing) 
     return scfres.energies.total 
 end  
-
+#this has a mistake that can't be corrected till MCStates is fixed. 
 function energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTPotential) #pos is SVector, i_atom is integer 
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.  
