@@ -86,7 +86,9 @@ function checkpoint(parallelstates,mc_params,checkpoint_keyword,save_dir)
     end
 
     for j_checkpoint in eachindex(parallelstates)
+
         save_states(mc_params,parallelstates[j_checkpoint],checkpoint_keyword,filename="$save_dir/checkpoint/save$(j_checkpoint).data")
+
     end
 
 end
