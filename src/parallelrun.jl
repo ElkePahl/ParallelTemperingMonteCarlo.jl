@@ -218,7 +218,7 @@ function collate_results!(results_vec,results)
 
     return results
 end
-function pptmc_cycle(parallel_states,mc_params,results_vec,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir,exch_threads)
+function pptmc_cycle(parallel_states,mc_params,results,results_vec,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir,exch_threads)
     # for i = 1:500
 
         Threads.@threads for threadindex = 1:n_threads
@@ -292,7 +292,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
 
     for run_index = 1:n_run_per_thread
 
-        parallel_states = pptmc_cycle(parallel_states,mc_params,results_vec,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir,exch_threads)
+        parallel_states = pptmc_cycle(parallel_states,mc_params,results,results_vec,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir,exch_threads)
 
         if rem(run_index,10) == 0
             println("cycle $run_index of $n_run_per_thread complete")
