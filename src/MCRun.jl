@@ -303,60 +303,10 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         end
     end
 
-    return mc_states
-end
-"""
-    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
-Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
-
-    We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
-"""
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, ensemble, n_steps, a, v, r)
-    file = RuNNer.writeinit(pot.dir)
-    #this for loop creates n_traj perturbed atoms
-    indices = []
-    trials = []
-    #we require parallelisation here, but will need to avoid a race condition
-    for mc_state in mc_states
-        #for i_step = 1:n_steps
-            ran = rand(1:(a+v+r))
-            trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
-            writeconfig(file,mc_state.config,ran,trial_pos, pot.atomtype)
-            push!(indices,ran)
-            push!(trials,trial_pos)
-        #end
-    end
-    #after which we require energy evaluations of the n_traj new configurations
-    close(file)    
-    energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)    
-    #this replaces the atom_move! function
-    #parallelisation here is fine
-
-    Threads.@threads for indx in 1:mc_params.n_traj
-        if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
-            mc_states[indx].config.pos[indices[indx]] = trials[indx]
-            mc_states[indx].en_tot = energyvec[indx]
-            mc_states[indx].count_atom[1] +=1
-            mc_states[indx].count_atom[2] += 1
-        end
-    end
-
-
-    if rand() < 0.1 #attempt to exchange trajectories
-        n_exc = rand(1:mc_params.n_traj-1)
-        mc_states[n_exc].count_exc[1] += 1
-        mc_states[n_exc+1].count_exc[1] += 1
-        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
-        if exc_acc > rand()
-            mc_states[n_exc].count_exc[2] += 1
-            mc_states[n_exc+1].count_exc[2] += 1
-            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
-        end
-    end
-
 
     return mc_states
 end
+
 """
     mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
 Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
@@ -491,9 +441,9 @@ end
     function save_states(mc_params,mc_states,trial_index; directory = pwd())
 opens a savefile, writes the mc params and states and the trial at which it was run. 
 """
-function save_states(mc_params,mc_states,trial_index; directory = pwd())
+function save_states(mc_params,mc_states,trial_index; filename = "$(pwd())/save.data")
     i = 0 
-    savefile = open("$(directory)/save.data","w+")
+    savefile = open("$filename","w+")
     write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
     save_params(savefile,mc_params)
     for state in mc_states

@@ -96,11 +96,11 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     return dimer_energy_vec, 0.5*energy_tot
 end    
 
-function energy_update(i_atom, dist2_new, en_old, pot::AbstractDimerPotential)
+function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
-function energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDimerPotential)
+function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
     d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
@@ -242,7 +242,7 @@ function getenergy_DFT(pos1, pot::DFTPotential)
     scfres = self_consistent_field(basis; tol = 1e-7, callback=info->nothing) 
     return scfres.energies.total 
 end  
-
+#this has a mistake that can't be corrected till MCStates is fixed. 
 function energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTPotential) #pos is SVector, i_atom is integer 
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.  

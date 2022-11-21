@@ -86,7 +86,9 @@ function checkpoint(parallelstates,mc_params,checkpoint_keyword,save_dir)
     end
 
     for j_checkpoint in eachindex(parallelstates)
-        save_states(mc_params,parallelstates[j_checkpoint],checkpoint_keyword,save_dir,filename="$save_dir/save$(j_checkpoint).data")
+
+        save_states(mc_params,parallelstates[j_checkpoint],checkpoint_keyword,filename="$save_dir/checkpoint/save$(j_checkpoint).data")
+
     end
 
 end
@@ -205,22 +207,34 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
 
     return mc_states
 end
+function collate_results!(results_vec,results,j_traj)
+    for output in results_vec        
+            results.en_histogram[j_traj] = results.en_histogram[j_traj] .+ output.en_histogram[j_traj]
 
-function pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
+            results.rdf[j_traj] = results.rdf[j_traj] .+ output.rdf[j_traj]
+     end
+
+    return results
+end
+function pptmc_cycle(parallel_states,mc_params,results,results_vec,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir,exch_threads)
     # for i = 1:500
 
         Threads.@threads for threadindex = 1:n_threads
 
             for thousand_runs = 1:1000 
-                ptmc_cycle!(parallel_states[threadindex],results,move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,thousand_runs,save_dir;delta_en_hist=delta_en) 
+                ptmc_cycle!(parallel_states[threadindex],results_vec[threadindex],move_strat,mc_params,pot_vector[threadindex],ensemble,n_steps,a,v,r,false,false,thousand_runs,save_dir;delta_en_hist=delta_en) 
             end
 
         end
+    
+    # results = collate_results!(results_vec,results)
         #we run 500 mc cycles per thread
     #end
-
-    for idx_thr_ex = 1:mc_params.n_traj
-        threadexchange!(parallel_states,n_threads,idx_thr_ex)
+    if exch_threads == true
+        for idx_thr_ex = 1:mc_params.n_traj
+            results = collate_results!(results_vec,results,idx_thr_ex)
+            threadexchange!(parallel_states,n_threads,idx_thr_ex)
+        end
     end
     #then run n_traj exchanges
     save_results(results,directory=save_dir)
@@ -241,7 +255,7 @@ function parallelstatesave(parallel_states,save_file::IOStream,j_traj)
     
 end
 
-function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads(),restart=false,save_configs=false)
+function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir=pwd(),n_threads=Threads.nthreads(),restart=false,save_configs=false,exch_threads=true)
 
     # if save_configs == true
         # save_files = []
@@ -252,9 +266,15 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
         # end
     # end
     
-    parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
+    parallel_states,pot_vector,a,v,r,delta_en = parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
     n_steps = a+v+r
 
+
+    results_vec = []
+    for dummy_index = 1:n_threads
+        temp_results = deepcopy(results)
+        push!(results_vec,temp_results)
+    end
     # for j_traj in 1:mc_params.n_traj
     #     write(save_files[j_traj],"equilibrated states \n")
     #     parallelstatesave(parallel_states,save_files[j_traj],j_traj)
@@ -271,7 +291,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
 
     for run_index = 1:n_run_per_thread
 
-        parallel_states = pptmc_cycle(parallel_states,mc_params,results,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir)
+        parallel_states = pptmc_cycle(parallel_states,mc_params,results,results_vec,move_strat,pot_vector,ensemble,n_threads,delta_en,n_steps,a,v,r,save_dir,exch_threads)
 
         if rem(run_index,10) == 0
             println("cycle $run_index of $n_run_per_thread complete")
