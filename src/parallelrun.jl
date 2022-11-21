@@ -207,14 +207,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
 
     return mc_states
 end
-function collate_results!(results_vec,results)
-    for output in results_vec
-        for j_traj in eachindex(results.en_histogram)
+function collate_results!(results_vec,results,j_traj)
+    for output in results_vec        
             results.en_histogram[j_traj] = results.en_histogram[j_traj] .+ output.en_histogram[j_traj]
 
             results.rdf[j_traj] = results.rdf[j_traj] .+ output.rdf[j_traj]
-        end
-    end
+     end
 
     return results
 end
@@ -229,11 +227,12 @@ function pptmc_cycle(parallel_states,mc_params,results,results_vec,move_strat,po
 
         end
     
-    results = collate_results!(results_vec,results)
+    # results = collate_results!(results_vec,results)
         #we run 500 mc cycles per thread
     #end
     if exch_threads == true
         for idx_thr_ex = 1:mc_params.n_traj
+            results = collate_results!(results_vec,results,idx_thr_ex)
             threadexchange!(parallel_states,n_threads,idx_thr_ex)
         end
     end
@@ -267,7 +266,7 @@ function pptmc_run!(mc_states,move_strat,mc_params,pot,ensemble,results;save_dir
         # end
     # end
     
-    parallel_states,pot_vector,a,v,r,delta_en =parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
+    parallel_states,pot_vector,a,v,r,delta_en = parallel_equilibration(mc_states,move_strat,mc_params,pot,ensemble,results,n_threads,restart)
     n_steps = a+v+r
 
 
