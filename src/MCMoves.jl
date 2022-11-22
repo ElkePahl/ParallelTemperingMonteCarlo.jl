@@ -106,7 +106,11 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     return trial_pos
 end
 
-
+# function atom_displacements(n_traj,max_displacement,bc)
+#     displacements_vector = []
+#     for i_traj = 1:n_traj
+#         delta_move = 
+#     end
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.

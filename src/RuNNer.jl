@@ -216,26 +216,6 @@ function writeconfig(file::IOStream,config::Config,index,test_pos, atomtype)
     write(file,"end \n")
 end
 
-# function edit_init(dir::String)
-#     editfile = open("$(dir)edit.sh", "w+")
-#     write(editfile, "#! /usr/bin/bash \n")
-#     # for j = 1:3
-#     #     write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])\" ")
-#     # end
-#     close(editfile)
-#     editfile = open("$(dir)edit.sh", "a")
-
-#     return editfile
-# end
-# function writeedit(editfile::IOStream,line_number,vec_old,vec_new)
-#     for j = 1:3
-#         write(editfile, "sed -i \"$(line_number)s/$(vec_old[j])/$(vec_new[j])/\" input.data \n")
-#     end
-
-# end
-#--------------------------------------------------------------#
-#------------------------RuNNer Complete-----------------------#
-#--------------------------------------------------------------#
 """
     getenergy(dir,config::Config,atomtype)
     getenergy(dir,config::Config,atomtype,ix,pos::SVector)
