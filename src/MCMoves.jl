@@ -107,18 +107,27 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     return trial_pos
 end
 """
-    function gen_displacements(n_traj,max_diplacements)
-generates n_traj vectors between [-max_disp/2: max_disp/2]
+    function gen_displacements(mc_states)
+perturbs one atom per state using the standard atom_displacement function. Returns the atoms trialed in a vector called indices and their trial positions in a vector called trial_pos.
+
 """
-function gen_displacements(n_traj,max_displacement)
+function gen_displacements(mc_states)
     displacements_vector = []
-    for i_traj = 1:n_traj
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    indices = []
+    for state in mc_states
+        ran = rand(1:length(state.config.pos))
+        trial_pos = atom_displacement(state.config.pos[ran],state.max_displ[1],state.config.bc)
 
-        push!(displacements_vector,delta_move)
-
+        push!(indices,ran)
+        push!(displacements_vector,trial_pos)
     end
-    return displacements_vector
+    # for i_traj = 1:n_traj
+    #     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+
+    #     push!(displacements_vector,delta_move)
+
+    # end
+    return indices,displacements_vector
 end
 
 """
