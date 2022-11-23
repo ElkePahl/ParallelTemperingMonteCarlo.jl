@@ -7,6 +7,7 @@ export atom_displacement #, update_max_stepsize!
 
 using StaticArrays
 
+using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
 
@@ -105,12 +106,21 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
+"""
+    function gen_displacements(n_traj,max_diplacements)
+generates n_traj vectors between [-max_disp/2: max_disp/2]
+"""
+function gen_displacements(n_traj,max_displacement)
+    displacements_vector = []
+    for i_traj = 1:n_traj
+        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
 
-# function atom_displacements(n_traj,max_displacement,bc)
-#     displacements_vector = []
-#     for i_traj = 1:n_traj
-#         delta_move = 
-#     end
+        push!(displacements_vector,delta_move)
+
+    end
+    return displacements_vector
+end
+
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
