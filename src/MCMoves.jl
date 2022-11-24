@@ -78,10 +78,11 @@ end
 
 """
     atom_displacement(pos, max_displacement, bc)
+    atom_displacement(mc_states,index)
 
 Generates trial position for atom, moving it from `pos` by some random displacement 
 Random displacement determined by `max_displacement`
-
+These variables are additionally contained in `mc_state` where the pos is determined by `index`.
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
@@ -106,30 +107,19 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
+function atom_displacement(mc_state,index)
+    trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+    return trial_pos
+end 
 """
-    function gen_displacements(mc_states)
-perturbs one atom per state using the standard atom_displacement function. Returns the atoms trialed in a vector called indices and their trial positions in a vector called trial_pos.
-
+    function generate_displacements(mc_states,mc_params)
+generates a perturbed atom per trajectory. Accepts `mc_states` as a vector of mc_state structs and `mc_params` to define the vector lengths. Outpur is a vector of `indices` indicating which atom per trajectory has been used to generate `trial positions` 
 """
-function gen_displacements(mc_states)
-    displacements_vector = []
-    indices = []
-    for state in mc_states
-        ran = rand(1:length(state.config.pos))
-        trial_pos = atom_displacement(state.config.pos[ran],state.max_displ[1],state.config.bc)
-
-        push!(indices,ran)
-        push!(displacements_vector,trial_pos)
-    end
-    # for i_traj = 1:n_traj
-    #     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-
-    #     push!(displacements_vector,delta_move)
-
-    # end
-    return indices,displacements_vector
+function generate_displacements(mc_states,mc_params)
+    indices=rand(1:mc_params.n_atoms,mc_params.n_traj)
+    trial_positions = atom_displacement.(mc_states,indices)
+    return indices,trial_positions
 end
-
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
