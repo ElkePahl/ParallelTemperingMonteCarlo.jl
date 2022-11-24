@@ -103,22 +103,8 @@ end
 function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
-    d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
+    d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], pot)
     return d_en, dist2_new
-end
-
-function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
-
-
-    dist2_new = [distance2(pos,b) for b in config.pos]
-    dist2_new[i_atom] = 0.
-
-    Evec = RuNNer.getenergy(pot.dir,config,pot.atomtype,i_atom,pos)
-
-    d_en = Evec[2] - Evec[1]
-
-    return d_en, dist2_new
-
 end
 
 """
