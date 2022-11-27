@@ -24,7 +24,7 @@ include("parallelrun.jl")
  @reexport using .EnergyEvaluation
  @reexport using .MCStates
  @reexport using .InputParams
- @reexport using .Initialization
+ #@reexport using .Initialization
  @reexport using .MCMoves
  @reexport using .MCRun
  @reexport using .Multihistogram
