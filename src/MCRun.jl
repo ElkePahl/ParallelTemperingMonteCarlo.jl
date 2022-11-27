@@ -234,7 +234,10 @@ Updates `mc_state` if move accepted.
 """
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
-    trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
+
+    # trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
+    
+    trial_pos = atom_displacement(mc_state,i_atom)
     #find new distances of moved atom 
 
     delta_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
