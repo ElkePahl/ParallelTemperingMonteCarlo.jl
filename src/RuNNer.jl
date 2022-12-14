@@ -186,9 +186,12 @@ end
 
     writeconfig(file::IOStream, config::Config,index, test_pos, atomtype)
     
+    writeconfig(file::IOStream,mc_state,index,test_pos, atomtype)
 
 two methods for a function to write out a configuration into an open IOStream called file. Both inputs require a configuration and string labelled atomtype which is written in the standard RuNNer format. 
     The second method also requires an index (integer) and SVector containing a new atomic position. It writes out config, but exchanges atom [index] with this new atomic position [test_pos]
+    
+    The final method uses mc_states explicitly and unpacks the configuration itself
 """
 function writeconfig(file::IOStream,config::Config,atomtype)
     write(file,"begin \n")
@@ -215,7 +218,21 @@ function writeconfig(file::IOStream,config::Config,index,test_pos, atomtype)
     write(file, "charge  0.000 \n")
     write(file,"end \n")
 end
-
+function writeconfig(file::IOStream,mc_state,index,test_pos, atomtype)
+    write(file,"begin \n")
+    i=0
+    for atom in mc_state.config.pos
+        i+=1
+        if i == index
+            write(file, "atom  $(test_pos[1])  $(test_pos[2])  $(test_pos[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+        else
+            write(file, "atom  $(atom[1])  $(atom[2])  $(atom[3])  $atomtype  0.0  0.0  0.0  0.0  0.0 \n")
+        end
+    end
+    write(file, "energy  0.000 \n")
+    write(file, "charge  0.000 \n")
+    write(file,"end \n")
+end
 """
     getenergy(dir,config::Config,atomtype)
     getenergy(dir,config::Config,atomtype,ix,pos::SVector)
