@@ -10,7 +10,7 @@ using DFTK
 using LinearAlgebra
 using SplitApplyCombine
 using ..Configurations
-using ..MCStates
+
 using ..RuNNer
 
 export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential , ParallelMLPotential,SerialMLPotential,ParallelMLPotential
