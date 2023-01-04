@@ -13,7 +13,7 @@ using ..Configurations
 
 using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential , ParallelMLPotential,SerialMLPotential,ParallelMLPotential
+export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
 
 export DFTPotential
 
