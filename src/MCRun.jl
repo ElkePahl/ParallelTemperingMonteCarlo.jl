@@ -309,12 +309,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 """
-    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential,ensemble,n_steps,a,v,r)
 Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
 
     We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
 """
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, ensemble, n_steps, a, v, r)
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential, ensemble, n_steps, a, v, r)
     file = RuNNer.writeinit(pot.dir)
     #this for loop creates n_traj perturbed atoms
     indices = []
@@ -361,12 +361,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, e
     return mc_states
 end
 """
-    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential,ensemble,n_steps,a,v,r)
 Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
 
     We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
 """
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, ensemble, n_steps, a, v, r)
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential, ensemble, n_steps, a, v, r)
     file = RuNNer.writeinit(pot.dir)
     #this for loop creates n_traj perturbed atoms
     indices = []
