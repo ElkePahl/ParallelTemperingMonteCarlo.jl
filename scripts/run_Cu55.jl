@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -41,9 +41,9 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms)
 #Potential
 # for laptop
-runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+#runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
-#runnerdir = "/home/grayseff/Code/Brass_potential/"
+runnerdir = "/home/ghunter/Documents/RuNNer-master/Brass_potential/"
 atomtype="Cu"
 
 pot = AbstractMLPotential(runnerdir,atomtype);
