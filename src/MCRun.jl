@@ -331,88 +331,88 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearnin
     return mc_states
 end
 
-"""
-    sampling_step(mc_params, mc_states, i, saveham::Bool)
-A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
-"""
-function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
-        if rem(i, mc_params.mc_sample) == 0
-            for i_traj=1:mc_params.n_traj
-                if saveham == true
-                    push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
-                else
-                    mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
-                    #add E,E**2 to the correct positions in the hamiltonian
-                    mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
-                end
-            end
-        end 
-end
+# """
+#     sampling_step(mc_params, mc_states, i, saveham::Bool)
+# A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
+# """
+# function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
+#         if rem(i, mc_params.mc_sample) == 0
+#             for i_traj=1:mc_params.n_traj
+#                 if saveham == true
+#                     push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+#                 else
+#                     mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
+#                     #add E,E**2 to the correct positions in the hamiltonian
+#                     mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
+#                 end
+#             end
+#         end 
+# end
 
-"""
-    function save_params(savefile::IOStream, mc_params::MCParams)
-writes the MCParam struct to a savefile
-"""
- function save_params(savefile::IOStream, mc_params::MCParams)
-     write(savefile,"MC_Params \n")
-     write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
-     write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
-     write(savefile,"n_traj: $(mc_params.n_traj)\n")
-     write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
-     write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
+# """
+#     function save_params(savefile::IOStream, mc_params::MCParams)
+# writes the MCParam struct to a savefile
+# """
+#  function save_params(savefile::IOStream, mc_params::MCParams)
+#      write(savefile,"MC_Params \n")
+#      write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
+#      write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
+#      write(savefile,"n_traj: $(mc_params.n_traj)\n")
+#      write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
+#      write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
 
-    #  close(savefile)
- end
-"""
-    function save_state(savefile::IOStream,mc_state::MCState)
-saves a single mc_state struct to a savefile
-"""
-function save_state(savefile::IOStream,mc_state::MCState)
-    write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
-    write(savefile,"total_energy: $(mc_state.en_tot)\n")
-    write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
-    write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
+#     #  close(savefile)
+#  end
+# """
+#     function save_state(savefile::IOStream,mc_state::MCState)
+# saves a single mc_state struct to a savefile
+# """
+# function save_state(savefile::IOStream,mc_state::MCState)
+#     write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
+#     write(savefile,"total_energy: $(mc_state.en_tot)\n")
+#     write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
+#     write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
 
-    if length(mc_state.ham) > 2
-        ham1 = sum(mc_state.ham)
-        ham2 = sum( mc_state.ham .* mc_state.ham)
-    elseif length(mc_state.ham) == 2
-        ham1 = mc_state.ham[1]
-        ham2 = mc_state.ham[2]
-    else
-        ham1 = 0
-        ham2 = 0
-    end
-    write(savefile, "E,E2: $ham1 $ham2 \n")
-    if typeof(mc_state.config.bc) == SphericalBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
-    elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
-    end
-    write(savefile,"configuration \n")
-    for row in mc_state.config.pos
-        write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
-    end
+#     if length(mc_state.ham) > 2
+#         ham1 = sum(mc_state.ham)
+#         ham2 = sum( mc_state.ham .* mc_state.ham)
+#     elseif length(mc_state.ham) == 2
+#         ham1 = mc_state.ham[1]
+#         ham2 = mc_state.ham[2]
+#     else
+#         ham1 = 0
+#         ham2 = 0
+#     end
+#     write(savefile, "E,E2: $ham1 $ham2 \n")
+#     if typeof(mc_state.config.bc) == SphericalBC{Float64}
+#         write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
+#     elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
+#         write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
+#     end
+#     write(savefile,"configuration \n")
+#     for row in mc_state.config.pos
+#         write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
+#     end
 
-end
+# end
 
-"""
-    function save_states(mc_params,mc_states,trial_index; directory = pwd())
-opens a savefile, writes the mc params and states and the trial at which it was run. 
-"""
-function save_states(mc_params,mc_states,trial_index; directory = pwd())
-    i = 0 
-    savefile = open("$(directory)/save.data","w+")
-    write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
-    save_params(savefile,mc_params)
-    for state in mc_states
-        i += 1
-        write(savefile, "config $i \n")
-        save_state(savefile,state)
-        write(savefile,"end \n")
-    end
-    close(savefile)
-end
+# """
+#     function save_states(mc_params,mc_states,trial_index; directory = pwd())
+# opens a savefile, writes the mc params and states and the trial at which it was run. 
+# """
+# function save_states(mc_params,mc_states,trial_index; directory = pwd())
+#     i = 0 
+#     savefile = open("$(directory)/save.data","w+")
+#     write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
+#     save_params(savefile,mc_params)
+#     for state in mc_states
+#         i += 1
+#         write(savefile, "config $i \n")
+#         save_state(savefile,state)
+#         write(savefile,"end \n")
+#     end
+#     close(savefile)
+# end
 
 """
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
@@ -455,7 +455,7 @@ end
 
 """
 
-    sampling_step(mc_params, mc_states, i, saveham::Bool)
+    sampling_step(mc_params, mc_states, save_index, saveham::Bool)
 A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
 """
 function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)  
