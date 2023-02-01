@@ -392,9 +392,9 @@ Function has two methods which vary only in how the initialise function is calle
     The output of this function are the four files defined in run_multihistogram.
 
 """
-function multihistogram(xdir::String)
+function multihistogram(xdir::String; NPoints=600)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
-    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
+    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir,NPoints)
 end
 
 function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=600)
