@@ -280,6 +280,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearnin
     return mc_states
 end
 
+
 """
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
