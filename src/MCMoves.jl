@@ -100,7 +100,6 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     end
     return trial_pos
 end
-
 function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
@@ -108,7 +107,10 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     return trial_pos
 end
 function atom_displacement(mc_state,index)
-    trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+    #if index <= length(mc_state.config.pos)
+        trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+    #end
+
     return trial_pos
 end 
 """
@@ -120,6 +122,13 @@ function generate_displacements(mc_states,mc_params)
     trial_positions = atom_displacement.(mc_states,indices)
     return indices,trial_positions
 end
+# #This method will supercede the above when multiple moves are implemented. Perhaps a more dynamic move strategy system will improve this?
+
+# function generate_displacements(mc_states,mc_params,a,v,r)
+#     indices=rand(1:(a+v+r),mc_params.n_traj)
+#     trial_positions = atom_displacement.(mc_states,indices)
+#     return indices,trial_positions
+# end
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
