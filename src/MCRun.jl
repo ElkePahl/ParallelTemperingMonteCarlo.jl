@@ -220,23 +220,20 @@ function swap_var_function(mc_state, i_atom, trial_pos, dist2_new, new_energy)
 end
 """
     function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
-        The acc_test function works in tandem with the swap  
+        The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster.
 """
 function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)
     
     if metropolis_condition(ensemble, (new_energy - mc_state.en_tot), mc_state.beta) >= rand()
-        mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-        mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-        mc_state.dist2_mat[:,i_atom] = dist2_new
-        mc_state.en_tot = new_energy
-        mc_state.count_atom[1] += 1
-        mc_state.count_atom[2] += 1
-        # swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, new_energy)
+        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, new_energy)
     
     end
     
 end
-
+"""
+    function mc_step!(mc_states,mc_params,pot,ensemble)
+        New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
+"""
 function mc_step!(mc_states,mc_params,pot,ensemble)
 
     indices,trial_positions = generate_displacements(mc_states,mc_params)
@@ -246,7 +243,10 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
     acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
 
 end
-
+"""
+    function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
+"""
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
     mc_step!(mc_states,mc_params,pot,ensemble)
