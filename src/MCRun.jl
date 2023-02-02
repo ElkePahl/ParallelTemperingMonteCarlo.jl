@@ -231,7 +231,7 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
 
     energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
     
-    exch_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
+    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
 
 end
 
