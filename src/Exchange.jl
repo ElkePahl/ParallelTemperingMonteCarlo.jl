@@ -8,7 +8,7 @@ module Exchange
 
 # using ..MCStates
 # using ..Configurations
-# using ..EnergyEvaluation
+using ..EnergyEvaluation
 
 export metropolis_condition, exc_acceptance
 """
