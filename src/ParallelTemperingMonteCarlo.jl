@@ -30,7 +30,7 @@ include("parallelrun.jl")
  @reexport using .InputParams
  #@reexport using .Initialization
  @reexport using .MCMoves
- @reexport using Exchange
+ @reexport using .Exchange
  @reexport using .MCRun
  @reexport using .Multihistogram
 
