@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo
-using Random,Plots
+using Random , BenchmarkTools#,Plots
 
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -16,7 +16,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 400000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -81,12 +81,12 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 
-@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false)
+@benchmark ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false)
 
 
 
 
 #plot(temp.t_grid,results.heat_cap)
 
-data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
+# data = [results.en_histogram[i] for i in 1:n_traj]
+# plot(data)
