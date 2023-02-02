@@ -3,10 +3,11 @@ module MCMoves
 export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
 export AbstractMove, StatMove
 export AtomMove
-export atom_displacement #, update_max_stepsize!
+export atom_displacement,generate_displacements #, update_max_stepsize!
 
 using StaticArrays
 
+using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
 
@@ -77,10 +78,11 @@ end
 
 """
     atom_displacement(pos, max_displacement, bc)
+    atom_displacement(mc_states,index)
 
 Generates trial position for atom, moving it from `pos` by some random displacement 
 Random displacement determined by `max_displacement`
-
+These variables are additionally contained in `mc_state` where the pos is determined by `index`.
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
@@ -105,8 +107,19 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
-
-
+function atom_displacement(mc_state,index)
+    trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+    return trial_pos
+end 
+"""
+    function generate_displacements(mc_states,mc_params)
+generates a perturbed atom per trajectory. Accepts `mc_states` as a vector of mc_state structs and `mc_params` to define the vector lengths. Outpur is a vector of `indices` indicating which atom per trajectory has been used to generate `trial positions` 
+"""
+function generate_displacements(mc_states,mc_params)
+    indices=rand(1:mc_params.n_atoms,mc_params.n_traj)
+    trial_positions = atom_displacement.(mc_states,indices)
+    return indices,trial_positions
+end
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.

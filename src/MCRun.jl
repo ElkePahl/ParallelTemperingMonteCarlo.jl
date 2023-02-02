@@ -1,99 +1,18 @@
 module MCRun
 
-export MCState
+#export MCState
 export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results
 export atom_move!,update_max_stepsize!
 export exc_acceptance, exc_trajectories!
 
 using StaticArrays,DelimitedFiles
-
+using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 using ..RuNNer
-
-"""
-    MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
-        max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])
-    MCState(temp, beta, config::Config, pot; kwargs...) 
-Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
-
-Fieldnames:
-- `temp`: temperature
-- `beta`: inverse temperature
-- `config`: actual configuration in Markov chain [`Config`](@ref)  
-- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
-- `en_atom_vec`: vector of energy contributions per atom i; generated automatically when `pot` given
-- `en_tot`: total energy of `config`; generated automatically when `pot` given
-- `ham`: vector containing sampled energies - generated in MC run
-- `max_displ`: max_diplacements for atom, volume and rotational moves; key-word argument
-- `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
-- `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
-- `count_rot`: number of accepted rotational moves - total and between adjustment of step sizes; key-word argument
-- `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
-"""
-mutable struct MCState{T,N,BC}
-    temp::T
-    beta::T
-    config::Config{N,BC,T}
-    dist2_mat::Matrix{T}
-    en_atom_vec::Vector{T}
-    en_tot::T
-    ham::Vector{T}
-    max_displ::Vector{T}
-    count_atom::Vector{Int}
-    count_vol::Vector{Int}
-    count_rot::Vector{Int}
-    count_exc::Vector{Int}
-end    
-
-function MCState(
-    temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
-    max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
-) where {T,N,BC}
-    ham = T[]
-    MCState{T,N,BC}(
-        temp, beta, deepcopy(config), copy(dist2_mat), copy(en_atom_vec), en_tot, 
-        ham, copy(max_displ), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
-        )
-end
-
-function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs...) 
-   dist2_mat = get_distance2_mat(config)
-   n_atoms = length(config.pos)
-   en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
-   MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-end
-
-function MCState(temp,beta, config::Config, pot::AbstractMLPotential;kwargs...)
-    dist2_mat = get_distance2_mat(config)
-    n_atoms = length(config.pos)
-    en_atom_vec = zeros(n_atoms)
-    en_tot = RuNNer.getenergy(pot.dir, config,pot.atomtype)
-
-    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-
-end
-function MCState(temp,beta, config::Config, pot::DFTPotential;kwargs...)
-    dist2_mat = get_distance2_mat(config)
-    n_atoms = length(config.pos)
-    en_atom_vec = zeros(n_atoms)
-    en_tot = getenergy_DFT(config.pos, pot)
-
-    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-end
-function MCState(temp,beta, config::Config, pot::ParallelMLPotential;kwargs...)
-    dist2_mat = get_distance2_mat(config)
-    n_atoms = length(config.pos)
-    en_atom_vec = zeros(n_atoms)
-    
-    en_tot = RuNNer.getenergy(pot.dir, config,pot.atomtype,pot.index)
-
-
-    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-end
 
 
 """
@@ -234,7 +153,10 @@ Updates `mc_state` if move accepted.
 """
 function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
     #move randomly selected atom (obeying the boundary conditions)
-    trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
+
+    # trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
+    
+    trial_pos = atom_displacement(mc_state,i_atom)
     #find new distances of moved atom 
 
     delta_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
@@ -306,12 +228,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 """
-    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential,ensemble,n_steps,a,v,r)
 Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
 
     We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
 """
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, ensemble, n_steps, a, v, r)
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential, ensemble, n_steps, a, v, r)
     file = RuNNer.writeinit(pot.dir)
     #this for loop creates n_traj perturbed atoms
     indices = []
@@ -358,12 +280,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, e
     return mc_states
 end
 """
-    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential,ensemble,n_steps,a,v,r)
+    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential,ensemble,n_steps,a,v,r)
 Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
 
     We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
 """
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, ensemble, n_steps, a, v, r)
+function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential, ensemble, n_steps, a, v, r)
     file = RuNNer.writeinit(pot.dir)
     #this for loop creates n_traj perturbed atoms
     indices = []
@@ -409,167 +331,89 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMLPotential, e
     return mc_states
 end
 
-"""
-    sampling_step(mc_params, mc_states, i, saveham::Bool)
-A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
-"""
-function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
-        if rem(i, mc_params.mc_sample) == 0
-            for i_traj=1:mc_params.n_traj
-                if saveham == true
-                    push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
-                else
-                    mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
-                    #add E,E**2 to the correct positions in the hamiltonian
-                    mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
-                end
-            end
-        end 
-end
+# """
+#     sampling_step(mc_params, mc_states, i, saveham::Bool)
+# A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
+# """
+# function sampling_step!(mc_params,mc_states,i, saveham::Bool)  
+#         if rem(i, mc_params.mc_sample) == 0
+#             for i_traj=1:mc_params.n_traj
+#                 if saveham == true
+#                     push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+#                 else
+#                     mc_states[i_traj].ham[1] += mc_states[i_traj].en_tot
+#                     #add E,E**2 to the correct positions in the hamiltonian
+#                     mc_states[i_traj].ham[2] += (mc_states[i_traj].en_tot*mc_states[i_traj].en_tot)
+#                 end
+#             end
+#         end 
+# end
 
-"""
-    function save_params(savefile::IOStream, mc_params::MCParams)
-writes the MCParam struct to a savefile
-"""
- function save_params(savefile::IOStream, mc_params::MCParams)
-     write(savefile,"MC_Params \n")
-     write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
-     write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
-     write(savefile,"n_traj: $(mc_params.n_traj)\n")
-     write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
-     write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
+# """
+#     function save_params(savefile::IOStream, mc_params::MCParams)
+# writes the MCParam struct to a savefile
+# """
+#  function save_params(savefile::IOStream, mc_params::MCParams)
+#      write(savefile,"MC_Params \n")
+#      write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
+#      write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
+#      write(savefile,"n_traj: $(mc_params.n_traj)\n")
+#      write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
+#      write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
 
-    #  close(savefile)
- end
-"""
-    function save_state(savefile::IOStream,mc_state::MCState)
-saves a single mc_state struct to a savefile
-"""
-function save_state(savefile::IOStream,mc_state::MCState)
-    write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
-    write(savefile,"total_energy: $(mc_state.en_tot)\n")
-    write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
-    write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
+#     #  close(savefile)
+#  end
+# """
+#     function save_state(savefile::IOStream,mc_state::MCState)
+# saves a single mc_state struct to a savefile
+# """
+# function save_state(savefile::IOStream,mc_state::MCState)
+#     write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
+#     write(savefile,"total_energy: $(mc_state.en_tot)\n")
+#     write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
+#     write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
 
-    if length(mc_state.ham) > 2
-        ham1 = sum(mc_state.ham)
-        ham2 = sum( mc_state.ham .* mc_state.ham)
-    elseif length(mc_state.ham) == 2
-        ham1 = mc_state.ham[1]
-        ham2 = mc_state.ham[2]
-    else
-        ham1 = 0
-        ham2 = 0
-    end
-    write(savefile, "E,E2: $ham1 $ham2 \n")
-    if typeof(mc_state.config.bc) == SphericalBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
-    elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
-    end
-    write(savefile,"configuration \n")
-    for row in mc_state.config.pos
-        write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
-    end
+#     if length(mc_state.ham) > 2
+#         ham1 = sum(mc_state.ham)
+#         ham2 = sum( mc_state.ham .* mc_state.ham)
+#     elseif length(mc_state.ham) == 2
+#         ham1 = mc_state.ham[1]
+#         ham2 = mc_state.ham[2]
+#     else
+#         ham1 = 0
+#         ham2 = 0
+#     end
+#     write(savefile, "E,E2: $ham1 $ham2 \n")
+#     if typeof(mc_state.config.bc) == SphericalBC{Float64}
+#         write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
+#     elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
+#         write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
+#     end
+#     write(savefile,"configuration \n")
+#     for row in mc_state.config.pos
+#         write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
+#     end
 
-end
-"""
+# end
 
-    save_results(results::Output; directory = pwd())
-Saves the on the fly results and histogram information for re-reading.
-"""
-function save_results(results::Output; directory = pwd())
-    resultsfile =  open("$(directory)/results.data","w+")
-    write(resultsfile,"emin,emax,nbins= $(results.en_min) $(results.en_max) $(results.n_bin) \n")
-    write(resultsfile, "Histograms \n")
-    writedlm(resultsfile,results.en_histogram)
-    close(resultsfile)
-    #requires: en_min,en_max,n_bin,en_hist
-    #reading doesn't require the rest as that is handled as a post-process
-end
-"""
-    function save_states(mc_params,mc_states,trial_index; directory = pwd())
-opens a savefile, writes the mc params and states and the trial at which it was run. 
-"""
-function save_states(mc_params,mc_states,trial_index; directory = pwd())
-    i = 0 
-    savefile = open("$(directory)/save.data","w+")
-    write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
-    save_params(savefile,mc_params)
-    for state in mc_states
-        i += 1
-        write(savefile, "config $i \n")
-        save_state(savefile,state)
-        write(savefile,"end \n")
-    end
-    close(savefile)
-end
-"""
-    initialise_histograms!(mc_params,results,T)
-functionalised the step in which we build the energy histograms  
-"""
-function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
-    T = typeof(mc_states[1].en_tot)
-    en_min = T[]
-    en_max = T[]
-    if full_ham == true
-        for i_traj in 1:mc_params.n_traj
-            push!(en_min,minimum(mc_states[i_traj].ham))
-            push!(en_max,maximum(mc_states[i_traj].ham))
-        end
-    
-        global_en_min = minimum(en_min)
-        global_en_max = maximum(en_max)
-    else
-        #we'll give ourselves a 10% leeway here
-        global_en_min = e_bounds[1] - abs(0.05*e_bounds[1])
-        global_en_max = e_bounds[2] + abs(0.05*e_bounds[2])
-        
-        for i_traj = 1:mc_params.n_traj
-            histogram = zeros(results.n_bin + 2 ) #bin 1 is too small bin nbin+2 is too large
-            push!(results.en_histogram, histogram)
-        end
-    end
+# """
+#     function save_states(mc_params,mc_states,trial_index; directory = pwd())
+# opens a savefile, writes the mc params and states and the trial at which it was run. 
+# """
+# function save_states(mc_params,mc_states,trial_index; directory = pwd())
+#     i = 0 
+#     savefile = open("$(directory)/save.data","w+")
+#     write(savefile,"Save made at step $trial_index \n") #at $(format(now(),"HH:MM") )\n")
+#     save_params(savefile,mc_params)
+#     for state in mc_states
+#         i += 1
+#         write(savefile, "config $i \n")
+#         save_state(savefile,state)
+#         write(savefile,"end \n")
+#     end
+#     close(savefile)
+# end
 
-    delta_en = (global_en_max - global_en_min) / (results.n_bin - 1)
-
-    results.en_min = global_en_min
-    results.en_max = global_en_max
-    
-   
-    return  delta_en
-    
-
-end
-
-function updatehistogram!(mc_params,mc_states,results,delta_en ; fullham=true)
-
-    for i_traj in 1:mc_params.n_traj
-        if fullham == true #this is done at the end of the cycle
-
-            hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
-            for en in mc_states[i_traj].ham
-                index = floor(Int,(en - results.en_min) / delta_en) + 1
-                hist[index] += 1
-            end
-        push!(results.en_histogram, hist)
-
-        else #this is done throughout the simulation
-            en = mc_states[i_traj].en_tot
-
-            index = floor(Int,(en - results.en_min) / delta_en) + 1 
-
-            if index < 1 #if energy too low
-                results.en_histogram[i_traj][1] += 1 #add to place 1
-            elseif index > results.n_bin #if energy too high
-                results.en_histogram[i_traj][(results.n_bin +2)] += 1 #add to place n_bin +2
-            else
-                results.en_histogram[i_traj][(index+1)] += 1
-            end
-        end
-    end
-
-end
 """
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
@@ -611,7 +455,7 @@ end
 
 """
 
-    sampling_step(mc_params, mc_states, i, saveham::Bool)
+    sampling_step(mc_params, mc_states, save_index, saveham::Bool)
 A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
 """
 function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)  

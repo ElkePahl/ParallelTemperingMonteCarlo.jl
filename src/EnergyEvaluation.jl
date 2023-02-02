@@ -8,18 +8,20 @@ module EnergyEvaluation
 using StaticArrays 
 using DFTK 
 using LinearAlgebra
+using SplitApplyCombine
 using ..Configurations
 
 using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMLPotential , ParallelMLPotential
+export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
 
 export DFTPotential
 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
-export getenergy_DFT
+export getenergy_DFT, get_energy_dimer,get_energy_RuNNer
 export energy_update
+export get_energy
 export AbstractEnsemble, NVT, NPT
 export EnHist
 
@@ -48,7 +50,7 @@ abstract type AbstractDimerPotential <: AbstractPotential end
 
 abstract type AbstractMachineLearningPotential <: AbstractPotential end
 
-struct AbstractMLPotential <: AbstractMachineLearningPotential #remove the Abstract from the name
+struct SerialMLPotential <: AbstractMachineLearningPotential #remove the Abstract from the name
     dir::String
     atomtype::String
 end
@@ -90,37 +92,47 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     for i in 1:NAtoms #eachindex(),enumerate()..?
-        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[i, :], pot) #@view distmat[i, :]
+        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], pot) #@view distmat[i, :]
         energy_tot += dimer_energy_vec[i]
     end 
     return dimer_energy_vec, 0.5*energy_tot
 end    
 
-function energy_update(i_atom, dist2_new, en_old, pot::AbstractDimerPotential)
+function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
-function energy_update(pos, i_atom, config, dist2_mat, en_old, pot::AbstractDimerPotential)
+function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
-    d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[i_atom,:], pot)
+    d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], pot)
     return d_en, dist2_new
 end
-
-function energy_update(pos,i_atom,config,dist2_mat,pot::AbstractMLPotential)
-
-
-    dist2_new = [distance2(pos,b) for b in config.pos]
+"""
+    get_energy_dimer(pos,i_atom,mc_state,pot)
+A get_energy function similar to the energy_update function. This simply returns the current energy rather than delta_en
+"""
+function get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotential)
+    dist2_new = [distance2(pos,b) for b in mc_state.config.pos]
     dist2_new[i_atom] = 0.
 
-    Evec = RuNNer.getenergy(pot.dir,config,pot.atomtype,i_atom,pos)
+    energy = dimer_energy_atom(i_atom,dist2_new,pot)
 
-    d_en = Evec[2] - Evec[1]
-
-    return d_en, dist2_new
-
+    return energy,dist2_new
 end
+"""
+    get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential)
+Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
 
+"""
+function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential)
+    energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
+
+    return energyvector,dist2_new
+end
+#this will be the format for this part of the get_energy function.
+
+# energyvector, dist2new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
 """
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
@@ -251,6 +263,34 @@ function energy_update(pos, i_atom, config::Config, dist2_mat, en_old, pot::DFTP
     delta_en = getenergy_DFT(pos_new, pot) - en_old
     return delta_en, dist2_new
 end   
+
+#--------------------------------------------#
+#--------------RuNNer methods----------------#
+"""
+    get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMLPotential)
+get energy function for the RuNNer potential. Accepts the updated positions, indices and mc_states as well as the potential and returns the energy vector. 
+"""
+function get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMachineLearningPotential)
+    file = RuNNer.writeinit(pot.dir)
+
+    writeconfig.(Ref(file),mc_states,i_atom_vec,pos_vec,Ref(pot.atomtype))
+    close(file)
+
+    energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)
+
+    return energyvec
+end
+"""
+    get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
+top-scope function for RuNNer returning the energy vector. Blank vector is presently a placeholder recognising that the dist2_new vector is returned for dimer potentials. This will be calculated later for RuNNer and DFT.
+"""
+function get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
+    energyvector = get_energy_RuNNer(trial_positions,indices,mc_states,pot)
+
+    return energy_vector,[]
+end
+
+#---------------------------------------------#
 """
     AbstractEnsemble
 abstract type for ensemble:
