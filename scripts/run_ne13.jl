@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo#update/version_2a
-using Random , BenchmarkTools,Plots
+using Random , BenchmarkTools, Plots
 
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -81,7 +81,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 
-@benchmark ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false)
+@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false)
 
 
 
