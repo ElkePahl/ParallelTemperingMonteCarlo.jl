@@ -210,11 +210,15 @@ end
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
+function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy;dimerbool=false)
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new
-    mc_state.en_tot = energy
+    if dimerbool == false
+        mc_state.en_tot = energy
+    else
+        mc_state.en_tot += energy
+    end
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
 end
@@ -222,11 +226,15 @@ end
     function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
         The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster.
 """
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot)
     
-    
-    if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
-        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+    if typeof(pot) <: AbstractDimerPotential
+        if metropolis_condition(ensemble,energy, mc_state.beta) >= rand()
+            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy,dimerbool=true)
+    else
+        if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+        end
     end
     
     
@@ -242,7 +250,7 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
     energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
     
 
-    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
+    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new,Ref(pot))
 
 end
 """
