@@ -113,11 +113,12 @@ end
 A get_energy function similar to the energy_update function. This simply returns the current energy rather than delta_en
 """
 function get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotential)
-    # dist2_new = [distance2(pos,b) for b in mc_state.config.pos]
-    # dist2_new[i_atom] = 0.
-    # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
-    delta_energy,dist2_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,pot)
-    energy = mc_state.en_tot + delta_energy
+    dist2_new = [distance2(pos,b) for b in mc_state.config.pos]
+    dist2_new[i_atom] = 0.
+    delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
+
+    # delta_energy,dist2_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,pot)
+    # energy = mc_state.en_tot + delta_energy
 
     return energy,dist2_new
 end
@@ -127,8 +128,9 @@ Top scope get energy function for dimer potentials returning the energy vector a
 
 """
 function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential)
-    energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
+    delta_energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
 
+    energyvector = mc_state.en_tot .+ delta_energyvector
     return energyvector,dist2_new
 end
 #this will be the format for this part of the get_energy function.
