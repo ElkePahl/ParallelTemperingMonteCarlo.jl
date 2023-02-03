@@ -224,15 +224,11 @@ end
 """
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot)
     
-    if typeof(pot) <: AbstractDimerPotential
-        if metropolis_condition(ensemble,energy, mc_state.beta) >= rand()
-            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
-        end
-    else
-        if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
-            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
-        end
+    
+    if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
+        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end
+    
     
 end
 """

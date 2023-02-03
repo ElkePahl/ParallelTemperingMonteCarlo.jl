@@ -118,9 +118,9 @@ function get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotential)
     # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
 
     delta_energy,dist2_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,pot)
-    #energy = mc_state.en_tot + delta_energy
+    energy = mc_state.en_tot + delta_energy
 
-    return delta_energy,dist2_new
+    return energy,dist2_new
 end
 """
     get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential)
