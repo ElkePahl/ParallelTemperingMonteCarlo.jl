@@ -213,10 +213,8 @@ end
 function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-    mc_state.dist2_mat[:,i_atom] = dist2_new
-    
+    mc_state.dist2_mat[:,i_atom] = dist2_new    
     mc_state.en_tot = energy
-    
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
 

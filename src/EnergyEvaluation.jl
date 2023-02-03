@@ -278,7 +278,7 @@ function get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMachineLear
     writeconfig.(Ref(file),mc_states,i_atom_vec,pos_vec,Ref(pot.atomtype))
     close(file)
 
-    energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)
+    energyvec = getRuNNerenergy(pot.dir,length(pos_vec))
 
     return energyvec
 end
