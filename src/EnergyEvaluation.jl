@@ -289,7 +289,7 @@ top-scope function for RuNNer returning the energy vector. Blank vector is prese
 function get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
     energyvector = get_energy_RuNNer(trial_positions,indices,mc_states,pot)
 
-    return energy_vector,[]
+    return energyvector,[]
 end
 
 #---------------------------------------------#
