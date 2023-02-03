@@ -222,11 +222,16 @@ end
     function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
         The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster.
 """
-function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
     
-    if metropolis_condition(ensemble, (new_energy - mc_state.en_tot), mc_state.beta) >= rand()
-        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, new_energy)
-    
+    if typeof(pot) <: AbstractDimerPotential
+        if metropolis_condition(ensemble,energy, mc_state.beta) >= rand()
+            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, new_energy)
+        end
+    else
+        if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
+            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, new_energy)
+        end
     end
     
 end
@@ -240,7 +245,8 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
 
     energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
     
-    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
+
+    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new,pot)
 
 end
 """
