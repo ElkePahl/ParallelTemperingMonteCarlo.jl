@@ -1,4 +1,4 @@
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo#update/version_2a
 using Random , BenchmarkTools,Plots
 
 #set random seed - for reproducibility
