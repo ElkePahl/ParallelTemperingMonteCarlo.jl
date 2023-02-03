@@ -249,7 +249,9 @@ end
 """
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
-    mc_step!(mc_states,mc_params,pot,ensemble)
+    for i_steps = 1:n_steps
+        mc_step!(mc_states,mc_params,pot,ensemble)
+    end
 
     if rand() < 0.1 #attempt to exchange trajectories
         n_exc = rand(1:mc_params.n_traj-1)
