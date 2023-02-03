@@ -210,7 +210,7 @@ end
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy;dimerbool=false)
+function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy; dimerbool=false)
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new
@@ -221,6 +221,7 @@ function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy;dimer
     end
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
+
 end
 """
     function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
@@ -231,6 +232,7 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
     if typeof(pot) <: AbstractDimerPotential
         if metropolis_condition(ensemble,energy, mc_state.beta) >= rand()
             swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy,dimerbool=true)
+        end
     else
         if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
             swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
