@@ -221,7 +221,9 @@ function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
 end
 """
     function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
-        The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster.
+        (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+
+        The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer
 """
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
     
@@ -229,6 +231,16 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
         if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
             swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
         end   
+end
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+    
+    
+    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+
+        dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+
+        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+    end   
 end
 """
     function mc_step!(mc_states,mc_params,pot,ensemble)
