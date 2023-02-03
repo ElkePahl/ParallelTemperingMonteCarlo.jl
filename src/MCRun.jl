@@ -210,7 +210,7 @@ end
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function swap_var_function(mc_state, i_atom, trial_pos, dist2_new, new_energy)
+function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new
