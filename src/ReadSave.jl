@@ -175,21 +175,28 @@ end
 
 function read_results(;directory=pwd())
     resfile = open("$(directory)/results.data")
+    rdffile = open("$directory/RDF.data")
     histinfo=readdlm(resfile)
+    rdfdata = readdlm(rdffile)
+    close(rdffile)
     close(resfile)
-
+    
     emin,emax,nbins = histinfo[1,2:4]
     histograms = []
-
+    rdf = []
     for i in 3:size(histinfo,1)
         hist = histinfo[i,:]
         push!(histograms,hist)
+    end
+    for row in eachrow(rdfdata)
+        push!(rdf,row)
     end
 
     results = Output{Float64}(nbins; en_min = emin)
     results.en_min = emin
     results.en_max = emax
     results.en_histogram = histograms
+    results.rdf = rdf
 
     return results
 
