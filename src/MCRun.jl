@@ -206,7 +206,7 @@ end
 #     return mc_states
 # end
 """
-    function swap_var_function(mc_state, i_atom, trial_pos, dist2_new, new_energy)
+    swap_var_function(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
@@ -220,7 +220,7 @@ function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
 end
 """
-    function acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+    acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
         (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
 
         The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer
@@ -243,6 +243,27 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     end   
 end
 """
+    parallel_tempering_exchange!(mc_states,mc_params)
+This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
+"""
+function parallel_tempering_exchange!(mc_states,mc_params)
+    n_exc = rand(1:mc_params.n_traj-1)
+
+    mc_states[n_exc].count_exc[1] += 1
+    mc_states[n_exc+1].count_exc[1] += 1
+
+    # exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
+        mc_states[n_exc].count_exc[2] += 1
+        mc_states[n_exc+1].count_exc[2] += 1
+
+        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+    end
+
+    return mc_states
+end
+"""
     function mc_step!(mc_states,mc_params,pot,ensemble)
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
 """
@@ -251,7 +272,6 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
     indices,trial_positions = generate_displacements(mc_states,mc_params)
 
     energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
-    
 
     acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
 
@@ -267,18 +287,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
-        n_exc = rand(1:mc_params.n_traj-1)
-        mc_states[n_exc].count_exc[1] += 1
-        mc_states[n_exc+1].count_exc[1] += 1
-
-        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
-
-        if exc_acc > rand()
-            mc_states[n_exc].count_exc[2] += 1
-            mc_states[n_exc+1].count_exc[2] += 1
-
-            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
-        end
+        parallel_tempering_exchange!(mc_states,mc_params)
     end
 
     return mc_states
