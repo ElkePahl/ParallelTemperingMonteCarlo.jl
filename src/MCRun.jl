@@ -292,38 +292,6 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
-"""
-    function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
-functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
-"""
-function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
-
-     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-    #sampling step
-    sampling_step!(mc_params,mc_states,i,save_ham)
-
-    if save_ham == false
-        updatehistogram!(mc_params,mc_states,results,delta_en,fullham=save_ham)
-    end
-
-    #step adjustment
-    if rem(i, mc_params.n_adjust) == 0
-        for i_traj = 1:mc_params.n_traj
-            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-        end 
-    end
-
-    if save == true
-        if rem(i,1000) == 0
-            save_states(mc_params,mc_states,i)
-            if save_ham == false
-                save_results(results)
-            end
-        end
-    end
-
-end
-
 
 """
 
