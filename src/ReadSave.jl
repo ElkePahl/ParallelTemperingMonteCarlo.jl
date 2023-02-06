@@ -103,12 +103,13 @@ end
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
 function readinput(savedata)
+
     step = savedata[1,5]
 
-    paramdata = savedata[2:7 ,:] #when writing this function properly, remember there is a steps line at the top.
-    configdata = savedata[8:end,:]
+    
+    configdata = savedata[2:end,:]
 
-    return step,paramdata,configdata
+    return step,configdata
 end
 
 """
@@ -204,10 +205,11 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
 
     filecontents=readdlm(readfile)
 
-    step,paramdata,configdata = readinput(filecontents)
+    step,configdata = readinput(filecontents)
 
     close(readfile)
-    
+    paramfile =  open("$(directory)/params.data")
+    paramdata = readdlm(paramfile)
     mc_params = initialiseparams(paramdata)
     mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
 
