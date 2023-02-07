@@ -216,7 +216,7 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
 
     close(readfile)
     paramfile =  open("$(directory)/params.data")
-    paramdata = readdlm(paramfile)\
+    paramdata = readdlm(paramfile)
 
     close(paramfile)
 
