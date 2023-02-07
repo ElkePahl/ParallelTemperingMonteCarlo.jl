@@ -3,7 +3,7 @@ module ReadSave
 
 export save_params,save_state,save_results,save_states
 export restart_ptmc,read_results
-
+export read_multihist
 
 
 using StaticArrays
@@ -231,5 +231,22 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
     end
 end
 
+"""
+    read_multihist(;directory=pwd())
+function designed to open and parse multihistogram information. Accepts a single keyword argument pointing to the location of the multihist file analysis.NVT
+    returns Temp, heat capacity, its derivative and entropy. All vectors ready to be plotted. 
+
+Not included: plotting functionality as this requires Plots to be added to the manifest and project, slowing down compile time.
+"""
+function read_multihist(;directory=pwd())
+    multihist_file = open("$(directory)/analysis.NVT")
+    multihist_info = readdlm(multihist_file)
+    close(multihist_file)
+
+    labels,M = multihist_info[1,:],multihist_info[2:end,:]
+    T,Cv,dCv,S = M[:,1],M[:,3],M[:,4],M[:,5]
+
+    return T,Cv,dCv,S
+end
 
 end
