@@ -260,7 +260,7 @@ analysis takes in the energy bin values, entropy per energy and inverse temperat
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
-function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
+function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
     
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
@@ -275,6 +275,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
    Z = Array{Float64}(undef,NPoints)
    U = Array{Float64}(undef,NPoints)
    U2 = Array{Float64}(undef,NPoints)
+   S_T = Array{Float64}(undef,NPoints)
    Cv = Array{Float64}(undef,NPoints)
    dCv = Array{Float64}(undef,NPoints)
    r2 = Array{Float64}(undef,NPoints)
@@ -323,13 +324,14 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints=600)
         end
         
        U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
-       U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]
+       U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]       
        r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        r3[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
+       S_T[i] = U[i]/T[i] + kB*log(Z[i])
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
    end
-return Z,Cv,dCv,T
+return Z,Cv,dCv,S_T,T
 end
 """ 
     runmultihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
@@ -342,10 +344,10 @@ This function completely determines the properties of a system given by the outp
 
     S.data containing the energy values and corresponding entropies 
 
-    analysis.NVT containing the temperatures, partition function, heat capacity and its derivative
+    analysis.NVT containing the temperatures, partition function, heat capacity and its derivative. NB now includes the temperature dependent Entropy function.
     
 """
-function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
+function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String,NPoints)
 
     #HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
 
@@ -353,7 +355,7 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
 
-    Z,C,dC,T = analysis(energyvector,S,beta,kB)
+    Z,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
     println("Quantities found")
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
     #png(cvplot,"$(xdir)Cv")
@@ -376,8 +378,8 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     close(entropyfile)
 
     cvfile = open("$(outdir)/analysis.NVT", "w")
-    writedlm(cvfile, ["T" "Z" "Cv" "dCv"])
-    writedlm(cvfile, [T Z C dC])
+    writedlm(cvfile, ["T" "Z" "Cv" "dCv" "S(T)"])
+    writedlm(cvfile, [T Z C dC S_T])
     close(cvfile)
        
 end
@@ -390,14 +392,14 @@ Function has two methods which vary only in how the initialise function is calle
     The output of this function are the four files defined in run_multihistogram.
 
 """
-function multihistogram(xdir::String)
+function multihistogram(xdir::String; NPoints=600)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
-    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir)
+    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir,NPoints)
 end
 
-function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd())
+function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=600)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output,Tvec)
-    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir)
+    run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir,NPoints)
 
 
 
