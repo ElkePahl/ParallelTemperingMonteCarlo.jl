@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo#feature/save_restart
-using Random , BenchmarkTools, Plots
+using Random, Plots
 
 #set random seed - for reproducibility
 Random.seed!(1234)
