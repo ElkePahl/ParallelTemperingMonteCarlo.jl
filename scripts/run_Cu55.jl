@@ -1,4 +1,4 @@
-using ParallelTemperingMonteCarlo#update/version_2a
+using ParallelTemperingMonteCarlo
 
 using Random
 
@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 20 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -41,7 +41,7 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms)
 #Potential
 # for laptop
-#runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+# runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
 runnerdir = "/home/ghunter/Documents/RuNNer-master/Brass_potential/"
 atomtype="Cu"
@@ -127,6 +127,7 @@ copperconstant = 0.36258*nmtobohr
 pos_cu55 = copperconstant*ico_55
 pos_cu13 = copperconstant*ico_13*1.5
 AtoBohr = 1.8897259886
+
 
 length(pos_cu55) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
