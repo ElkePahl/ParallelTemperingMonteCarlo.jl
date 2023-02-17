@@ -64,7 +64,11 @@ function update_one_rdf!(mc_state,histogram,delta_r2)
     rdf_indices = find_rdf_index(mc_state,delta_r2)
     broadcast(update_one_histval!,Ref(histogram),rdf_indices)
 end
+"""
+    sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
+Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
 
+"""
 function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
         mc_states =  update_energy_tot.(mc_states)#update energies
@@ -73,6 +77,7 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,del
 
         broadcast(update_one_rdf!,mc_states,results.rdf,Ref(delta_r2)) #update rdf's
     end
+    return mc_states,results
 end
 
 
