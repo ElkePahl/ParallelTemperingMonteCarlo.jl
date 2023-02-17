@@ -1,5 +1,7 @@
 module MCSampling
 
+export sampling_step!
+
 
 using StaticArrays
 using ..MCStates
@@ -32,7 +34,27 @@ function find_hist_index(mc_state,results,delta_en_hist)
         return hist_index +1
     end
 end
+"""
+    initialise_histograms!(mc_params,results,e_bounds,bc)
+Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from e_bounds and (with 2% either side additionally) used to determine the energy grating for the histogram (delta_en_hist). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is 2*r2 and distance**2 is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as en_histogram
 
+Returns delta_en_hist,delta_r2
+"""
+function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
+
+    # incl 4% leeway
+    results.en_min = e_bounds[1] - abs(0.02*e_bounds[1])
+    results.en_max = e_bounds[2] + abs(0.02*e_bounds[2])
+    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    delta_r2 = 4*bc.radius2/results.n_bin/5 
+
+    for i_traj in 1:mc_params.n_traj
+        
+        push!(results.en_histogram,zeros(results.n_bin + 2))
+        push!(results.rdf,zeros(results.n_bin*5))
+    end
+    return delta_en_hist,delta_r2
+end
 """
     update_one_histval!(histogram,index)
 To be used in conjunction with the find index function above to correctly update the overall results. Mostly a wrapper function to allow correct broascasting, this then can be used on en_histogram vector of vectors. See the update_histogram! function defined below.
