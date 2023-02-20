@@ -3,7 +3,7 @@ module MCSampling
 #export sampling_step!
 
 
-using StaticArrays
+using StaticArrays,LinearAlgebra
 using ..MCStates
 using ..Configurations
 using ..InputParams
