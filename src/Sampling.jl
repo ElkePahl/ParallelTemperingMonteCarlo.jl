@@ -7,7 +7,7 @@ using StaticArrays
 using ..MCStates
 using ..Configurations
 using ..InputParams
-#using ..BoundaryConditions
+using ..BoundaryConditions
 
 """
     update_energy_tot(mc_state)
