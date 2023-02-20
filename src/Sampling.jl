@@ -84,6 +84,8 @@ Function accepts one mc_state and the rdf histogram corresponding to it. It calc
 """
 function update_one_rdf!(mc_state,histogram,delta_r2)
     rdf_indices = find_rdf_index(mc_state,delta_r2)
+    filter!(x->x≠0.0,rdf_indices)
+
     broadcast(update_one_histval!,Ref(histogram),rdf_indices)
 end
 """
