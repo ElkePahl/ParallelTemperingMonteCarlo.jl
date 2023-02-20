@@ -101,7 +101,7 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,del
             state = update_energy_tot(state)
         end
         results = update_histograms!(mc_states,results,delta_en_hist)
-        results = update_rdf!(state,results,delta_r2)
+        results = update_rdf!(mc_states,results,delta_r2)
     end
     return mc_states,results
 end
