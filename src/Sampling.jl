@@ -75,7 +75,14 @@ rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
 for each element in the dist2_matrix we calculate an rdf index using the anonymous rdf_index function above.
 """
 function find_rdf_index(mc_state,delta_r2)
-    rdf_indices = rdf_index.(mc_state.dist2_mat,Ref(delta_r2))   
+    rdf_ind_mat = rdf_index.(mc_state.dist2_mat,Ref(delta_r2))   
+    m = LinearAlgebra.checksquare(rdf_ind_mat)
+    rdf_indices = Vector{T}(undef,(m*(m) >>1))
+    k=0    
+    for j=1:m,i=j+1:m
+        @inbounds rdf_indices[k += 1] = rdf_ind_mat[i,j]
+    end
+
     return rdf_indices
 end
 """
@@ -84,8 +91,6 @@ Function accepts one mc_state and the rdf histogram corresponding to it. It calc
 """
 function update_one_rdf!(mc_state,histogram,delta_r2)
     rdf_indices = find_rdf_index(mc_state,delta_r2)
-    filter!(x->x≠0,rdf_indices)
-
     broadcast(update_one_histval!,Ref(histogram),rdf_indices)
 end
 """
