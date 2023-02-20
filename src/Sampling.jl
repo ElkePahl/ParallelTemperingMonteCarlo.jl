@@ -81,12 +81,13 @@ function find_rdf_index(mc_state,delta_r2)
     return rdf_indices
 end
 
-function update_one_rdf!(mc_state,results,delta_r2)
-    
-        rdf_indices = find_rdf_index(mc_state,delta_r2)
+function update_rdf!(mc_states,results,delta_r2)
+    @inbounds for i in eachindex(mc_states)
+        rdf_indices = find_rdf_index(mc_states[i],delta_r2)
         @inbounds for idx in rdf_indices 
             results.rdf[i][idx] += 1
         end
+    end
     return results
 end
 """
@@ -98,9 +99,9 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,del
     if rem(save_index, mc_params.mc_sample) == 0
         for state in mc_states
             state = update_energy_tot(state)
-            results = update_one_rdf!(state,results,delta_r2)
         end
         results = update_histograms!(mc_states,results,delta_en_hist)
+        results = update_rdf!(state,results,delta_r2)
     end
     return mc_states,results
 end
