@@ -57,7 +57,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 end
 
 function update_histograms!(mc_states,results,delta_en_hist)
-    @inbounds for i in eachindex(mc_states)
+    for i in eachindex(mc_states)
         index = find_hist_index(mc_states[i],results,delta_en_hist)
         results.en_histogram[i][index] +=1
     end
