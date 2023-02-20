@@ -262,6 +262,7 @@ function parallel_tempering_exchange!(mc_states,mc_params)
         mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
     end
 
+
     return mc_states
 end
 """
@@ -287,12 +288,14 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         mc_step!(mc_states,mc_params,pot,ensemble)
     end
 
+
     if rand() < 0.1 #attempt to exchange trajectories
         parallel_tempering_exchange!(mc_states,mc_params)
     end
 
     return mc_states
 end
+
 
 """
 
@@ -313,6 +316,7 @@ function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)
         end 
 end
 """
+
 
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  
