@@ -203,6 +203,7 @@ end
 #     end
 
 
+
 #     return mc_states
 # end
 """
@@ -261,6 +262,7 @@ function parallel_tempering_exchange!(mc_states,mc_params)
         mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
     end
 
+
     return mc_states
 end
 """
@@ -292,6 +294,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
+
 
 """
 
