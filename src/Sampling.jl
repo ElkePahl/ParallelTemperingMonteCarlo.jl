@@ -77,7 +77,7 @@ for each element in the dist2_matrix we calculate an rdf index using the anonymo
 function find_rdf_index(mc_state,delta_r2)
     rdf_ind_mat = rdf_index.(mc_state.dist2_mat,Ref(delta_r2))   
     m = LinearAlgebra.checksquare(rdf_ind_mat)
-    rdf_indices = Vector{T}(undef,(m*(m) >>1))
+    rdf_indices = Vector{Int64}(undef,(m*(m) >>1))
     k=0    
     for j=1:m,i=j+1:m
         @inbounds rdf_indices[k += 1] = rdf_ind_mat[i,j]
