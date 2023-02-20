@@ -1,6 +1,6 @@
 module MCSampling
 
-export sampling_step!
+#export sampling_step!
 
 
 using StaticArrays
