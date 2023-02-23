@@ -64,7 +64,7 @@ function update_histograms!(mc_states,results,delta_en_hist)
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
-function updaterdf!(mc_states,results,delta_r2)
+function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
             idx=rdf_index(element,delta_r2)
