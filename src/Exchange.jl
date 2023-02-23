@@ -3,7 +3,6 @@
 
 Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle
 """
-
 module Exchange
 
 using ..MCStates
