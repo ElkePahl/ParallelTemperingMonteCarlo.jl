@@ -297,6 +297,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 end
 
 
+# function ptmc_cycle( pot::nested)
+#    for i =1:pot.cycle
+#       ptmc_cycle!( pot::LJ)
+# end
+
+
 """
 
     sampling_step(mc_params, mc_states, save_index, saveham::Bool)
