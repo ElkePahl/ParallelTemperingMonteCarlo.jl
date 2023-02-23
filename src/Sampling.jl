@@ -50,15 +50,15 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 
     for i_traj in 1:mc_params.n_traj
         
-        push!(results.en_histogram,zeros(results.n_bin + 2))
-        push!(results.rdf,zeros(results.n_bin*5))
+        push!(results.en_histogram,zeros(Int,results.n_bin + 2))
+        push!(results.rdf,zeros(Int,results.n_bin*5))
     end
     return delta_en_hist,delta_r2
 end
 
 function update_histograms!(mc_states,results,delta_en_hist)
-    @inbounds for i in eachindex(mc_states)
-        index = find_hist_index(mc_states[i],results,delta_en_hist)
+     for i in eachindex(mc_states)
+        @inbounds index = find_hist_index(mc_states[i],results,delta_en_hist)
         results.en_histogram[i][index] +=1
     end
     return results        
@@ -82,9 +82,9 @@ function find_rdf_index(mc_state,delta_r2)
 end
 
 function update_rdf!(mc_states,results,delta_r2)
-    @inbounds for i in eachindex(mc_states)
-        rdf_indices = find_rdf_index(mc_states[i],delta_r2)
-        @inbounds for idx in rdf_indices 
+    for i in eachindex(mc_states)
+        @inbounds rdf_indices = find_rdf_index(mc_states[i],delta_r2)
+        for idx in rdf_indices 
             results.rdf[i][idx] += 1
         end
     end
