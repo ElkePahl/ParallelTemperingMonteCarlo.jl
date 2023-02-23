@@ -60,34 +60,19 @@ function update_histograms!(mc_states,results,delta_en_hist)
         @inbounds index = find_hist_index(mc_states[i],results,delta_en_hist)
         results.en_histogram[i][index] +=1
     end
-    return results        
+    return results
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
-"""
-    find_rdf_index(mc_state,delta_r2)
-for each element in the dist2_matrix we calculate an rdf index using the anonymous rdf_index function above.
-"""
-function find_rdf_index(mc_state,delta_r2)
-    rdf_ind_mat = rdf_index.(mc_state.dist2_mat,Ref(delta_r2))   
-    m = LinearAlgebra.checksquare(rdf_ind_mat)
-    rdf_indices = Vector{Int64}(undef,(m*(m) >>1))
-    k=0    
-    for j=1:m,i=j+1:m
-        @inbounds rdf_indices[k += 1] = rdf_ind_mat[i,j]
-    end
-
-    return rdf_indices
-end
-
-function update_rdf!(mc_states,results,delta_r2)
-    for i in eachindex(mc_states)
-        @inbounds rdf_indices = find_rdf_index(mc_states[i],delta_r2)
-        for idx in rdf_indices 
-            results.rdf[i][idx] += 1
+function updaterdf!(mc_states,results,delta_r2)
+    for j_traj in eachindex(mc_states)
+        for element in mc_states[j_traj].dist2_mat 
+            idx=rdf_index(element,delta_r2)
+            if rdf_index != 0
+                results.rdf[j_traj][idx] +=1
+            end
         end
     end
-    return results
 end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
