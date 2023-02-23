@@ -13,11 +13,18 @@ using ..BoundaryConditions
     update_energy_tot(mc_state)
 function to update the current energy and energy squared values for coarse analysis of averages at the end. 
 """
-function update_energy_tot(mc_state)
-    mc_state.ham[1] +=mc_state.en_tot
-    mc_state.ham[2] +=(mc_state.en_tot*mc_state.en_tot)
+# function update_energy_tot(mc_state)
+#     mc_state.ham[1] +=mc_state.en_tot
+#     mc_state.ham[2] +=(mc_state.en_tot*mc_state.en_tot)
 
-    return mc_state
+#     return mc_state
+# end
+function update_energy_tot(mc_states)
+    for indx_traj in eachindex(mc_states)      
+        mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
+            #add E,E**2 to the correct positions in the hamiltonian
+        mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+    end
 end
 """
     find_hist_index(mc_state,results,delta_en_hist)
@@ -81,9 +88,10 @@ Function performed at the end of an mc_cycle! after equilibration. Updates the E
 """
 function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
-        for state in mc_states
-            state = update_energy_tot(state)
-        end
+        update_energy_tot(mc_states)
+        # for state in mc_states
+        #     state = update_energy_tot(state)
+        # end
         results = update_histograms!(mc_states,results,delta_en_hist)
         results = update_rdf!(mc_states,results,delta_r2)
     end
