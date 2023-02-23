@@ -48,8 +48,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     delta_r2 = 4*bc.radius2/results.n_bin/5 
 
-    for i_traj in 1:mc_params.n_traj
-        
+    for i_traj in 1:mc_params.n_traj       
         push!(results.en_histogram,zeros(Int,results.n_bin + 2))
         push!(results.rdf,zeros(Int,results.n_bin*5))
     end

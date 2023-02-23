@@ -275,7 +275,7 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
     energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
 
     for idx in eachindex(mc_states)
-        @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_position[idx],dist2_new[idx])
+        @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
     end
 
     return mc_states
