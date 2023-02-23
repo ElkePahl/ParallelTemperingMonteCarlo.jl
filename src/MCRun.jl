@@ -12,50 +12,9 @@ using ..Configurations
 using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
+using ..Exchange
 using ..RuNNer
 
-
-"""
-    metropolis_condition(ensemble, delta_en, beta)
-Returns probability to accept a MC move at inverse temperature `beta` 
-for energy difference `delta_en` between new and old configuration 
-for given ensemble; implemented: 
-    - `NVT`: canonical ensemble
-    - `NPT`: NPT ensemble
-Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
-Boltzmann probability otherwise
-"""
-function metropolis_condition(::NVT, delta_energy, beta)
-    prob_val = exp(-delta_energy*beta)
-    T = typeof(prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
-end
-
-function metropolis_condition(::NPT, N, d_en, volume_changed, volume_unchanged, pressure, beta)
-    delta_h = d_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
-    prob_val = exp(-delta_h*beta + NAtoms*log(volume_changed/volume_unchanged))
-    T = typeof(prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
-end
-
-#function metropolis_condition(energy_unmoved, energy_moved, beta)
-#    prob_val = exp(-(energy_moved-energy_unmoved)*beta)
-#    T = typeof(prob_val)
-#    return ifelse(prob_val > 1, T(1), prob_val)
-#end
-
-
-"""
-    exc_acceptance(beta_1, beta_2, en_1, en_2)
-Returns probability to exchange configurations of two trajectories with energies `en_1` and `en_2` 
-at inverse temperatures `beta_1` and `beta_2`. 
-"""
-function exc_acceptance(beta_1, beta_2, en_1, en_2)
-    delta_energy_acc = en_1 - en_2
-    delta_beta = beta_1 - beta_2
-    exc_acc = min(1.0,exp(delta_beta * delta_energy_acc))
-    return exc_acc
-end
 
 """
     exc_trajectories!(state_1::MCState, state_2::MCState)
@@ -109,208 +68,231 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     end
     return mc_state
 end
+
+
+# """
+#     atom_move!(mc_state::MCState, i_atom, pot, ensemble)
+# Moves selected `i_atom`'s atom randomly (max. displacement as in `mc_state`).
+# Calculates energy update (depending on potential `pot`).
+# Accepts move according to Metropolis criterium (asymmetric choice, depending on `ensemble`)
+# Updates `mc_state` if move accepted.
+# """
+# function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
+#     #move randomly selected atom (obeying the boundary conditions)
+
+#     # trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
     
-#    for i in 1:length(count_acc)
-#       acc_rate =  count_accept[i] / (displ.update_step * n_atom)
-#        if acc_rate < 0.4
-#            displ.max_displacement[i] *= 0.9
-#        elseif acc_rate > 0.6
-#            displ.max_displacement[i] *= 1.1
-#        end
-#        count_accept[i] = 0
-#    end
-#    return displ, count_accept
-#end
+#     trial_pos = atom_displacement(mc_state,i_atom)
+#     #find new distances of moved atom 
 
-#function mc_step_atom!(config, beta, dist2_mat, en_tot, i_atom, max_displacement, count_acc, count_acc_adjust, pot)
-    #move randomly selected atom (obeying the boundary conditions)
-    #trial_pos = atom_displacement(config.pos[i_atom], max_displacement, config.bc)
-    #find new distances of moved atom - might not be always needed?
-    #dist2_new = [distance2(trial_pos,b) for b in config.pos]
-    #en_moved = energy_update(i_atom, dist2_new, pot)
-    #recalculate old 
-    #en_unmoved = energy_update(i_atom, dist2_mat[i_atom,:], pot)
-    #one might want to store dimer energies per atom in vector?
-    #decide acceptance
-    #if metropolis_condition(en_unmoved, en_moved, beta) >= rand()
-        #new config accepted
-    #    config.pos[i_atom] = copy(trial_pos)
-    #    dist2_mat[i_atom,:] = copy(dist2_new)
-    #    dist2_mat[:,i_atom] = copy(dist2_new)
-    #    en_tot = en_tot - en_unmoved + en_moved
-    #    count_acc += 1
-    #    count_acc_adjust += 1
-    #end 
-    #return config, entot, dist2mat, count_acc, count_acc_adjust
-#end
+#     delta_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
 
+#     #decide acceptance
+#     if metropolis_condition(ensemble, delta_en_move, mc_state.beta) >= rand()
+#         #new config accepted
+#         mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
+#         mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
+#         mc_state.dist2_mat[:,i_atom] = dist2_new
+#         mc_state.en_tot += delta_en_move
+#         mc_state.count_atom[1] += 1
+#         mc_state.count_atom[2] += 1
+#     end
+#     return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
+# end
+
+# """
+#     mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
+# Performs an individual MC step.
+# Chooses type of move randomly according to frequency of moves `a`,`v` and `r` 
+# for atom, volume and rotation moves.
+# Performs the selected move.   
+# """
+# function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
+#     ran_atom = rand(1:(a+v+r)) #choose move randomly
+#     if ran_atom <= a
+#         mc_state = atom_move!(mc_state, ran_atom, pot, ensemble)
+#     #else if ran <= v
+#     #    vol_move!(mc_state, pot, ensemble)
+#     #else if ran <= r
+#     #    rot_move!(mc_state, pot, ensemble)
+#     end
+#     return mc_state
+# end 
+
+# """
+#     mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+# Performs a MC cycle consisting of `n_steps` individual MC steps 
+# (frequencies of moves given by `a`,`v` and `r`).
+# Attempts parallel tempering step for 10% of cycles.
+# Exchanges trajectories if exchange accepted.
+# """
+# function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+#     #perform one MC cycle
+#     for i_traj = 1:mc_params.n_traj
+#         for i_step = 1:n_steps
+#             #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
+#             @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
+#         end
+#         #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+#     end
+#     #parallel tempering
+#     if rand() < 0.1 #attempt to exchange trajectories
+#         n_exc = rand(1:mc_params.n_traj-1)
+#         mc_states[n_exc].count_exc[1] += 1
+#         mc_states[n_exc+1].count_exc[1] += 1
+
+#         exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+
+#         if exc_acc > rand()
+#             mc_states[n_exc].count_exc[2] += 1
+#             mc_states[n_exc+1].count_exc[2] += 1
+
+#             mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+#         end
+#     end
+
+#     return mc_states
+# end
+# """
+#     mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential,ensemble,n_steps,a,v,r)
+# Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
+
+#     We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
+# """
+# function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential, ensemble, n_steps, a, v, r)
+#     file = RuNNer.writeinit(pot.dir)
+#     #this for loop creates n_traj perturbed atoms
+#     indices = []
+#     trials = []
+#     #we require parallelisation here, but will need to avoid a race condition
+#     for mc_state in mc_states
+#         #for i_step = 1:n_steps
+#             ran = rand(1:(a+v+r))
+#             trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
+#             writeconfig(file,mc_state.config,ran,trial_pos, pot.atomtype)
+#             push!(indices,ran)
+#             push!(trials,trial_pos)
+#         #end
+#     end
+#     #after which we require energy evaluations of the n_traj new configurations
+#     close(file)    
+#     energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)    
+#     #this replaces the atom_move! function
+#     #parallelisation here is fine
+
+#     Threads.@threads for indx in 1:mc_params.n_traj
+#         if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
+#             mc_states[indx].config.pos[indices[indx]] = trials[indx]
+#             mc_states[indx].en_tot = energyvec[indx]
+#             mc_states[indx].count_atom[1] +=1
+#             mc_states[indx].count_atom[2] += 1
+#         end
+#     end
+
+
+#     if rand() < 0.1 #attempt to exchange trajectories
+#         n_exc = rand(1:mc_params.n_traj-1)
+#         mc_states[n_exc].count_exc[1] += 1
+#         mc_states[n_exc+1].count_exc[1] += 1
+#         exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+#         if exc_acc > rand()
+#             mc_states[n_exc].count_exc[2] += 1
+#             mc_states[n_exc+1].count_exc[2] += 1
+#             mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+#         end
+#     end
+
+
+
+#     return mc_states
+# end
 """
-    atom_move!(mc_state::MCState, i_atom, pot, ensemble)
-Moves selected `i_atom`'s atom randomly (max. displacement as in `mc_state`).
-Calculates energy update (depending on potential `pot`).
-Accepts move according to Metropolis criterium (asymmetric choice, depending on `ensemble`)
-Updates `mc_state` if move accepted.
+    swap_var_function(mc_state, i_atom, trial_pos, dist2_new, new_energy)
+        Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
+        If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function atom_move!(mc_state::MCState, i_atom, pot, ensemble)
-    #move randomly selected atom (obeying the boundary conditions)
+function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
+    mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
+    mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
+    mc_state.dist2_mat[:,i_atom] = dist2_new    
+    mc_state.en_tot = energy
+    mc_state.count_atom[1] += 1
+    mc_state.count_atom[2] += 1
 
-    # trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
-    
-    trial_pos = atom_displacement(mc_state,i_atom)
-    #find new distances of moved atom 
-
-    delta_en_move, dist2_new = energy_update(trial_pos, i_atom, mc_state.config, mc_state.dist2_mat, pot)
-
-    #decide acceptance
-    if metropolis_condition(ensemble, delta_en_move, mc_state.beta) >= rand()
-        #new config accepted
-        mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-        mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-        mc_state.dist2_mat[:,i_atom] = dist2_new
-        mc_state.en_tot += delta_en_move
-        mc_state.count_atom[1] += 1
-        mc_state.count_atom[2] += 1
-    end
-    return mc_state #config, entot, dist2mat, count_acc, count_acc_adjust
 end
+"""
+    acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+        (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
 
+        The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer
 """
-    mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
-Performs an individual MC step.
-Chooses type of move randomly according to frequency of moves `a`,`v` and `r` 
-for atom, volume and rotation moves.
-Performs the selected move.   
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
+    
+    
+        if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+        end   
+end
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+    
+    
+    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+
+        dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+
+        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+    end   
+end
 """
-function mc_step!(mc_state::MCState, pot, ensemble, a, v, r)
-    ran_atom = rand(1:(a+v+r)) #choose move randomly
-    if ran_atom <= a
-        mc_state = atom_move!(mc_state, ran_atom, pot, ensemble)
-    #else if ran <= v
-    #    vol_move!(mc_state, pot, ensemble)
-    #else if ran <= r
-    #    rot_move!(mc_state, pot, ensemble)
+    parallel_tempering_exchange!(mc_states,mc_params)
+This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
+"""
+function parallel_tempering_exchange!(mc_states,mc_params)
+    n_exc = rand(1:mc_params.n_traj-1)
+
+    mc_states[n_exc].count_exc[1] += 1
+    mc_states[n_exc+1].count_exc[1] += 1
+
+    # exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
+
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
+        mc_states[n_exc].count_exc[2] += 1
+        mc_states[n_exc+1].count_exc[2] += 1
+
+        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
     end
-    return mc_state
-end 
 
+
+    return mc_states
+end
 """
-    mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-Performs a MC cycle consisting of `n_steps` individual MC steps 
-(frequencies of moves given by `a`,`v` and `r`).
-Attempts parallel tempering step for 10% of cycles.
-Exchanges trajectories if exchange accepted.
+    function mc_step!(mc_states,mc_params,pot,ensemble)
+        New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
+"""
+function mc_step!(mc_states,mc_params,pot,ensemble)
+
+    indices,trial_positions = generate_displacements(mc_states,mc_params)
+
+    energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
+
+    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
+
+end
+"""
+    function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+        Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
 """
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-    #perform one MC cycle
-    for i_traj = 1:mc_params.n_traj
-        for i_step = 1:n_steps
-            #mc_states[i_traj] = mc_step!(type_moves[ran][2], type_moves[ran][1], mc_states[i_traj], ran, pot, ensemble)
-            @inbounds mc_states[i_traj] = mc_step!(mc_states[i_traj], pot, ensemble, a, v, r)
-        end
-        #push!(mc_states[i_traj].ham, mc_states[i_traj].en_tot) #to build up ham vector of sampled energies
+
+    for i_steps = 1:n_steps
+        mc_step!(mc_states,mc_params,pot,ensemble)
     end
-    #parallel tempering
+
     if rand() < 0.1 #attempt to exchange trajectories
-        n_exc = rand(1:mc_params.n_traj-1)
-        mc_states[n_exc].count_exc[1] += 1
-        mc_states[n_exc+1].count_exc[1] += 1
-
-        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
-
-        if exc_acc > rand()
-            mc_states[n_exc].count_exc[2] += 1
-            mc_states[n_exc+1].count_exc[2] += 1
-
-            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
-        end
+        parallel_tempering_exchange!(mc_states,mc_params)
     end
 
     return mc_states
-end
-"""
-    mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential,ensemble,n_steps,a,v,r)
-Method for the MC cycle when using a machine learning potential. While functionally we can use the energyupdate! method for these potentials this is inefficient when using an external program, as such this is the parallelised energy version.
-
-    We perturb one atom per trajectory, write them all out (see RuNNer.writeconfig) run the program and then read the energies (see RuNNer.getRuNNerenergy). We then batch-determine whether any configuration will be saved and update the relevant mc_state parameters.
-"""
-function mc_cycle!(mc_states, move_strat, mc_params, pot::AbstractMachineLearningPotential, ensemble, n_steps, a, v, r)
-    file = RuNNer.writeinit(pot.dir)
-    #this for loop creates n_traj perturbed atoms
-    indices = []
-    trials = []
-    #we require parallelisation here, but will need to avoid a race condition
-    for mc_state in mc_states
-        #for i_step = 1:n_steps
-            ran = rand(1:(a+v+r))
-            trial_pos = atom_displacement(mc_state.config.pos[ran], mc_state.max_displ[1], mc_state.config.bc)
-            writeconfig(file,mc_state.config,ran,trial_pos, pot.atomtype)
-            push!(indices,ran)
-            push!(trials,trial_pos)
-        #end
-    end
-    #after which we require energy evaluations of the n_traj new configurations
-    close(file)    
-    energyvec = getRuNNerenergy(pot.dir,mc_params.n_traj)    
-    #this replaces the atom_move! function
-    #parallelisation here is fine
-
-    Threads.@threads for indx in 1:mc_params.n_traj
-        if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
-            mc_states[indx].config.pos[indices[indx]] = trials[indx]
-            mc_states[indx].en_tot = energyvec[indx]
-            mc_states[indx].count_atom[1] +=1
-            mc_states[indx].count_atom[2] += 1
-        end
-    end
-
-
-    if rand() < 0.1 #attempt to exchange trajectories
-        n_exc = rand(1:mc_params.n_traj-1)
-        mc_states[n_exc].count_exc[1] += 1
-        mc_states[n_exc+1].count_exc[1] += 1
-        exc_acc = exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot)
-        if exc_acc > rand()
-            mc_states[n_exc].count_exc[2] += 1
-            mc_states[n_exc+1].count_exc[2] += 1
-            mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
-        end
-    end
-
-
-    return mc_states
-end
-
-
-"""
-    function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
-functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
-"""
-function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. )
-
-    @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-    #sampling step
-    sampling_step!(mc_params,mc_states,i,save_ham)
-
-    if save_ham == false
-        updatehistogram!(mc_params,mc_states,results,delta_en,fullham=save_ham)
-    end
-
-    #step adjustment
-    if rem(i, mc_params.n_adjust) == 0
-        for i_traj = 1:mc_params.n_traj
-            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-        end 
-    end
-
-    if save == true
-        if rem(i,1000) == 0
-            save_states(mc_params,mc_states,i)
-            if save_ham == false
-                save_results(results)
-            end
-        end
-    end
-
 end
 
 

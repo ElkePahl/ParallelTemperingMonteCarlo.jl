@@ -100,7 +100,6 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     end
     return trial_pos
 end
-
 function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
@@ -108,7 +107,10 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     return trial_pos
 end
 function atom_displacement(mc_state,index)
-    trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+    #if index <= length(mc_state.config.pos)
+        trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+    #end
+
     return trial_pos
 end 
 """
@@ -120,6 +122,13 @@ function generate_displacements(mc_states,mc_params)
     trial_positions = atom_displacement.(mc_states,indices)
     return indices,trial_positions
 end
+# #This method will supercede the above when multiple moves are implemented. Perhaps a more dynamic move strategy system will improve this?
+
+# function generate_displacements(mc_states,mc_params,a,v,r)
+#     indices=rand(1:(a+v+r),mc_params.n_traj)
+#     trial_positions = atom_displacement.(mc_states,indices)
+#     return indices,trial_positions
+# end
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
@@ -131,25 +140,25 @@ function volume_change(conf::Config, max_vchange)
     return trial_config
 end
 
-"""
-    update_max_stepsize!(displ, n_update, count_accept, n_atom)
-update of maximum step size of atom moves after n_update MC cyles (n_atom moves per cycle)
-depends on ratio of accepted moves - as given in count_accept - 
-for acceptance ratio < 40% max_displacement is reduced to 90% of its value,
-for acceptance ratio > 60% max_displacement is increased to 110% of its value.
-count_accept is set back to zero at end.      
-"""
-function update_max_stepsize!(displ, n_update, count_accept, n_atom)
-    for i in 1:length(count_accept)
-        acc_rate =  count_accept[i] / (n_update * n_atom)
-        if acc_rate < 0.4
-            displ[i] *= 0.9
-        elseif acc_rate > 0.6
-            displ[i] *= 1.1
-        end
-        count_accept[i] = 0
-    end
-    return displ, count_accept
-end
+# """ ----- OLD VERSION NOT USED---------#
+#     update_max_stepsize!(displ, n_update, count_accept, n_atom)
+# update of maximum step size of atom moves after n_update MC cyles (n_atom moves per cycle)
+# depends on ratio of accepted moves - as given in count_accept - 
+# for acceptance ratio < 40% max_displacement is reduced to 90% of its value,
+# for acceptance ratio > 60% max_displacement is increased to 110% of its value.
+# count_accept is set back to zero at end.      
+# """
+# function update_max_stepsize!(displ, n_update, count_accept, n_atom)
+#     for i in 1:length(count_accept)
+#         acc_rate =  count_accept[i] / (n_update * n_atom)
+#         if acc_rate < 0.4
+#             displ[i] *= 0.9
+#         elseif acc_rate > 0.6
+#             displ[i] *= 1.1
+#         end
+#         count_accept[i] = 0
+#     end
+#     return displ, count_accept
+# end
 
 end #module
