@@ -10,7 +10,7 @@ using ..InputParams
 using ..BoundaryConditions
 
 """
-    update_energy_tot(mc_states)
+    update_energy_tot(mc_state)
 function to update the current energy and energy squared values for coarse analysis of averages at the end. 
 """
 # function update_energy_tot(mc_state)
@@ -61,10 +61,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     end
     return delta_en_hist,delta_r2
 end
-"""
-    update_histograms!(mc_states,results,delta_en_hist)
-Operating on each state in mc_states, determines the index of the histogram and updates the corresponding value in results.
-"""
+
 function update_histograms!(mc_states,results,delta_en_hist)
      for i in eachindex(mc_states)
         @inbounds index = find_hist_index(mc_states[i],results,delta_en_hist)
@@ -74,10 +71,6 @@ function update_histograms!(mc_states,results,delta_en_hist)
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
-"""
-    update_rdf!(mc_states,results,delta_r2)
-Very stripped down double for-loop to update radial distribution functions. This should be made optional as it accounts for 7.2 of the 7.6μs that sampling takes
-"""
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
@@ -92,8 +85,6 @@ end
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
 Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
 
-TO DO: 
-    - make RDF optional, this alone is the majority of the sampling step.
 """
 function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
