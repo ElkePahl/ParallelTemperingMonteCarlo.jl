@@ -274,7 +274,12 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
 
     energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
 
-    acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
+    for idx in eachindex(mc_states)
+        @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],index[idx],trial_position[idx],dist2_new[idx])
+    end
+
+    return mc_states
+    #acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
 
 end
 """
@@ -284,7 +289,7 @@ end
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
     for i_steps = 1:n_steps
-        mc_step!(mc_states,mc_params,pot,ensemble)
+        mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
