@@ -58,11 +58,11 @@ end
 
 
 """
-    swap_var_function(mc_state, i_atom, trial_pos, dist2_new, new_energy)
+    swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
+function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new    
@@ -75,13 +75,13 @@ end
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
         (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
 
-        The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer
+        The acc_test function works in tandem with the swap_var_function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
 """
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
     
     
         if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-            swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+            swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
         end   
 end
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
@@ -89,9 +89,9 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
 
-        dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+        dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
-        swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
+        swap_var_function!(mc_state,i_atom,trial_pos,dist2new, energy)
     end   
 end
 """
