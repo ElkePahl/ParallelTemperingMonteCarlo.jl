@@ -63,7 +63,7 @@ end
     save_results(results::Output; directory = pwd())
 Saves the on the fly results and histogram information for re-reading.
 """
-function save_results(results::Output; directory = pwd())
+function save_results(results::Output, directory)
     resultsfile =  open("$(directory)/results.data","w+")
     rdf_file = open("$directory/RDF.data","w+")
     write(resultsfile,"emin,emax,nbins= $(results.en_min) $(results.en_max) $(results.n_bin) \n")
