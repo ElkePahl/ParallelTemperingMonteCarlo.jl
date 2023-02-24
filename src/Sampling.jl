@@ -88,6 +88,7 @@ function update_rdf!(mc_states,results,delta_r2)
             end
         end
     end
+    return results
 end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
@@ -99,6 +100,7 @@ This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this
 """
 function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
+
         update_energy_tot(mc_states)
         
         results = update_histograms!(mc_states,results,delta_en_hist)
