@@ -193,10 +193,10 @@ end
 #     end
 
 
-end
-"""
-    acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
-        (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+#end
+
+#     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+#         (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
 
 
 #     if rand() < 0.1 #attempt to exchange trajectories
@@ -212,7 +212,7 @@ end
 #     end
 
 
-        dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+#         dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
 #     return mc_states
 # end
