@@ -204,6 +204,7 @@ end
 #     end
 
 
+
 #     return mc_states
 # end
 """
@@ -218,6 +219,7 @@ function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.en_tot = energy
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
+
 
 end
 """
@@ -239,6 +241,7 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
 
         dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+
 
         swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
@@ -283,7 +286,6 @@ end
         Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
 """
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-
     for i_steps = 1:n_steps
         mc_step!(mc_states,mc_params,pot,ensemble)
     end
