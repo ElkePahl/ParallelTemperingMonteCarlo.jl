@@ -478,5 +478,15 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     println("done")
     return 
 end
+#---------------------------------------------------------#
+#-------------Notes for Future Implementation-------------#
+#---------------------------------------------------------#
+"""
+- possible struct containing params relating to the simulation such as min/max acceptance rate, save/checkpoint frequency and whether to store RDF info. 
+- equilibration should have its own function with variable methods for restart etc.
 
+
+"""
+
+#---------------------------------------------------------#
 end
