@@ -291,11 +291,8 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 
     if save == true
         if rem(i,1000) == 0
-
             save_states(mc_params,mc_states,i,save_dir)
-            if save_ham == false
-                save_results(results)
-            end
+            save_results(results)
         end
     end
 
