@@ -15,7 +15,7 @@ using ..EnergyEvaluation
 using ..Exchange
 using ..RuNNer
 using ..ReadSave
-
+using ..MCSampling
 
 """
     update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
@@ -150,69 +150,69 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states
 end
 
-"""
+# """
 
-    sampling_step(mc_params, mc_states, save_index, saveham::Bool)
-A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
-"""
-function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)  
-        if rem(save_index, mc_params.mc_sample) == 0
-            for indx_traj=1:mc_params.n_traj
-                if saveham == true
-                    push!(mc_states[indx_traj].ham, mc_states[indx_traj].en_tot) #to build up ham vector of sampled energies
-                else
-                    mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
-                    #add E,E**2 to the correct positions in the hamiltonian
-                    mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)
-                end
-            end
-        end 
-end
-"""
+#     sampling_step(mc_params, mc_states, save_index, saveham::Bool)
+# A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
+# """
+# function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)  
+#         if rem(save_index, mc_params.mc_sample) == 0
+#             for indx_traj=1:mc_params.n_traj
+#                 if saveham == true
+#                     push!(mc_states[indx_traj].ham, mc_states[indx_traj].en_tot) #to build up ham vector of sampled energies
+#                 else
+#                     mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
+#                     #add E,E**2 to the correct positions in the hamiltonian
+#                     mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)
+#                 end
+#             end
+#         end 
+# end
+# """
 
-    initialise_histograms!(mc_params,results,T)
-functionalised the step in which we build the energy histograms  
-"""
-function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
-    T = typeof(mc_states[1].en_tot)
-    en_min = T[]
-    en_max = T[]
+#     initialise_histograms!(mc_params,results,T)
+# functionalised the step in which we build the energy histograms  
+# """
+# function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
+#     T = typeof(mc_states[1].en_tot)
+#     en_min = T[]
+#     en_max = T[]
 
-    r_max = 4*mc_states[1].config.bc.radius2 #we will work in d^2
-    delta_r = r_max/results.n_bin/5 #we want more bins for the RDFs
+#     r_max = 4*mc_states[1].config.bc.radius2 #we will work in d^2
+#     delta_r = r_max/results.n_bin/5 #we want more bins for the RDFs
 
-    if full_ham == true
-        for i_traj in 1:mc_params.n_traj
-            push!(en_min,minimum(mc_states[i_traj].ham))
-            push!(en_max,maximum(mc_states[i_traj].ham))
-        end
+#     if full_ham == true
+#         for i_traj in 1:mc_params.n_traj
+#             push!(en_min,minimum(mc_states[i_traj].ham))
+#             push!(en_max,maximum(mc_states[i_traj].ham))
+#         end
     
-        global_en_min = minimum(en_min)
-        global_en_max = maximum(en_max)
-    else
+#         global_en_min = minimum(en_min)
+#         global_en_max = maximum(en_max)
+#     else
 
-        #we'll give ourselves a 6% leeway here
-        global_en_min = e_bounds[1] - abs(0.03*e_bounds[1])
-        global_en_max = e_bounds[2] + abs(0.03*e_bounds[2])
-    end
+#         #we'll give ourselves a 6% leeway here
+#         global_en_min = e_bounds[1] - abs(0.03*e_bounds[1])
+#         global_en_max = e_bounds[2] + abs(0.03*e_bounds[2])
+#     end
 
-    for i_traj = 1:mc_params.n_traj
-        histogram = zeros(results.n_bin + 2)
-        push!(results.en_histogram, histogram)
-        RDF = zeros(results.n_bin*5)
-        push!(results.rdf,RDF)
-    end
+#     for i_traj = 1:mc_params.n_traj
+#         histogram = zeros(results.n_bin + 2)
+#         push!(results.en_histogram, histogram)
+#         RDF = zeros(results.n_bin*5)
+#         push!(results.rdf,RDF)
+#     end
     
 
-    delta_en_hist = (global_en_max - global_en_min) / (results.n_bin - 1)
+#     delta_en_hist = (global_en_max - global_en_min) / (results.n_bin - 1)
 
 
-    results.en_min = global_en_min
-    results.en_max = global_en_max
+#     results.en_min = global_en_min
+#     results.en_max = global_en_max
 
   
-        return  delta_en_hist
-end
+#         return  delta_en_hist
+# end
 """
     updaterdf!(mc_states,results,delta_r2)
 For each state in a vector of mc_states, we use the distance squared matrix to determine which bin (between zero and 2*r_bound) the distance falls into, we then update results.rdf[bin] to build the radial distribution function
@@ -267,18 +267,20 @@ end
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
 """
-function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir ;delta_en_hist=0.)
+function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save, i,save_dir,delta_en_hist,delta_r2)
 
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+
+    mc_states,results = sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
     #sampling step
-    sampling_step!(mc_params,mc_states,i,save_ham)
+    # sampling_step!(mc_params,mc_states,i,save_ham)
 
-    if save_ham == false
-        updatehistogram!(mc_params,mc_states,results,delta_en_hist,fullham=save_ham)
-        updaterdf!(mc_states,results,(4*mc_states[1].config.bc.radius2/(results.n_bin*5)))
+    # if save_ham == false
+    #     updatehistogram!(mc_params,mc_states,results,delta_en_hist,fullham=save_ham)
+    #     updaterdf!(mc_states,results,(4*mc_states[1].config.bc.radius2/(results.n_bin*5)))
 
-    end
+    # end
 
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
@@ -348,15 +350,13 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     #equilibration cycle
     if restart == false
         #this initialises the max and min energies for histograms
-        if save_ham == false
+        
             ebounds = [100. , -100.] #emin,emax
-        end
+       
         
         for i = 1:mc_params.eq_cycles
             @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
             #verbose way to save the highest and lowest energies
-
-            if save_ham == false
                 for i_traj = 1:mc_params.n_traj
                     if mc_states[i_traj].en_tot < ebounds[1]
                         ebounds[1] = mc_states[i_traj].en_tot
@@ -366,7 +366,6 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
                         ebounds[2] = mc_states[i_traj].en_tot
                     end
                 end
-            end
             #update stepsizes
 
             if rem(i, mc_params.n_adjust) == 0
@@ -385,7 +384,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         #initialise histogram for non-saving hamiltonian 
         if save_ham == false
 
-            delta_en_hist = initialise_histograms!(mc_params,mc_states,results, full_ham=false,e_bounds=ebounds)
+            delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
 
         end
 
@@ -404,26 +403,13 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     if restart == false
 
         for i = 1:mc_params.mc_cycles
-            if save_ham == false
-
-                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
-            else
-                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
-            end
-
+            @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
         end
 
     else #if restarting
 
         for i = restartindex:mc_params.mc_cycles
-            if save_ham == false
-
-                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir;delta_en_hist=delta_en_hist)
-            else
-                @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i,save_dir)
-            end
-            
-
+            @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
         end 
     end
     println("MC loop done.")
@@ -452,23 +438,6 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     println(results.heat_cap)
 
     #energy histograms
-    if save_ham == true
-        # T = typeof(mc_states[1].ham[1])
-
-        delta_en_hist= initialise_histograms!(mc_params,mc_states,results)
-        updatehistogram!(mc_params,mc_states,results,delta_en_hist)
-
-    
-    end
-    #     for i_traj in 1:mc_params.n_traj
-    #         hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
-    #         for en in mc_states[i_traj].ham
-    #             index = floor(Int,(en - global_en_min) / delta_en) + 1
-    #             hist[index] += 1
-    #         end
-    #         push!(results.en_histogram, hist)
-    #     end
-    # end
 
     #TO DO
     # volume (NPT ensemble),rot moves ...
