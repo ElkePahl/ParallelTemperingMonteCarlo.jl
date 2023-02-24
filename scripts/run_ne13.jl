@@ -1,5 +1,7 @@
+
 using ParallelTemperingMonteCarlo#feature/sampling
 using Random
+
 
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -16,7 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 400000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 

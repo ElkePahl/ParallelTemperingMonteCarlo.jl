@@ -125,6 +125,14 @@ function generate_displacements(mc_states,mc_params)
     return indices,trial_positions
 end
 
+# #This method will supercede the above when multiple moves are implemented. Perhaps a more dynamic move strategy system will improve this?
+
+# function generate_displacements(mc_states,mc_params,a,v,r)
+#     indices=rand(1:(a+v+r),mc_params.n_traj)
+#     trial_positions = atom_displacement.(mc_states,indices)
+#     return indices,trial_positions
+# end
+
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.

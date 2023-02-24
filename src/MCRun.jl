@@ -17,6 +17,7 @@ using ..RuNNer
 using ..ReadSave
 
 
+
 # """
 #     exc_trajectories!(state_1::MCState, state_2::MCState)
 # Exchanges configurations and distance and energy information between two trajectories;
@@ -29,6 +30,7 @@ using ..ReadSave
 #     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
 #     return state_1, state_2
 # end 
+
 
 
 """
@@ -191,6 +193,12 @@ end
 #     end
 
 
+end
+"""
+    acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+        (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+
+
 #     if rand() < 0.1 #attempt to exchange trajectories
 #         n_exc = rand(1:mc_params.n_traj-1)
 #         mc_states[n_exc].count_exc[1] += 1
@@ -203,6 +211,8 @@ end
 #         end
 #     end
 
+
+        dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
 #     return mc_states
 # end
@@ -238,12 +248,14 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
 
+
         dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
         swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
 end
 """
+
     parallel_tempering_exchange!(mc_states,mc_params)
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 """
@@ -276,6 +288,8 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
 
     acc_test!.(Ref(ensemble), mc_states, energy_vector, indices, trial_positions, dist2_new)
 
+
+    return mc_states
 end
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
@@ -293,6 +307,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
+
 
 """
 
@@ -313,6 +328,7 @@ function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)
         end 
 end
 """
+
 
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  

@@ -3,6 +3,7 @@
 
 Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle
 """
+
 module Exchange
 
 using ..MCStates
@@ -10,6 +11,7 @@ using ..Configurations
 using ..EnergyEvaluation
 
 export metropolis_condition, exc_acceptance,exc_trajectories!
+
 
 """
     metropolis_condition(ensemble, delta_en, beta)
@@ -45,6 +47,7 @@ function exc_acceptance(beta_1, beta_2, en_1, en_2)
     exc_acc = min(1.0,exp(delta_beta * delta_energy_acc))
     return exc_acc
 end
+
 """
     exc_trajectories!(state_1::MCState, state_2::MCState)
 Exchanges configurations and distance and energy information between two trajectories;
@@ -57,6 +60,7 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
 end 
+
 
 
 end
