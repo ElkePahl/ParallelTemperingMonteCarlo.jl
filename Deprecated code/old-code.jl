@@ -147,3 +147,118 @@
 
 #     return mc_states
 # end
+
+
+# """
+
+#     sampling_step(mc_params, mc_states, save_index, saveham::Bool)
+# A function to store the information at the end of an MC_Cycle, replacing the manual if statements previously in PTMC_run. 
+# """
+# function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)  
+#         if rem(save_index, mc_params.mc_sample) == 0
+#             for indx_traj=1:mc_params.n_traj
+#                 if saveham == true
+#                     push!(mc_states[indx_traj].ham, mc_states[indx_traj].en_tot) #to build up ham vector of sampled energies
+#                 else
+#                     mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
+#                     #add E,E**2 to the correct positions in the hamiltonian
+#                     mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)
+#                 end
+#             end
+#         end 
+# end
+# """
+
+#     initialise_histograms!(mc_params,results,T)
+# functionalised the step in which we build the energy histograms  
+# """
+# function initialise_histograms!(mc_params,mc_states,results; full_ham = true,e_bounds = [0,0])    
+#     T = typeof(mc_states[1].en_tot)
+#     en_min = T[]
+#     en_max = T[]
+
+#     r_max = 4*mc_states[1].config.bc.radius2 #we will work in d^2
+#     delta_r = r_max/results.n_bin/5 #we want more bins for the RDFs
+
+#     if full_ham == true
+#         for i_traj in 1:mc_params.n_traj
+#             push!(en_min,minimum(mc_states[i_traj].ham))
+#             push!(en_max,maximum(mc_states[i_traj].ham))
+#         end
+    
+#         global_en_min = minimum(en_min)
+#         global_en_max = maximum(en_max)
+#     else
+
+#         #we'll give ourselves a 6% leeway here
+#         global_en_min = e_bounds[1] - abs(0.03*e_bounds[1])
+#         global_en_max = e_bounds[2] + abs(0.03*e_bounds[2])
+#     end
+
+#     for i_traj = 1:mc_params.n_traj
+#         histogram = zeros(results.n_bin + 2)
+#         push!(results.en_histogram, histogram)
+#         RDF = zeros(results.n_bin*5)
+#         push!(results.rdf,RDF)
+#     end
+    
+
+#     delta_en_hist = (global_en_max - global_en_min) / (results.n_bin - 1)
+
+
+#     results.en_min = global_en_min
+#     results.en_max = global_en_max
+
+  
+#         return  delta_en_hist
+# end
+# """
+#     updaterdf!(mc_states,results,delta_r2)
+# For each state in a vector of mc_states, we use the distance squared matrix to determine which bin (between zero and 2*r_bound) the distance falls into, we then update results.rdf[bin] to build the radial distribution function
+# """
+# function updaterdf!(mc_states,results,delta_r2)
+#     for j_traj in eachindex(mc_states)
+#         for element in mc_states[j_traj].dist2_mat 
+#             rdf_index=floor(Int,(element/delta_r2))
+#             if rdf_index != 0
+#                 results.rdf[j_traj][rdf_index] +=1
+#             end
+#         end
+#     end
+# end
+# """
+#     updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
+# Performed either at the end or during the mc run according to fullham=true/false (saved all datapoints or calculated on the fly). Uses the energy bounds and the previously defined delta_en_hist to calculate the bin in which te current energy value falls for each trajectory. This is used to build up the energy histograms for post-analysis.
+# """
+# function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
+
+#     for update_traj_index in 1:mc_params.n_traj
+        
+#         if fullham == true #this is done at the end of the cycle
+
+#             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
+#             for en in mc_states[update_traj_index].ham
+#                 hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1
+#                 hist[hist_index] += 1
+
+#             end
+#         push!(results.en_histogram, hist)
+
+#         else #this is done throughout the simulation
+
+#             en = mc_states[update_traj_index].en_tot
+
+#             hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1 
+
+#             if hist_index < 1 #if energy too low
+#                 results.en_histogram[update_traj_index][1] += 1 #add to place 1
+#             elseif hist_index > results.n_bin #if energy too high
+#                 results.en_histogram[update_traj_index][(results.n_bin +2)] += 1 #add to place n_bin +2
+#             else
+#                 results.en_histogram[update_traj_index][(hist_index+1)] += 1
+#             end
+
+#         end
+#     end
+
+# end
