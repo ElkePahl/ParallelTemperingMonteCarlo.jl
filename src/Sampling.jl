@@ -51,8 +51,8 @@ Returns delta_en_hist,delta_r2
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 
     # incl 6% leeway
-    results.en_min = e_bounds[1] - abs(0.02*e_bounds[1])
-    results.en_max = e_bounds[2] + abs(0.02*e_bounds[2])
+    results.en_min = e_bounds[1] - abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] + abs(0.03*e_bounds[2])
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     delta_r2 = 4*bc.radius2/results.n_bin/5 
 

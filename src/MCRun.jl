@@ -379,11 +379,11 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
             mc_states[i_traj].count_exc = [0, 0]
         end
         #initialise histogram for non-saving hamiltonian 
-        if save_ham == false
+        #if save_ham == false
 
             delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
 
-        end
+        #end
 
         println("equilibration done")
 
