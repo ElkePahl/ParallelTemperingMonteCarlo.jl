@@ -12,10 +12,10 @@ module ParallelRun
     using ..RuNNer
     using ..MCRun
 
-    import ..MCRun: initialise_histograms!,updatehistogram!,update_max_stepsize!,sampling_step!,save_results,save_states
+    import ..MCRun: initialise_histograms!,update_max_stepsize!,sampling_step!,save_results,save_states
     import .MCRun.mc_cycle!
 
-    export pptmc_run!,mc_cycle!,pptmc_cycle,parallel_equilibration
+    #export pptmc_run!,mc_cycle!,pptmc_cycle,parallel_equilibration
 
 
 

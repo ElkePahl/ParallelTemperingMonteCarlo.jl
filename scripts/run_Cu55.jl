@@ -4,7 +4,7 @@ using Random
 
 
 #set random seed - for reproducibility
-Random.seed!(0)
+Random.seed!(1234)
 
 # number of atoms
 
@@ -43,7 +43,7 @@ ensemble = NVT(n_atoms)
 # for laptop
 #runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
-runnerdir = "/home/ghunter/Documents/RuNNer-master/Brass_potential/"
+runnerdir = "/home/ghunter/Documents/RuNNer-master/test-Brass/"
 atomtype="Cu"
 
 pot = SerialMLPotential(runnerdir,atomtype);
