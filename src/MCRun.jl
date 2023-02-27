@@ -213,56 +213,56 @@ end
   
 #         return  delta_en_hist
 # end
-"""
-    updaterdf!(mc_states,results,delta_r2)
-For each state in a vector of mc_states, we use the distance squared matrix to determine which bin (between zero and 2*r_bound) the distance falls into, we then update results.rdf[bin] to build the radial distribution function
-"""
-function updaterdf!(mc_states,results,delta_r2)
-    for j_traj in eachindex(mc_states)
-        for element in mc_states[j_traj].dist2_mat 
-            rdf_index=floor(Int,(element/delta_r2))
-            if rdf_index != 0
-                results.rdf[j_traj][rdf_index] +=1
-            end
-        end
-    end
-end
-"""
-    updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
-Performed either at the end or during the mc run according to fullham=true/false (saved all datapoints or calculated on the fly). Uses the energy bounds and the previously defined delta_en_hist to calculate the bin in which te current energy value falls for each trajectory. This is used to build up the energy histograms for post-analysis.
-"""
-function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
+# """
+#     updaterdf!(mc_states,results,delta_r2)
+# For each state in a vector of mc_states, we use the distance squared matrix to determine which bin (between zero and 2*r_bound) the distance falls into, we then update results.rdf[bin] to build the radial distribution function
+# """
+# function updaterdf!(mc_states,results,delta_r2)
+#     for j_traj in eachindex(mc_states)
+#         for element in mc_states[j_traj].dist2_mat 
+#             rdf_index=floor(Int,(element/delta_r2))
+#             if rdf_index != 0
+#                 results.rdf[j_traj][rdf_index] +=1
+#             end
+#         end
+#     end
+# end
+# """
+#     updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
+# Performed either at the end or during the mc run according to fullham=true/false (saved all datapoints or calculated on the fly). Uses the energy bounds and the previously defined delta_en_hist to calculate the bin in which te current energy value falls for each trajectory. This is used to build up the energy histograms for post-analysis.
+# """
+# function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
 
-    for update_traj_index in 1:mc_params.n_traj
+#     for update_traj_index in 1:mc_params.n_traj
         
-        if fullham == true #this is done at the end of the cycle
+#         if fullham == true #this is done at the end of the cycle
 
-            hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
-            for en in mc_states[update_traj_index].ham
-                hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1
-                hist[hist_index] += 1
+#             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)
+#             for en in mc_states[update_traj_index].ham
+#                 hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1
+#                 hist[hist_index] += 1
 
-            end
-        push!(results.en_histogram, hist)
+#             end
+#         push!(results.en_histogram, hist)
 
-        else #this is done throughout the simulation
+#         else #this is done throughout the simulation
 
-            en = mc_states[update_traj_index].en_tot
+#             en = mc_states[update_traj_index].en_tot
 
-            hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1 
+#             hist_index = floor(Int,(en - results.en_min) / delta_en_hist) + 1 
 
-            if hist_index < 1 #if energy too low
-                results.en_histogram[update_traj_index][1] += 1 #add to place 1
-            elseif hist_index > results.n_bin #if energy too high
-                results.en_histogram[update_traj_index][(results.n_bin +2)] += 1 #add to place n_bin +2
-            else
-                results.en_histogram[update_traj_index][(hist_index+1)] += 1
-            end
+#             if hist_index < 1 #if energy too low
+#                 results.en_histogram[update_traj_index][1] += 1 #add to place 1
+#             elseif hist_index > results.n_bin #if energy too high
+#                 results.en_histogram[update_traj_index][(results.n_bin +2)] += 1 #add to place n_bin +2
+#             else
+#                 results.en_histogram[update_traj_index][(hist_index+1)] += 1
+#             end
 
-        end
-    end
+#         end
+#     end
 
-end
+# end
 """
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
 functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.

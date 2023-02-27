@@ -31,6 +31,7 @@ end
 returns the histogram index of a single mc_state energy and returns this value. 
 """
 function find_hist_index(mc_state,results,delta_en_hist)
+
     hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
 
     if hist_index < 1
@@ -49,7 +50,7 @@ Returns delta_en_hist,delta_r2
 """
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 
-    # incl 4% leeway
+    # incl 6% leeway
     results.en_min = e_bounds[1] - abs(0.02*e_bounds[1])
     results.en_max = e_bounds[2] + abs(0.02*e_bounds[2])
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
@@ -67,9 +68,9 @@ Self explanatory name, updates the energy histograms in results using the curren
 
 """
 function update_histograms!(mc_states,results,delta_en_hist)
-     for i in eachindex(mc_states)
-        @inbounds index = find_hist_index(mc_states[i],results,delta_en_hist)
-        results.en_histogram[i][index] +=1
+     for i_traj in eachindex(mc_states)
+        @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
+        results.en_histogram[i_traj][histindex] +=1
     end
     return results
 end
