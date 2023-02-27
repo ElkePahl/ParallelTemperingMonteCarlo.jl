@@ -72,7 +72,7 @@ function update_histograms!(mc_states,results,delta_en_hist)
         @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
         results.en_histogram[i_traj][histindex] +=1
     end
-    return results
+    
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
@@ -89,7 +89,7 @@ function update_rdf!(mc_states,results,delta_r2)
             end
         end
     end
-    return results
+    
 end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
@@ -104,10 +104,10 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,del
 
         update_energy_tot(mc_states)
         
-        results = update_histograms!(mc_states,results,delta_en_hist)
-        results = update_rdf!(mc_states,results,delta_r2)
+        update_histograms!(mc_states,results,delta_en_hist)
+        update_rdf!(mc_states,results,delta_r2)
     end
-    return mc_states,results
+    
 end
 
 

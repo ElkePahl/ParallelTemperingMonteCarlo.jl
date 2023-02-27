@@ -272,7 +272,7 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-    mc_states,results = sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
     #sampling step
     # sampling_step!(mc_params,mc_states,i,save_ham)
 
