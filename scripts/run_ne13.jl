@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo#update/version_2a
-using Random, Plots
+using Random#, Plots
 
 #set random seed - for reproducibility
 Random.seed!(1234)
