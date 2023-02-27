@@ -93,7 +93,10 @@ function update_rdf!(mc_states,results,delta_r2)
 end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
+    sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
+
 Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
+Second method does not perform the rdf calculation. This is designed to improve the speed of sampling where the rdf is not required.
 
 
 TO IMPLEMENT:
@@ -106,10 +109,17 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,del
         
         update_histograms!(mc_states,results,delta_en_hist)
         update_rdf!(mc_states,results,delta_r2)
+    end 
+end
+function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
+    if rem(save_index, mc_params.mc_sample) == 0
+
+        update_energy_tot(mc_states)
+        
+        update_histograms!(mc_states,results,delta_en_hist)
     end
     
 end
-
 
 
 end
