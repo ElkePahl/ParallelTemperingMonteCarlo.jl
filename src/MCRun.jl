@@ -174,24 +174,20 @@ save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = true, save::Bool=true, restart::Bool=false,restartindex::Int64=0,save_dir = pwd())
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,restartindex::Int64=0,save_dir = pwd())
 
     #restart isn't compatible with saving the hamiltonian at the moment
 
-    if restart == true
-        save_ham = false
-    end
     
-    if save_ham == false
-        if restart == false
+    
+    
             #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
-            for i_traj = 1:mc_params.n_traj
-                push!(mc_states[i_traj].ham, 0)
-                push!(mc_states[i_traj].ham, 0)
-            end
-
+        for i_traj = 1:mc_params.n_traj
+            push!(mc_states[i_traj].ham, 0)
+            push!(mc_states[i_traj].ham, 0)
         end
-    end
+
+   
 
     a = atom_move_frequency(move_strat)
     v = vol_move_frequency(move_strat)
@@ -204,7 +200,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
     
     #equilibration cycle
-    if restart == false
+    #if restart == false
         #this initialises the max and min energies for histograms
         
             ebounds = [100. , -100.] #emin,emax
@@ -250,24 +246,24 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         if save == true
             save_states(mc_params,mc_states,0,save_dir)
         end
-    end
+    #end
 
 
 
     #main MC loop
 
-    if restart == false
+    #if restart == false
 
-        for i = 1:mc_params.mc_cycles
-            @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
-        end
-
-    else #if restarting
-
-        for i = restartindex:mc_params.mc_cycles
-            @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
-        end 
+    for i = 1:mc_params.mc_cycles
+        @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
     end
+
+    # else #if restarting
+
+    #     for i = restartindex:mc_params.mc_cycles
+    #         @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
+    #     end 
+    # end
     println("MC loop done.")
     #Evaluation
     #average energy
@@ -285,7 +281,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     results.en_avg = en_avg
 
     #heat capacity
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta 
+    
+    for i in 1:mc_params.n_traj]
 
     #acceptance statistics
     results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
