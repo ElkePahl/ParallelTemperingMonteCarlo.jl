@@ -14,6 +14,7 @@ using ..MCMoves
 using ..EnergyEvaluation
 using ..Exchange
 using ..RuNNer
+using ..ReadSave
 
 
 """
@@ -219,6 +220,7 @@ function swap_var_function!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
 
+
 end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
@@ -239,6 +241,7 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
 
         dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+
 
         swap_var_function!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
@@ -283,10 +286,10 @@ end
         Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
 """
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-
     for i_steps = 1:n_steps
         mc_step!(mc_states,mc_params,pot,ensemble)
     end
+
 
     if rand() < 0.1 #attempt to exchange trajectories
         parallel_tempering_exchange!(mc_states,mc_params)
@@ -294,6 +297,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
+
+
+# function ptmc_cycle( pot::nested)
+#    for i =1:pot.cycle
+#       ptmc_cycle!( pot::LJ)
+# end
 
 
 """
@@ -315,92 +324,7 @@ function sampling_step!(mc_params,mc_states,save_index, saveham::Bool)
         end 
 end
 """
-    function save_params(savefile::IOStream, mc_params::MCParams)
-writes the MCParam struct to a savefile
-"""
- function save_params(savefile::IOStream, mc_params::MCParams)
-     write(savefile,"MC_Params \n")
-     write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
-     write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
-     write(savefile,"n_traj: $(mc_params.n_traj)\n")
-     write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
-     write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
 
-    #  close(savefile)
- end
-"""
-    function save_state(savefile::IOStream,mc_state::MCState)
-saves a single mc_state struct to a savefile
-"""
-function save_state(savefile::IOStream,mc_state::MCState)
-    write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
-    write(savefile,"total_energy: $(mc_state.en_tot)\n")
-    write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
-    write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
-
-    if length(mc_state.ham) > 2
-        ham1 = sum(mc_state.ham)
-        ham2 = sum( mc_state.ham .* mc_state.ham)
-    elseif length(mc_state.ham) == 2
-        ham1 = mc_state.ham[1]
-        ham2 = mc_state.ham[2]
-    else
-        ham1 = 0
-        ham2 = 0
-    end
-    write(savefile, "E,E2: $ham1 $ham2 \n")
-    if typeof(mc_state.config.bc) == SphericalBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
-    elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
-    end
-    write(savefile,"configuration \n")
-    for row in mc_state.config.pos
-        write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
-    end
-
-end
-"""
-    save_results(results::Output; directory = pwd())
-Saves the on the fly results and histogram information for re-reading.
-"""
-function save_results(results::Output; directory = pwd())
-    resultsfile =  open("$(directory)/results.data","w+")
-    rdf_file = open("$directory/RDF.data","w+")
-    write(resultsfile,"emin,emax,nbins= $(results.en_min) $(results.en_max) $(results.n_bin) \n")
-    write(resultsfile, "Histograms \n")
-    writedlm(resultsfile,results.en_histogram)
-    close(resultsfile)
-    writedlm(rdf_file,results.rdf)
-    close(rdf_file)
-    
-end
-"""
-    function save_states(mc_params,mc_states,trial_index; directory = pwd())
-opens a savefile, writes the mc params and states and the trial at which it was run. 
-"""
-function save_states(mc_params,mc_states,trial_index, directory; filename="save.data")
-    dummy_index = 0 
-    savefile = open("$(directory)/$(filename)","w+")
-
-    if isfile("$directory/params.data") == false
-        paramsfile = open("$directory/params.data","w+")
-        save_params(paramsfile,mc_params)
-        close(paramsfile)
-    end
-
-    write(savefile,"Save made at step $trial_index \n") #
-    for state in mc_states
-        dummy_index += 1
-        write(savefile, "config $dummy_index \n")
-        save_state(savefile,state)
-        write(savefile,"end \n")
-    end
-    close(savefile)
-end
-
-
-"""
 
     initialise_histograms!(mc_params,results,T)
 functionalised the step in which we build the energy histograms  

@@ -87,6 +87,8 @@ Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
     - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+
+The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
 function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
@@ -115,13 +117,14 @@ function atom_displacement(mc_state,index)
 end 
 """
     function generate_displacements(mc_states,mc_params)
-generates a perturbed atom per trajectory. Accepts `mc_states` as a vector of mc_state structs and `mc_params` to define the vector lengths. Outpur is a vector of `indices` indicating which atom per trajectory has been used to generate `trial positions` 
+generates a perturbed atom per trajectory. Accepts `mc_states` as a vector of mc_state structs and `mc_params` to define the vector lengths. Output is a vector of `indices` indicating which atom per trajectory has been used to generate `trial positions` 
 """
 function generate_displacements(mc_states,mc_params)
     indices=rand(1:mc_params.n_atoms,mc_params.n_traj)
     trial_positions = atom_displacement.(mc_states,indices)
     return indices,trial_positions
 end
+
 # #This method will supercede the above when multiple moves are implemented. Perhaps a more dynamic move strategy system will improve this?
 
 # function generate_displacements(mc_states,mc_params,a,v,r)
@@ -129,6 +132,7 @@ end
 #     trial_positions = atom_displacement.(mc_states,indices)
 #     return indices,trial_positions
 # end
+
 """
     function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
