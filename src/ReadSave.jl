@@ -4,15 +4,13 @@ module ReadSave
 export save_params,save_state,save_results,save_states
 export restart_ptmc,read_results
 export read_multihist
-
-
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
 using ..MCStates
-# using ..MCRun
+
 """
     save_params(savefile::IOStream, mc_params::MCParams)
 writes the MCParam struct to a savefile
