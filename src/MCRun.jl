@@ -1,6 +1,6 @@
 module MCRun
 
-#export MCState
+
 export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results
 export atom_move!,update_max_stepsize!
 export exc_acceptance, exc_trajectories!
@@ -184,16 +184,15 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,restartindex::Int64=0,save_dir = pwd())
 
-    #restart isn't compatible with saving the hamiltonian at the moment
 
     
     
     
             #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
-        for i_traj = 1:mc_params.n_traj
-            push!(mc_states[i_traj].ham, 0)
-            push!(mc_states[i_traj].ham, 0)
-        end
+    for i_traj = 1:mc_params.n_traj
+        push!(mc_states[i_traj].ham, 0)
+        push!(mc_states[i_traj].ham, 0)
+    end
 
    
 
@@ -211,7 +210,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     #if restart == false
         #this initialises the max and min energies for histograms
         
-            ebounds = [100. , -100.] #emin,emax
+        ebounds = [100. , -100.] #emin,emax
        
         
         for i = 1:mc_params.eq_cycles
