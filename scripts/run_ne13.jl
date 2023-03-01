@@ -1,5 +1,7 @@
 
-using ParallelTemperingMonteCarlo#feature/sampling
+
+using ParallelTemperingMonteCarlo
+
 using Random
 
 
