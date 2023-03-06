@@ -91,7 +91,7 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
 
         dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
-        swap_var_function!(mc_state,i_atom,trial_pos,dist2new, energy)
+        swap_config!(mc_state,i_atom,trial_pos,dist2new, energy)
     end   
 end
 
