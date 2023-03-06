@@ -258,16 +258,11 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     println("equilibration done")
 
 
-        if save == true
-            save_states(mc_params,mc_states,0,save_dir)
-        end
+    if save == true
+        save_states(mc_params,mc_states,0,save_dir)
+    end
     
-
-
-
     #main MC loop
-
-    
 
     for i = start_counter:mc_params.mc_cycles
         @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
