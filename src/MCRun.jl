@@ -250,9 +250,9 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
         println("equilibration done")
 
 
-        if save == true
+        #if save == true
             save_states(mc_params,mc_states,0,save_dir)
-        end
+        #end
     #end
 
 
