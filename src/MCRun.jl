@@ -137,6 +137,85 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
+"""
+    test_min(new_en,en_min)
+determines if energy is lower than en_min and returns the minimum
+"""
+function test_min(new_en,en_min)
+    return ifelse(new_en<en_min,new_en,en_min)
+end
+"""
+    test_max(new_en,en_min)
+determines if energy is greater than en_max and returns the minimum
+"""
+function test_max(new_en,en_max)
+    return ifelse(new_en>en_max,new_en,en_max)
+end
+"""
+    check_e_bounds(energy,ebounds)
+Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
+"""
+function check_e_bounds(energy,ebounds)
+    if energy<ebounds[1]
+        ebounds[1]=energy
+    elseif energy>ebounds[2]
+        ebounds[2] = energy
+    else
+    end
+    return ebounds
+end
+"""
+    equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble)
+Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future. 
+
+outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
+
+"""
+function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble)
+
+
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+    n_steps = a + v + r
+    println("Total number of moves per MC cycle: ", n_steps)
+    println()
+
+    for mc_state in mc_states
+        push!(mc_state.ham, 0)
+        push!(mc_state.ham, 0)
+    end
+
+    ebounds = [100. , -100.]
+
+    for i = 1:mc_params.eq_cycles
+
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)
+        
+        for state in mc_states
+            ebounds = checkbounds3(state.en_tot,ebounds)
+        end
+
+        if rem(i, mc_params.n_adjust) == 0
+            for state in mc_states
+                update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+            end
+        end
+        
+    end
+
+    #reset counter-variables
+    for state in mc_states
+        reset_counters(state)
+    end
+
+    delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
+
+    start_counter = 1
+
+    println("equilibration done")
+
+    return mc_states,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r
+
+end
 
 """
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
@@ -186,91 +265,30 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
 
     
-    
-    
-            #If we do not save the hamiltonian we still need to store the E, E**2 terms at each cycle
-    for i_traj = 1:mc_params.n_traj
-        push!(mc_states[i_traj].ham, 0)
-        push!(mc_states[i_traj].ham, 0)
-    end
+    mc_states,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble)
 
    
-
-    a = atom_move_frequency(move_strat)
-    v = vol_move_frequency(move_strat)
-    r = rot_move_frequency(move_strat)
-    #number of MC steps per MC cycle
-    n_steps = a + v + r
-
-    println("Total number of moves per MC cycle: ", n_steps)
-    println()
-
-    
-    #equilibration cycle
-    #if restart == false
-        #this initialises the max and min energies for histograms
-        
-        ebounds = [100. , -100.] #emin,emax
-       
-        
-        for i = 1:mc_params.eq_cycles
-            @inbounds mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
-            #verbose way to save the highest and lowest energies
-                for i_traj = 1:mc_params.n_traj
-                    if mc_states[i_traj].en_tot < ebounds[1]
-                        ebounds[1] = mc_states[i_traj].en_tot
-                    end
-
-                    if mc_states[i_traj].en_tot > ebounds[2]
-                        ebounds[2] = mc_states[i_traj].en_tot
-                    end
-                end
-            #update stepsizes
-
-            if rem(i, mc_params.n_adjust) == 0
-                for i_traj = 1:mc_params.n_traj
-                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-                end 
-            end
-        end
-    #re-set counter variables to zero
-        for i_traj = 1:mc_params.n_traj
-            mc_states[i_traj].count_atom = [0, 0]
-            mc_states[i_traj].count_vol = [0, 0]
-            mc_states[i_traj].count_rot = [0, 0]
-            mc_states[i_traj].count_exc = [0, 0]
-        end
-        #initialise histogram for non-saving hamiltonian 
-        #if save_ham == false
-
-            delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
-
-        #end
-
-        println("equilibration done")
+    println("equilibration done")
 
 
-        #if save == true
+        if save == true
             save_states(mc_params,mc_states,0,save_dir)
-        #end
-    #end
+        end
+    
 
 
 
     #main MC loop
 
-    #if restart == false
+    
 
-    for i = 1:mc_params.mc_cycles
+    for i = start_counter:mc_params.mc_cycles
         @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
     end
 
-    # else #if restarting
+    
 
-    #     for i = restartindex:mc_params.mc_cycles
-    #         @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
-    #     end 
-    # end
+    
     println("MC loop done.")
     #Evaluation
     #average energy
