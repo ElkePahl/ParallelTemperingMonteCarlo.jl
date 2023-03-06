@@ -1,4 +1,4 @@
-using ParallelTemperingMonteCarlo#update/version_2a
+using ParallelTemperingMonteCarlo
 
 using Random
 
@@ -24,6 +24,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 mc_cycles = 20 #default 20% equilibration cycles on top
 
+
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -41,7 +42,7 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 ensemble = NVT(n_atoms)
 #Potential
 # for laptop
-#runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
+# runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
 runnerdir = "/home/ghunter/Documents/RuNNer-master/test-Brass/"
 atomtype="Cu"
