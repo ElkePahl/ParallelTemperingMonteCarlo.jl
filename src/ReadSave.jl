@@ -11,6 +11,8 @@ using ..Configurations
 using ..InputParams
 using ..MCStates
 
+
+
 """
     save_params(savefile::IOStream, mc_params::MCParams)
 writes the MCParam struct to a savefile
@@ -22,9 +24,20 @@ writes the MCParam struct to a savefile
      write(savefile,"n_traj: $(mc_params.n_traj)\n")
      write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
      write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
-
+     
     #  close(savefile)
  end
+ function save_params(savefile::IOStream, mc_params::MCParams,move_strat,ensemble)
+    write(savefile,"MC_Params \n")
+    write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
+    write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
+    write(savefile,"n_traj: $(mc_params.n_traj)\n")
+    write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
+    write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
+    write(savefile,"ensemble: $ensemble\n" )
+    write(savefile,"avr: $(atom_move_frequency(move_strat)) $(vol_move_frequency(move_strat)) $(rot_move_frequency(move_strat)) \n")
+   #  close(savefile)
+end
 """
     save_state(savefile::IOStream,mc_state::MCState)
 saves a single mc_state struct to a savefile
@@ -105,10 +118,7 @@ takes the delimited contents of a savefile and splits it into paramdata to reini
 
 function read_input(savedata)
 
-
     step = savedata[1,5]
-
-    
     configdata = savedata[2:end,:]
 
     return step,configdata
@@ -121,10 +131,15 @@ accepts an array of the delimited paramdata and returns an MCParam struct based 
 function initialise_params(paramdata)
 
     MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
-
-    return MC_param
+    if size(paramdata)[1] > 6
+        ensemble = eval(Meta.parse(paramdata[7,2]))
+        a,v,r = paramdata[8,2],paramdata[8,3],paramsata[8,4]
+        move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
+        return ensemble,move_strat,MC_param
+    else
+        return MC_param
+    end
 end
-
 """
     read_config(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
@@ -208,7 +223,7 @@ end
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
-function restart_ptmc(potential ;directory = pwd(),save_ham = false)
+function restart_ptmc(potential ;directory = pwd())
 
     readfile = open("$(directory)/save.data","r+")
 
@@ -223,17 +238,13 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
 
     close(paramfile)
 
-
     mc_params = initialise_params(paramdata)
     mc_states = read_configs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
+    results  = read_results(directory = directory)
 
 
-    if save_ham == false
-        results  = read_results(directory = directory)
-        return results,mc_params,mc_states,step
-    else
-        return mc_params,mc_states,step
-    end
+    return results,mc_params,mc_states,step
+
 end
 
 """
