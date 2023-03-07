@@ -263,7 +263,7 @@ function restart_ptmc(potential ;directory = pwd())
     results  = read_results(directory = directory)
 
 
-    return results,mc_params,mc_states,step
+    return results,ensemble,move_strat,mc_params,mc_states,step
 
 end
 
