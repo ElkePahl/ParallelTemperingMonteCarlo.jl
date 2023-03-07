@@ -110,7 +110,25 @@ function save_states(mc_params,mc_states,trial_index, directory; filename="save.
     end
     close(savefile)
 end
+function save_states(mc_params,mc_states,trial_index, directory,move_strat,ensemble; filename="save.data")
+    dummy_index = 0 
+    savefile = open("$(directory)/$(filename)","w+")
 
+    if isfile("$directory/params.data") == false
+        paramsfile = open("$directory/params.data","w+")
+        save_params(paramsfile,mc_params,move_strat,ensemble)
+        close(paramsfile)
+    end
+
+    write(savefile,"Save made at step $trial_index \n") #
+    for state in mc_states
+        dummy_index += 1
+        write(savefile, "config $dummy_index \n")
+        save_state(savefile,state)
+        write(savefile,"end \n")
+    end
+    close(savefile)
+end
 """
     readinput(savedata)
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.

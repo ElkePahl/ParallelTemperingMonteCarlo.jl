@@ -267,7 +267,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
 
     if save == true
-        save_states(mc_params,mc_states,0,save_dir)
+        save_states(mc_params,mc_states,0,save_dir,move_strat,ensemble)
     end
     
     #main MC loop
