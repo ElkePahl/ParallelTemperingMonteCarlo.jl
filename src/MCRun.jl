@@ -165,12 +165,12 @@ Determines the parameters of a fully thermalised set of mc_states. The method in
 outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
 
 """
-function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble)
+function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
 
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
     n_steps = a + v + r
-    
+
     println("Total number of moves per MC cycle: ", n_steps)
     println()
 
@@ -260,7 +260,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
 
     
-    mc_states,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble)
+    mc_states,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
 
    
     println("equilibration done")
