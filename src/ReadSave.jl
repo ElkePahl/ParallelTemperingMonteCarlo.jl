@@ -154,7 +154,7 @@ function initialise_params(paramdata)
     MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
     if size(paramdata)[1] > 6
         ensemble = eval(Meta.parse(paramdata[7,2]))
-        a,v,r = paramdata[8,2],paramdata[8,3],paramsata[8,4]
+        a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
         move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
         return ensemble,move_strat,MC_param
     else
