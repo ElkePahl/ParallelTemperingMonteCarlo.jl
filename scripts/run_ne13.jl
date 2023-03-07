@@ -1,7 +1,9 @@
 
+
 using ParallelTemperingMonteCarlo
 
 using Random
+
 
 #set random seed - for reproducibility
 Random.seed!(1234)
