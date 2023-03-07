@@ -248,7 +248,7 @@ save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,restartindex::Int64=0,save_dir = pwd())
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,save_dir = pwd())
 
 
     
@@ -276,13 +276,13 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     #average energy
     n_sample = mc_params.mc_cycles / mc_params.mc_sample
 
-    if save_ham == true
-        en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
-        en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
-    else
-        en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
-        en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
-    end
+    # if save_ham == true
+    #     en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
+    #     en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
+    # else
+    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
+    #end
 
 
     results.en_avg = en_avg
