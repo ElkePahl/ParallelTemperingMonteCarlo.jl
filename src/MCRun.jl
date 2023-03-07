@@ -18,6 +18,7 @@ using ..ReadSave
 using ..MCSampling
 
 
+
 """
     update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
@@ -57,8 +58,6 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     return mc_state
 end
 
-
-
 """
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
@@ -93,7 +92,6 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
 
-
         dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
         swap_config!(mc_state,i_atom,trial_pos,dist2new, energy)
@@ -119,6 +117,8 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
     return mc_states
     
 
+
+    return mc_states
 end
 
 """
