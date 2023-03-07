@@ -151,6 +151,13 @@ function check_e_bounds(energy,ebounds)
     end
     return ebounds
 end
+
+function reset_counters(state)
+    state.count_atom = [0,0]
+    state.count_vol = [0,0]
+    state.count_rot = [0,0]
+    state.count_exc = [0,0]
+end
 """
     equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble)
 Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future. 
@@ -163,6 +170,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble)
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
     n_steps = a + v + r
+    
     println("Total number of moves per MC cycle: ", n_steps)
     println()
 
