@@ -9,6 +9,7 @@ using DelimitedFiles
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
+using ..EnergyEvaluation
 using ..MCStates
 using ..MCMoves
 
@@ -16,7 +17,8 @@ using ..MCMoves
 
 """
     save_params(savefile::IOStream, mc_params::MCParams)
-writes the MCParam struct to a savefile
+    (savefile::IOStream, mc_params::MCParams,move_strat,ensemble)
+writes the MCParam struct to a savefile. Second method also writes the move strategy and ensemble.
 """
  function save_params(savefile::IOStream, mc_params::MCParams)
      write(savefile,"MC_Params \n")
