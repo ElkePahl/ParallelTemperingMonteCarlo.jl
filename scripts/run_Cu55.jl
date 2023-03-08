@@ -1,10 +1,10 @@
-using ParallelTemperingMonteCarlo#update/version_2a
+using ParallelTemperingMonteCarlo
 
 using Random
 
 
 #set random seed - for reproducibility
-Random.seed!(0)
+Random.seed!(1234)
 
 # number of atoms
 
@@ -21,7 +21,6 @@ n_traj = 15
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-
 
 mc_cycles = 20 #default 20% equilibration cycles on top
 
@@ -45,7 +44,7 @@ ensemble = NVT(n_atoms)
 # for laptop
 # runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
 #desktop
-runnerdir = "/home/ghunter/Documents/RuNNer-master/Brass_potential/"
+runnerdir = "/home/ghunter/Documents/RuNNer-master/test-Brass/"
 atomtype="Cu"
 
 pot = SerialMLPotential(runnerdir,atomtype);

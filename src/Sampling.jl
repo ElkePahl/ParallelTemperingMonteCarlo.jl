@@ -3,6 +3,8 @@ module MCSampling
 #export sampling_step!
 
 
+export sampling_step!, initialise_histograms!
+
 using StaticArrays,LinearAlgebra
 using ..MCStates
 using ..Configurations
@@ -10,7 +12,8 @@ using ..InputParams
 using ..BoundaryConditions
 
 """
-    update_energy_tot(mc_states)
+    update_energy_tot(mc_state)
+
 function to update the current energy and energy squared values for coarse analysis of averages at the end. 
 """
 # function update_energy_tot(mc_state)
@@ -31,6 +34,7 @@ end
 returns the histogram index of a single mc_state energy and returns this value. 
 """
 function find_hist_index(mc_state,results,delta_en_hist)
+
     hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
 
     if hist_index < 1
@@ -48,10 +52,10 @@ Function to create the energy and radial histograms at the end of equilibration.
 Returns delta_en_hist,delta_r2
 """
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
+    # incl 6% leeway
+    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
 
-    # incl 4% leeway
-    results.en_min = e_bounds[1] - abs(0.02*e_bounds[1])
-    results.en_max = e_bounds[2] + abs(0.02*e_bounds[2])
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     delta_r2 = 4*bc.radius2/results.n_bin/5 
 
@@ -63,20 +67,22 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 end
 """
     update_histograms!(mc_states,results,delta_en_hist)
-Operating on each state in mc_states, determines the index of the histogram and updates the corresponding value in results.
+Self explanatory name, updates the energy histograms in results using the current mc_states.en_tot
+
 """
 function update_histograms!(mc_states,results,delta_en_hist)
-     for i in eachindex(mc_states)
-        @inbounds index = find_hist_index(mc_states[i],results,delta_en_hist)
-        results.en_histogram[i][index] +=1
+     for i_traj in eachindex(mc_states)
+        @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
+        results.en_histogram[i_traj][histindex] +=1
     end
-    return results
+
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
 """
     update_rdf!(mc_states,results,delta_r2)
-Very stripped down double for-loop to update radial distribution functions. This should be made optional as it accounts for 7.2 of the 7.6μs that sampling takes
+Self explanatory name, iterates over mc_states and adds to the appropriate results.rdf histogram. Type stable by the initialise function specifying a vector of integers.  
+
 """
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
@@ -87,26 +93,36 @@ function update_rdf!(mc_states,results,delta_r2)
             end
         end
     end
+    
 end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
-Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
+    sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
 
-TO DO: 
-    - make RDF optional, this alone is the majority of the sampling step.
+Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
+Second method does not perform the rdf calculation. This is designed to improve the speed of sampling where the rdf is not required.
+
+
+TO IMPLEMENT:
+This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
 """
 function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
+
         update_energy_tot(mc_states)
-        # for state in mc_states
-        #     state = update_energy_tot(state)
-        # end
-        results = update_histograms!(mc_states,results,delta_en_hist)
-        results = update_rdf!(mc_states,results,delta_r2)
-    end
-    return mc_states,results
+        
+        update_histograms!(mc_states,results,delta_en_hist)
+        update_rdf!(mc_states,results,delta_r2)
+    end 
 end
+function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
+    if rem(save_index, mc_params.mc_sample) == 0
 
-
+        update_energy_tot(mc_states)
+        
+        update_histograms!(mc_states,results,delta_en_hist)
+    end
+    
+end
 
 end

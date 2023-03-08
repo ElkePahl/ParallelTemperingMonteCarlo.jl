@@ -6,11 +6,14 @@ Here we include methods for calculating the metropolis condition and other excha
 
 module Exchange
 
+
 using ..MCStates
 using ..Configurations
 using ..EnergyEvaluation
 
 export metropolis_condition, exc_acceptance,exc_trajectories!
+
+export parallel_tempering_exchange!
 
 
 """
@@ -60,6 +63,29 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
 end 
+
+"""
+    parallel_tempering_exchange!(mc_states,mc_params)
+This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
+"""
+function parallel_tempering_exchange!(mc_states,mc_params)
+    n_exc = rand(1:mc_params.n_traj-1)
+
+    mc_states[n_exc].count_exc[1] += 1
+    mc_states[n_exc+1].count_exc[1] += 1
+
+    
+
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
+        mc_states[n_exc].count_exc[2] += 1
+        mc_states[n_exc+1].count_exc[2] += 1
+
+        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+    end
+
+    return mc_states
+end
+
 
 
 

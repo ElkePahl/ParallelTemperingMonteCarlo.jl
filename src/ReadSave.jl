@@ -63,7 +63,9 @@ end
     save_results(results::Output; directory = pwd())
 Saves the on the fly results and histogram information for re-reading.
 """
-function save_results(results::Output; directory = pwd())
+
+function save_results(results::Output, directory)
+
     resultsfile =  open("$(directory)/results.data","w+")
     rdf_file = open("$directory/RDF.data","w+")
     write(resultsfile,"emin,emax,nbins= $(results.en_min) $(results.en_max) $(results.n_bin) \n")
@@ -102,7 +104,9 @@ end
     readinput(savedata)
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
-function readinput(savedata)
+
+function read_input(savedata)
+
 
     step = savedata[1,5]
 
@@ -116,7 +120,7 @@ end
     initialiseparams(paramdata)
 accepts an array of the delimited paramdata and returns an MCParam struct based on saved data
 """
-function initialiseparams(paramdata)
+function initialise_params(paramdata)
 
     MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
 
@@ -124,10 +128,10 @@ function initialiseparams(paramdata)
 end
 
 """
-    readconfig(oneconfigvec,n_atoms, potential)
+    read_config(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
 """
-function readconfig(oneconfigvec,n_atoms, potential)
+function read_config(oneconfigvec,n_atoms, potential)
     positions = []
     coord_atom = zeros(3)
     for j=1:n_atoms
@@ -156,15 +160,15 @@ function readconfig(oneconfigvec,n_atoms, potential)
 end
 
 """
-    readconfigs(configvecs,n_atoms,n_traj,potential)
+    read_configs(configvecs,n_atoms,n_traj,potential)
 takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
 """
-function readconfigs(configvecs,n_atoms,n_traj,potential)
+function read_configs(configvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
     for idx=1:n_traj
         oneconfig = configvecs[1+ (idx - 1)*lines:(idx*lines), :]
-        onestate = readconfig(oneconfig,n_atoms,potential)
+        onestate = read_config(oneconfig,n_atoms,potential)
 
         push!(states,onestate)
 
@@ -212,7 +216,8 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
 
     filecontents=readdlm(readfile)
 
-    step,configdata = readinput(filecontents)
+    step,configdata = read_input(filecontents)
+
 
     close(readfile)
     paramfile =  open("$(directory)/params.data")
@@ -220,8 +225,10 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
 
     close(paramfile)
 
-    mc_params = initialiseparams(paramdata)
-    mc_states = readconfigs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
+
+    mc_params = initialise_params(paramdata)
+    mc_states = read_configs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
+
 
     if save_ham == false
         results  = read_results(directory = directory)

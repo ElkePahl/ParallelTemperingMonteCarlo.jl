@@ -20,7 +20,9 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
+
 mc_cycles = 400000 #default 20% equilibration cycles on top
+
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
