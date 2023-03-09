@@ -254,6 +254,25 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 
 end
 
+function finalise_results(mc_states,mc_params,results)
+
+    #Energy average
+    n_sample = mc_params.mc_cycles / mc_params.mc_sample
+    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
+    results.en_avg = en_avg
+    #heat capacity
+    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    #count stats 
+    results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
+    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+
+    println(results.heat_cap)
+
+    return results
+
+end
+
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
 
@@ -297,32 +316,28 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     println("MC loop done.")
     #Evaluation
     #average energy
-    n_sample = mc_params.mc_cycles / mc_params.mc_sample
-
-    # if save_ham == true
-    #     en_avg = [sum(mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj] #floor(mc_cycles/mc_sample)
-    #     en2_avg = [sum(mc_states[i_traj].ham .* mc_states[i_traj].ham) / n_sample for i_traj in 1:mc_params.n_traj]
-    # else
-    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
-    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
-    #end
-
-
-    results.en_avg = en_avg
-
-    #heat capacity
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta 
+    # n_sample = mc_params.mc_cycles / mc_params.mc_sample
+  
+    # en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+    # en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
     
-    for i in 1:mc_params.n_traj]
 
-    #acceptance statistics
-    results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
-    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
 
-    println(results.heat_cap)
+    # results.en_avg = en_avg
+
+    # #heat capacity
+    # results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta 
+    
+    # for i in 1:mc_params.n_traj]
+
+    # #acceptance statistics
+    # results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
+    # results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+
+    # println(results.heat_cap)
 
     #energy histograms
-
+    results = finalise_results(mc_states,mc_params,results)
     #TO DO
     # volume (NPT ensemble),rot moves ...
     # move boundary condition from config to mc_params?

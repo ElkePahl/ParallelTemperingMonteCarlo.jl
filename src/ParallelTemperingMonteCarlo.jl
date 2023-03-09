@@ -11,18 +11,13 @@ include("MCStates.jl")
 
 
 include("InputParams.jl")
-
 #include("Initialization")
 include("MCMoves.jl")
 include("Exchange.jl")
-
 include("Sampling.jl")
 include("ReadSave.jl")
-
 include("MCRun.jl")
 include("multihist.jl")
-
-
 include("parallelrun.jl")
 
 
@@ -35,10 +30,8 @@ include("parallelrun.jl")
  #@reexport using .Initialization
  @reexport using .MCMoves
  @reexport using .Exchange
-
  @reexport using .MCSampling
  @reexport using .ReadSave
-
  @reexport using .MCRun
  @reexport using .Multihistogram
 
