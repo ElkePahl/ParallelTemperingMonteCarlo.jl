@@ -18,6 +18,7 @@ using ..ReadSave
 using ..MCSampling
 
 
+
 """
     update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
@@ -58,7 +59,6 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
 end
 
 
-
 """
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
@@ -92,7 +92,6 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     
     
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-
 
         dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
@@ -135,8 +134,10 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         parallel_tempering_exchange!(mc_states,mc_params)
     end
 
+
     return mc_states
 end
+
 
 """
     check_e_bounds(energy,ebounds)
@@ -270,15 +271,17 @@ save_ham: whether or not to save every energy in a vector, or calculate averages
 save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
-
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,save_dir = pwd())
 
 
-    
+
+  
     mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
 
    
     println("equilibration done")
+
+
 
 
     if save == true
@@ -293,7 +296,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
 
     
 
-    
+ 
     println("MC loop done.")
     #Evaluation
     #average energy

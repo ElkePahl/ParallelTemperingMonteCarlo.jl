@@ -136,7 +136,6 @@ end
     readinput(savedata)
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
-
 function read_input(savedata)
 
     step = savedata[1,5]
@@ -264,6 +263,7 @@ function restart_ptmc(potential ;directory = pwd())
 
 
     return results,ensemble,move_strat,mc_params,mc_states,step
+
 
 end
 
