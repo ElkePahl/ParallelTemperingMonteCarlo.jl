@@ -2,7 +2,7 @@ module MCRun
 
 
 export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results
-export atom_move!,update_max_stepsize!
+export atom_move!
 export exc_acceptance, exc_trajectories!
 
 using StaticArrays,DelimitedFiles
@@ -18,48 +18,10 @@ using ..ReadSave
 using ..MCSampling
 
 
-"""
-    update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
-Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
-if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
-each cycle consists of `a` atom, `v` volume and `r` rotation moves.
-Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).  
-"""
-function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.4, max_acc = 0.6)
-    #atom moves
-    acc_rate = mc_state.count_atom[2] / (n_update * a)
-    if acc_rate < min_acc
-        mc_state.max_displ[1] *= 0.9
-    elseif acc_rate > max_acc
-        mc_state.max_displ[1] *= 1.1
-    end
-    mc_state.count_atom[2] = 0
-    #volume moves
-    if v > 0
-        acc_rate = mc_state.count_vol[2] / (n_update * v)
-        if acc_rate < min_acc
-            mc_state.max_displ[2] *= 0.9
-        elseif acc_rate > max_acc
-            mc_state.max_displ[2] *= 1.1
-        end
-        mc_state.count_vol[2] = 0
-    end
-    #rotation moves
-    if r > 0
-        acc_rate = mc_state.count_rot[2] / (n_update * r)
-        if acc_rate < min_acc
-            mc_state.max_displ[3] *= 0.9
-        elseif acc_rate > max_acc
-            mc_state.max_displ[3] *= 1.1
-        end
-        mc_state.count_rot[2] = 0
-    end
-    return mc_state
-end
 
 
 
-"""
+"""  
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
@@ -76,7 +38,7 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
-        (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+            (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
         The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
 
 """
@@ -254,24 +216,7 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
 
 end
 
-function finalise_results(mc_states,mc_params,results)
 
-    #Energy average
-    n_sample = mc_params.mc_cycles / mc_params.mc_sample
-    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
-    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
-    results.en_avg = en_avg
-    #heat capacity
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
-    #count stats 
-    results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
-    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
-
-    println(results.heat_cap)
-
-    return results
-
-end
 
 """
     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
@@ -290,14 +235,11 @@ save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,save_dir = pwd())
-
-
-    
-    mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
-
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
    
-    println("equilibration done")
+    mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
+   
+    #println("equilibration done")
 
 
     if save == true
