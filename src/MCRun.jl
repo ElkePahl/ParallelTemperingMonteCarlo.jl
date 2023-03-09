@@ -175,7 +175,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     return mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r
 
 end
-function equilibration_cycle!( pot; save_dir=pwd() )
+function equilibration_cycle!( pot, save_dir=pwd() )
 
     results,ensemble,move_strat,mc_params,mc_states,step = restart_ptmc(pot,directory=save_dir)
 
