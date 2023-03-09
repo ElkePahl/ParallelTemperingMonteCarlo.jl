@@ -4,18 +4,21 @@ module ReadSave
 export save_params,save_state,save_results,save_states
 export restart_ptmc,read_results
 export read_multihist
-
-
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
+using ..EnergyEvaluation
 using ..MCStates
-# using ..MCRun
+using ..MCMoves
+
+
+
 """
     save_params(savefile::IOStream, mc_params::MCParams)
-writes the MCParam struct to a savefile
+    (savefile::IOStream, mc_params::MCParams,move_strat,ensemble)
+writes the MCParam struct to a savefile. Second method also writes the move strategy and ensemble.
 """
  function save_params(savefile::IOStream, mc_params::MCParams)
      write(savefile,"MC_Params \n")
@@ -24,9 +27,20 @@ writes the MCParam struct to a savefile
      write(savefile,"n_traj: $(mc_params.n_traj)\n")
      write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
      write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
-
+     
     #  close(savefile)
  end
+ function save_params(savefile::IOStream, mc_params::MCParams,move_strat,ensemble)
+    write(savefile,"MC_Params \n")
+    write(savefile,"total_cycles: $(mc_params.mc_cycles)\n")
+    write(savefile,"mc_samples: $(mc_params.mc_sample)\n")
+    write(savefile,"n_traj: $(mc_params.n_traj)\n")
+    write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
+    write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
+    write(savefile,"ensemble: $ensemble\n" )
+    write(savefile,"avr: $(atom_move_frequency(move_strat)) $(vol_move_frequency(move_strat)) $(rot_move_frequency(move_strat)) \n")
+   #  close(savefile)
+end
 """
     save_state(savefile::IOStream,mc_state::MCState)
 saves a single mc_state struct to a savefile
@@ -99,18 +113,32 @@ function save_states(mc_params,mc_states,trial_index, directory; filename="save.
     end
     close(savefile)
 end
+function save_states(mc_params,mc_states,trial_index, directory,move_strat,ensemble; filename="save.data")
+    dummy_index = 0 
+    savefile = open("$(directory)/$(filename)","w+")
 
+    if isfile("$directory/params.data") == false
+        paramsfile = open("$directory/params.data","w+")
+        save_params(paramsfile,mc_params,move_strat,ensemble)
+        close(paramsfile)
+    end
+
+    write(savefile,"Save made at step $trial_index \n") #
+    for state in mc_states
+        dummy_index += 1
+        write(savefile, "config $dummy_index \n")
+        save_state(savefile,state)
+        write(savefile,"end \n")
+    end
+    close(savefile)
+end
 """
     readinput(savedata)
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
-
 function read_input(savedata)
 
-
     step = savedata[1,5]
-
-    
     configdata = savedata[2:end,:]
 
     return step,configdata
@@ -123,10 +151,14 @@ accepts an array of the delimited paramdata and returns an MCParam struct based 
 function initialise_params(paramdata)
 
     MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
-
-    return MC_param
+    
+    ensemble = eval(Meta.parse(paramdata[7,2]))
+    a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
+    move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
+    
+    return ensemble,move_strat,MC_param
+    
 end
-
 """
     read_config(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
@@ -210,7 +242,7 @@ end
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
-function restart_ptmc(potential ;directory = pwd(),save_ham = false)
+function restart_ptmc(potential ;directory = pwd())
 
     readfile = open("$(directory)/save.data","r+")
 
@@ -225,17 +257,14 @@ function restart_ptmc(potential ;directory = pwd(),save_ham = false)
 
     close(paramfile)
 
-
-    mc_params = initialise_params(paramdata)
+    ensemble,move_strat,mc_params = initialise_params(paramdata)
     mc_states = read_configs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
+    results  = read_results(directory = directory)
 
 
-    if save_ham == false
-        results  = read_results(directory = directory)
-        return results,mc_params,mc_states,step
-    else
-        return mc_params,mc_states,step
-    end
+    return results,ensemble,move_strat,mc_params,mc_states,step
+
+
 end
 
 """

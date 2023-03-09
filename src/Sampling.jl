@@ -52,6 +52,7 @@ Function to create the energy and radial histograms at the end of equilibration.
 Returns delta_en_hist,delta_r2
 """
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
+
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
     results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
@@ -60,8 +61,10 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     delta_r2 = 4*bc.radius2/results.n_bin/5 
 
     for i_traj in 1:mc_params.n_traj       
-        push!(results.en_histogram,zeros(Int,results.n_bin + 2))
-        push!(results.rdf,zeros(Int,results.n_bin*5))
+
+        push!(results.en_histogram,zeros(results.n_bin + 2))
+        push!(results.rdf,zeros(results.n_bin*5))
+
     end
     return delta_en_hist,delta_r2
 end

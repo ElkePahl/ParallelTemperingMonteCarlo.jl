@@ -4,7 +4,6 @@ authors = ["Elke Pahl <Elke.Pahl@auckland.ac.nz>"]
 version = "0.1.0"
 
 [deps]
-
 DFTK = "acf6eb54-70d9-11e9-0013-234b7a5f5337"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"

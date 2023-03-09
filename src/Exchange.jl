@@ -15,7 +15,6 @@ export metropolis_condition, exc_acceptance,exc_trajectories!
 
 export parallel_tempering_exchange!
 
-
 """
     metropolis_condition(ensemble, delta_en, beta)
 Returns probability to accept a MC move at inverse temperature `beta` 
