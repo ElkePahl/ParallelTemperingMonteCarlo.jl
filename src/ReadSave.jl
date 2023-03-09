@@ -172,7 +172,7 @@ function read_config(oneconfigvec,n_atoms, potential)
         push!(positions,coord_atom)
     end
     if oneconfigvec[7,2] == "SphericalBC{Float64}"
-        boundarycondition = SphericalBC(radius=oneconfigvec[7,3])
+        boundarycondition = SphericalBC(radius = sqrt(oneconfigvec[7,3]))
     end
     counta = [oneconfigvec[5,2], oneconfigvec[5,3]]
     countv = [oneconfigvec[5,4], oneconfigvec[5,5]]
