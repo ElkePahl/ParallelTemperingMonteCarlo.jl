@@ -172,7 +172,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
 
     println("equilibration done")
 
-    return mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r
+    return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r
 
 end
 function equilibration_cycle!( pot, save_dir=pwd() )
@@ -185,7 +185,7 @@ function equilibration_cycle!( pot, save_dir=pwd() )
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
 
-    return mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,step,n_steps,a,v,r
+    return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,step,n_steps,a,v,r
 
 end
 
@@ -237,7 +237,7 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 
 function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
    
-    mc_states,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
+    mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
    
     #println("equilibration done")
 
