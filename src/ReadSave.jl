@@ -63,7 +63,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
     write(savefile, "E,E2: $ham1 $ham2 \n")
     if typeof(mc_state.config.bc) == SphericalBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
+        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(sqrt(mc_state.config.bc.radius2)) \n")
     elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
         write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
     end
@@ -172,7 +172,7 @@ function read_config(oneconfigvec,n_atoms, potential)
         push!(positions,coord_atom)
     end
     if oneconfigvec[7,2] == "SphericalBC{Float64}"
-        boundarycondition = SphericalBC(radius = sqrt(oneconfigvec[7,3]))
+        boundarycondition = SphericalBC(radius = (oneconfigvec[7,3]))
     end
     counta = [oneconfigvec[5,2], oneconfigvec[5,3]]
     countv = [oneconfigvec[5,4], oneconfigvec[5,5]]
