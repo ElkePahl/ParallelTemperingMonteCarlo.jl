@@ -2,7 +2,7 @@ module ReadSave
 
 
 export save_params,save_state,save_results,save_states
-export restart_ptmc,read_results
+export restart_ptmc,read_results,read_config,init_sim
 export read_multihist
 using StaticArrays
 using DelimitedFiles
@@ -149,9 +149,9 @@ end
     initialiseparams(paramdata)
 accepts an array of the delimited paramdata and returns an MCParam struct based on saved data
 """
-function initialise_params(paramdata)
+function initialise_params(paramdata;eq_percentage = 0.2)
 
-    MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
+    MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],eq_percentage = eq_percentage,mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
     
     ensemble = eval(Meta.parse(paramdata[7,2]))
     a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
@@ -180,10 +180,10 @@ function read_config(config_info)
     return config
 end
 """
-    read_state(onestatevec,n_atoms, potential)
+    read_state(onestatevec, potential)
 reads a single trajectory based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
 """
-function read_state(onestatevec,n_atoms, potential)
+function read_state(onestatevec, potential)
     config = read_config(onestatevec[7:end-1,:])
 
     counta = [onestatevec[5,2], onestatevec[5,3]]
@@ -213,7 +213,7 @@ function read_states(trajvecs,n_atoms,n_traj,potential)
     lines = Int64(9+n_atoms)
     for idx=1:n_traj
         onetraj = trajvecs[1+ (idx - 1)*lines:(idx*lines), :]
-        onestate = read_state(onetraj,n_atoms,potential)
+        onestate = read_state(onetraj,potential)
 
         push!(states,onestate)
 
@@ -250,7 +250,35 @@ function read_results(;directory=pwd())
     return results
 
 end
+"""
+    init_sim(pot ;dir=pwd())
+Function designed to take an input file named by kwarg `file` and open and initalise the states and parameters required for the simulation. 
+    
+    ---This is not exactly the same as the restart as the params etc are distributed in separate files by the checkpoint function to prevent duplication and slowdown throughout the simulation. 
+"""
+function init_sim(pot ;file="$(pwd())/input.data")
+    file=open(file,"r+")
+    init = readdlm(file)
+    close(file)
+    paramsdata,simdata,config_data = init[1:8,:],init[9:11,:],init[12:end,:]
 
+    ensemble,move_strat,mc_params = initialise_params(paramsdata)
+
+    temps=TempGrid{mc_params.n_traj}(simdata[1,2],simdata[1,3])
+
+    max_displ_atom=[0.1*sqrt(simdata[2,2]*t) for t in temps.t_grid]
+
+    start_config = read_config(config_data)
+
+    length(start_config.pos) == mc_params.n_atoms || error("number of atoms and positions not the same - check starting config")
+
+    
+    mc_states = [MCState(temps.t_grid[i], temps.beta_grid[i], start_config, pot) for i in 1:mc_params.n_traj]
+
+    results = Output{Float64}(simdata[3,2]; en_min = mc_states[1].en_tot)
+
+    return mc_states,move_strat,mc_params,pot,ensemble,results
+end
 """
     function restart(potential ;directory = pwd())
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.

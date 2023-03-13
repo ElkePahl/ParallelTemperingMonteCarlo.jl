@@ -121,10 +121,27 @@ function reset_counters(state)
     state.count_exc = [0,0]
 end
 """
+    initialisation( pot, save_dir=pwd() )
+Function to restart parallel simulations through the restart_ptmc function. 
+"""
+function initialisation( pot, save_dir=pwd() )
+
+    results,ensemble,move_strat,mc_params,mc_states,step = restart_ptmc(pot,directory=save_dir)
+
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+    n_steps = a + v + r
+
+    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
+
+    return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,step,n_steps,a,v,r
+
+end
+"""
     equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble)
-    ( pot; save_dir=pwd() )
+    
 Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future. 
-Second method "equilibrates" the simulation by reading a complete checkpoint, and returning all required parameters for a ptmc run
+
 
 outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
 
@@ -175,19 +192,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r
 
 end
-function equilibration_cycle!( pot, save_dir=pwd() )
 
-    results,ensemble,move_strat,mc_params,mc_states,step = restart_ptmc(pot,directory=save_dir)
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
-    n_steps = a + v + r
-
-    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
-
-    return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,step,n_steps,a,v,r
-
-end
 
 """
     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
