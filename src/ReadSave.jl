@@ -160,26 +160,40 @@ function initialise_params(paramdata)
     return ensemble,move_strat,MC_param
     
 end
-"""
-    read_config(oneconfigvec,n_atoms, potential)
-reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
-"""
-function read_state(onestatevec,n_atoms, potential)
-    positions = []
-    coord_atom = zeros(3)
-    for j=1:n_atoms
-        coord_atom = SVector(onestatevec[8+j,1] ,onestatevec[8+j,2] ,onestatevec[8+j,3] )
+function read_config(config_info)
+    positions =  []
+    if config_info[1,2] == "SphericalBC{Float64}"
+        boundarycondition = SphericalBC(radius = (config_info[1,3]))
+    end
+
+    for row in eachrow(config_info[3:end,:])
+        coord_atom = SVector(row[1] ,row[2] ,row[3] )
         push!(positions,coord_atom)
     end
-    if onestatevec[7,2] == "SphericalBC{Float64}"
-        boundarycondition = SphericalBC(radius = (onestatevec[7,3]))
-    end
+
+    config = Config(positions,boundarycondition)
+    
+    return config
+end
+"""
+    read_state(onestatevec,n_atoms, potential)
+reads a single trajectory based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
+"""
+function read_state(onestatevec,n_atoms, potential)
+    config = read_config(onestatevec[7:end-1,:])
+    # for j=1:n_atoms
+    #     coord_atom = SVector(onestatevec[8+j,1] ,onestatevec[8+j,2] ,onestatevec[8+j,3] )
+    #     push!(positions,coord_atom)
+    # end
+    # if onestatevec[7,2] == "SphericalBC{Float64}"
+    #     boundarycondition = SphericalBC(radius = (onestatevec[7,3]))
+    # end
     counta = [onestatevec[5,2], onestatevec[5,3]]
     countv = [onestatevec[5,4], onestatevec[5,5]]
     countr = [onestatevec[5,6], onestatevec[5,7]]
     countx = [onestatevec[5,8], onestatevec[5,9]]
     
-    mcstate = MCState(onestatevec[2,2], onestatevec[2,3],Config(positions,boundarycondition), potential ; max_displ=[onestatevec[4,2], onestatevec[4,3], onestatevec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
+    mcstate = MCState(onestatevec[2,2], onestatevec[2,3],config, potential ; max_displ=[onestatevec[4,2], onestatevec[4,3], onestatevec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
 
     mcstate.en_tot = onestatevec[3,2] #incl current energy
 
@@ -193,8 +207,8 @@ function read_state(onestatevec,n_atoms, potential)
 end
 
 """
-    read_configs(configvecs,n_atoms,n_traj,potential)
-takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
+    read_states(trajvecs,n_atoms,n_traj,potential)
+takes the entirety of the trajectory information, splits it into n_traj configs and outputs them as a new mc_states vector.
 """
 function read_states(trajvecs,n_atoms,n_traj,potential)
     states = []
