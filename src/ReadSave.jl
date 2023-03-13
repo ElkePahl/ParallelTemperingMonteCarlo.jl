@@ -160,6 +160,10 @@ function initialise_params(paramdata)
     return ensemble,move_strat,MC_param
     
 end
+"""
+    read_config(config_info)
+function to read specifically a configuration from within the wider state information. This will be used both with the restart functions and the initialise functions once we have input files.
+"""
 function read_config(config_info)
     positions =  []
     if config_info[1,2] == "SphericalBC{Float64}"
@@ -181,13 +185,7 @@ reads a single trajectory based on the savefile format. The potential must be ma
 """
 function read_state(onestatevec,n_atoms, potential)
     config = read_config(onestatevec[7:end-1,:])
-    # for j=1:n_atoms
-    #     coord_atom = SVector(onestatevec[8+j,1] ,onestatevec[8+j,2] ,onestatevec[8+j,3] )
-    #     push!(positions,coord_atom)
-    # end
-    # if onestatevec[7,2] == "SphericalBC{Float64}"
-    #     boundarycondition = SphericalBC(radius = (onestatevec[7,3]))
-    # end
+
     counta = [onestatevec[5,2], onestatevec[5,3]]
     countv = [onestatevec[5,4], onestatevec[5,5]]
     countr = [onestatevec[5,6], onestatevec[5,7]]
