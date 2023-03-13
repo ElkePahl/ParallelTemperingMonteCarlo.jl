@@ -104,7 +104,7 @@ function save_states(mc_params,mc_states,trial_index, directory; filename="save.
         close(paramsfile)
     end
 
-    write(savefile,"Save made at step $trial_index \n") #
+    write(savefile,"Save_made_at_step $trial_index \n") #
     for state in mc_states
         dummy_index += 1
         write(savefile, "config $dummy_index \n")
@@ -139,7 +139,7 @@ takes the delimited contents of a savefile and splits it into paramdata to reini
 
 function read_input(savedata)
 
-    step = savedata[1,5]
+    step = savedata[1,2]
     configdata = savedata[2:end,:]
 
     return step,configdata

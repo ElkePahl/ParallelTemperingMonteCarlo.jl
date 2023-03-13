@@ -1,5 +1,5 @@
 MC_Params 
-total_cycles: 1000000
+total_cycles: 500000
 mc_samples: 1
 n_traj: 32
 n_atoms: 13
