@@ -164,7 +164,7 @@ end
     read_config(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
 """
-function read_config(oneconfigvec,n_atoms, potential)
+function read_state(oneconfigvec,n_atoms, potential)
     positions = []
     coord_atom = zeros(3)
     for j=1:n_atoms
@@ -196,7 +196,7 @@ end
     read_configs(configvecs,n_atoms,n_traj,potential)
 takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
 """
-function read_configs(configvecs,n_atoms,n_traj,potential)
+function read_states(configvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
     for idx=1:n_traj
@@ -259,7 +259,7 @@ function restart_ptmc(potential ;directory = pwd())
     close(paramfile)
 
     ensemble,move_strat,mc_params = initialise_params(paramdata)
-    mc_states = read_configs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
+    mc_states = read_states(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
     results  = read_results(directory = directory)
 
 
