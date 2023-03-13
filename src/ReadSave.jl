@@ -164,27 +164,27 @@ end
     read_config(oneconfigvec,n_atoms, potential)
 reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
 """
-function read_state(oneconfigvec,n_atoms, potential)
+function read_state(onestatevec,n_atoms, potential)
     positions = []
     coord_atom = zeros(3)
     for j=1:n_atoms
-        coord_atom = SVector(oneconfigvec[8+j,1] ,oneconfigvec[8+j,2] ,oneconfigvec[8+j,3] )
+        coord_atom = SVector(onestatevec[8+j,1] ,onestatevec[8+j,2] ,onestatevec[8+j,3] )
         push!(positions,coord_atom)
     end
-    if oneconfigvec[7,2] == "SphericalBC{Float64}"
-        boundarycondition = SphericalBC(radius = (oneconfigvec[7,3]))
+    if onestatevec[7,2] == "SphericalBC{Float64}"
+        boundarycondition = SphericalBC(radius = (onestatevec[7,3]))
     end
-    counta = [oneconfigvec[5,2], oneconfigvec[5,3]]
-    countv = [oneconfigvec[5,4], oneconfigvec[5,5]]
-    countr = [oneconfigvec[5,6], oneconfigvec[5,7]]
-    countx = [oneconfigvec[5,8], oneconfigvec[5,9]]
+    counta = [onestatevec[5,2], onestatevec[5,3]]
+    countv = [onestatevec[5,4], onestatevec[5,5]]
+    countr = [onestatevec[5,6], onestatevec[5,7]]
+    countx = [onestatevec[5,8], onestatevec[5,9]]
     
-    mcstate = MCState(oneconfigvec[2,2], oneconfigvec[2,3],Config(positions,boundarycondition), potential ; max_displ=[oneconfigvec[4,2], oneconfigvec[4,3], oneconfigvec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
+    mcstate = MCState(onestatevec[2,2], onestatevec[2,3],Config(positions,boundarycondition), potential ; max_displ=[onestatevec[4,2], onestatevec[4,3], onestatevec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
 
-    mcstate.en_tot = oneconfigvec[3,2] #incl current energy
+    mcstate.en_tot = onestatevec[3,2] #incl current energy
 
-    push!(mcstate.ham,oneconfigvec[6,2])
-    push!(mcstate.ham,oneconfigvec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
+    push!(mcstate.ham,onestatevec[6,2])
+    push!(mcstate.ham,onestatevec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
 
 
     
@@ -196,12 +196,12 @@ end
     read_configs(configvecs,n_atoms,n_traj,potential)
 takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
 """
-function read_states(configvecs,n_atoms,n_traj,potential)
+function read_states(trajvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
     for idx=1:n_traj
-        oneconfig = configvecs[1+ (idx - 1)*lines:(idx*lines), :]
-        onestate = read_config(oneconfig,n_atoms,potential)
+        onetraj = trajvecs[1+ (idx - 1)*lines:(idx*lines), :]
+        onestate = read_state(onetraj,n_atoms,potential)
 
         push!(states,onestate)
 
