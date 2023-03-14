@@ -86,7 +86,10 @@ end
 
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+             mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
         Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
+
+        second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save funcitons. 
 """
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
@@ -178,9 +181,6 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     end
 
     delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
-
-    println("equilibration done")
-
     return mc_states,results,delta_en_hist,delta_r2
 
 end
@@ -188,7 +188,7 @@ end
     equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
 while initialisation sets mc_states,params etc we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the equilibration_cycle! function that optionally removes the thermalisation from restart.
 
-    --NB in future we will add a method for restarting from an incomplete equilibration. Additional changes would be vararg output that excludes delta_en_hist and potentially switching the use of a,v,r for directly using the move_strat struct. 
+
 """
 function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
     if restart == true
@@ -202,35 +202,6 @@ function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_ste
 
     return mc_states,results,delta_en_hist,delta_r2
 end
-
-
-# """"
-#     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
-# functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
-# """
-# function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save, i,save_dir,delta_en_hist,delta_r2)
-
-
-#     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-
-#     sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
-    
-#     #step adjustment
-#     if rem(i, mc_params.n_adjust) == 0
-#         for i_traj = 1:mc_params.n_traj
-#             update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-#         end 
-#     end
-
-#     if save == true
-#         if rem(i,1000) == 0
-#             save_states(mc_params,mc_states,i,save_dir)
-#             save_results(results,save_dir)
-#         end
-#     end
-
-# end
-
 
 
 """
@@ -253,8 +224,9 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
 function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
 
+    #first we initialise the simulation with arguments matching the initialise function's various methods
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
-    
+    #equilibration thermalises new simulaitons and sets the histograms and results
     mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
    
     println("equilibration done")
@@ -286,8 +258,9 @@ end
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
 """
-- possible struct containing params relating to the simulation such as min/max acceptance rate, save/checkpoint frequency and whether to store RDF info. 
-- equilibration should have its own function with variable methods for restart etc.
+--NB in future we will add a method for restarting from an incomplete equilibration. Additional changes would be vararg output that excludes delta_en_hist and potentially switching the use of a,v,r for directly using the move_strat struct. 
+
+Want firmer keywords and a better way to initialise the potential from a file.
 
 
 """

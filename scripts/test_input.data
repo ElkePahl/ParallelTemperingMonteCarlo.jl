@@ -1,4 +1,4 @@
-MC_Params 
+MC_Params
 total_cycles: 300000
 mc_samples: 1
 n_traj: 32
