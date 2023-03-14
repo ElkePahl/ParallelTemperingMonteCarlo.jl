@@ -51,7 +51,7 @@ end
 
 
 """
-    function restart(potential ;directory = pwd())
+    function restart_ptmc(potential, directory)
 function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
 """
 function restart_ptmc(potential,directory)
@@ -73,7 +73,7 @@ function restart_ptmc(potential,directory)
     mc_states = read_states(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
     results  = read_results(directory = directory)
 
-    return mc_states,move_strat,mc_params,pot,ensemble,results,step
+    return mc_states,move_strat,mc_params,potential,ensemble,results,step
 
 end
 """
