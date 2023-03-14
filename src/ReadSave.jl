@@ -177,7 +177,7 @@ function read_config(config_info)
         boundarycondition = SphericalBC(radius = (config_info[1,3]))
     end
 
-    for row in eachrow(config_info[3:end,:])
+    for row in eachrow(config_info[3:end-1,:])
         coord_atom = SVector(row[1] ,row[2] ,row[3] )
         push!(positions,coord_atom)
     end
