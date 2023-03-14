@@ -80,12 +80,12 @@ end
     initialisation( pot, save_dir )
 Function to restart parallel simulations through the restart_ptmc function. 
 """
-function initialisation( pot, save_dir, restart::Bool;eq_percentage = 0.2)
+function initialisation( pot, save_dir, restart::Bool;eq_percentage = 0.2,startfile="input.data")
 
     if restart == true
         mc_states,move_strat,mc_params,pot,ensemble,results,start_counter = restart_ptmc(pot,save_dir)
     else
-        mc_states,move_strat,mc_params,pot,ensemble,results = init_sim(pot,file,eq_percentage)
+        mc_states,move_strat,mc_params,pot,ensemble,results = init_sim(pot,"$(save_dir)/$(startfile)",eq_percentage)
         start_counter = 1
     end
 
