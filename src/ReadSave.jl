@@ -2,7 +2,7 @@ module ReadSave
 
 
 export save_params,save_state,save_results,save_states
-export read_results,read_config,read_input,read_states
+export read_results,read_config,read_input,read_states,initialise_params
 export read_multihist
 
 
