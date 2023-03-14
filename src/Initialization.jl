@@ -96,7 +96,7 @@ function initialisation( pot, save_dir, restart::Bool;eq_percentage = 0.2)
     println()
 
 
-    return mc_states,mc_params,move_strat,ensemble,results,start_counter,n_steps,a,v,r
+    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 
 end
 function initialisation(mc_states, move_strat, mc_params, pot, ensemble, results)
@@ -105,8 +105,8 @@ function initialisation(mc_states, move_strat, mc_params, pot, ensemble, results
     n_steps = a + v + r
 
     start_counter = 1
-    
-    return mc_states,mc_params,move_strat,ensemble,results,start_counter,n_steps,a,v,r
+
+    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 end
 
 end
