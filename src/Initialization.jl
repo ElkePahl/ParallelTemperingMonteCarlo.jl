@@ -28,7 +28,7 @@ function init_sim(pot ,file,eq_percentage)
     file=open(file,"r+")
     init = readdlm(file)
     close(file)
-    paramsdata,simdata,config_data = init[1:8,:],init[9:11,:],init[12:end,:]
+    paramsdata,simdata,config_data = init[1:8,:],init[9:11,:],init[12:end-1,:]
 
     ensemble,move_strat,mc_params = initialise_params(paramsdata,eq_percentage)
 
