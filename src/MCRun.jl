@@ -16,6 +16,7 @@ using ..Exchange
 using ..RuNNer
 using ..ReadSave
 using ..MCSampling
+using ..Initialization
 
 
 
@@ -99,106 +100,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
-
-"""
-    check_e_bounds(energy,ebounds)
-Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
-"""
-function check_e_bounds(energy,ebounds)
-    if energy<ebounds[1]
-        ebounds[1]=energy
-    elseif energy>ebounds[2]
-        ebounds[2] = energy
-    else
-    end
-    return ebounds
-end
-
-function reset_counters(state)
-    state.count_atom = [0,0]
-    state.count_vol = [0,0]
-    state.count_rot = [0,0]
-    state.count_exc = [0,0]
-end
-"""
-    initialisation( pot, save_dir=pwd() )
-Function to restart parallel simulations through the restart_ptmc function. 
-"""
-function initialisation( pot, save_dir=pwd() )
-
-    results,ensemble,move_strat,mc_params,mc_states,step = restart_ptmc(pot,directory=save_dir)
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
-    n_steps = a + v + r
-
-    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
-
-    return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,step,n_steps,a,v,r
-
-end
-"""
-    equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble)
-    
-Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future. 
-
-
-outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
-
-"""
-function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
-
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
-    n_steps = a + v + r
-
-    println("Total number of moves per MC cycle: ", n_steps)
-    println()
-
-    for mc_state in mc_states
-        push!(mc_state.ham, 0)
-        push!(mc_state.ham, 0)
-    end
-
-    ebounds = [100. , -100.]
-
-    for i = 1:mc_params.eq_cycles
-
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)
-        
-        for state in mc_states
-            ebounds = check_e_bounds(state.en_tot,ebounds)
-        end
-
-        if rem(i, mc_params.n_adjust) == 0
-            for state in mc_states
-                update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
-            end
-        end
-        
-    end
-
-    #reset counter-variables
-    for state in mc_states
-        reset_counters(state)
-    end
-
-    delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
-
-    start_counter = 1
-
-    println("equilibration done")
-
-    return mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r
-
-end
-
-
-"""
-    function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
-functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
-"""
-function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save, i,save_dir,delta_en_hist,delta_r2)
+function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
 
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
@@ -220,6 +122,114 @@ function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_s
     end
 
 end
+"""
+    check_e_bounds(energy,ebounds)
+Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
+"""
+function check_e_bounds(energy,ebounds)
+    if energy<ebounds[1]
+        ebounds[1]=energy
+    elseif energy>ebounds[2]
+        ebounds[2] = energy
+    else
+    end
+    return ebounds
+end
+
+function reset_counters(state)
+    state.count_atom = [0,0]
+    state.count_vol = [0,0]
+    state.count_rot = [0,0]
+    state.count_exc = [0,0]
+end
+
+"""
+    equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble)
+    
+Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future. 
+
+outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
+
+"""
+function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+
+    for mc_state in mc_states
+        push!(mc_state.ham, 0)
+        push!(mc_state.ham, 0)
+    end
+
+    ebounds = [100. , -100.]
+
+    for i = 1:mc_params.eq_cycles
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
+        for state in mc_states
+            ebounds = check_e_bounds(state.en_tot,ebounds)
+        end
+
+        if rem(i, mc_params.n_adjust) == 0
+            for state in mc_states
+                update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+            end
+        end        
+    end
+    #reset counter-variables
+    for state in mc_states
+        reset_counters(state)
+    end
+
+    delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
+
+    println("equilibration done")
+
+    return mc_states,results,delta_en_hist,delta_r2
+
+end
+"""
+    equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+while initialisation sets mc_states,params etc we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the equilibration_cycle! function that optionally removes the thermalisation from restart.
+
+    --NB in future we will add a method for restarting from an incomplete equilibration. Additional changes would be vararg output that excludes delta_en_hist and potentially switching the use of a,v,r for directly using the move_strat struct. 
+"""
+function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+    if restart == true
+
+        delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+        delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
+
+    else
+        mc_states,results,delta_en_hist,delta_r2 = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+    end
+
+    return mc_states,results,delta_en_hist,delta_r2
+end
+
+
+# """"
+#     function ptmc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save_ham, save, i ;delta_en=0. ) 
+# functionalised the main body of the ptmc_run! code. Runs a single mc_state, samples the results, updates the histogram and writes the savefile if necessary.
+# """
+# function ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r, save, i,save_dir,delta_en_hist,delta_r2)
+
+
+#     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+
+#     sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    
+#     #step adjustment
+#     if rem(i, mc_params.n_adjust) == 0
+#         for i_traj = 1:mc_params.n_traj
+#             update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+#         end 
+#     end
+
+#     if save == true
+#         if rem(i,1000) == 0
+#             save_states(mc_params,mc_states,i,save_dir)
+#             save_results(results,save_dir)
+#         end
+#     end
+
+# end
 
 
 
@@ -240,11 +250,14 @@ save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
 
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
+#function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
+function ptmc_run!(input; save::Bool=true, restart::Bool=false,save_dir = pwd())
+    
+    mc_states,mc_params,move_strat,ensemble,results,start_counter,n_steps,a,v,r = initialisation(input...)
+    
+    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
    
-    mc_states,mc_params,move_strat,ensemble,results,delta_en_hist,delta_r2,start_counter,n_steps,a,v,r = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble)
-   
-    #println("equilibration done")
+    println("equilibration done")
 
 
     if save == true
@@ -254,7 +267,7 @@ function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; sav
     #main MC loop
 
     for i = start_counter:mc_params.mc_cycles
-        @inbounds ptmc_cycle!(mc_states,results,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,save,i,save_dir,delta_en_hist,delta_r2)
+        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
     end
   
     println("MC loop done.")

@@ -2,8 +2,10 @@ module ReadSave
 
 
 export save_params,save_state,save_results,save_states
-export restart_ptmc,read_results,read_config,init_sim
+export read_results,read_config
 export read_multihist
+
+
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
@@ -43,7 +45,7 @@ writes the MCParam struct to a savefile. Second method also writes the move stra
 end
 """
     save_state(savefile::IOStream,mc_state::MCState)
-saves a single mc_state struct to a savefile
+saves a single `mc_state` struct to `savefile`
 """
 function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
@@ -74,7 +76,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
 
 end
 """
-    save_results(results::Output; directory = pwd())
+    save_results(results::Output, directory)
 Saves the on the fly results and histogram information for re-reading.
 """
 
@@ -133,7 +135,7 @@ function save_states(mc_params,mc_states,trial_index, directory,move_strat,ensem
     close(savefile)
 end
 """
-    readinput(savedata)
+    read_input(savedata)
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
 
@@ -146,18 +148,23 @@ function read_input(savedata)
 end
 
 """
-    initialiseparams(paramdata)
-accepts an array of the delimited paramdata and returns an MCParam struct based on saved data
+    initialiseparams(paramdata,restart::Bool)
+accepts an array of the delimited paramdata and returns the ensemble, move strategy and mc_params, the eq_percentage is set when initialising simulations. This can be set to zero as it is when restarting a simulation from a checkpoint.
 """
-function initialise_params(paramdata;eq_percentage = 0.2)
+function initialise_params(paramdata,eq_percentage)
 
-    MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],eq_percentage = eq_percentage,mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
+    #MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],eq_percentage = eq_percentage,mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
+
+    mc_cycles,n_traj,n_atoms,mc_sample,n_adjust = paramdata[2,2],paramdata[4,2],paramdata[5,2],paramdata[3,2], paramdata[6,2]
     
+    mc_params = MCParams(mc_cycles,n_traj,n_atoms,eq_percentage=eq_percentage,mc_sample=mc_sample,n_adjust=n_adjust)
+
+
     ensemble = eval(Meta.parse(paramdata[7,2]))
     a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
     move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
     
-    return ensemble,move_strat,MC_param
+    return ensemble,move_strat,mc_params
     
 end
 """
@@ -198,8 +205,6 @@ function read_state(onestatevec, potential)
     push!(mcstate.ham,onestatevec[6,2])
     push!(mcstate.ham,onestatevec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
 
-
-    
 
     return mcstate
 end
@@ -248,62 +253,6 @@ function read_results(;directory=pwd())
     results.rdf = rdf
 
     return results
-
-end
-"""
-    init_sim(pot ;dir=pwd())
-Function designed to take an input file named by kwarg `file` and open and initalise the states and parameters required for the simulation. 
-    
-    ---This is not exactly the same as the restart as the params etc are distributed in separate files by the checkpoint function to prevent duplication and slowdown throughout the simulation. 
-"""
-function init_sim(pot ;file="$(pwd())/input.data")
-    file=open(file,"r+")
-    init = readdlm(file)
-    close(file)
-    paramsdata,simdata,config_data = init[1:8,:],init[9:11,:],init[12:end,:]
-
-    ensemble,move_strat,mc_params = initialise_params(paramsdata)
-
-    temps=TempGrid{mc_params.n_traj}(simdata[1,2],simdata[1,3])
-
-    max_displ_atom=[0.1*sqrt(simdata[2,2]*t) for t in temps.t_grid]
-
-    start_config = read_config(config_data)
-
-    length(start_config.pos) == mc_params.n_atoms || error("number of atoms and positions not the same - check starting config")
-
-    
-    mc_states = [MCState(temps.t_grid[i], temps.beta_grid[i], start_config, pot) for i in 1:mc_params.n_traj]
-
-    results = Output{Float64}(simdata[3,2]; en_min = mc_states[1].en_tot)
-
-    return mc_states,move_strat,mc_params,pot,ensemble,results
-end
-"""
-    function restart(potential ;directory = pwd())
-function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
-"""
-function restart_ptmc(potential ;directory = pwd())
-
-    readfile = open("$(directory)/save.data","r+")
-
-    filecontents=readdlm(readfile)
-
-    step,configdata = read_input(filecontents)
-
-
-    close(readfile)
-    paramfile =  open("$(directory)/params.data")
-    paramdata = readdlm(paramfile)
-
-    close(paramfile)
-
-    ensemble,move_strat,mc_params = initialise_params(paramdata)
-    mc_states = read_states(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
-    results  = read_results(directory = directory)
-
-
-    return results,ensemble,move_strat,mc_params,mc_states,step
 
 end
 
