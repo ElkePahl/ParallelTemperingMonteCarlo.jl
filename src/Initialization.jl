@@ -80,7 +80,7 @@ end
     initialisation( pot, save_dir )
 Function to restart parallel simulations through the restart_ptmc function. 
 """
-function initialisation( pot, save_dir, restart::Bool;eq_percentage = 0.2,startfile="input.data")
+function initialisation(restart::Bool, pot, save_dir;eq_percentage = 0.2,startfile="input.data")
 
     if restart == true
         mc_states,move_strat,mc_params,pot,ensemble,results,start_counter = restart_ptmc(pot,save_dir)
@@ -99,7 +99,7 @@ function initialisation( pot, save_dir, restart::Bool;eq_percentage = 0.2,startf
     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 
 end
-function initialisation(mc_states, move_strat, mc_params, pot, ensemble, results;save=true,save_dir=pwd(),startfile="input.data")
+function initialisation(restart,mc_states, move_strat, mc_params, pot, ensemble, results;save=true,save_dir=pwd(),startfile="input.data")
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
     n_steps = a + v + r

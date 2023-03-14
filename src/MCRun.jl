@@ -251,9 +251,9 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 """
 
 #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
-function ptmc_run!(input; startfile="input.data",save::Bool=true,save_dir = pwd())
+function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
 
-    mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(input...; startfile=startfile)
+    mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
     
     mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
    
