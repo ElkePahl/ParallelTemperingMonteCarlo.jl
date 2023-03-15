@@ -150,6 +150,8 @@ Finds the distance between two positions a and b.
 """
 distance2(a,b) = (a-b)⋅(a-b)
 
+distance2(a,b,bc::SphericalBC) = (a-b)⋅(a-b)
+
 """
     distance2(a,b,bc::CubicBC) 
     
@@ -164,6 +166,6 @@ distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length),
 
 Builds the matrix of squared distances between positions of configuration.
 """
-get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
+get_distance2_mat(conf::Config{N}) where N = [distance2(a,b,conf.bc) for a in conf.pos, b in conf.pos]
 
 end
