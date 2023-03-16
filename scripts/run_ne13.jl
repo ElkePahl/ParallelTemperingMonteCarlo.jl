@@ -8,21 +8,21 @@ using Random
 #set random seed - for reproducibility
 Random.seed!(1234)
 
+println("1234")
+
 # number of atoms
 n_atoms = 13
 
 # temperature grid
 ti = 5.
-tf = 16.
+tf = 20.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-
-mc_cycles = 400 #default 20% equilibration cycles on top
-
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -66,6 +66,7 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 #convert to Bohr
 AtoBohr = 1.8897259886
 pos_ne13 = pos_ne13 * AtoBohr
+println()
 
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -80,14 +81,23 @@ n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
+r_max=0.
+if typeof(bc_ne13)<:SphericalBC
+    r_max = 4*bc_ne13.radius2
+    println(r_max)
+elseif typeof(bc_ne13)<:PeriodicBC
+    r_max = 3/4*bc_ne13.box_length^2
+    println(r_max)
+end
+
 #construct array of MCState (for each temperature)
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-Random.seed!(1234)
-@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false,save=false)
+
+@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results, r_max; save_ham = false)
 
 
 
@@ -96,3 +106,6 @@ Random.seed!(1234)
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)
+
+
+multihistogram(results,temp; outdir = pwd(), NPoints=100)

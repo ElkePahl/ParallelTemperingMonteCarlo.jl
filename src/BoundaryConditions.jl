@@ -38,6 +38,7 @@ struct PeriodicBC{T} <: AbstractBC{T}
     box_length::T
 end
 
+
 """
     check_boundary(bc::SpericalBC,pos)
 
