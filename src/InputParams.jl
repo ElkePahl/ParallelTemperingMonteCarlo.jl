@@ -49,6 +49,7 @@ function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n
     return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust)
 end
 
+
 """
     TempGrid{N}(ti, tf; tdistr) 
     TempGrid(ti, tf, N; tdistr=:geometric)

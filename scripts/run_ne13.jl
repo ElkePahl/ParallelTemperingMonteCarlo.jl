@@ -34,7 +34,7 @@ n_adjust = 100
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
 move_strat = MoveStrategy(atom_moves = n_atoms)  
