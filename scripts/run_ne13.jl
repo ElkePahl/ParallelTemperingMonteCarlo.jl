@@ -99,3 +99,4 @@ Random.seed!(1234)
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)
+
