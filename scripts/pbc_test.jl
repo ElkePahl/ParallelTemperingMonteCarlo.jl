@@ -1,5 +1,3 @@
-
-
 using ParallelTemperingMonteCarlo
 
 using Random
@@ -9,7 +7,7 @@ using Random
 Random.seed!(1234)
 
 # number of atoms
-n_atoms = 13
+n_atoms = 32
 
 # temperature grid
 ti = 5.
@@ -29,7 +27,7 @@ mc_cycles = 1000 #default 20% equilibration cycles on top
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-displ_atom = 0.1 # Angstrom
+displ_atom = 0.5 # Angstrom
 n_adjust = 100
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
@@ -51,31 +49,50 @@ pot = ELJPotentialEven{6}(c)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
-pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
-[2.023342172678102,	-2.136126268595355, 0.666071287554958],
-[2.033761811732818,	-0.643989413759464, -2.133000349161121],
-[0.979777205108572,	2.312002562803556, -1.671909307631893],
-[0.962914279874254,	-0.102326586625353, 2.857083360096907],
-[0.317957619634043,	2.646768968413408, 1.412132053672896],
-[-2.825388342924982, -0.928563755928189, -0.505520471387560],
-[-0.317955944853142, -2.646769840660271, -1.412131825293682],
-[-0.979776174195320, -2.312003751825495, 1.671909138648006],
-[-0.962916072888105, 0.102326392265998,	-2.857083272537599],
-[-2.023340541398004, 2.136128558801072,	-0.666071089291685],
-[-2.033762834001679, 0.643989905095452, 2.132999911364582],
-[0.000002325340981,	0.000000762100600, 0.000000414930733]]
+pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
+  [-2.1918,       -2.1918,       -4.3837],
+  [-2.1918,       -4.3837,       -2.1918],
+  [-4.3837,       -2.1918,       -2.1918],
+  [-4.3837,       -4.3837,        0.0000],
+  [-2.1918,       -2.1918,        0.0000],
+  [-2.1918,       -4.3837,        2.1918],
+  [-4.3837,       -2.1918,        2.1918],
+  [-4.3837,        0.0000,       -4.3837],
+  [-2.1918,        2.1918,       -4.3837],
+  [-2.1918,        0.0000,       -2.1918],
+  [-4.3837,        2.1918,       -2.1918],
+  [-4.3837,        0.0000,        0.0000],
+  [-2.1918,        2.1918,        0.0000],
+  [-2.1918,        0.0000,        2.1918],
+  [-4.3837,        2.1918,        2.1918],
+ [0.0000,       -4.3837,       -4.3837],
+ [2.1918,       -2.1918,       -4.3837],
+ [2.1918,       -4.3837,       -2.1918],
+ [0.0000,       -2.1918,       -2.1918],
+ [0.0000,       -4.3837,        0.0000],
+ [2.1918,       -2.1918,        0.0000],
+ [2.1918,       -4.3837,        2.1918],
+ [0.0000,       -2.1918,        2.1918],
+ [0.0000,        0.0000,       -4.3837],
+ [2.1918,        2.1918,       -4.3837],
+ [2.1918,        0.0000,       -2.1918],
+ [0.0000,        2.1918,       -2.1918],
+ [0.0000,        0.0000,        0.0000],
+ [2.1918,        2.1918,       0.0000],
+ [2.1918,        0.0000,        2.1918],
+ [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
 AtoBohr = 1.8897259886
-pos_ne13 = pos_ne13 * AtoBohr
+pos_ne32 = pos_ne32 * AtoBohr
 
-length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
+length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
+bc_ne32 = PeriodicBC(8.7674 * AtoBohr)   
 
 #starting configuration
-start_config = Config(pos_ne13, bc_ne13)
+start_config = Config(pos_ne32, bc_ne32)
 
 #histogram information
 n_bin = 100
@@ -84,6 +101,8 @@ n_bin = 100
 
 #construct array of MCState (for each temperature)
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
+
+println(mc_states[1].en_tot)
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
@@ -97,4 +116,4 @@ Random.seed!(1234)
 # plot(temp.t_grid,results.heat_cap)
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
-# plot(data)
+# plot(data)]
