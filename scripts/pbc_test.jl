@@ -10,8 +10,8 @@ Random.seed!(1234)
 n_atoms = 32
 
 # temperature grid
-ti = 5.
-tf = 16.
+ti = 20.
+tf = 50.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -20,14 +20,15 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
-displ_atom = 0.5 # Angstrom
+displ_atom = 1.0 # Angstrom
+max_vchange = 0.02
 n_adjust = 100
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
@@ -35,10 +36,10 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(atom_moves = n_atoms)  
+move_strat = MoveStrategy(atom_moves = n_atoms, vol_moves = 1)  
 
 #ensemble
-ensemble = NVT(n_atoms)
+ensemble = NPT(n_atoms,101325)
 
 #ELJpotential for neon
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]

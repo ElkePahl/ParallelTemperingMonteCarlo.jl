@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 
@@ -38,6 +38,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
 move_strat = MoveStrategy(atom_moves = n_atoms)  
+
 
 #ensemble
 ensemble = NVT(n_atoms)

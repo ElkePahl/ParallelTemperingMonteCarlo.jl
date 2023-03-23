@@ -75,6 +75,20 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
 end
 """
+    swap_config!(mc_state, trial_pos, dist2_new, new_energy)
+        Update the configurations, but this time the whole config, including all coordinates, box length, distance matrix and energy matrix
+        If the Metropolis condition is satisfied, these are used to update mc_state. 
+"""
+function swap_config!(mc_state, trial_configs_all, dist2_mat_new::Vector, en_mat_new::Vector, energy)
+
+    mc_state.config = trial_configs_all
+    mc_state.dist2_mat = dist2_mat_new  
+    mc_state.en_atom_vec = en_mat_new
+    mc_state.en_tot = energy
+
+end
+
+"""
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
         (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
         The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
@@ -88,6 +102,21 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
             swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
         end   
 end
+
+"""
+    acc_test! function for volume change
+    the acceptance depends on both energy and volume differences
+"""
+
+function acc_test!(ensemble::NPT, n_atoms, mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
+    
+    
+    if metropolis_condition(ensemble, n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, pressure, beta) >= rand()
+
+        swap_config!(mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
+    end   
+end
+
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
     
     
@@ -103,16 +132,31 @@ end
     function mc_step!(mc_states,mc_params,pot,ensemble)
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
 """
-function mc_step!(mc_states,mc_params,pot,ensemble)
+function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
 
-    indices,trial_positions = generate_displacements(mc_states,mc_params)
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+    #println("a=",a)
+    #println("v=",v)
+    n_atoms=a
+    
+    select=rand(1:a+v+r)
+    if select<=a
+        println("displacement")
+        indices,trial_positions = generate_displacements(mc_states,mc_params)
+        energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
+        for idx in eachindex(mc_states)
+            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
+        end
 
-
-    energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
-
-
-    for idx in eachindex(mc_states)
-        @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
+    elseif select<=a+v
+        println("vchange")
+        trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
+        #get the new distance matrix, energy matrix and total energy for each trajectory
+        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,n_atoms,pot::AbstractDimerPotential)
+        println(en_tot_new)
+        for idx in eachindex(mc_states)
+            @inbounds acc_test!(ensemble, n_atoms, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx])
+        end
     end
 
     return mc_states
@@ -127,7 +171,7 @@ end
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
     for i_steps = 1:n_steps
-        mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
+        mc_states = mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
