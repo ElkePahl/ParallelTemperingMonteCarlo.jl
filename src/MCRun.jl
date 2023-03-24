@@ -16,13 +16,14 @@ using ..Exchange
 using ..RuNNer
 using ..ReadSave
 using ..MCSampling
+
 using ..Initialization
 
 
 
 
-
 """  
+
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
@@ -39,7 +40,9 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+
             (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+
         The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
 
 """
@@ -100,6 +103,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     if rand() < 0.1 #attempt to exchange trajectories
         parallel_tempering_exchange!(mc_states,mc_params)
     end
+
 
     return mc_states
 end
@@ -180,11 +184,14 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
         reset_counters(state)
     end
 
+
     delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
     return mc_states,results,delta_en_hist,delta_r2
 
 end
+
 """
+
     equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
 while initialisation sets mc_states,params etc we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the equilibration_cycle! function that optionally removes the thermalisation from restart.
 
@@ -198,6 +205,7 @@ function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_ste
 
     else
         mc_states,results,delta_en_hist,delta_r2 = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+
     end
 
     return mc_states,results,delta_en_hist,delta_r2
@@ -220,6 +228,8 @@ save_ham: whether or not to save every energy in a vector, or calculate averages
 save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
+function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,save_dir = pwd())
+
 
 #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
 function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
@@ -228,8 +238,10 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
     #equilibration thermalises new simulaitons and sets the histograms and results
     mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+
    
     println("equilibration done")
+
 
 
     if save == true
@@ -239,11 +251,12 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     #main MC loop
 
     for i = start_counter:mc_params.mc_cycles
+
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
     end
   
     println("MC loop done.")
-    #Evaluation
+
 
     results = finalise_results(mc_states,mc_params,results)
     #TO DO
@@ -258,6 +271,7 @@ end
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
 """
+
 -- TO IMPLEMENT -- 
 
 This version is not complete. While "under the hood" is working as it should, not a lot of effort has been put into:
@@ -265,6 +279,7 @@ This version is not complete. While "under the hood" is working as it should, no
     - Making the input script order-invariant by making the I/O smarter
     - Organising the keyword arguments to be more intuitive
     - Expanding the initialise functions to set the type of results we wish to collect (eg no RDF, save configs as well as checkpoints)
+
 
 
 """

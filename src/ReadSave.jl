@@ -4,8 +4,6 @@ module ReadSave
 export save_params,save_state,save_results,save_states
 export read_results,read_config,read_input,read_states,initialise_params
 export read_multihist
-
-
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
@@ -139,9 +137,11 @@ end
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
 
+
 function read_input(savedata)
 
     step = savedata[1,2]
+
     configdata = savedata[2:end,:]
 
     return step,configdata
@@ -151,6 +151,7 @@ end
     initialiseparams(paramdata,restart::Bool)
 accepts an array of the delimited paramdata and returns the ensemble, move strategy and mc_params, the eq_percentage is set when initialising simulations. This can be set to zero as it is when restarting a simulation from a checkpoint.
 """
+
 function initialise_params(paramdata,eq_percentage)
 
     #MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],eq_percentage = eq_percentage,mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
@@ -160,10 +161,11 @@ function initialise_params(paramdata,eq_percentage)
     mc_params = MCParams(mc_cycles,n_traj,n_atoms,eq_percentage=eq_percentage,mc_sample=mc_sample,n_adjust=n_adjust)
 
 
+
     ensemble = eval(Meta.parse(paramdata[7,2]))
     a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
     move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
-    
+
     return ensemble,move_strat,mc_params
     
 end
@@ -175,6 +177,7 @@ function read_config(config_info)
     positions =  []
     if config_info[1,2] == "SphericalBC{Float64}"
         boundarycondition = SphericalBC(radius = (config_info[1,3]))
+
     end
 
     for row in eachrow(config_info[3:end,:])
@@ -210,6 +213,7 @@ function read_state(onestatevec, potential)
 end
 
 """
+
     read_states(trajvecs,n_atoms,n_traj,potential)
 takes the entirety of the trajectory information, splits it into n_traj configs and outputs them as a new mc_states vector.
 """
@@ -219,6 +223,7 @@ function read_states(trajvecs,n_atoms,n_traj,potential)
     for idx=1:n_traj
         onetraj = trajvecs[1+ (idx - 1)*lines:(idx*lines), :]
         onestate = read_state(onetraj,potential)
+
 
         push!(states,onestate)
 
@@ -257,6 +262,7 @@ function read_results(;directory=pwd())
 end
 
 """
+
     read_multihist(;directory=pwd())
 function designed to open and parse multihistogram information. Accepts a single keyword argument pointing to the location of the multihist file analysis.NVT
     returns Temp, heat capacity, its derivative and entropy. All vectors ready to be plotted. 

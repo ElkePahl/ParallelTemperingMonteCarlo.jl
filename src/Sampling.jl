@@ -2,7 +2,10 @@ module MCSampling
 
 #export sampling_step!
 
+
 export sampling_step!, initialise_histograms!,finalise_results
+
+
 using StaticArrays,LinearAlgebra
 using ..MCStates
 using ..Configurations
@@ -11,6 +14,7 @@ using ..BoundaryConditions
 
 """
     update_energy_tot(mc_state)
+
 function to update the current energy and energy squared values for coarse analysis of averages at the end. 
 """
 # function update_energy_tot(mc_state)
@@ -51,14 +55,18 @@ Returns delta_en_hist,delta_r2
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 
     # incl 6% leeway
+
     results.en_min = e_bounds[1] #- abs(0.02*e_bounds[1])
     results.en_max = e_bounds[2] #+ abs(0.02*e_bounds[2])
+
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     delta_r2 = 4*bc.radius2/results.n_bin/5 
 
     for i_traj in 1:mc_params.n_traj       
+
         push!(results.en_histogram,zeros(results.n_bin + 2))
         push!(results.rdf,zeros(results.n_bin*5))
+
     end
     return delta_en_hist,delta_r2
 end
@@ -72,13 +80,14 @@ function update_histograms!(mc_states,results,delta_en_hist)
         @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
         results.en_histogram[i_traj][histindex] +=1
     end
-    
+
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
 """
     update_rdf!(mc_states,results,delta_r2)
 Self explanatory name, iterates over mc_states and adds to the appropriate results.rdf histogram. Type stable by the initialise function specifying a vector of integers.  
+
 """
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
@@ -117,6 +126,7 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
         update_energy_tot(mc_states)
         
         update_histograms!(mc_states,results,delta_en_hist)
+
     end   
 end
 """
@@ -139,6 +149,7 @@ function finalise_results(mc_states,mc_params,results)
     println(results.heat_cap)
 
     return results
+
 
 end
 

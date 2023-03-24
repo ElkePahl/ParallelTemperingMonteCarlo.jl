@@ -12,7 +12,9 @@ using ..Configurations
 using ..EnergyEvaluation
 
 export metropolis_condition, exc_acceptance,exc_trajectories!
+
 export parallel_tempering_exchange!,update_max_stepsize!
+
 
 """
     metropolis_condition(ensemble, delta_en, beta)
@@ -61,6 +63,7 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
 end 
+
 """
     parallel_tempering_exchange!(mc_states,mc_params)
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
@@ -121,6 +124,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     end
     return mc_state
 end
+
 
 
 end

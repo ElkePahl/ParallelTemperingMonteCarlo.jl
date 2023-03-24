@@ -1,4 +1,5 @@
 
+
 using ParallelTemperingMonteCarlo
 
 using Random
@@ -18,7 +19,6 @@ n_traj = 32
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
-
 
 mc_cycles = 1000000 #default 20% equilibration cycles on top
 
@@ -85,8 +85,8 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
+
 
 
 
