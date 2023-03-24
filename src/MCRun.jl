@@ -89,7 +89,7 @@ end
              mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
         Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
 
-        second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save funcitons. 
+        second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save functions. 
 """
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
