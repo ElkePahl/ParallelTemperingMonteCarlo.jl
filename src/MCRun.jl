@@ -258,9 +258,13 @@ end
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
 """
---NB in future we will add a method for restarting from an incomplete equilibration. Additional changes would be vararg output that excludes delta_en_hist and potentially switching the use of a,v,r for directly using the move_strat struct. 
+-- TO IMPLEMENT -- 
 
-Want firmer keywords and a better way to initialise the potential from a file.
+This version is not complete. While "under the hood" is working as it should, not a lot of effort has been put into:
+    - organising the dependencies, properly categorising these is a job for the future.
+    - Making the input script order-invariant by making the I/O smarter
+    - Organising the keyword arguments to be more intuitive
+    - Expanding the initialise functions to set the type of results we wish to collect (eg no RDF, save configs as well as checkpoints)
 
 
 """
