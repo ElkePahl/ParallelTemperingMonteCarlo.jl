@@ -16,7 +16,7 @@ directory = "$(pwd())/scripts"
 testinput = pot,directory
 #I've named the input file, input.data is the default if you don't do this.
 
-ptmc_run!(testinput;startfile="test_input.data",save_dir=directory)
+@time ptmc_run!(testinput;startfile="test_input.data",save_dir=directory)
 
 
 # #----------------------------------------------------#

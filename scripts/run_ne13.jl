@@ -86,7 +86,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 
-@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham = false,save=false)
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
 
 
 
