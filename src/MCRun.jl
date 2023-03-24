@@ -228,8 +228,6 @@ save_ham: whether or not to save every energy in a vector, or calculate averages
 save: whether or not to save the parameters and configurations every 1000 steps
 restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
 """
-function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save_ham::Bool = false, save::Bool=true, restart::Bool=false,save_dir = pwd())
-
 
 #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
 function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
