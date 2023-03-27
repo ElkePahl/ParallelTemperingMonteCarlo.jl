@@ -79,7 +79,7 @@ end
         Update the configurations, but this time the whole config, including all coordinates, box length, distance matrix and energy matrix
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function swap_config!(mc_state, trial_configs_all, dist2_mat_new::Vector, en_mat_new::Vector, energy)
+function swap_config!(mc_state, trial_configs_all::mc_states.config, dist2_mat_new::Vector, en_mat_new::Vector, energy)
 
     mc_state.config = trial_configs_all
     mc_state.dist2_mat = dist2_mat_new  
@@ -111,7 +111,7 @@ end
 function acc_test!(ensemble::NPT, n_atoms, mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
     
     
-    if metropolis_condition(ensemble, n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, pressure, beta) >= rand()
+    if metropolis_condition(ensemble, n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
 
         swap_config!(mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
     end   

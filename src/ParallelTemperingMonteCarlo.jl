@@ -13,11 +13,11 @@ include("InputParams.jl")
 include("MCMoves.jl")
 include("Exchange.jl")
 include("Sampling.jl")
-include("ReadSave.jl")
+#include("ReadSave.jl")
 
 include("MCRun.jl")
-include("multihist.jl")
-include("parallelrun.jl")
+#include("multihist.jl")
+#include("parallelrun.jl")
 
 
  @reexport using .BoundaryConditions

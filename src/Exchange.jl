@@ -37,8 +37,10 @@ function metropolis_condition(::NPT, delta_energy, beta)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function metropolis_condition(::NPT, N, d_en, volume_changed, volume_unchanged, pressure, beta)
-    delta_h = d_en + pressure*(volume_changed-volume_unchanged)*JtoEh*Bohr3tom3
+function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
+    # Joule to hartree -> /2.2937104486906E+17
+    # Bohr^3 to m^3 -> 1.48184743472E-31
+    delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)*3.398928944382626e-14
     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)

@@ -1,4 +1,3 @@
 {
-    "julia.NumThreads": "auto",
-    "julia.environmentPath": "/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl-3"
+    "julia.NumThreads": "auto"
 }
