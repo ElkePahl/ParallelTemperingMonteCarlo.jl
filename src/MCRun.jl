@@ -83,21 +83,37 @@ end
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
     
     
-        if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-
-            swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
-        end   
-end
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
-    
-    
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
 
-        dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
-
-        swap_config!(mc_state,i_atom,trial_pos,dist2new, energy)
+        swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
 end
+
+"""
+acc_test! function for volume change
+the acceptance depends on both energy and volume differences
+"""
+
+function acc_test!(ensemble::NPT, n_atoms, mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
+
+
+if metropolis_condition(ensemble, n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
+
+    swap_config!(mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
+end   
+end
+
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+
+
+if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+
+    dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+
+    swap_config!(mc_state,i_atom,trial_pos,dist2new, energy)
+end   
+end
+
 
 """
     function mc_step!(mc_states,mc_params,pot,ensemble)
@@ -129,7 +145,6 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     for i_steps = 1:n_steps
         mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
     end
-    println("++")
 
     if rand() < 0.1 #attempt to exchange trajectories
         parallel_tempering_exchange!(mc_states,mc_params)
