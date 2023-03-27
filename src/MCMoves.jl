@@ -4,6 +4,7 @@ export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
 export AbstractMove, StatMove
 export AtomMove
 export atom_displacement,generate_displacements #, update_max_stepsize!
+export volume_change,generate_vchange
 
 using StaticArrays
 
@@ -123,6 +124,27 @@ function generate_displacements(mc_states,mc_params)
     indices=rand(1:mc_params.n_atoms,mc_params.n_traj)
     trial_positions = atom_displacement.(mc_states,indices)
     return indices,trial_positions
+end
+
+"""
+    function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
+scale the whole configuration, including positions and the box length.
+returns the trial configuration as a struct. 
+"""
+function volume_change(conf::Config, max_vchange)
+    scale = exp((rand()-0.5)*max_vchange)^(1/3)
+    trial_config = Config(conf.pos * scale,PeriodicBC(conf.bc.box_length * scale))
+    return trial_config
+end
+
+function volume_change(mc_state)
+    trial_config = volume_change(mc_state.config,mc_state.max_displ[2])
+    return trial_config
+end
+
+function generate_vchange(mc_states)
+    trial_configs_all = volume_change.(mc_states)
+    return trial_configs_all
 end
 
 

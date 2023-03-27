@@ -139,9 +139,9 @@ end
     get_energy function when the whole configuration is scaled
         find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
 """
-function get_energy(trial_configs_all,n_atoms,pot::AbstractDimerPotential)
+function get_energy(trial_configs_all,pot::AbstractDimerPotential)
     dist2_mat_new = get_distance2_mat.(trial_configs_all)
-    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, n_atoms, Ref(pot)))
+    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all), Ref(pot)))
 
     return dist2_mat_new,en_atom_vec,en_tot_new
 end
