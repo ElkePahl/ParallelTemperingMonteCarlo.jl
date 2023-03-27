@@ -60,11 +60,41 @@ end
 
 
 """
+    swap_config!(mc_state, trial_configs_all, dist2_mat_new, en_vect_new, en_tot)
+        Update the configurations, but this time the whole config, including all coordinates, box length, distance matrix and energy matrix
+        If the Metropolis condition is satisfied, these are used to update mc_state. 
+"""
+#function swap_config!(mc_state, trial_configs_all::mc_states.config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot)
+    #println("swap_config")
+
+    #mc_state.config.pos = trial_configs_all.pos
+    #mc_state.config.bc = trial_configs_all.bc
+    #mc_state.dist2_mat = dist2_mat_new  
+    #mc_state.en_atom_vec = en_vec_new
+    #mc_state.en_tot = en_tot
+
+#end
+
+function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
+    println("swap_v_config")
+    #for i=1:length(mc_state.config.pos)
+        #mc_state.config.pos[i] = trial_config.pos[i]
+    #end
+    #mc_state.config.bc.box_length = trial_config.bc.box_length
+    mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
+    mc_state.dist2_mat = dist2_mat_new
+    mc_state.en_atom_vec = en_vec_new
+    mc_state.en_tot = en_tot
+end
+
+
+"""
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
 """
-function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
+function swap_config!(mc_state, i_atom::Int64, trial_pos, dist2_new, energy)
+    #println("swap_config_displacement")
 
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
@@ -74,6 +104,8 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[2] += 1
 
 end
+
+
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
         (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
@@ -94,13 +126,16 @@ acc_test! function for volume change
 the acceptance depends on both energy and volume differences
 """
 
-function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_mat_new::Matrix, en_tot_new::Float64)
+function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64)
 
 
-if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
+    if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
+        println("accepted")
+        println("swap")
 
-    swap_config!(mc_state, trial_config, dist2_mat_new, en_mat_new, en_tot_new)
-end   
+        #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
+        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
+    end   
 end
 
 #function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
