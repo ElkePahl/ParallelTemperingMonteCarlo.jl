@@ -2,20 +2,15 @@ module MCSampling
 
 #export sampling_step!
 
-include("/Users/tiantianyu/Downloads/PTMC/Boundaryconditions.jl")
-include("/Users/tiantianyu/Downloads/PTMC/Configurations.jl")
-include("/Users/tiantianyu/Downloads/PTMC/MCStates.jl")
-include("/Users/tiantianyu/Downloads/PTMC/InputParams.jl")
-
 
 
 export sampling_step!, initialise_histograms!
 
 using StaticArrays,LinearAlgebra
-using .MCStates
-using .Configurations
-using .InputParams
-using .BoundaryConditions
+using ..MCStates
+using ..Configurations
+using ..InputParams
+using ..BoundaryConditions
 
 """
     update_energy_tot(mc_state)

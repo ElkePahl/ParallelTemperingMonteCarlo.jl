@@ -5,16 +5,14 @@ this module provides data, structs and methods for dimer energy and total energy
 """    
 module EnergyEvaluation
 
-include("/Users/tiantianyu/Downloads/PTMC/Configurations.jl")
-include("/Users/tiantianyu/Downloads/PTMC/RuNNer.jl")
 
 using StaticArrays 
 using DFTK 
 using LinearAlgebra
 using SplitApplyCombine
-using .Configurations
+using ..Configurations
 
-using .RuNNer
+using ..RuNNer
 
 export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
 
