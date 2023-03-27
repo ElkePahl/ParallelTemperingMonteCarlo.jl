@@ -129,6 +129,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     for i_steps = 1:n_steps
         mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
     end
+    println("++")
 
     if rand() < 0.1 #attempt to exchange trajectories
         parallel_tempering_exchange!(mc_states,mc_params)
