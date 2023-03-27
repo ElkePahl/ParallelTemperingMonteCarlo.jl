@@ -4,6 +4,7 @@ export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
 export AbstractMove, StatMove
 export AtomMove
 export atom_displacement,generate_displacements #, update_max_stepsize!
+export volume_change,generate_vchange
 
 using StaticArrays
 
@@ -142,9 +143,22 @@ returns the trial configuration as a struct.
 """
 function volume_change(conf::Config, max_vchange)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    trial_config = Config(conf.pos * scale, PeriodicBC(conf.bc.box_length * scale))
+    trial_config = Config(conf.pos * scale,PeriodicBC(conf.bc.box_length * scale))
     return trial_config
 end
+
+function volume_change(mc_state)
+    trial_config = volume_change(mc_state.config,mc_state.max_displ[2])
+    return trial_config
+end
+
+function generate_vchange(mc_states)
+    trial_configs_all = volume_change.(mc_states)
+    return trial_configs_all
+end
+
+
+    
 
 # """ ----- OLD VERSION NOT USED---------#
 #     update_max_stepsize!(displ, n_update, count_accept, n_atom)

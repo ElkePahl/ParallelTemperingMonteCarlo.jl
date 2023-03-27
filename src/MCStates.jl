@@ -36,6 +36,7 @@ mutable struct MCState{T,N,BC}
     en_tot::T
     ham::Vector{T}
     max_displ::Vector{T}
+    max_vchange::T
     count_atom::Vector{Int}
     count_vol::Vector{Int}
     count_rot::Vector{Int}
@@ -44,12 +45,12 @@ end
 
 function MCState(
     temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
-    max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
+    max_displ = [0.1,0.1,1.], max_vchange=0.03,count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC}(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(en_atom_vec), en_tot, 
-        ham, copy(max_displ), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
+        ham, copy(max_displ), copy(max_vchange),copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
         )
 end
 
