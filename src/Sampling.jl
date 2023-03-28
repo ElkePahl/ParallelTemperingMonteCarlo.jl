@@ -3,7 +3,8 @@ module MCSampling
 #export sampling_step!
 
 
-export sampling_step!, initialise_histograms!
+export sampling_step!, initialise_histograms!,finalise_results
+
 
 using StaticArrays,LinearAlgebra
 using ..MCStates
@@ -54,8 +55,9 @@ Returns delta_en_hist,delta_r2
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 
     # incl 6% leeway
-    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
-    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
+
+    results.en_min = e_bounds[1] #- abs(0.02*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.02*e_bounds[2])
 
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     delta_r2 = 4*bc.radius2/results.n_bin/5 
@@ -124,8 +126,31 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
         update_energy_tot(mc_states)
         
         update_histograms!(mc_states,results,delta_en_hist)
-    end
-    
+
+    end   
+end
+"""
+    finalise_results(mc_states,mc_params,results)
+Function designed to take a complete mc simulation and calculate the averages. 
+"""
+function finalise_results(mc_states,mc_params,results)
+
+    #Energy average
+    n_sample = mc_params.mc_cycles / mc_params.mc_sample
+    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
+    results.en_avg = en_avg
+    #heat capacity
+    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    #count stats 
+    results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
+    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+
+    println(results.heat_cap)
+
+    return results
+
+
 end
 
 end

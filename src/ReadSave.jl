@@ -2,7 +2,7 @@ module ReadSave
 
 
 export save_params,save_state,save_results,save_states
-export restart_ptmc,read_results
+export read_results,read_config,read_input,read_states,initialise_params
 export read_multihist
 using StaticArrays
 using DelimitedFiles
@@ -43,7 +43,7 @@ writes the MCParam struct to a savefile. Second method also writes the move stra
 end
 """
     save_state(savefile::IOStream,mc_state::MCState)
-saves a single mc_state struct to a savefile
+saves a single `mc_state` struct to `savefile`
 """
 function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
@@ -63,7 +63,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
     write(savefile, "E,E2: $ham1 $ham2 \n")
     if typeof(mc_state.config.bc) == SphericalBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(mc_state.config.bc.radius2) \n")
+        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(sqrt(mc_state.config.bc.radius2)) \n")
     elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
         write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
     end
@@ -74,7 +74,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
 
 end
 """
-    save_results(results::Output; directory = pwd())
+    save_results(results::Output, directory)
 Saves the on the fly results and histogram information for re-reading.
 """
 
@@ -104,7 +104,7 @@ function save_states(mc_params,mc_states,trial_index, directory; filename="save.
         close(paramsfile)
     end
 
-    write(savefile,"Save made at step $trial_index \n") #
+    write(savefile,"Save_made_at_step $trial_index \n") #
     for state in mc_states
         dummy_index += 1
         write(savefile, "config $dummy_index \n")
@@ -133,74 +133,97 @@ function save_states(mc_params,mc_states,trial_index, directory,move_strat,ensem
     close(savefile)
 end
 """
-    readinput(savedata)
+    read_input(savedata)
 takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 """
+
+
 function read_input(savedata)
 
-    step = savedata[1,5]
+    step = savedata[1,2]
+
     configdata = savedata[2:end,:]
 
     return step,configdata
 end
 
 """
-    initialiseparams(paramdata)
-accepts an array of the delimited paramdata and returns an MCParam struct based on saved data
+    initialiseparams(paramdata,restart::Bool)
+accepts an array of the delimited paramdata and returns the ensemble, move strategy and mc_params, the eq_percentage is set when initialising simulations. This can be set to zero as it is when restarting a simulation from a checkpoint.
 """
-function initialise_params(paramdata)
 
-    MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
+function initialise_params(paramdata,eq_percentage)
+
+    #MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],eq_percentage = eq_percentage,mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
+
+    mc_cycles,n_traj,n_atoms,mc_sample,n_adjust = paramdata[2,2],paramdata[4,2],paramdata[5,2],paramdata[3,2], paramdata[6,2]
     
+    mc_params = MCParams(mc_cycles,n_traj,n_atoms,eq_percentage=eq_percentage,mc_sample=mc_sample,n_adjust=n_adjust)
+
+
+
     ensemble = eval(Meta.parse(paramdata[7,2]))
     a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
     move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
-    
-    return ensemble,move_strat,MC_param
+
+    return ensemble,move_strat,mc_params
     
 end
 """
-    read_config(oneconfigvec,n_atoms, potential)
-reads a single configuration based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
+    read_config(config_info)
+function to read specifically a configuration from within the wider state information. This will be used both with the restart functions and the initialise functions once we have input files.
 """
-function read_config(oneconfigvec,n_atoms, potential)
-    positions = []
-    coord_atom = zeros(3)
-    for j=1:n_atoms
-        coord_atom = SVector(oneconfigvec[8+j,1] ,oneconfigvec[8+j,2] ,oneconfigvec[8+j,3] )
+function read_config(config_info)
+    positions =  []
+    if config_info[1,2] == "SphericalBC{Float64}"
+        boundarycondition = SphericalBC(radius = (config_info[1,3]))
+
+    end
+
+    for row in eachrow(config_info[3:end,:])
+        coord_atom = SVector(row[1] ,row[2] ,row[3] )
         push!(positions,coord_atom)
     end
-    if oneconfigvec[7,2] == "SphericalBC{Float64}"
-        boundarycondition = SphericalBC(radius=oneconfigvec[7,3])
-    end
-    counta = [oneconfigvec[5,2], oneconfigvec[5,3]]
-    countv = [oneconfigvec[5,4], oneconfigvec[5,5]]
-    countr = [oneconfigvec[5,6], oneconfigvec[5,7]]
-    countx = [oneconfigvec[5,8], oneconfigvec[5,9]]
+
+    config = Config(positions,boundarycondition)
     
-    mcstate = MCState(oneconfigvec[2,2], oneconfigvec[2,3],Config(positions,boundarycondition), potential ; max_displ=[oneconfigvec[4,2], oneconfigvec[4,3], oneconfigvec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
+    return config
+end
+"""
+    read_state(onestatevec, potential)
+reads a single trajectory based on the savefile format. The potential must be manually added, though there is the possibility of including this in the savefile if required. Output is a single MCState struct.
+"""
+function read_state(onestatevec, potential)
+    config = read_config(onestatevec[7:end-1,:])
 
-    mcstate.en_tot = oneconfigvec[3,2] #incl current energy
-
-    push!(mcstate.ham,oneconfigvec[6,2])
-    push!(mcstate.ham,oneconfigvec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
-
-
+    counta = [onestatevec[5,2], onestatevec[5,3]]
+    countv = [onestatevec[5,4], onestatevec[5,5]]
+    countr = [onestatevec[5,6], onestatevec[5,7]]
+    countx = [onestatevec[5,8], onestatevec[5,9]]
     
+    mcstate = MCState(onestatevec[2,2], onestatevec[2,3],config, potential ; max_displ=[onestatevec[4,2], onestatevec[4,3], onestatevec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
+
+    mcstate.en_tot = onestatevec[3,2] #incl current energy
+
+    push!(mcstate.ham,onestatevec[6,2])
+    push!(mcstate.ham,onestatevec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
+
 
     return mcstate
 end
 
 """
-    read_configs(configvecs,n_atoms,n_traj,potential)
-takes the entirety of the configuration information, splits it into n_traj configs and outputs them as a new mc_states vector.
+
+    read_states(trajvecs,n_atoms,n_traj,potential)
+takes the entirety of the trajectory information, splits it into n_traj configs and outputs them as a new mc_states vector.
 """
-function read_configs(configvecs,n_atoms,n_traj,potential)
+function read_states(trajvecs,n_atoms,n_traj,potential)
     states = []
     lines = Int64(9+n_atoms)
     for idx=1:n_traj
-        oneconfig = configvecs[1+ (idx - 1)*lines:(idx*lines), :]
-        onestate = read_config(oneconfig,n_atoms,potential)
+        onetraj = trajvecs[1+ (idx - 1)*lines:(idx*lines), :]
+        onestate = read_state(onetraj,potential)
+
 
         push!(states,onestate)
 
@@ -239,35 +262,7 @@ function read_results(;directory=pwd())
 end
 
 """
-    function restart(potential ;directory = pwd())
-function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
-"""
-function restart_ptmc(potential ;directory = pwd())
 
-    readfile = open("$(directory)/save.data","r+")
-
-    filecontents=readdlm(readfile)
-
-    step,configdata = read_input(filecontents)
-
-
-    close(readfile)
-    paramfile =  open("$(directory)/params.data")
-    paramdata = readdlm(paramfile)
-
-    close(paramfile)
-
-    ensemble,move_strat,mc_params = initialise_params(paramdata)
-    mc_states = read_configs(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
-    results  = read_results(directory = directory)
-
-
-    return results,ensemble,move_strat,mc_params,mc_states,step
-
-
-end
-
-"""
     read_multihist(;directory=pwd())
 function designed to open and parse multihistogram information. Accepts a single keyword argument pointing to the location of the multihist file analysis.NVT
     returns Temp, heat capacity, its derivative and entropy. All vectors ready to be plotted. 
