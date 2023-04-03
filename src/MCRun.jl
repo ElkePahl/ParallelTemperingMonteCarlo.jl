@@ -107,7 +107,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2,n_config)
 
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
@@ -127,6 +127,7 @@ function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v
             save_results(results,save_dir)
         end
     end
+
 
 end
 """
@@ -230,7 +231,7 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 """
 
 #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
-function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
+function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd(), n_config::Int64=(mc_cycles+1))
 
     #first we initialise the simulation with arguments matching the initialise function's various methods
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
@@ -247,12 +248,16 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     end
     
     #main MC loop
-
+    save_configs = []
     for i = start_counter:mc_params.mc_cycles
 
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+
+        if rem(i, n_config) == 0
+            append!(save_configs, mc_states[i].config.pos)
+        end
     end
-  
+    print(save_configs)
     println("MC loop done.")
 
 
