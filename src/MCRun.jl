@@ -254,6 +254,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     end
   
     println("MC loop done.")
+    println("c")
 
 
     results = finalise_results(mc_states,mc_params,results)
