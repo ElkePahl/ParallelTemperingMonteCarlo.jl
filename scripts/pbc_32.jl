@@ -11,8 +11,8 @@ n_atoms = 32
 pressure=101325
 
 # temperature grid
-ti = 20.
-tf = 50.
+ti = 15.
+tf = 35.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 
@@ -107,6 +107,7 @@ n_bin = 100
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 println(mc_states[1].en_tot)
+println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^3*3.398928944382626e-14)
 
 
 #results = Output(n_bin, max_displ_vec)

@@ -23,11 +23,19 @@ function to update the current energy and energy squared values for coarse analy
 
 #     return mc_state
 # end
-function update_energy_tot(mc_states)
-    for indx_traj in eachindex(mc_states)      
-        mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
+function update_energy_tot(mc_states,ensemble)
+    if typeof(mc_states[1].config.bc) == SphericalBC
+        for indx_traj in eachindex(mc_states)      
+            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
             #add E,E**2 to the correct positions in the hamiltonian
-        mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+            mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+        end
+    else
+        for indx_traj in eachindex(mc_states)      
+            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14
+            #add E,E**2 to the correct positions in the hamiltonian
+            mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14))
+        end
     end
 end
 """
@@ -35,6 +43,22 @@ end
 returns the histogram index of a single mc_state energy and returns this value. 
 """
 function find_hist_index(mc_state,results,delta_en_hist)
+
+    hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
+
+    if hist_index < 1
+        return 1
+    elseif hist_index > results.n_bin
+        return results.n_bin+2
+    else
+        return hist_index +1
+    end
+end
+"""
+    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+returns the histogram index of a single mc_state energy and volume. 
+"""
+function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
 
     hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
 
@@ -70,7 +94,6 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     return delta_en_hist,delta_r2
 end
 
-#PBC one
 function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
 
     # incl 6% leeway
@@ -78,7 +101,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
     results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
 
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    delta_r2 = (3/4*bc.box_length^2*1.1)/results.n_bin/5
+    delta_r2 =  (3/4*bc.box_length^2*1.1)/results.n_bin/5
 
     for i_traj in 1:mc_params.n_traj       
 
@@ -88,6 +111,33 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
     end
     return delta_en_hist,delta_r2
 end
+
+#PBC one
+#The new version, under construction
+"""
+function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+
+    # incl 6% leeway
+    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
+
+    results.v_max = 16.56798363245164^3*3
+    results.v_min = 16.56798363245164^3*0.9
+
+    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    delta_v_hist = (results.v_max - results.v_min) / (results.n_bin - 1)
+    delta_r2 = (3/4*bc.box_length^2*1.1)/results.n_bin/5
+
+    for i_traj in 1:mc_params.n_traj       
+
+        push!(results.ev_histogram,zeros(results.n_bin + 2, results.n_bin + 2))
+        push!(results.rdf,zeros(results.n_bin*5))
+
+    end
+    return delta_ev_hist,delta_r2
+end
+"""
+
 """
     update_histograms!(mc_states,results,delta_en_hist)
 Self explanatory name, updates the energy histograms in results using the current mc_states.en_tot
@@ -101,6 +151,20 @@ function update_histograms!(mc_states,results,delta_en_hist)
 
 end
 
+"""
+    update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+Update the 2D histograms with both energy and volume
+
+"""
+function update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+    for i_traj in eachindex(mc_states)
+       @inbounds histindex_e = find_hist_index(mc_states[i_traj],results,delta_en_hist)
+       @inbounds histindex_v = find_hist_index(mc_states[i_traj],results,delta_v_hist)
+       results.ev_histogram[i_traj][histindex_e,histindex_v] +=1
+   end
+
+end
+
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
 """
     update_rdf!(mc_states,results,delta_r2)
@@ -111,12 +175,12 @@ function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
             idx=rdf_index(element,delta_r2)
-            if idx > 500
-                println(element)
-                println(j_traj)
-                println(mc_states[j_traj].dist2_mat)
-            end
-            if idx != 0
+            #if idx > 500
+                #println(element)
+                #println(j_traj)
+                #println(mc_states[j_traj].dist2_mat)
+            #end
+            if idx != 0 && idx <= 500
                 results.rdf[j_traj][idx] +=1
             end
         end
@@ -134,19 +198,19 @@ Second method does not perform the rdf calculation. This is designed to improve 
 TO IMPLEMENT:
 This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
 """
-function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
+function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
 
-        update_energy_tot(mc_states)
+        update_energy_tot(mc_states,ensemble)
         
         update_histograms!(mc_states,results,delta_en_hist)
         update_rdf!(mc_states,results,delta_r2)
     end 
 end
-function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
+function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist)
     if rem(save_index, mc_params.mc_sample) == 0
 
-        update_energy_tot(mc_states)
+        update_energy_tot(mc_states,ensemble)
         
         update_histograms!(mc_states,results,delta_en_hist)
     end
