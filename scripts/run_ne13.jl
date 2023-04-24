@@ -1,6 +1,6 @@
 
 
-using Main.ParallelTemperingMonteCarlo
+using .ParallelTemperingMonteCarlo
 
 using Random
 

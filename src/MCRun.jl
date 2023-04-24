@@ -129,7 +129,7 @@ function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v
     end
 
     if rem(i, n_config) == 0
-        append!(saveconfigs, mc_states[i].config)
+        append!(saveconfigs, mc_states.config.pos)
     end
 
 
