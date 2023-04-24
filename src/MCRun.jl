@@ -107,7 +107,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2, n_config)
 
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
@@ -126,6 +126,10 @@ function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v
             save_states(mc_params,mc_states,i,save_dir)
             save_results(results,save_dir)
         end
+    end
+
+    if rem(i, n_config) == 0
+        append!(saveconfigs, mc_states[i].config)
     end
 
 
@@ -251,11 +255,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     save_configs = []
     for i = start_counter:mc_params.mc_cycles
 
-        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
-
-        if rem(i, n_config) == 0
-            append!(save_configs, mc_states[i].config.pos)
-        end
+        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2, n_config)
     end
     print(save_configs)
     println("MC loop done.")
