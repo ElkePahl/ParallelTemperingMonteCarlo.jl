@@ -70,6 +70,26 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     end
     return delta_en_hist,delta_r2
 end
+
+function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+
+    # incl 6% leeway
+    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
+
+    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    delta_r2 =  (3/4*bc.box_length^2*1.1)/results.n_bin/5
+
+    for i_traj in 1:mc_params.n_traj       
+
+        push!(results.en_histogram,zeros(results.n_bin + 2))
+        push!(results.ev_histogram,zeros(results.n_bin + 2,results.n_bin + 2))
+        push!(results.rdf,zeros(results.n_bin*5))
+
+    end
+    return delta_en_hist,delta_r2
+end
+
 """
     update_histograms!(mc_states,results,delta_en_hist)
 Self explanatory name, updates the energy histograms in results using the current mc_states.en_tot
@@ -93,7 +113,7 @@ function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
             idx=rdf_index(element,delta_r2)
-            if idx != 0
+            if idx != 0 && idx <= results.n_bin*5
                 results.rdf[j_traj][idx] +=1
             end
         end

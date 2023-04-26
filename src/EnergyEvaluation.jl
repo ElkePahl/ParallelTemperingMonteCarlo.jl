@@ -103,7 +103,7 @@ function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
 end
 
 function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
-    dist2_new = [distance2(pos,b) for b in config.pos]
+    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
     d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], pot)
     return d_en, dist2_new
@@ -133,6 +133,17 @@ function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentia
     return energyvector,dist2_new
 end
 #this will be the format for this part of the get_energy function.
+
+"""
+    get_energy function when the whole configuration is scaled
+        find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
+"""
+function get_energy(trial_configs_all,pot::AbstractDimerPotential)
+    dist2_mat_new = get_distance2_mat.(trial_configs_all)
+    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all), Ref(pot)))
+
+    return dist2_mat_new,en_atom_vec,en_tot_new
+end
 
 # energyvector, dist2new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
 """
