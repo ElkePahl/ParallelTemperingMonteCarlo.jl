@@ -20,7 +20,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 400000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -85,7 +85,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
- ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true, n_config=10000)
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true, n_config=10000)
 
 
 

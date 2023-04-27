@@ -249,6 +249,8 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     end
     
     save_configs = []
+    
+    configsfile = open("$save_dir/configs.data", "w+")
     #main MC loop
     for i = start_counter:mc_params.mc_cycles
 
@@ -256,14 +258,17 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
 
         if rem(i,n_config) == 0
             for j in length(mc_states)
-                push!(save_configs,mc_states[j].config.pos)
+                position = mc_states[j].config.pos
+                push!(save_configs, position)
+                #write(configsfile, "$position \n")
+
             end
         end
     end
-    
+    write(configsfile, "$save_configs")
+    close(configsfile)
     println("MC loop done.")
 
-    println(save_configs)
 
 
     results = finalise_results(mc_states,mc_params,results)
