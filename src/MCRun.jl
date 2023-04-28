@@ -38,6 +38,20 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[2] += 1
 
 end
+
+function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
+    #println("swap_v_config")
+    #for i=1:length(mc_state.config.pos)
+        #mc_state.config.pos[i] = trial_config.pos[i]
+    #end
+    #mc_state.config.bc.box_length = copy(trial_config.bc.box_length)
+    mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
+    mc_state.dist2_mat = dist2_mat_new
+    mc_state.en_atom_vec = en_vec_new
+    mc_state.en_tot = en_tot
+    mc_state.count_vol[1] += 1
+    mc_state.count_vol[2] += 1
+end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
 
@@ -47,12 +61,12 @@ end
 
 """
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
-    
-    
-        if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+    #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
+    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+        #println("swap")
 
-            swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
-        end   
+        swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
+    end   
 end
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
     
@@ -66,20 +80,42 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     end   
 end
 
+function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64)
+
+
+    if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
+        #println("accepted")
+        #println("swap")
+
+        #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
+        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
+    end   
+end
+
 """
     function mc_step!(mc_states,mc_params,pot,ensemble)
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
 """
-function mc_step!(mc_states,mc_params,pot,ensemble)
 
-    indices,trial_positions = generate_displacements(mc_states,mc_params)
+function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
 
-
-    energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
-
-
-    for idx in eachindex(mc_states)
-        @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+    if rand(1:a+v+r)<=a
+        #println("d")
+        indices,trial_positions = generate_displacements(mc_states,mc_params)
+        energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
+        for idx in eachindex(mc_states)
+            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
+        end
+    else
+        #println("v")
+        trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
+        #get the new distance matrix, energy matrix and total energy for each trajectory
+        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,pot::AbstractDimerPotential)
+        #println(en_tot_new)
+        for idx in eachindex(mc_states)
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx])
+        end
     end
 
     return mc_states
@@ -94,10 +130,11 @@ end
 
         second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save functions. 
 """
+
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
 
     for i_steps = 1:n_steps
-        mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
+        mc_states = mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
@@ -248,12 +285,15 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     
     #main MC loop
 
+
     for i = start_counter:mc_params.mc_cycles
 
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+    
     end
   
     println("MC loop done.")
+    println("cc")
 
 
     results = finalise_results(mc_states,mc_params,results)
