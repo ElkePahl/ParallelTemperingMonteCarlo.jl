@@ -10,6 +10,11 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 13
+atoms = []
+atom = "Ne"
+for i = 1:n_atoms
+    push!(atoms, atom)
+end
 
 # temperature grid
 ti = 5.
@@ -85,7 +90,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true, n_config=10000)
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true, n_config=10000, atoms)
 
 
 

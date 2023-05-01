@@ -232,7 +232,7 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 """
 
 #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
-function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd(), n_config::Int64)
+function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd(), n_config::Int64, atoms::Vector)
 
     #first we initialise the simulation with arguments matching the initialise function's various methods
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
@@ -250,22 +250,37 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     
     save_configs = []
     
-    configsfile = open("$save_dir/configs.data", "w+")
+    configsfile = open("$save_dir/configs.xyz", "w+")
     #main MC loop
     for i = start_counter:mc_params.mc_cycles
 
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
 
         if rem(i,n_config) == 0
-            for j in length(mc_states)
+            for j = 1:length(mc_states)
                 position = mc_states[j].config.pos
-                push!(save_configs, position)
+                temp = mc_states[j].temp
+                index = i
+                push!(save_configs, [index, temp, position])
                 #write(configsfile, "$position \n")
 
             end
         end
     end
-    write(configsfile, "$save_configs")
+    for i = 1:length(save_configs)
+        ind = save_configs[i][1]
+        itemp = save_configs[i][2]
+        config = save_configs[i][3]
+        write(configsfile, "step = $ind temp = $itemp \n")
+        for j = 1:length(config)
+            x = config[j][1]
+            y = config[j][2]
+            z = config[j][3]
+            atom = atoms[j]
+            write(configsfile, "$atom $x $y $x \n")
+        end
+        write(configsfile, "\n")
+    end
     close(configsfile)
     println("MC loop done.")
 
