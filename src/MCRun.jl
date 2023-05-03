@@ -138,7 +138,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
-        parallel_tempering_exchange!(mc_states,mc_params)
+        parallel_tempering_exchange!(mc_states,mc_params,ensemble)
     end
 
 
@@ -149,7 +149,7 @@ function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-    sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    sampling_step!(mc_params,mc_states,ensemble,i,results,delta_en_hist,delta_r2)
     
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
@@ -293,7 +293,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     end
   
     println("MC loop done.")
-    println("cc")
+    println("ccc")
 
 
     results = finalise_results(mc_states,mc_params,results)

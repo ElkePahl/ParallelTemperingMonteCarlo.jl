@@ -23,11 +23,19 @@ function to update the current energy and energy squared values for coarse analy
 
 #     return mc_state
 # end
-function update_energy_tot(mc_states)
-    for indx_traj in eachindex(mc_states)      
-        mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
+function update_energy_tot(mc_states,ensemble)
+    if typeof(mc_states[1].config.bc) == SphericalBC
+        for indx_traj in eachindex(mc_states)      
+            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
             #add E,E**2 to the correct positions in the hamiltonian
-        mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+            mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+        end
+    else
+        for indx_traj in eachindex(mc_states)      
+            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14
+            #add E,E**2 to the correct positions in the hamiltonian
+            mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14))
+        end
     end
 end
 """
@@ -131,19 +139,19 @@ Second method does not perform the rdf calculation. This is designed to improve 
 TO IMPLEMENT:
 This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
 """
-function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
+function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
 
-        update_energy_tot(mc_states)
+        update_energy_tot(mc_states,ensemble)
         
         update_histograms!(mc_states,results,delta_en_hist)
         update_rdf!(mc_states,results,delta_r2)
     end 
 end
-function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
+function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist)
     if rem(save_index, mc_params.mc_sample) == 0
 
-        update_energy_tot(mc_states)
+        update_energy_tot(mc_states,ensemble)
         
         update_histograms!(mc_states,results,delta_en_hist)
 

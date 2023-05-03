@@ -80,10 +80,10 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
 end 
 
 """
-    parallel_tempering_exchange!(mc_states,mc_params)
+    parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 """
-function parallel_tempering_exchange!(mc_states,mc_params)
+function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NVT)
     n_exc = rand(1:mc_params.n_traj-1)
 
     mc_states[n_exc].count_exc[1] += 1
@@ -92,6 +92,29 @@ function parallel_tempering_exchange!(mc_states,mc_params)
     
 
     if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
+        mc_states[n_exc].count_exc[2] += 1
+        mc_states[n_exc+1].count_exc[2] += 1
+
+        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+    end
+
+    return mc_states
+end
+
+"""
+    parallel_tempering_exchange!(mc_states,mc_params,ensemble:NPT)
+This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
+Acceptance is determined by enthalpy instead of energy. 
+"""
+function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
+    n_exc = rand(1:mc_params.n_traj-1)
+
+    mc_states[n_exc].count_exc[1] += 1
+    mc_states[n_exc+1].count_exc[1] += 1
+
+    
+
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3*3.398928944382626e-14),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3*3.398928944382626e-14)) > rand()
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc+1].count_exc[2] += 1
 
