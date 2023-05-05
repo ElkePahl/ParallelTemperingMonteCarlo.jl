@@ -277,7 +277,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
             y = config[j][2]
             z = config[j][3]
             atom = atoms[j]
-            write(configsfile, "$atom $x $y $x \n")
+            write(configsfile, "$atom $x $y $z \n")
         end
         write(configsfile, "\n")
     end
