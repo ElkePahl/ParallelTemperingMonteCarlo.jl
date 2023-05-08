@@ -249,7 +249,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     end
     
     save_configs = []
-    config_index = mc_params.mc_cycles / n_config
+    config_index = trunc(Int, mc_params.mc_cycles/n_config)
     #main MC loop
     for i = start_counter:mc_params.mc_cycles
 
