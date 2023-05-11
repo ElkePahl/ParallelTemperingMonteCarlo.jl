@@ -1,0 +1,8 @@
+MC_Params 
+total_cycles: 100000
+mc_samples: 1
+n_traj: 32
+n_atoms: 13
+n_adjust: 100
+ensemble: NVT(13)
+avr: 13 0 0 
