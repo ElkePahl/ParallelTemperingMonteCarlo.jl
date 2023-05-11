@@ -90,27 +90,48 @@ Implemented for:
 
 The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
+function atom_displacement(state, index, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    trial_pos = pos + delta_move
+    trial_pos = state.config.pos[index] + delta_move
     count = 0
     while check_boundary(bc, trial_pos)         #displace the atom until it's inside the binding sphere
         count += 1
         delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        trial_pos = pos + delta_move
+        trial_pos = state.config.pos[index] + delta_move
         count == 100 && error("Error: too many moves out of binding sphere")
     end
     return trial_pos
 end
-function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+function atom_displacement(state, index, max_displacement, bc::AdjacencyBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    trial_pos = pos + delta_move
+    trial_pos = state.config.pos[index] + delta_move
+    count = 0
+    trial_dist2mat = copy(state.dist2_mat)
+    for i in state.config.pos[index]
+        trial_dist2mat[index,i] = distance2(trial_pos,i)
+        trial_dist2mat[i,index] = trial_dist2mat[index,i]
+    end
+    while check_boundary(bc, trial_dist2mat)         #displace the atom until it's inside the binding sphere
+        count += 1
+        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+        trial_pos = state.config.pos[index] + delta_move
+        for i in state.config.pos[index]
+            trial_dist2mat[index,i] = distance2(trial_pos,i)
+            trial_dist2mat[i,index] = trial_dist2mat[index,i]
+        end
+        count == 100 && error("Error: too many moves out of boundary")
+    end
+    return trial_pos
+end
+function atom_displacement(state, index, max_displacement, bc::PeriodicBC)
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = state.config.pos[index] + delta_move
     trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
 function atom_displacement(mc_state,index)
     #if index <= length(mc_state.config.pos)
-        trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
+        trial_pos = atom_displacement(mc_state,index,mc_state.max_displ[1],mc_state.config.bc)
     #end
 
     return trial_pos

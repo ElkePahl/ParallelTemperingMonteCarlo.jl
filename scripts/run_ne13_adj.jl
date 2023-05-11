@@ -1,10 +1,7 @@
-using .ParallelTemperingMonteCarlo
-using ..BoundaryConditions
+using ParallelTemperingMonteCarlo
 
 using Random
-
 using Plots
-
 
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -70,7 +67,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = initAdjacencyBC(pos_ne13, 3.5)  #3.5 Angstrom
+bc_ne13 = init_AdjacencyBC(pos_ne13, 3.5^2)  #3.5 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
@@ -92,7 +89,7 @@ multihistogram(results,temp)
 
 
 
-# plot(temp.t_grid,results.heat_cap)
+plot(temp.t_grid,results.heat_cap)
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)
