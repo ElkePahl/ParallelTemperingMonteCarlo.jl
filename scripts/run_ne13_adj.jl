@@ -1,6 +1,9 @@
-using ParallelTemperingMonteCarlo
+using .ParallelTemperingMonteCarlo
+using ..BoundaryConditions
 
 using Random
+
+using Plots
 
 
 #set random seed - for reproducibility
@@ -18,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -67,7 +70,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = SphericalBC(radius=5.32*AtoBohr)   #5.32 Angstrom
+bc_ne13 = initAdjacencyBC(pos_ne13, 3.5)  #3.5 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
@@ -85,7 +88,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
 
-
+multihistogram(results,temp)
 
 
 

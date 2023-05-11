@@ -6,7 +6,9 @@
 """
 module BoundaryConditions
 
-export SphericalBC, AbstractBC, PeriodicBC
+using LinearAlgebra
+
+export SphericalBC, AbstractBC, PeriodicBC, AdjacencyBC
 export check_boundary
 
 # include("SphericalBC.jl")
@@ -42,6 +44,7 @@ mutable struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
     adj_mat::Matrix
 end
+
 function init_AdjacencyBC(pos, r2_cut)
     adj_mat = find_adjmat(pos,r2_cut)
 
@@ -55,6 +58,19 @@ Returns `true` when atom outside of spherical boundary
 (squared norm of position vector < radius^2 of binding sphere).
 """
 check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
+
+function check_boundary(bc::AdjacencyBC,dist2_matrix)
+    bcflag = false
+    for col in eachcol(find_adjmat(dist2_matrix, bc.r2_cut))
+      dummysum = sum(col)
+        if dummysum < 4
+            bcflag = true
+             # break
+        end
+        #push!(SumVec, dummysum)
+    end
+    return bcflag
+end
 
 
 """

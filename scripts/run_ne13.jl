@@ -4,6 +4,8 @@ using .ParallelTemperingMonteCarlo
 
 using Random
 
+using Plots
+
 
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -20,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -87,11 +89,11 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
 
+multihistogram(results,temp)
 
 
 
-
-# plot(temp.t_grid,results.heat_cap)
+plot(temp.t_grid,results.heat_cap)
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)
