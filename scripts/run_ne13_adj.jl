@@ -18,7 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -67,7 +67,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = init_AdjacencyBC(pos_ne13, 3.5^2)  #3.5 Angstrom
+bc_ne13 = init_AdjacencyBC(pos_ne13, 20^2)  #3.5 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)

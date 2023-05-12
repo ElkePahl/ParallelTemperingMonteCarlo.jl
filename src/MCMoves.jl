@@ -107,17 +107,17 @@ function atom_displacement(state, index, max_displacement, bc::AdjacencyBC)
     trial_pos = state.config.pos[index] + delta_move
     count = 0
     trial_dist2mat = copy(state.dist2_mat)
-    for i in state.config.pos[index]
-        trial_dist2mat[index,i] = distance2(trial_pos,i)
-        trial_dist2mat[i,index] = trial_dist2mat[index,i]
+    for (ind,i) in enumerate(state.config.pos)
+        trial_dist2mat[index,ind] = distance2(trial_pos,i)
+        trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
     end
     while check_boundary(bc, trial_dist2mat)         #displace the atom until it's inside the binding sphere
         count += 1
         delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
         trial_pos = state.config.pos[index] + delta_move
-        for i in state.config.pos[index]
-            trial_dist2mat[index,i] = distance2(trial_pos,i)
-            trial_dist2mat[i,index] = trial_dist2mat[index,i]
+        for (ind,i) in enumerate(state.config.pos)
+            trial_dist2mat[index,ind] = distance2(trial_pos,i)
+            trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
         end
         count == 100 && error("Error: too many moves out of boundary")
     end
