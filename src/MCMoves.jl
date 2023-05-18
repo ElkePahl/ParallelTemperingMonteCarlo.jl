@@ -143,6 +143,10 @@ returns the trial configuration as a struct.
 """
 function volume_change(conf::Config, max_vchange)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
+    if conf.bc.box_length >= 30. && scale > 1.
+        scale=1.
+    end
+
     trial_config = Config(conf.pos * scale,PeriodicBC(conf.bc.box_length * scale))
     return trial_config
 end

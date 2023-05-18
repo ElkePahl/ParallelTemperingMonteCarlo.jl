@@ -24,13 +24,15 @@ function to update the current energy and energy squared values for coarse analy
 #     return mc_state
 # end
 function update_energy_tot(mc_states,ensemble)
-    if typeof(mc_states[1].config.bc) == SphericalBC
+    if typeof(mc_states[1].config.bc) <: SphericalBC
+        #println("NVT")
         for indx_traj in eachindex(mc_states)      
             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
             #add E,E**2 to the correct positions in the hamiltonian
             mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
         end
     else
+        #println("NPT")
         for indx_traj in eachindex(mc_states)      
             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14
             #add E,E**2 to the correct positions in the hamiltonian
@@ -54,8 +56,45 @@ function find_hist_index(mc_state,results,delta_en_hist)
         return hist_index +1
     end
 end
+
 """
-    initialise_histograms!(mc_params,results,e_bounds,bc)
+    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+returns the histogram index of a single mc_state energy and returns this value. 
+"""
+function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+
+    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
+    #println("energy ",mc_state.en_tot)
+    #println("energy min ",results.en_min)
+    #println("energy max ",results.en_max)
+    #println("volume ",mc_state.config.bc.box_length^3)
+    #println("delta_v ",delta_v_hist)
+    hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
+    #println(hist_index_e)
+    #println(hist_index_v)
+    #println()
+
+    if hist_index_e < 1
+        hist_index_e = 1
+    elseif hist_index_e > results.n_bin
+        hist_index_e = results.n_bin+2
+    else
+        hist_index_e += 1
+    end
+
+    if hist_index_v < 1
+        hist_index_v = 1
+    elseif hist_index_v > results.n_bin
+        hist_index_v = results.n_bin+2
+    else
+        hist_index_v += 1
+    end
+
+    return hist_index_e, hist_index_v
+end
+
+"""
+    initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from e_bounds and (with 2% either side additionally) used to determine the energy grating for the histogram (delta_en_hist). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is 2*r2 and distance**2 is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as en_histogram
 
 Returns delta_en_hist,delta_r2
@@ -79,13 +118,26 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     return delta_en_hist,delta_r2
 end
 
+"""
+    initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+Function to create the 2D energy-volume histograms.
+"""
 function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+
+    println("ev_hist")
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
     results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
 
+    results.v_min = bc.box_length^3*0.8
+    results.v_max = bc.box_length^3*2.0
+
+    println(results.v_min)
+    println(results.v_max)
+
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    #delta_v_hist = (results.v_max - results.v_min) / (results.n_bin - 1)
     delta_r2 =  (3/4*bc.box_length^2*1.1)/results.n_bin/5
 
     for i_traj in 1:mc_params.n_traj       
@@ -107,6 +159,19 @@ function update_histograms!(mc_states,results,delta_en_hist)
      for i_traj in eachindex(mc_states)
         @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
         results.en_histogram[i_traj][histindex] +=1
+    end
+
+end
+
+"""
+    update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+Self explanatory name, updates the energy histograms in results using the current mc_states.en_tot
+
+"""
+function update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+     for i_traj in eachindex(mc_states)
+        @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist)
+        results.ev_histogram[i_traj][histindex_e,histindex_v] +=1
     end
 
 end
@@ -157,6 +222,25 @@ function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en
 
     end   
 end
+
+function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_v_hist,delta_r2)
+    if rem(save_index, mc_params.mc_sample) == 0
+
+        update_energy_tot(mc_states,ensemble)
+        
+        update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+        update_rdf!(mc_states,results,delta_r2)
+    end 
+end
+#function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_v_hist)
+    #if rem(save_index, mc_params.mc_sample) == 0
+
+        #update_energy_tot(mc_states,ensemble)
+        
+        #update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+
+    #end   
+#end
 """
     finalise_results(mc_states,mc_params,results)
 Function designed to take a complete mc simulation and calculate the averages. 

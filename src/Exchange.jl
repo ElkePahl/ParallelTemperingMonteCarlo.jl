@@ -49,7 +49,13 @@ function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unc
     # Joule to hartree -> /2.2937104486906E+17
     # Bohr^3 to m^3 -> 1.48184743472E-31
     delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)*3.398928944382626e-14
+    #println("energy difference ",d_en)
+    #println("enthalpy difference ",delta_h)
+    #println("beta ",beta)
+    #println("factor 1 = ",-delta_h*beta)
+    #println("factor 2 = ",N*log(volume_changed/volume_unchanged))
     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
+    #println("p = ",prob_val)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -136,7 +142,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     acc_rate = mc_state.count_atom[2] / (n_update * a)
     if acc_rate < min_acc
         mc_state.max_displ[1] *= 0.9
-    elseif acc_rate > max_acc
+    elseif acc_rate > max_acc && mc_state.max_displ[1]<=10.
         mc_state.max_displ[1] *= 1.1
     end
     mc_state.count_atom[2] = 0
