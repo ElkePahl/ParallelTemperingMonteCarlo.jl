@@ -111,7 +111,9 @@ function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
             idx=rdf_index(element,delta_r2)
-            if idx != 0
+            if idx >= 100
+                results.rdf[j_traj][100] +=1
+            if 0 < idx < 100
                 results.rdf[j_traj][idx] +=1
             end
         end
