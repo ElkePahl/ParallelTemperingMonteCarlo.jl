@@ -113,6 +113,9 @@ function update_rdf!(mc_states,results,delta_r2)
             idx=rdf_index(element,delta_r2)
             if idx >= 100
                 results.rdf[j_traj][100] +=1
+                if results.rdf[j_traj][100] >100
+                    println("Warning: Bin size too small")
+                end
             if 0 < idx < 100
                 results.rdf[j_traj][idx] +=1
             end

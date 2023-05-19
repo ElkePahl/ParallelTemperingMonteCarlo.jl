@@ -66,9 +66,7 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix)
       dummysum = sum(col)
         if dummysum < 4
             bcflag = true
-             # break
         end
-        #push!(SumVec, dummysum)
     end
     return bcflag
 end
