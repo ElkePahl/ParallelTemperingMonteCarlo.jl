@@ -1,7 +1,6 @@
 module MCSampling
 
-#export sampling_step!
-
+export sampling_step!
 
 export sampling_step!, initialise_histograms!,finalise_results
 
@@ -123,6 +122,7 @@ function update_rdf!(mc_states,results,delta_r2)
     end
     
 end
+end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
@@ -173,7 +173,6 @@ function finalise_results(mc_states,mc_params,results)
 
     return results
 
-
 end
 
-end
+end #module
