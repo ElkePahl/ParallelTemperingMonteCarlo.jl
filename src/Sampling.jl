@@ -110,18 +110,19 @@ function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
             idx=rdf_index(element,delta_r2)
-            if idx >= 100
+            #if idx != 0
+                #results.rdf[j_traj][idx] +=1
+            #end
+             if 0 < idx < 100
+                 results.rdf[j_traj][idx] +=1
+            elseif idx >= 100
                 results.rdf[j_traj][100] +=1
-                if results.rdf[j_traj][100] >100
-                    println("Warning: Bin size too small")
-                end
-            if 0 < idx < 100
-                results.rdf[j_traj][idx] +=1
             end
         end
     end
-    
-end
+    #if results.rdf[j_traj][100] >1000000
+    #     println("Warning: Bin size too small")
+    # end
 end
 """
     sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)

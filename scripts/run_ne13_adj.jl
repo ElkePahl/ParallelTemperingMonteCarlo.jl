@@ -1,4 +1,4 @@
-using ParallelTemperingMonteCarlo
+using .ParallelTemperingMonteCarlo
 
 using Random
 using Plots
@@ -89,6 +89,6 @@ plot(temp.t_grid,results.heat_cap)
 
 plot(multihistogram(results,temp))
 
-data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
+# data = [results.en_histogram[i] for i in 1:n_traj]
+# plot(data)
 
