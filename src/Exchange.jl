@@ -48,7 +48,7 @@ end
 function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
     # Joule to hartree -> /2.2937104486906E+17
     # Bohr^3 to m^3 -> 1.48184743472E-31
-    delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)*3.398928944382626e-14
+    delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)
     #println("energy difference ",d_en)
     #println("enthalpy difference ",delta_h)
     #println("beta ",beta)
@@ -120,7 +120,7 @@ function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
 
     
 
-    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3*3.398928944382626e-14),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3*3.398928944382626e-14)) > rand()
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc+1].count_exc[2] += 1
 

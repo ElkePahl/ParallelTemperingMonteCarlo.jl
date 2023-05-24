@@ -363,6 +363,10 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     for i = start_counter:mc_params.mc_cycles
 
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
+
+        if rem(i,100000)==0
+            println(i/100000)
+        end
         
     end
 

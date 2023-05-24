@@ -34,9 +34,9 @@ function update_energy_tot(mc_states,ensemble)
     else
         #println("NPT")
         for indx_traj in eachindex(mc_states)      
-            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14
+            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3
             #add E,E**2 to the correct positions in the hamiltonian
-            mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3*3.398928944382626e-14))
+            mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3))
         end
     end
 end
