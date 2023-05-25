@@ -256,7 +256,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
 
         if rem(i,config_index) == 0
-            for j = 1:length(mc_states)
+            for j in eachindex(mc_states)
                 position = mc_states[j].config.pos
                 temp = mc_states[j].temp
                 index = i
@@ -269,14 +269,14 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     for k in eachindex(mc_states)
         temp = mc_states[k].temp
         tempfile = open("$save_dir/configs/$temp.xyz", "w+")
-        for i = 1:length(save_configs)
+        for i in eachindex(save_configs)
             ind = save_configs[i][1]
             itemp = save_configs[i][2]
             config = save_configs[i][3]
             if itemp == temp
                 n_atoms = length(atoms)
                 write(tempfile, "$n_atoms \n \n")
-                for j = 1:length(config)
+                for j in eachindex(config)
                     x = config[j][1]
                     y = config[j][2]
                     z = config[j][3]

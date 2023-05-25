@@ -23,7 +23,7 @@ tgrid = [5. *(16. /5.)^((i-1)/(M-1)) for i in 1:M]
 #println()
 filedir = "$dir/configs"
 savedir = "$filedir/classify"
-for i = 1:length(tgrid)
+for i in eachindex(tgrid)
     temp = tgrid[i]
     open("$filedir/$temp.xyz") do f
         for i=1:N_c
