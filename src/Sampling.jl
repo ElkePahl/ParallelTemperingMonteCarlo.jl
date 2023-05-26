@@ -112,8 +112,8 @@ function update_rdf!(mc_states,results,delta_r2)
             idx=rdf_index(element,delta_r2)
              if 0 < idx < (results.n_bins*5)
                  results.rdf[j_traj][idx] +=1
-            elseif idx >= (results.nbins*5)
-                results.rdf[j_traj][results.nbins*5] +=1
+            elseif idx >= (results.n_bins*5)
+                results.rdf[j_traj][results.n_bins*5] +=1
             end
         end
     end
