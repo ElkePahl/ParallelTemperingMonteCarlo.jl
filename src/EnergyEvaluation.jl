@@ -19,7 +19,8 @@ export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotenti
 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
-export getenergy_DFT, get_energy_dimer,get_energy_RuNNer
+# export getenergy_DFT 
+export get_energy_dimer,get_energy_RuNNer
 export energy_update
 export get_energy
 export AbstractEnsemble, NVT, NPT
@@ -248,7 +249,7 @@ n_atoms:: specifies the number of atoms, kgrid: is the k-point sampling grid, Ec
 Calculates total energy of a given configuration for an arbitrary number of gallium atoms; 
 note that this function depends only on the positions of the atoms within the configuration, 
 so no bc's are to be included. 
-"""
+ """
 # function getenergy_DFT(pos1, pot::DFTPotential) 
 #     pos1 = pos1 / pot.a 
 #     model = model_DFT(pot.lattice, pot.atoms, pos1, pot.functional)

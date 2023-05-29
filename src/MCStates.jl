@@ -69,14 +69,14 @@ function MCState(temp,beta, config::Config, pot::AbstractMachineLearningPotentia
     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 
 end
-function MCState(temp,beta, config::Config, pot::DFTPotential;kwargs...)
-    dist2_mat = get_distance2_mat(config)
-    n_atoms = length(config.pos)
-    en_atom_vec = zeros(n_atoms)
-    en_tot = getenergy_DFT(config.pos, pot)
+# function MCState(temp,beta, config::Config, pot::DFTPotential;kwargs...)
+#     dist2_mat = get_distance2_mat(config)
+#     n_atoms = length(config.pos)
+#     en_atom_vec = zeros(n_atoms)
+#     en_tot = getenergy_DFT(config.pos, pot)
 
-    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-end
+#     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
+# end
 function MCState(temp,beta, config::Config, pot::ParallelMLPotential;kwargs...)
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config.pos)
