@@ -119,7 +119,7 @@ function atom_displacement(state, index, max_displacement, bc::AdjacencyBC)
             trial_dist2mat[index,ind] = distance2(trial_pos,i)
             trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
         end
-        count == 100 && error("Error: too many moves out of boundary")
+        count == 10000 && error("Error: too many moves out of boundary")
     end
     return trial_pos
 end
