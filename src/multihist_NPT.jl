@@ -30,7 +30,7 @@ for i=1:tempnumber   #initialisation
     free_energy[i]=0
     new_free_energy[i]=0
     #beta[i]=1/k/temp[i]
-    normalconst[i]=0
+    #normalconst[i]=0
     ncycles[i]=0
     for m=1:Ebins
         for n=1:Vbins
@@ -39,13 +39,17 @@ for i=1:tempnumber   #initialisation
     end
 end
 
+for i=1:tempnumber_result
+    normalconst[i]=0
+end
+
 
 function quasiprob(betat,m,n)
     energy_t=Emin+(m-0.5)*dEhist
     volume=Vmin+(n-0.5)*dVhist
     quasiprob=0
     denom=0
-    offset=-10^9
+    offset=-10^6
     for i=1:tempnumber
         offset=max(offset,-beta[i]*(energy_t+p*volume)-free_energy[i])
     end
@@ -56,6 +60,7 @@ function quasiprob(betat,m,n)
     end
 
     quasiprob=quasiprob/denom*exp(-betat*(energy_t+p*volume)-offset)
+    return quasiprob
 end
 
 
@@ -70,8 +75,10 @@ for it=1:1000
                 new_free_energy[i]=new_free_energy[i]+quasiprob(betat,m,n)
             end
         end
-
+        
+        #println(new_free_energy[i])
         new_free_energy[i]=log(new_free_energy[i])
+        #println(new_free_energy[i])
     end
     
     local delta
@@ -81,6 +88,7 @@ for it=1:1000
         free_energy[i]=new_free_energy[i]
     end
     println(delta)
+    println()
 
     if delta<conv_threshold
         println("iteration finished")
@@ -126,6 +134,9 @@ for i=1:tempnumber_result
     println("volume: ", evolume)
     println("enthalpy: ", eenthalpy)
     println("heat capacity: ", (eenthalpy2-eenthalpy^2)/(k*temp_result[i]^2))
+    println("1")
     cp[i]=(eenthalpy2-eenthalpy^2)/(k*temp_result[i]^2)
     println()
+end
+
 end

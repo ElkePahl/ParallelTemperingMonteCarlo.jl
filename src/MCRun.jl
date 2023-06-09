@@ -104,7 +104,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
-        energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
+        energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
         for idx in eachindex(mc_states)
             @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
         end
@@ -122,7 +122,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
             @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx])
         end
     end
-
+    #println()
     return mc_states
     
 
@@ -140,6 +140,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     for i_steps = 1:n_steps
         mc_states = mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
+        #println(mc_states[1].en_tot)
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
@@ -364,8 +365,8 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
 
         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
 
-        if rem(i,100000)==0
-            println(i/100000)
+        if rem(i,10000)==0
+            println(i/10000)
         end
         
     end

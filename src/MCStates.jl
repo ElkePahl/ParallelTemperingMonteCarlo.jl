@@ -54,10 +54,14 @@ function MCState(
 end
 
 function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs...) 
-   dist2_mat = get_distance2_mat(config)
-   n_atoms = length(config.pos)
-   en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
-   MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
+    dist2_mat = get_distance2_mat(config)
+    n_atoms = length(config.pos)
+    if typeof(config.bc) == PeriodicBC{Float64}
+        en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, config.bc.box_length^2/4, pot)
+    else
+        en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
+    end
+    MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
 end
 
 function MCState(temp,beta, config::Config, pot::AbstractMachineLearningPotential;kwargs...)
