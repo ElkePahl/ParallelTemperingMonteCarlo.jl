@@ -11,7 +11,7 @@ using LinearAlgebra
 using SplitApplyCombine
 using ..Configurations
 
-using ..RuNNer
+#using ..RuNNer
 
 export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
 
@@ -19,7 +19,7 @@ export DFTPotential
 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
-export getenergy_DFT, get_energy_dimer,get_energy_RuNNer
+export getenergy_DFT, get_energy_dimer#,get_energy_RuNNer
 export energy_update
 export get_energy
 export AbstractEnsemble, NVT, NPT
@@ -279,29 +279,29 @@ end
 
 #--------------------------------------------#
 #--------------RuNNer methods----------------#
-"""
-    get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMLPotential)
-get energy function for the RuNNer potential. Accepts the updated positions, indices and mc_states as well as the potential and returns the energy vector. 
-"""
-function get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMachineLearningPotential)
-    file = RuNNer.writeinit(pot.dir)
+# """
+#     get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMLPotential)
+# get energy function for the RuNNer potential. Accepts the updated positions, indices and mc_states as well as the potential and returns the energy vector. 
+# """
+# function get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMachineLearningPotential)
+#     file = RuNNer.writeinit(pot.dir)
 
-    writeconfig.(Ref(file),mc_states,i_atom_vec,pos_vec,Ref(pot.atomtype))
-    close(file)
+#     writeconfig.(Ref(file),mc_states,i_atom_vec,pos_vec,Ref(pot.atomtype))
+#     close(file)
 
-    energyvec = getRuNNerenergy(pot.dir,length(pos_vec))
+#     energyvec = getRuNNerenergy(pot.dir,length(pos_vec))
 
-    return energyvec
-end
-"""
-    get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
-top-scope function for RuNNer returning the energy vector. Blank vector is presently a placeholder recognising that the dist2_new vector is returned for dimer potentials. This will be calculated later for RuNNer and DFT.
-"""
-function get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
-    energyvector = get_energy_RuNNer(trial_positions,indices,mc_states,pot)
+#     return energyvec
+# end
+# """
+#     get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
+# top-scope function for RuNNer returning the energy vector. Blank vector is presently a placeholder recognising that the dist2_new vector is returned for dimer potentials. This will be calculated later for RuNNer and DFT.
+# """
+# function get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
+#     energyvector = get_energy_RuNNer(trial_positions,indices,mc_states,pot)
 
-    return energyvector,zeros(length(energyvector))
-end
+#     return energyvector,zeros(length(energyvector))
+# end
 
 #---------------------------------------------#
 """
