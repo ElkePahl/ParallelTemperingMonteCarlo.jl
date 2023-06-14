@@ -25,8 +25,10 @@ using ..Initialization
 """  
 
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
+    swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
         Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
         If the Metropolis condition is satisfied, these are used to update mc_state. 
+        Second method applies to the NNPState struct which has several more fields to update.
 """
 function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
@@ -38,7 +40,26 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[2] += 1
 
 end
+function swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
 
+    nnp_state.config.pos[atomindex] = trial_pos
+
+    nnp_state.dist2_mat[atomindex,:] = nnp_state.new_dist2_vec
+    nnp_state.dist2_mat[:,atomindex] = nnp_state.new_dist2_vec
+
+    nnp_state.f_matrix[atomindex,:] = nnp_state.new_f_vec
+    nnp_state.f_matrix[:,atomindex] = nnp_state.new_f_vec
+
+    nnp_state.g_matrix = nnp_state.new_g_matrix
+
+    nnp_state.en_atom_vec = nnp_state.new_en_atom
+    nnp_state.en_tot = new_energy
+
+    nnp_state.count_atom[1] +=1
+    nnp_state.count_atom[2] +=1
+
+    return nnp_state
+end
 function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
     #println("swap_v_config")
     #for i=1:length(mc_state.config.pos)
@@ -55,9 +76,13 @@ end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
 
-            (ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
+        (ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
 
-        The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
+        The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. 
+
+        The second method involes the NNPState subtype of the MCState, it follows the same basic functions as the other version, but accounts for the different output of the getenergy function. 
+
+NB: this method becomes redundant if we change the output and format of the getenergy function for the dimer potential: waiting on an email. 
 
 """
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
@@ -67,18 +92,15 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
 end
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
-    
-    
-    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+function acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
 
+    if metropolis_condition(ensemble,(new_energy - nnp_state.en_tot),nnp_state.beta) >= rand()
 
-        dist2new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+        swap_config!(nnp_state,i_atom,trial_pos,new_energy)
 
-        swap_config!(mc_state,i_atom,trial_pos,dist2new, energy)
-    end   
+    end
+
 end
-
 function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64)
 
 
@@ -93,7 +115,10 @@ end
 
 """
     function mc_step!(mc_states,mc_params,pot,ensemble)
+        (nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
+            
+            second method relates to the inclusion of a neural network potential. This method could be made redundant by rethinking the current MCState struct, but currently results in three new_something_vector outputs, meaning it is not compatible with the dimer potential with only one new_dist2_vector output.
 """
 
 function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
@@ -121,7 +146,17 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     
 
 end
+function mc_step!(nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
+    indices,trial_positions = generate_displacements(mc_states,mc_params)
+    
+    energy_vector, nnp_states = get_energy!(trial_positions,indices,nnp_states,potential)
 
+    Threads.@threads for idx in eachindex(nnp_states)
+        test_acc_test!(ensemble,nnp_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],0.)
+    end
+
+    return nnp_states
+end
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
              mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
