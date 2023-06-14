@@ -2,10 +2,11 @@ module MCStates
 
 using ..BoundaryConditions
 using ..Configurations
-using ..MachineLearningPotential
+using MachineLearningPotential
 using ..EnergyEvaluation
 #using ..InputParams
 
+export MCState, NNPState
 export MCState, NNPState
 """
     MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
@@ -119,8 +120,7 @@ mutable struct NNPState{T,N,BC}
     beta::T
     config::Config{N,BC,T}
     dist2_mat::Matrix{T}
-
-    en_atom_vec::Array{T}
+    en_atom_vec::Vector{T}
     en_tot::T
     ham::Vector{T}
     max_displ::Vector{T}

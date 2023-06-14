@@ -136,7 +136,6 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
         #println("swap")
-
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end
 end
