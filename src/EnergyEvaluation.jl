@@ -341,7 +341,7 @@ end
     get_energy!(trial_positions,indices,nnp_states,pot::RuNNerPotential)
 Total, vectorised function for the calculation of the energy change in each state within `nnp_states` based on a vector of moved `indices` to `trial_positions` based on the potential `pot`.
 """
-function get_energy!(trial_positions,indices,nnp_states,pot::RuNNerPotential)
+function get_energy(trial_positions,indices,nnp_states,pot::RuNNerPotential)
     energyvector = Vector{Float64}(undef,length(indices))
 
     energyvector,nnp_states = invert(get_runner_energy!.(trial_positions,indices,nnp_states,Ref(pot)))
