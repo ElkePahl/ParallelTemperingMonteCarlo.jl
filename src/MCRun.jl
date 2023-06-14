@@ -254,7 +254,17 @@ function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ense
 
 
 end
+function mc_step!(nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
+    indices,trial_positions = generate_displacements(mc_states,mc_params)
+    
+    energy_vector, nnp_states = get_energy!(trial_positions,indices,nnp_states,potential)
 
+    Threads.@threads for idx in eachindex(nnp_states)
+        test_acc_test!(ensemble,nnp_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],0.)
+    end
+
+    return nnp_states
+end
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
              mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
