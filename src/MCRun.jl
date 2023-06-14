@@ -153,7 +153,7 @@ function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,pote
     energy_vector, nnp_states = get_energy(trial_positions,indices,nnp_states,potential)
 
     Threads.@threads for idx in eachindex(nnp_states)
-        test_acc_test!(ensemble,nnp_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],0.)
+        acc_test!(ensemble,nnp_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],0.)
     end
 
     return nnp_states
