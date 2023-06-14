@@ -304,8 +304,8 @@ end
 calculates the changes to the g_matrix, dist2_matrix etc based on the new `trial_pos` of atom `atomindex` and adjusts these values inside the `nnp_state` struct. Note the use of the threaded function for the calculation of the symmetry functions
 """
 function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
-    nnp_state.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
 
+    nnp_state.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
     nnp_state.new_dist2_vec[atomindex] = 0.
     
     nnp_state.new_f_vec = cutoff_function.(sqrt.(nnp_state.new_dist2_vec),Ref(pot.r_cut))
@@ -317,6 +317,7 @@ function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
 
     return nnp_state
 end
+
 """
     calc_new_energy!(nnp_state,pot)
 Function to curry the PTMC struct `nnp_state` and `pot` into the format required by the MachineLearningPotential package, output is the updated `nnp_state`
