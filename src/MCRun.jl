@@ -147,8 +147,8 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
 
 end
 function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,potential,ensemble) where T where N where BC
-    
-    indices,trial_positions = generate_displacements(mc_states,mc_params)
+
+    indices,trial_positions = generate_displacements(nnp_states,mc_params)
     
     energy_vector, nnp_states = get_energy!(trial_positions,indices,nnp_states,potential)
 
