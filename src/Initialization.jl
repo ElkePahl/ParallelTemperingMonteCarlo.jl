@@ -7,8 +7,7 @@ module Initialization
 
 export init_sim,restart_ptmc, initialisation
 
-using StaticArrays,DelimitedFiles,Random
-using ..MachineLearningPotential
+using StaticArrays,DelimitedFiles,Random,MachineLearningPotential
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -109,26 +108,8 @@ function initialisation(restart,mc_states, move_strat, mc_params, pot, ensemble,
 
     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 end
-"""
-    initial_energy_calculation(nnp_state,runner_pot)
-takes a new `nnp_state` struct, calculates the total symmetry function and the energy according to the `runner_pot` potential energy surface. Returns the state with the updated g_matrix and en_tot fields 
 
-"""
-function initial_energy_calculation(nnp_state,runner_pot)
-    n_atoms = length(nnp_state.config.pos)
 
-    nnp_state.g_matrix = total_symm_calc(nnp_state.config.pos,nnp_state.dist2_mat,nnp_state.f_matrix,runner_pot.symmetryfunctions)
-
-    nnp_state.en_atom_vec = forward_pass(nnp_state.g_matrix,n_atoms,runner_pot.nnp)
-
-    nnp_state.en_tot = sum(nnp_state.en_atom_vec)
-
-    return nnp_state
-end
-"""
-    initial_energy_vec(nnp_states,potential)
-Accepts a vector of `nnp_states` trajectories and a `potential` we calculate the g_matrix and energy values for each state. 
-"""
 function initial_energy_vec(nnp_states,potential)
     
     for state in nnp_states 
@@ -148,6 +129,4 @@ function initialisation(restart,mc_states::Vector{NNPState{T,N,BC}}, move_strat,
 
     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 end
-
-
 end
