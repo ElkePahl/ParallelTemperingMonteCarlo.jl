@@ -10,6 +10,7 @@ using DFTK
 using LinearAlgebra
 using SplitApplyCombine
 using ..MachineLearningPotential
+using MachineLearningPotential
 using ..Configurations
 
 #using ..RuNNer
