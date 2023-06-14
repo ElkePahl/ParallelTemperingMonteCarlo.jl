@@ -7,7 +7,7 @@ module Initialization
 
 export init_sim,restart_ptmc, initialisation
 
-using StaticArrays,DelimitedFiles,Random
+using StaticArrays,DelimitedFiles,Random,MachineLearningPotential
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -109,4 +109,24 @@ function initialisation(restart,mc_states, move_strat, mc_params, pot, ensemble,
     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 end
 
+
+function initial_energy_vec(nnp_states,potential)
+    
+    for state in nnp_states 
+        state = initial_energy_calculation(state,potential)
+    end
+    return nnp_states
+end
+
+function initialisation(restart,mc_states::Vector{NNPState{T,N,BC}}, move_strat, mc_params, pot, ensemble, results;save=true,save_dir=pwd(),startfile="input.data") where T where N where BC
+
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+    n_steps = a + v + r
+
+    mc_states = initial_energy_vec(mc_states,pot)
+
+    start_counter = 1
+
+    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
+end
 end
