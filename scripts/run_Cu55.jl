@@ -1,8 +1,8 @@
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo, MachineLearningPotential
 
-using Random
+using Random,DelimitedFiles
 
-
+#cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
 
@@ -40,14 +40,8 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 
 #ensemble
 ensemble = NVT(n_atoms)
-#Potential
-# for laptop
-# runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
-#desktop
-runnerdir = "/home/ghunter/Documents/RuNNer-master/test-Brass/"
-atomtype="Cu"
 
-pot = SerialMLPotential(runnerdir,atomtype);
+
 
 
 #starting configurations
@@ -185,16 +179,19 @@ for symmindex in eachindex(eachrow(X))
     push!(radsymmvec,radsymm)
 end
 
-n_index = 10
+
+let n_index = 10
+
 for element in V
     for types in T 
-        
+
         n_index += 1
 
         symmfunc = AngularType3{Float64}(element[1],element[2],element[3],11.338,types,G_value_vec[n_index])
 
         push!(angularsymmvec,symmfunc)
     end
+end
 end
 #---------------------------------------------------#
 #------concatenating radial and angular values------#
@@ -218,7 +215,9 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #------------------------------------------------------------#
 #============================================================#
 #------------------------------------------------------------#
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj];
+
+mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+
 
 
 #results = Output(n_bin, max_displ_vec)
