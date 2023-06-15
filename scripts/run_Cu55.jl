@@ -1,14 +1,8 @@
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo, MachineLearningPotential
 
 using Random,DelimitedFiles
 
-script_folder = @__DIR__ # folder where this script is located
-data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
-
-## When moving this script to a different folder it may be necessary to adjust the
-## location of the shared library "librunner.so". Uncomment and adjust the next line for this.
-# ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass.lib_path() = joinpath(@__DIR__, "../MachineLearningPotential/lib/")
-
+#cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
 
@@ -187,16 +181,19 @@ for symmindex in eachindex(eachrow(X))
     push!(radsymmvec,radsymm)
 end
 
-n_index = 10
+
+let n_index = 10
+
 for element in V
     for types in T 
-        
+
         n_index += 1
 
         symmfunc = AngularType3{Float64}(element[1],element[2],element[3],11.338,types,G_value_vec[n_index])
 
         push!(angularsymmvec,symmfunc)
     end
+end
 end
 #---------------------------------------------------#
 #------concatenating radial and angular values------#
@@ -220,7 +217,9 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #------------------------------------------------------------#
 #============================================================#
 #------------------------------------------------------------#
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj];
+
+mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+
 
 
 #results = Output(n_bin, max_displ_vec)
