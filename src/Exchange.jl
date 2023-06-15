@@ -86,7 +86,7 @@ function exc_trajectories!(state_1::NNPState, state_2::NNPState)
     #then the unique NNP variables
     state_1.g_matrix, state_2.g_matrix = state_2.g_matrix, state_1.g_matrix
     state_1.f_matrix, state_2.f_matrix = state_2.f_matrix, state_1.f_matrix
-
+    
 
     return state_1,state_2
 end
