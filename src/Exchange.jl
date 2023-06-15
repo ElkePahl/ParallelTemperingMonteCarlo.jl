@@ -86,7 +86,7 @@ function exc_trajectories!(state_1::NNPState, state_2::NNPState)
     #then the unique NNP variables
     state_1.g_matrix, state_2.g_matrix = state_2.g_matrix, state_1.g_matrix
     state_1.f_matrix, state_2.f_matrix = state_2.f_matrix, state_1.f_matrix
-    
+
 
     return state_1,state_2
 end
@@ -175,7 +175,6 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     end
     return mc_state
 end
-
 function update_max_stepsize!(mc_state::NNPState, n_update, a, v, r; min_acc = 0.4, max_acc = 0.6)
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * a)
