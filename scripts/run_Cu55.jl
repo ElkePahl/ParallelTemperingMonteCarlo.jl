@@ -20,6 +20,8 @@ n_atoms = 55
 # temperature grid
 ti = 550
 tf = 900
+ti = 550
+tf = 900
 
 n_traj = 20
 
@@ -28,7 +30,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -169,7 +171,7 @@ angularsymmvec = []
 #-------------------------------------------#
 #-----------Including scaling data----------#
 #-------------------------------------------#
-file = open(joinpath(data_path,"scaling.data")) # full path "./data/scaling.data"
+file = open("$(pwd())/scaling.data")
 scalingvalues = readdlm(file)
 close(file)
 G_value_vec = []
@@ -185,19 +187,16 @@ for symmindex in eachindex(eachrow(X))
     push!(radsymmvec,radsymm)
 end
 
-
-let n_index = 10
-
+n_index = 10
 for element in V
-    for types in T
-
+    for types in T 
+        
         n_index += 1
 
         symmfunc = AngularType3{Float64}(element[1],element[2],element[3],11.338,types,G_value_vec[n_index])
 
         push!(angularsymmvec,symmfunc)
     end
-end
 end
 #---------------------------------------------------#
 #------concatenating radial and angular values------#
@@ -211,7 +210,7 @@ totalsymmvec = vcat(radsymmvec,angularsymmvec)
 #--------------------------------------------------#
 num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
-file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
+file = open("weights.029.data","r+")
 weights=readdlm(file)
 close(file)
 weights = vec(weights)
@@ -221,9 +220,7 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #------------------------------------------------------------#
 #============================================================#
 #------------------------------------------------------------#
-
-mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj];
 
 
 #results = Output(n_bin, max_displ_vec)
