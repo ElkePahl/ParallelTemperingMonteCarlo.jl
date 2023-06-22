@@ -1,10 +1,10 @@
-ico 
-ambiguous 
-ico 
-ico 
-ambiguous 
-dec 
-dec 
-ambiguous 
-ico 
-dec 
+ico => ico 
+ambiguous => ambiguous 
+ico => ico 
+ico => ico 
+ambiguous => ambiguous 
+dec => dec 
+dec => dec 
+ambiguous => ambiguous 
+ico => ico 
+dec => dec 

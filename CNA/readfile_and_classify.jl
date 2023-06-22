@@ -27,10 +27,14 @@ The /100000 is to prevent the energy gradient being too large.
 Otherwise the minimisation might push atoms apart at the first step.
 "
 function lj2(d)
+    c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
     if d>=0.9
-        sig6d6=sigma^6*d^(-3)
-        #e=sigma^12*d^(-6)-sigma^6*d^(-3)
-        e=sig6d6*(sig6d6-1)
+        e=0
+        dummy = 6
+            for i in c
+            e += i * d^(dummy)
+            dummy += 2
+        end
     else
         e=0.50993431+7.9720358*(0.9-d)
     end
@@ -38,7 +42,8 @@ function lj2(d)
 end
 
 "Lennard-Jones potential for the whole configuration"
-function lj(x)
+function elj_ne(x)
+    
     E=0
     for i=1:N-1
         for j=i+1:N
@@ -69,24 +74,28 @@ for i in eachindex(tgrid)
 		        end
             end
             
-            totalProfiles, atomicProfiles = CNA(configuration, N, cut, true, 1)
+            totalProfiles_i, atomicProfiles_i = CNA(configuration, N, cut, true, 1)
             #println(totalProfiles)
             #println(atomicProfiles)
 
             x = configuration*2
 
-            class = cluster_classify(atomicProfiles,N)
+            classi = cluster_classify(atomicProfiles_i,N)
             
-            write(classifyfile, "$class \n")
-            od=OnceDifferentiable(lj,x; autodiff=:forward);     #gradient
+            
+            od=OnceDifferentiable(elj_ne,x; autodiff=:forward);     #gradient
             result = Optim.minimizer(optimize(od, x, ConjugateGradient(),Optim.Options(g_tol=1e-8)))
 
-            #println(configuration)
-        
-            #println()
+            totalProfiles_f, atomicProfiles_f = CNA(result/2, N, cut, true, 1)
+            classf = cluster_classify(atomicProfiles_f,N)
+
+            #println(result/2)
+            
+            write(classifyfile, "$classi => $classf \n")
         end
     end
     close(classifyfile)
 end
+
 
 end
