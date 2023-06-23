@@ -1,10 +1,10 @@
 ambiguous => ambiguous 
-dec => dec 
-dec => dec 
+ico => ico 
+ico => ico 
 ambiguous => ambiguous 
-dec => dec 
 ico => ico 
 ico => ico 
 ico => ico 
 ico => ico 
-dec => dec 
+ico => ico 
+ico => ico 

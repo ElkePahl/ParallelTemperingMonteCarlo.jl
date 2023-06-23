@@ -1,8 +1,8 @@
 ico => ico 
 ico => ico 
-dec => dec 
-ambiguous => ambiguous 
-ambiguous => ambiguous 
+ambiguous => ico 
+ambiguous => ico 
+dec => ico 
 ico => ico 
 ico => ico 
 ico => ico 
