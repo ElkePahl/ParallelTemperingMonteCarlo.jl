@@ -4,7 +4,7 @@ module Comparison # This module contains functions which compare configurations 
 include("io.jl") # This file contains the IO module.
 using .IO # This module contains functions that read in and write out files.
 using Statistics # This module allows easy mean and standard deviation.
-export compareConfigs,groupConfigs,configStats # These functions ared used to compare configurations.
+export compareConfigs,groupConfigs,configStats, similarityScore, similarityScore_one # These functions ared used to compare configurations.
 
 """
 Finds the most similar configuration to every configuration over all rCut values based on their CNA profile.
@@ -126,6 +126,29 @@ function similarityScore(configA, configB, totalProfiles,atomicProfilesDict,simi
 	elseif (similarityMeasure == "total") # If want to compare using total CNA profile
 		# Compute Jacard index of their total CNA profiles
 		similarity = JacardIndex(totalProfiles[i,configA],totalProfiles[i,configB])
+	else # If none of the valid similarity measures were used
+		throw(DomainError(similarityMeasure, "Invalid similarity measure")) # Throw an error
+	end
+
+	return round(similarity; digits = 3) # Return rounded similarity score
+end
+
+function similarityScore_one(configA, configB, totalProfiles,atomicProfilesDict,similarityMeasure,N)
+	similarity = 0.0 # Initialise similarity score
+	if (similarityMeasure == "atomic") # If want to compare using atomic CNA profile
+		# Compute similarity of atomic CNA profiles
+		println("atomic")
+		for key in keys(atomicProfilesDict[configA]) # For each atom CNA profile
+			# Add the number of atoms with the same atom CNA profile
+			println(get(atomicProfilesDict[configA],key,0))
+			println(get(atomicProfilesDict[configB],key,0))
+			similarity += min(get(atomicProfilesDict[configA],key,0),get(atomicProfilesDict[configB],key,0))
+		end
+		similarity /= N # Normalise the similarity score
+		
+	elseif (similarityMeasure == "total") # If want to compare using total CNA profile
+		# Compute Jacard index of their total CNA profiles
+		similarity = JacardIndex(totalProfiles[configA],totalProfiles[configB])
 	else # If none of the valid similarity measures were used
 		throw(DomainError(similarityMeasure, "Invalid similarity measure")) # Throw an error
 	end
