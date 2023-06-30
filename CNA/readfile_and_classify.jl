@@ -13,7 +13,7 @@ using Optim
 using LinearAlgebra
 using Graphs
 
-N_c=10   #Number of configurations
+N_c=1000   #Number of configurations
 N=13    #Number of atoms in each configuration
 cut=7.5
 sigma=2.782

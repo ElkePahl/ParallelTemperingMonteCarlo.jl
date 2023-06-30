@@ -11,11 +11,11 @@ using .Comparison
 using .Cluster_Classification
 using Optim
 using LinearAlgebra
-using Graphs
+using Plots
 
 
 
-N_c=10   #Number of configurations
+N_c=1000   #Number of configurations
 N=13    #Number of atoms in each configuration
 cut=7.5
 sigma=2.782
@@ -78,9 +78,65 @@ println(atomicProfile_global)
 filedir = "$dir/configs"
 savedir = "$filedir/classify"
 savefile = open("$savedir/ne13.txt", "w+")
+plt = plot(legend=:none)
 
-for t in eachindex(tgrid)
-    temp = tgrid[t]
+folders = ["d=1.1", "d=1.5", "d=1.5(2)"]
+for folder in folders
+    energies=Array{Float64}(undef,10000)
+    similarity=Array{Float64}(undef,10000)
+    open("$savedir/$folder-profiles_and_energies.txt") do f
+        for i=1:10000
+            line = readline(f)
+            energies[i] = parse(Float64, line)
+            totalProfiles = Dict{String,Int}()
+            line = readline(f)
+            len = length(line)
+            dummy = 7
+            while dummy <= len
+                string = line[dummy:dummy+6]
+                try
+                    int = parse(Int64, line[dummy+12:dummy+13])
+                    totalProfiles[string] = int
+                    dummy += 17
+                catch
+                    int = parse(Int64, line[dummy+12])
+                    totalProfiles[string] = int 
+                    dummy += 16
+                end
+
+            end
+            bonds = parse(Int64, readline(f))
+            atomicProfiles = []
+            for i = 1:bonds
+                line = readline(f)
+                len = length(line)
+                #println(len)
+                str = line[len-9:len-3]
+                arr = []
+                
+                if len == 20
+                    push!(arr, parse(Int64, line[3]))
+                    push!(arr, parse(Int64, line[6]))
+                elseif len == 21
+                    push!(arr, parse(Int64, line[3]))
+                    push!(arr, parse(Int64, line[6:7]))
+                elseif len == 22
+                    push!(arr, parse(Int64, line[3:4]))
+                    push!(arr, parse(Int64, line[7:8]))
+                end
+                prof = (arr, str)
+                push!(atomicProfiles, prof)
+            end
+            similarity[i]= similarityScore_one(1, 2, [totalProfile_global,totalProfiles],[atomicProfile_global,atomicProfiles],"total",N)
+            
+        end
+
+        scatter!(similarity, energies; mc=:purple)
+    end
+
+end
+
+for temp in tgrid
     energies=Array{Float64}(undef,N_c)
     similarity=Array{Float64}(undef,N_c)
     open("$savedir/$temp-profiles_and_energies.txt") do f
@@ -132,11 +188,13 @@ for t in eachindex(tgrid)
         write(savefile, "$temp \n")
         write(savefile, "$similarity \n")
         write(savefile, "$energies \n")
+
+        scatter!(similarity, energies; mc=:yellowgreen)
     end
 
 end
 
 close(savefile)
 
-
+display(plt)
 end
