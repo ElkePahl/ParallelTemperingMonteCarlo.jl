@@ -7,7 +7,7 @@ module Initialization
 
 export init_sim,restart_ptmc, initialisation
 
-using StaticArrays,DelimitedFiles,Random,MachineLearningPotential
+using StaticArrays,DelimitedFiles,Random,MCMachineLearningPotentialInterface
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
