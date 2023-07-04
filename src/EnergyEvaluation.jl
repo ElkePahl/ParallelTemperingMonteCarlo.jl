@@ -9,8 +9,7 @@ using StaticArrays
 using DFTK 
 using LinearAlgebra
 using SplitApplyCombine
-using ..MachineLearningPotential
-using MachineLearningPotential
+using MCMachineLearningPotentialInterface
 using ..Configurations
 
 #using ..RuNNer
