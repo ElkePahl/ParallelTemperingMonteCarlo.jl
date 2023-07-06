@@ -172,9 +172,6 @@ function get_distance2_mat(conf::Config)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N
-        for j=1:i-1
-            mat[i,j]=mat[j,i]=distance2(conf.pos[i],conf.pos[j],conf.bc)
-        end
         for j=i+1:N
             mat[i,j]=mat[j,i]=distance2(conf.pos[i],conf.pos[j],conf.bc)
         end
