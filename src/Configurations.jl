@@ -18,7 +18,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance2_mat, move_atom!
+export distance2, get_distance2_mat, get_tantheta_mat, move_atom!
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -166,6 +166,40 @@ distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length),
 
 Builds the matrix of squared distances between positions of configuration.
 """
-get_distance2_mat(conf::Config{N}) where N = [distance2(a,b,conf.bc) for a in conf.pos, b in conf.pos]
+#get_distance2_mat(conf::Config{N}) where N = [distance2(a,b,conf.bc) for a in conf.pos, b in conf.pos]
+
+function get_distance2_mat(conf::Config)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=1:i-1
+            mat[i,j]=mat[j,i]=distance2(conf.pos[i],conf.pos[j],conf.bc)
+        end
+        for j=i+1:N
+            mat[i,j]=mat[j,i]=distance2(conf.pos[i],conf.pos[j],conf.bc)
+        end
+    end
+    return mat
+end
+
+"""
+    get_theta_mat(conf::Config{N})
+
+Builds the matrix of tan of angles between positions of configuration.
+"""
+
+function get_tantheta_mat(conf::Config)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=1:i-1
+            mat[i,j]=mat[j,i]=((conf.pos[i][1]-conf.pos[j][1])^2+(conf.pos[i][2]-conf.pos[j][2])^2)^0.5/abs(conf.pos[i][3]-conf.pos[j][3])
+        end
+        for j=i+1:N
+            mat[i,j]=mat[j,i]=((conf.pos[i][1]-conf.pos[j][1])^2+(conf.pos[i][2]-conf.pos[j][2])^2)^0.5/abs(conf.pos[i][3]-conf.pos[j][3])
+        end
+    end
+    return mat
+end
 
 end

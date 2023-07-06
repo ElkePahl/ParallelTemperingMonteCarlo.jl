@@ -108,8 +108,9 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
         for idx in eachindex(mc_states)
             @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
         end
+        #println(mc_states[1].en_tot)
     else
-        #println("v")
+        println("v")
         trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
         #get the new distance matrix, energy matrix and total energy for each trajectory
         dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,pot::AbstractDimerPotential)
