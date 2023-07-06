@@ -2,7 +2,7 @@ module MCStates
 
 using ..BoundaryConditions
 using ..Configurations
-using MCMachineLearningPotentialInterface
+using ..MachineLearningPotential
 using ..EnergyEvaluation
 #using ..InputParams
 

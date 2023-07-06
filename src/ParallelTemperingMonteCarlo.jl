@@ -4,7 +4,7 @@ using Reexport
 
 include("BoundaryConditions.jl")
 include("Configurations.jl")
-
+include("../MachineLearningPotential/MachineLearningPotential.jl")
 include("EnergyEvaluation.jl")
 include("MCStates.jl")
 include("InputParams.jl")
@@ -21,7 +21,7 @@ include("multihist.jl")
 
  @reexport using .BoundaryConditions
  @reexport using .Configurations
-
+ @reexport using .MachineLearningPotential
  @reexport using .EnergyEvaluation
  @reexport using .MCStates
  @reexport using .InputParams
