@@ -14,9 +14,7 @@ using ..Configurations
 
 #using ..RuNNer
 
-
-export AbstractPotential, AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential,EmbeddedAtomPotential
-
+export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,
 
 export RuNNerPotential
 
