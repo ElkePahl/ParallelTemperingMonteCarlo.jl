@@ -14,7 +14,7 @@ using ..Configurations
 
 #using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
+export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,
 
 export RuNNerPotential
 
@@ -53,16 +53,6 @@ abstract type AbstractDimerPotential <: AbstractPotential end
 
 abstract type AbstractMachineLearningPotential <: AbstractPotential end
 
-struct SerialMLPotential <: AbstractMachineLearningPotential #remove the Abstract from the name
-    dir::String
-    atomtype::String
-end
-struct ParallelMLPotential <: AbstractMachineLearningPotential
-    dir::String
-    atomtype::String
-    index::Int64
-    total::Int64
-end
 
 
 
