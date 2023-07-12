@@ -1,6 +1,4 @@
-
 using ParallelTemperingMonteCarlo
-
 using Random,DelimitedFiles
 
 #cd("$(pwd())/scripts")
@@ -13,10 +11,8 @@ n_atoms = 78
 
 
 # temperature grid
-
-ti = 700
-tf = 1100
-
+ti = 550
+tf = 900
 
 n_traj = 20
 
@@ -25,9 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-
-mc_cycles = 1000000 #default 20% equilibration cycles on top
-
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -132,25 +126,10 @@ pos_cu78 = [[9.20810577, 10.6811792, 12.85775222],
 [12.79744324, 10.11163506, 10.75172547]]
 
 #convert to Bohr
-
-nmtobohr = 18.8973
-
-
-
+# nmtobohr = 18.8973
 # copperconstant = 0.36258*nmtobohr
 # pos_cu55 = copperconstant*ico_55
 AtoBohr = 1.8897259886
-pos_cu78 .*= AtoBohr 
- 
- # we do not have a centred config, correcting this now
- 
- cofm = [sum([pos[1] for pos in pos_cu78]),sum([pos[2] for pos in pos_cu78]),sum([pos[3] for pos in pos_cu78])]./78
-
-for element in pos_cu78
-    element .-=cofm 
-end
-
-
 
 length(pos_cu78) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -164,22 +143,6 @@ start_config = Config(pos_cu78, bc_cu55)
 
 #histogram information
 n_bin = 100
-
-#----------------------------------------------------------------------------#
-evtohartree = 0.0367493
-#parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
-n = 8.482
-m = 4.692
-ϵ = evtohartree*0.0370
-a = 0.25*nmtobohr
-C = 27.561
-
-pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
-# sutton chen potential as used by Doye et al for the cambridge cluster database energy landscape
-
-suttonchenpot = EmbeddedAtomPotential(9.0,6.0,0.0126*evtohartree,39.432,0.3612*nmtobohr)
-#----------------------------------------------------------------------------#
-
 #-------------------------------------------#
 #--------Vector of radial symm values-------#
 #-------------------------------------------#
@@ -261,14 +224,11 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #============================================================#
 #------------------------------------------------------------#
 
-#nnp_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
+mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results));
-
+@time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));
