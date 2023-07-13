@@ -180,10 +180,9 @@ function acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
 end
 
 """
-
-function mc_step!(mc_states,mc_params,pot,ensemble)
+    function mc_step!(mc_states,mc_params,pot,ensemble)
         mc_step!(nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
-        mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
+        
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
 
         second method relates to the inclusion of a neural network potential. This method could be made redundant by rethinking the current MCState struct, but currently results in three new_something_vector outputs, meaning it is not compatible with the dimer potential with only one new_dist2_vector output.
