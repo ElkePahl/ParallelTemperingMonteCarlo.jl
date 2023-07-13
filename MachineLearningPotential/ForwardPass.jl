@@ -22,9 +22,9 @@ function NeuralNetworkPotential(num_nodes::Vector,activation_functions::Vector, 
 end
 """
     forward_pass( input::AbstractArray, batchsize, num_layers, num_nodes, activation_functions, num_parameters, parameters) 
-        (input::AbstractArray,batchsize,nnparams::NeuralNetworkPotential)
-        (eatom,input::AbstractArray,batchsize,nnparams::NeuralNetworkPotential; directory = pwd()) 
-        ( eatom,input::AbstractArray, batchsize, num_layers, num_nodes, activation_functions, num_parameters, parameters,dir)
+    forward_pass(input::AbstractArray,batchsize,nnparams::NeuralNetworkPotential)
+    forward_pass(eatom,input::AbstractArray,batchsize,nnparams::NeuralNetworkPotential; directory = pwd()) 
+    forward_pass( eatom,input::AbstractArray, batchsize, num_layers, num_nodes, activation_functions, num_parameters, parameters,dir)
 
 calls the RuNNer forward pass module written by A. Knoll located in `directory`. This self-defines the `eatoms` output, a vector of the atomic energies. `batchsize` is based on the number of atoms whose energies we want to determine. The remaining inputs are contained in `nnparams.` Details of this struct can be found in the definition of the NeuralNetworkPotential struct. 
 The last two definitions are identical except eatoms is an input rather than a vector determined during the calculation. This can save memory in the long run. 
