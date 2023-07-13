@@ -9,17 +9,19 @@ using StaticArrays
 using DFTK 
 using LinearAlgebra
 using SplitApplyCombine
+using ..MachineLearningPotential
 using ..Configurations
 
-using ..RuNNer
+#using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
+export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential
+export RuNNerPotential
 
 export DFTPotential
 
 export ELJPotential, ELJPotentialEven
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
-export getenergy_DFT, get_energy_dimer,get_energy_RuNNer
+export getenergy_DFT, get_energy_dimer#,get_energy_RuNNer
 export energy_update
 export get_energy
 export AbstractEnsemble, NVT, NPT
@@ -50,16 +52,6 @@ abstract type AbstractDimerPotential <: AbstractPotential end
 
 abstract type AbstractMachineLearningPotential <: AbstractPotential end
 
-struct SerialMLPotential <: AbstractMachineLearningPotential #remove the Abstract from the name
-    dir::String
-    atomtype::String
-end
-struct ParallelMLPotential <: AbstractMachineLearningPotential
-    dir::String
-    atomtype::String
-    index::Int64
-    total::Int64
-end
 
 
 
@@ -136,7 +128,7 @@ end
 
 """
     get_energy function when the whole configuration is scaled
-        find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
+    find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
 """
 function get_energy(trial_configs_all,pot::AbstractDimerPotential)
     dist2_mat_new = get_distance2_mat.(trial_configs_all)
@@ -280,27 +272,70 @@ end
 #--------------------------------------------#
 #--------------RuNNer methods----------------#
 """
-    get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMLPotential)
-get energy function for the RuNNer potential. Accepts the updated positions, indices and mc_states as well as the potential and returns the energy vector. 
+    RuNNerPotential <: AbstractMachineLearningPotential
+Contains the important structs required for a neural network potential defined in the MachineLearningPotential package:
+    Fields are:
+    nnp -- a struct containing the weights, biases and neural network parameters.
+    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
+    r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
 """
-function get_energy_RuNNer(pos_vec,i_atom_vec,mc_states,pot::AbstractMachineLearningPotential)
-    file = RuNNer.writeinit(pot.dir)
-
-    writeconfig.(Ref(file),mc_states,i_atom_vec,pos_vec,Ref(pot.atomtype))
-    close(file)
-
-    energyvec = getRuNNerenergy(pot.dir,length(pos_vec))
-
-    return energyvec
+struct  RuNNerPotential <: AbstractMachineLearningPotential
+    nnp::NeuralNetworkPotential
+    symmetryfunctions::Vector{AbstractSymmFunction}
+    r_cut::Float64
+end
+function RuNNerPotential(nnp,symmetryfunction)
+    r_cut = symmetryfunction[1].r_cut
+    return RuNNerPotential(nnp,symmetryfunction,r_cut)
 end
 """
-    get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
-top-scope function for RuNNer returning the energy vector. Blank vector is presently a placeholder recognising that the dist2_new vector is returned for dimer potentials. This will be calculated later for RuNNer and DFT.
+    get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
+calculates the changes to the g_matrix, dist2_matrix etc based on the new `trial_pos` of atom `atomindex` and adjusts these values inside the `nnp_state` struct. Note the use of the threaded function for the calculation of the symmetry functions
 """
-function get_energy(trial_positions,indices,mc_states,pot::AbstractMachineLearningPotential)
-    energyvector = get_energy_RuNNer(trial_positions,indices,mc_states,pot)
+function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
 
-    return energyvector,zeros(length(energyvector))
+    nnp_state.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
+    nnp_state.new_dist2_vec[atomindex] = 0.
+    
+    nnp_state.new_f_vec = cutoff_function.(sqrt.(nnp_state.new_dist2_vec),Ref(pot.r_cut))
+
+
+    nnp_state.new_g_matrix = copy(nnp_state.g_matrix)
+
+    nnp_state.new_g_matrix = total_thr_symm!(nnp_state.new_g_matrix,nnp_state.config.pos,trial_pos,nnp_state.dist2_mat,nnp_state.new_dist2_vec,nnp_state.f_matrix,nnp_state.new_f_vec,atomindex,pot.symmetryfunctions)
+
+    return nnp_state
+end
+
+"""
+    calc_new_energy!(nnp_state,pot)
+Function to curry the PTMC struct `nnp_state` and `pot` into the format required by the MachineLearningPotential package, output is the updated `nnp_state`
+"""
+function calc_new_energy!(nnp_state,pot)
+    nnp_state.new_en_atom = forward_pass(nnp_state.new_g_matrix,length(nnp_state.en_atom_vec),pot.nnp)
+    return nnp_state
+end
+"""
+    get_runner_energy!(trial_pos,atomindex,nnp_state,pot)
+base-level single-state calculation of the `energy` and adjusted `nnp_state` given that we have displaced atom `atomindex` to position `trial_pos`.
+"""
+function get_runner_energy!(trial_pos,atomindex,nnp_state,pot)
+    nnp_state = get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
+
+    nnp_state = calc_new_energy!(nnp_state,pot)
+    
+    return sum(nnp_state.new_en_atom) , nnp_state
+end
+"""
+    get_energy!(trial_positions,indices,nnp_states,pot::RuNNerPotential)
+Total, vectorised function for the calculation of the energy change in each state within `nnp_states` based on a vector of moved `indices` to `trial_positions` based on the potential `pot`.
+"""
+function get_energy(trial_positions,indices,nnp_states,pot::RuNNerPotential)
+    energyvector = Vector{Float64}(undef,length(indices))
+
+    energyvector,nnp_states = invert(get_runner_energy!.(trial_positions,indices,nnp_states,Ref(pot)))
+    
+    return energyvector, nnp_states
 end
 
 #---------------------------------------------#

@@ -1,8 +1,8 @@
 using ParallelTemperingMonteCarlo
 
-using Random
+using Random,DelimitedFiles
 
-
+#cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
 
@@ -12,17 +12,17 @@ n_atoms = 55
 
 
 # temperature grid
-ti = 540
-tf = 650
+ti = 550
+tf = 900
 
-n_traj = 15
+n_traj = 20
 
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 20 #default 20% equilibration cycles on top
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -40,14 +40,8 @@ move_strat = MoveStrategy(atom_moves = n_atoms)
 
 #ensemble
 ensemble = NVT(n_atoms)
-#Potential
-# for laptop
-# runnerdir = "/home/ghun245/RuNNer-master/Brass_potential/"
-#desktop
-runnerdir = "/home/ghunter/Documents/RuNNer-master/test-Brass/"
-atomtype="Cu"
 
-pot = SerialMLPotential(runnerdir,atomtype);
+
 
 
 #starting configurations
@@ -141,18 +135,95 @@ start_config = Config(pos_cu55, bc_cu55)
 
 #histogram information
 n_bin = 100
-#en_min = -0.006    #might want to update after equilibration run if generated on the fly
-#en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
+#-------------------------------------------#
+#--------Vector of radial symm values-------#
+#-------------------------------------------#
+X = [ 1    1              0.001   0.000  11.338
+ 1    0              0.001   0.000  11.338
+ 1    1              0.020   0.000  11.338
+ 1    0              0.020   0.000  11.338
+ 1    1              0.035   0.000  11.338
+ 1    0              0.035   0.000  11.338
+ 1    1              0.100   0.000  11.338
+ 1    0              0.100   0.000  11.338
+ 1    1              0.400   0.000  11.338
+ 1    0              0.400   0.000  11.338]
 
-#construct array of MCState (for each temperature)
+radsymmvec = []
 
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj];
+
+#--------------------------------------------#
+#--------Vector of angular symm values-------#
+#--------------------------------------------#
+V = [[0.0001,1,1,11.338],[0.0001,-1,2,11.338],[0.003,-1,1,11.338],[0.003,-1,2,11.338],[0.008,-1,1,11.338],[0.008,-1,2,11.338],[0.008,1,2,11.338],[0.015,1,1,11.338],[0.015,-1,2,11.338],[0.015,-1,4,11.338],[0.015,-1,16,11.338],[0.025,-1,1,11.338],[0.025,1,1,11.338],[0.025,1,2,11.338],[0.025,-1,4,11.338],[0.025,-1,16,11.338],[0.025,1,16,11.338],[0.045,1,1,11.338],[0.045,-1,2,11.338],[0.045,-1,4,11.338],[0.045,1,4,11.338],[0.045,1,16,11.338],[0.08,1,1,11.338],[0.08,-1,2,11.338],[0.08,-1,4,11.338],[0.08,1,4,11.338]]
+
+T = [[1.,1.,1.],[1.,1.,0.],[1.,0.,0.]]
+
+angularsymmvec = []
+#-------------------------------------------#
+#-----------Including scaling data----------#
+#-------------------------------------------#
+file = open("$(pwd())/scaling.data")
+scalingvalues = readdlm(file)
+close(file)
+G_value_vec = []
+for row in eachrow(scalingvalues[1:88,:])
+    max_min = [row[4],row[3]]
+    push!(G_value_vec,max_min)
+end
+
+
+for symmindex in eachindex(eachrow(X))
+    row = X[symmindex,:]
+    radsymm = RadialType2{Float64}(row[3],row[5],[row[1],row[2]],G_value_vec[symmindex])
+    push!(radsymmvec,radsymm)
+end
+
+
+let n_index = 10
+
+for element in V
+    for types in T 
+
+        n_index += 1
+
+        symmfunc = AngularType3{Float64}(element[1],element[2],element[3],11.338,types,G_value_vec[n_index])
+
+        push!(angularsymmvec,symmfunc)
+    end
+end
+end
+#---------------------------------------------------#
+#------concatenating radial and angular values------#
+#---------------------------------------------------#
+
+totalsymmvec = vcat(radsymmvec,angularsymmvec)
+
+
+#--------------------------------------------------#
+#-----------Initialising the nnp weights-----------#
+#--------------------------------------------------#
+num_nodes::Vector{Int32} = [88, 20, 20, 1]
+activation_functions::Vector{Int32} = [1, 2, 2, 1]
+file = open("weights.029.data","r+")
+weights=readdlm(file)
+close(file)
+weights = vec(weights)
+nnp = NeuralNetworkPotential(num_nodes,activation_functions,weights)
+
+runnerpotential = RuNNerPotential(nnp,totalsymmvec)
+#------------------------------------------------------------#
+#============================================================#
+#------------------------------------------------------------#
+
+mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+
 
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results);
+@time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));
 
 # plot(temp.t_grid,results.heat_cap)
 
