@@ -18,7 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -67,7 +67,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = init_AdjacencyBC(pos_ne13, 4.39*AtoBohr)  #4.39 Angstrom
+bc_ne13 = init_AdjacencyBC(pos_ne13, 4.38*AtoBohr)  #4.39 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
@@ -95,4 +95,5 @@ plot(data)
 
 rdf = [results.rdf[i] for i in 1:n_traj]
 plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
+#png("adjacency1M")
 #png("atomloss")

@@ -1,4 +1,4 @@
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 
 using Random
 using Plots
@@ -12,14 +12,14 @@ n_atoms = 38
 
 # temperature grid
 ti = 5.
-tf = 32.
+tf = 30.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 500000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -111,13 +111,17 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
 
-plot(temp.t_grid,results.heat_cap)
+plot(temp.t_grid,results.heat_cap, xlabel="Temperature", ylabel="Heat Capacity")
+png("Ne38-10k")
 
 plot(multihistogram(results,temp))
+png("ne38-multi")
 
 rdf = [results.rdf[i] for i in 1:n_traj]
 
-plot([rdf]; minorticks=10)
+plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
+png("Ne38RDF")
 
-# data = [results.en_histogram[i] for i in 1:n_traj]
-# plot(data)
+data = [results.en_histogram[i] for i in 1:n_traj]
+plot(data)
+png("ne38hist")
