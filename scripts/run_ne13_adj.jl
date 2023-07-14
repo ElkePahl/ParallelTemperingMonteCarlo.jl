@@ -11,7 +11,7 @@ n_atoms = 13
 
 # temperature grid
 ti = 5.
-tf = 30.
+tf = 25.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -67,7 +67,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = init_AdjacencyBC(pos_ne13, 50)  #4.39 Angstrom, square it
+bc_ne13 = init_AdjacencyBC(pos_ne13, 4.39*AtoBohr)  #4.39 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
@@ -87,10 +87,12 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 plot(temp.t_grid,results.heat_cap)
 
-plot(multihistogram(results,temp))
+plot(multihistogram(results,temp), legend = false, xlabel="Temperature", ylabel="Heat Capacity")
+#png("atomloss1")
 
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
 
 rdf = [results.rdf[i] for i in 1:n_traj]
-plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)')
+plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
+#png("atomloss")
