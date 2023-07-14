@@ -46,10 +46,11 @@ mutable struct AdjacencyBC{T} <: AbstractBC{T}
     adj_mat::Matrix
 end
 
-function init_AdjacencyBC(pos, r2_cut)
-    adj_mat = find_adjmat(pos,r2_cut)
+function init_AdjacencyBC(pos, r_cut)
+    adj_mat = find_adjmat(pos, r_cut)
+    r2_cut = r_cut*r_cut
 
-    return AdjacencyBC(r2_cut,adj_mat)
+    return AdjacencyBC(r2_cut, adj_mat)
 end
 
 """

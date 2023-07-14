@@ -14,7 +14,7 @@ n_atoms = 13
 
 # temperature grid
 ti = 5.
-tf = 30.
+tf = 20.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -94,7 +94,7 @@ plot(multihistogram(results,temp))
 
 rdf = [results.rdf[i] for i in 1:n_traj]
 
-plot([rdf]; minorticks=10, palette=:thermal)
+plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)')
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)
