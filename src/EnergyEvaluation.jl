@@ -417,7 +417,8 @@ function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
     #d^(-6)*c6*(1+a6*t2+b6*t4)+d^(-8)*(c8*(1+a8*t2+b8*t4)+d_inv*(c9*(1+a9*t2+b9*t4)+d_inv*(c10*(1+a10*t2+b10*t4)+d_inv*(c11*(1+a11*t2+b11*t4)+d_inv*c12*(1+a12*t2+b12*t4)))))
     if r2>=5.30
         r6inv = 1/(r2*r2*r2)
-        t2=2/(tan^2+1)-1
+        t2=2/(tan^2+1)-1     #cos(2*theta)
+        #t2=0
         t4=2*t2^2-1
         sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1]*t2 + pot.coeff_b[1]*t4)
         r6inv/=r2
@@ -551,11 +552,16 @@ function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotentialB)
     return dimer_energy_atom(i_atom, dist2_new, r_cut, pot)
 end
 
-function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotentialB)
+function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
-    d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], pot)
-    return d_en, dist2_new
+    tan_new = [get_tan(pos,b) for b in config.pos]
+    tan_new[i_atom] = 0
+    #println("i_atom ",i_atom)
+    #println("dimer energy atom new ",dimer_energy_atom(i_atom, dist2_new, tan_new, pot))
+    d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],pot)
+    #println("d_en= ",d_en)
+    return d_en, dist2_new, tan_new
 end
 
 function energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotentialB)
@@ -573,9 +579,9 @@ function get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotentialB)
     # dist2_new[i_atom] = 0.
     # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
 
-    delta_energy,dist2_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,mc_state.tan_mat,pot)
+    delta_energy,dist2_new,tan_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,mc_state.tan_mat,pot)
     energy = mc_state.en_tot + delta_energy
-    return energy,dist2_new
+    return energy,[dist2_new,tan_new]
 end
 """
     get_energy_dimer(pos,i_atom,r_cut,mc_state,pot::AbstractDimerPotentialB)
@@ -598,10 +604,10 @@ Top scope get energy function for dimer potentials returning the energy vector a
 
 """
 function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentialB,ensemble::NVT)
-    energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
+    energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
 
     # energyvector = mc_state.en_tot .+ delta_energyvector
-    return energyvector,dist2_new
+    return energyvector, mats_new
 end
 #this will be the format for this part of the get_energy function.
 

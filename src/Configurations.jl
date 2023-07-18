@@ -18,7 +18,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance2_mat, get_tantheta_mat, move_atom!
+export distance2, get_distance2_mat, get_tan, get_tantheta_mat, move_atom!
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -180,6 +180,16 @@ function get_distance2_mat(conf::Config)
 end
 
 """
+    get_tan(a,b)
+
+tan of the angle between the line connecting two points and the z-direction
+"""
+function get_tan(a,b)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return tan
+end
+
+"""
     get_theta_mat(conf::Config{N})
 
 Builds the matrix of tan of angles between positions of configuration.
@@ -189,11 +199,8 @@ function get_tantheta_mat(conf::Config)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N
-        for j=1:i-1
-            mat[i,j]=mat[j,i]=((conf.pos[i][1]-conf.pos[j][1])^2+(conf.pos[i][2]-conf.pos[j][2])^2)^0.5/abs(conf.pos[i][3]-conf.pos[j][3])
-        end
         for j=i+1:N
-            mat[i,j]=mat[j,i]=((conf.pos[i][1]-conf.pos[j][1])^2+(conf.pos[i][2]-conf.pos[j][2])^2)^0.5/abs(conf.pos[i][3]-conf.pos[j][3])
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j])
         end
     end
     return mat

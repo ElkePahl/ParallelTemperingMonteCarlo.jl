@@ -10,7 +10,7 @@ Random.seed!(1234)
 n_atoms = 13
 
 # temperature grid
-ti = 5.
+ti = 9.
 tf = 16.
 n_traj = 32
 
@@ -18,7 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles

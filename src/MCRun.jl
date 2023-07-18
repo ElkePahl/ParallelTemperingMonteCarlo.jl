@@ -39,6 +39,19 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
 end
 
+function swap_config!(mc_state, i_atom, trial_pos, dist2_new, tan_new, energy)
+
+    mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
+    mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
+    mc_state.dist2_mat[:,i_atom] = dist2_new    
+    mc_state.tan_mat[i_atom,:] = tan_new
+    mc_state.tan_mat[:,i_atom] = tan_new    
+    mc_state.en_tot = energy
+    mc_state.count_atom[1] += 1
+    mc_state.count_atom[2] += 1
+
+end
+
 function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
     #println("swap_v_config")
     #for i=1:length(mc_state.config.pos)
@@ -60,12 +73,20 @@ end
         The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
 
 """
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot::AbstractDimerPotential)
     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
         #println("swap")
 
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
+    end   
+end
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
+    #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
+    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+        #println("swap")
+
+        swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
     end   
 end
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
@@ -104,11 +125,12 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
-        energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
+        energy_vector, mats_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
+            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],mats_new[idx],pot)
         end
         #println(mc_states[1].en_tot)
+        #println()
     else
         println("v")
         trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
