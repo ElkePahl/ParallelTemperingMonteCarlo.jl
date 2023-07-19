@@ -215,7 +215,100 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
     end
     return sum1
 end 
+#-----------------------------------------------------------------------------#
+#----------------------------EmbeddedAtomPotential----------------------------#
+#-----------------------------------------------------------------------------#
+"""
+    EmbeddedAtomPotential
+Struct containing the important quantities for calculating EAM (specifically Sutton-Chen type) potentials.
+    Fields:
+    `n` the exponent for the two-body repulsive ϕ component
+    `m` the exponent for the embedded electron density ρ
+    `ean` multiplicative factor ϵa^n /2 for ϕ
+    `eCam` multiplicative factor ϵCa^(m/2) for ρ 
 
+"""
+struct EmbeddedAtomPotential <: AbstractDimerPotential
+    n::Float64
+    m::Float64
+    ean::Float64
+    eCam::Float64
+end
+"""
+    EmbeddedAtomPotential(n,m,ϵ,C,a)
+Function to initalise the EAM struct given the actual constants cited in papers. The exponents `n`,`m`, the energy constant `ϵ` the distance constant `a` standard in all EAM models, and a dimensionless parameter `C` scaling ρ with respect to ϕ.
+"""
+function EmbeddedAtomPotential(n,m,ϵ,C,a)
+    epsan = ϵ * a^n / 2
+    epsCam = ϵ * C * a^(m/2)
+    return EmbeddedAtomPotential(n,m,epsan,epsCam)
+end
+"""
+    invrexp(r2,n,m)
+Function to calculate the `ϕ,ρ` components given a square distance `r2` and the exponents `n,m`
+"""
+function invrexp(r2,n,m)
+    if r2 != 0.
+        r_term = 1/sqrt(r2)
+        return r_term^n , r_term^m
+    else
+        return 0. , 0.
+    end    
+end
+"""
+    calc_components(eatomvec,distancevec,n,m)
+Primary calculation of ϕ,ρ for atom i, given each other atom's distance to i in `distancevec`. `eatomvec` stores the ϕ and ρ components.
+"""
+function calc_components(eatomvec,distancevec,n,m)
+    for dist in distancevec
+        eatomvec .+= invrexp(dist,n,m)
+    end
+    return eatomvec
+end
+"""
+    calc_all_components(dist2_mat,n,m) 
+    calc_components(componentvec,atomindex,old_r2_vec,new_r2_vec,n,m)
+Given a matrix `dist2_mat` of each square-radial distance and the exponents `n,m` calculates the Nx2 vector of ϕ and ρ components for each atom and returning them as a `component_vector`.
+
+Second method also includes an existing `componentvec` `atomindex` and old and new interatomic distances from an atom at `atomindex` stored in vectors `new_r2_vec,old_r2_vec`. This calculates the `new_component_vec` based on the updated distances and returns this.
+"""
+function calc_components(dist2_mat,n,m)
+    n_atoms = size(dist2_mat)[1]
+    component_vector = zeros(n_atoms,2)
+    for row_index in 1:n_atoms
+        component_vector[row_index,:] = calc_components(component_vector[row_index,:],dist2_mat[row_index,:],n,m)
+    end
+    return component_vector
+end
+function calc_components(componentvec,atomindex,old_r2_vec,new_r2_vec,n,m)
+    new_component_vec= copy(componentvec)
+
+    for j_index in eachindex(new_r2_vec)
+        j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
+        new_component_vec[j_index,:] .+= j_term 
+        new_component_vec[atomindex,:] .+= j_term 
+    end
+    return new_component_vec
+end
+"""
+    calc_energies_from_components(component_vector,ean,ecam)
+Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy.
+"""
+function calc_energies_from_components(component_vector,ean,ecam)
+    return sum(ean.*component_vector[:,1] .- ecam*sqrt.(component_vector[:,2]))
+end
+"""
+    get_energy(dist2_mat,pot::EmbeddedAtomPotential)
+Initialises the energy of an EAM potential. Using the interatomic distances stored in `dist2_mat` and the parameters in `pot` we return the atomic two body components in `componentvec` as well as the total energy. 
+"""
+function get_energy(dist2_mat,pot::EmbeddedAtomPotential)
+    componentvec = calc_all_components(dist2_mat,pot.n,pot.m)
+    return componentvec,calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
+end
+
+#-----------------------------------------------------------------------------#
+#-----------------------------Non-Dimer Potentials----------------------------#
+#-----------------------------------------------------------------------------#
 """ 
     DFTPotential 
 Implements type for a "density functional theory" potential (calcuate energies in DFT); subtype of AbstractPotential 
