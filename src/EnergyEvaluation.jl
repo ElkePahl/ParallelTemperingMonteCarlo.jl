@@ -298,6 +298,21 @@ function calc_energies_from_components(component_vector,ean,ecam)
     return sum(ean.*component_vector[:,1] .- ecam*sqrt.(component_vector[:,2]))
 end
 """
+    calc_new_energy(componentvec,atomindex,old_r2,new_r2,pot::EmbeddedAtomPotential)
+Function to calculate updated energy after a move of an atom at `atomindex` resulting in a change in `componentvec` to `new_component_vector`. The `dist2_mat` and `newpos` are used with the potential `pot` to calculate the updated components and `newenergy` 
+"""
+function calc_new_energy(componentvec,atomindex,dist2_mat,newpos,pot::EmbeddedAtomPotential)
+    dist2_new = [distance2(newpos,b) for b in newpos]
+    dist2_new[i_atom] = 0.
+
+    new_component_vector = update_components(componentvec,atomindex,dist2_mat[:,atomindex],dist2_new,pot.n,pot.m)
+
+    newenergy = calc_energies_from_components(new_component_vector,pot.ean,pot.eCam)
+
+    return  newenergy,dist2_new,new_component_vector 
+end
+
+"""
     get_energy(dist2_mat,pot::EmbeddedAtomPotential)
 Initialises the energy of an EAM potential. Using the interatomic distances stored in `dist2_mat` and the parameters in `pot` we return the atomic two body components in `componentvec` as well as the total energy. 
 """
