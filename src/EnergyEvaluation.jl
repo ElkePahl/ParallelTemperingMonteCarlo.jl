@@ -479,6 +479,7 @@ function get_energy(dist2_mat,pot::EmbeddedAtomPotential)
     componentvec = calc_components(dist2_mat,pot.n,pot.m)
     return componentvec,calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
 end
+
 function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential)
 
     energyvector,dist2_new,new_components = invert(calc_new_energy.(mc_states,indices,trial_positions,Ref(pot)))
@@ -486,7 +487,14 @@ function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential
 
     return energyvector,dist2_new,new_components
 end
-
+"""
+    dimer_energy_config(distmat,NAtoms,pot::EmbeddedAtomPotential)
+Currying function to match the initialisation of MCStates with the embedded atom model. This now matches the form of the general dimer potential for use.
+"""
+function dimer_energy_config(distmat,NAtoms,pot::EmbeddedAtomPotential)
+    
+    return get_energy(distmat,pot)
+end
 #-----------------------------------------------------------------------------#
 #-----------------------------Non-Dimer Potentials----------------------------#
 #-----------------------------------------------------------------------------#
