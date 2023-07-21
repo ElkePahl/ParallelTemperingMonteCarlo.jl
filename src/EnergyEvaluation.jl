@@ -476,7 +476,7 @@ end
 Initialises the energy of an EAM potential. Using the interatomic distances stored in `dist2_mat` and the parameters in `pot` we return the atomic two body components in `componentvec` as well as the total energy. 
 """
 function get_energy(dist2_mat,pot::EmbeddedAtomPotential)
-    componentvec = calc_all_components(dist2_mat,pot.n,pot.m)
+    componentvec = calc_components(dist2_mat,pot.n,pot.m)
     return componentvec,calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
 end
 function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential)
