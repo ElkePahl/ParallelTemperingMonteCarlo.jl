@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -143,6 +143,21 @@ start_config = Config(pos_cu78, bc_cu55)
 
 #histogram information
 n_bin = 100
+#----------------------------------------------------------------------------#
+evtohartree = 0.0367493
+
+n = 8.482
+m = 4.692
+ϵ = evtohartree*0.0370
+a = 0.25*nmtobohr
+C = 27.561
+
+pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
+
+suttonchenpot = EmbeddedAtomPotential(9.0,6.0,0.0126*evtohartree,39.432,0.3612*nmtobohr)
+#----------------------------------------------------------------------------#
+
+
 #-------------------------------------------#
 #--------Vector of radial symm values-------#
 #-------------------------------------------#
@@ -231,4 +246,4 @@ mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpot
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results));
