@@ -101,7 +101,7 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Flo
     end   
 end
 
-function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64)
+function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64,pot)
          
     #println("metro ",metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) )
     if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
@@ -132,17 +132,17 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
         #println(mc_states[1].en_tot)
         #println()
     else
-        println("v")
+        #println("v")
         trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
         #get the new distance matrix, energy matrix and total energy for each trajectory
-        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,pot::AbstractDimerPotential)
+        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,mc_states,pot)
         #if isnan(en_tot_new[3])==true
             #println(trial_configs[3])
             #println(dist2_mat_new[3])
         #end
         
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx])
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
         end
     end
     #println()

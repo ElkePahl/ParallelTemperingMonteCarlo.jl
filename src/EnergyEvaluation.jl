@@ -274,7 +274,7 @@ end
     get_energy function when the whole configuration is scaled
         find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
 """
-function get_energy(trial_configs_all,pot::AbstractDimerPotential)
+function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotential)
     dist2_mat_new = get_distance2_mat.(trial_configs_all)
     #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
     n=length(trial_configs_all)
@@ -564,11 +564,13 @@ function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDim
     return d_en, dist2_new, tan_new
 end
 
-function energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotentialB)
+function energy_update(pos, i_atom, config, dist2_mat, tan_mat, r_cut, pot::AbstractDimerPotentialB)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
-    d_en = dimer_energy_atom(i_atom, dist2_new, r_cut, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], r_cut, pot)
-    return d_en, dist2_new
+    tan_new = [get_tan(pos,b) for b in config.pos]
+    tan_new[i_atom] = 0
+    d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, r_cut, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],r_cut, pot)
+    return d_en, dist2_new, tan_new
 end
 """
     get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotentialB)
@@ -593,9 +595,9 @@ function get_energy_dimer(pos,i_atom,r_cut,mc_state,pot::AbstractDimerPotentialB
     # dist2_new[i_atom] = 0.
     # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
 
-    delta_energy,dist2_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,r_cut,pot)
+    delta_energy,dist2_new,tan_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,mc_state.tan_mat,r_cut,pot)
     energy = mc_state.en_tot + delta_energy
-    return energy,dist2_new
+    return energy,[dist2_new,tan_new]
 end
 
 """
@@ -623,16 +625,16 @@ function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentia
     for i=1:n
         r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
     end
-    energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
+    energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
     # energyvector = mc_state.en_tot .+ delta_energyvector
-    return energyvector,dist2_new
+    return energyvector,mats_new
 end
 
 """
     get_energy function when the whole configuration is scaled
         find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
 """
-function get_energy(trial_configs_all,pot::AbstractDimerPotentialB)
+function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotentialB)
     dist2_mat_new = get_distance2_mat.(trial_configs_all)
     #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
     n=length(trial_configs_all)
@@ -640,7 +642,11 @@ function get_energy(trial_configs_all,pot::AbstractDimerPotentialB)
     for i=1:n
         r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
     end
-    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), r_cut_all, Ref(pot)))
+    tan_mat=Array{Matrix}(undef,n)
+    for i=1:n
+        tan_mat[i]=mc_states[i].tan_mat
+    end
+    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, tan_mat, length(trial_configs_all[1].pos), r_cut_all, Ref(pot)))
     #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
     #println()
 
