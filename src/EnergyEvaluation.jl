@@ -303,7 +303,7 @@ Function to calculate updated energy after a move of an atom at `atomindex` resu
 """
 function calc_new_energy(mc_state,atomindex,newpos,pot::EmbeddedAtomPotential)
     dist2_new = [distance2(newpos,b) for b in mc_state.config.pos]
-    dist2_new[i_atom] = 0.
+    dist2_new[atomindex] = 0.
 
     new_component_vector = calc_components(mc_state.en_atom_vec,atomindex,mc_state.dist2_mat[:,atomindex],dist2_new,pot.n,pot.m)
 
