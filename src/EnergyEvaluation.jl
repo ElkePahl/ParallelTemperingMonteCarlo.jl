@@ -14,7 +14,7 @@ using ..Configurations
 
 #using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential
+export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,EmbeddedAtomPotential
 export RuNNerPotential
 
 export DFTPotential
@@ -321,7 +321,7 @@ function get_energy(dist2_mat,pot::EmbeddedAtomPotential)
     return componentvec,calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
 end
 function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential)
-    
+
     energyvector,dist2_new,new_components = invert(calc_new_energy.(mc_states,indices,trial_positions,Ref(pot)))
 
 
