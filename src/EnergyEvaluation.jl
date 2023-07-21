@@ -301,11 +301,11 @@ end
     calc_new_energy(componentvec,atomindex,old_r2,new_r2,pot::EmbeddedAtomPotential)
 Function to calculate updated energy after a move of an atom at `atomindex` resulting in a change in `componentvec` to `new_component_vector`. The `dist2_mat` and `newpos` are used with the potential `pot` to calculate the updated components and `newenergy` 
 """
-function calc_new_energy(componentvec,atomindex,dist2_mat,newpos,pot::EmbeddedAtomPotential)
+function calc_new_energy(mc_state,atomindex,newpos,pot::EmbeddedAtomPotential)
     dist2_new = [distance2(newpos,b) for b in newpos]
     dist2_new[i_atom] = 0.
 
-    new_component_vector = update_components(componentvec,atomindex,dist2_mat[:,atomindex],dist2_new,pot.n,pot.m)
+    new_component_vector = calc_components(mc_state.en_atom_vec,atomindex,mc_state.dist2_mat[:,atomindex],dist2_new,pot.n,pot.m)
 
     newenergy = calc_energies_from_components(new_component_vector,pot.ean,pot.eCam)
 
@@ -319,6 +319,13 @@ Initialises the energy of an EAM potential. Using the interatomic distances stor
 function get_energy(dist2_mat,pot::EmbeddedAtomPotential)
     componentvec = calc_all_components(dist2_mat,pot.n,pot.m)
     return componentvec,calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
+end
+function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential)
+    
+    energyvector,dist2_new,new_components = invert(calc_new_energy.(mc_states,indices,trial_positions,Ref(pot)))
+
+
+    return energyvector,dist2_new,new_components
 end
 
 #-----------------------------------------------------------------------------#
