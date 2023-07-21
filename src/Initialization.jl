@@ -148,4 +148,6 @@ function initialisation(restart,mc_states::Vector{NNPState{T,N,BC}}, move_strat,
 
     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 end
+
+
 end
