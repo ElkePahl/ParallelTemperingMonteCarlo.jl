@@ -26,14 +26,14 @@ using ..Initialization
 
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
+    swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
     swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
-        Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy.
-        If the Metropolis condition is satisfied, these are used to update mc_state.
+        Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
+        If the Metropolis condition is satisfied, these are used to update mc_state. 
 
         Second method is used for the EAM potential to ensure the rho and phi components are stored for later use.
-
+        
         Third method applies to the NNPState struct which has several more fields to update.
-
 """
 function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
@@ -45,39 +45,18 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[2] += 1
 
 end
-
-
-function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy::Float64,new_component_vector)
-  mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-  mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-  mc_state.dist2_mat[:,i_atom] = dist2_new
-  mc_state.en_tot = energy
-  mc_state.count_atom[1] += 1
-  mc_state.count_atom[2] += 1
-
-  mc_state.en_atom_vec = new_component_vector
-end
-
-
-function swap_config!(mc_state, i_atom, trial_pos, dist2_new, tan_new::Array, energy)
-
+function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
 
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-    mc_state.dist2_mat[:,i_atom] = dist2_new
-
-    mc_state.tan_mat[i_atom,:] = tan_new
-    mc_state.tan_mat[:,i_atom] = tan_new
-
+    mc_state.dist2_mat[:,i_atom] = dist2_new    
     mc_state.en_tot = energy
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
 
-
-
+    mc_state.en_atom_vec = new_component_vector
 
 end
-
 function swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
 
     nnp_state.config.pos[atomindex] = trial_pos
@@ -117,14 +96,15 @@ end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)
 
-
     acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
 
     acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
 
         The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster.
 
-        The second method involes the NNPState subtype of the MCState, it follows the same basic functions as the other version, but accounts for the different output of the getenergy function.
+        The second method involes the NNPState subtype of the MCState, it follows the same basic functions as the other version, but accounts for the different output of the getenergy function. 
+        
+        The third method is used for the EmbeddedAtomPotential, since we need to have the components of that potential stored separately.
 
         The third method is used for the EmbeddedAtomPotential, since we need to have the components of that potential stored separately.
 
@@ -157,38 +137,16 @@ function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new:
 
         #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
         swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
-    end
-    #println()
-end
-
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
-
-    if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
-
-        swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
-    end
-end
-
-function acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
-
-    if metropolis_condition(ensemble, (new_energy - nnp_state.en_tot), nnp_state.beta) >= rand()
-
-        swap_config!(nnp_state, i_atom, trial_pos, new_energy)
-
-    end
-
+    end   
 end
 
 """
-    function mc_step!(mc_states,mc_params,pot,ensemble)
+function mc_step!(mc_states,mc_params,pot,ensemble)
         mc_step!(nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
-        
+        mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
-
-        second method relates to the inclusion of a neural network potential. This method could be made redundant by rethinking the current MCState struct, but currently results in three new_something_vector outputs, meaning it is not compatible with the dimer potential with only one new_dist2_vector output.
-
-        The Third method relates to the EAM potential, which requires separate pairwise terms that are combined during the energy calcualtion -- calling a separate acc_test version.
-
+            
+            second method relates to the inclusion of a neural network potential. This method could be made redundant by rethinking the current MCState struct, but currently results in three new_something_vector outputs, meaning it is not compatible with the dimer potential with only one new_dist2_vector output.
 """
 
 function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
@@ -264,6 +222,23 @@ function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,pote
     end
 
     return nnp_states
+end
+function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
+
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+ #   if rand(1:a+v+r)<=a
+        #println("d")
+        indices,trial_positions = generate_displacements(mc_states,mc_params)
+        energy_vector, dist2_new, new_component_vector = get_energy(trial_positions,indices,mc_states,pot)
+        for idx in eachindex(mc_states)
+            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx],new_component_vector[idx])
+        end
+
+#    end
+
+    return mc_states
+    
+
 end
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
