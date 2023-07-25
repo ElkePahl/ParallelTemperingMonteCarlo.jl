@@ -126,8 +126,8 @@ pos_cu78 = [[9.20810577, 10.6811792, 12.85775222],
 [12.79744324, 10.11163506, 10.75172547]]
 
 #convert to Bohr
-# nmtobohr = 18.8973
-# copperconstant = 0.36258*nmtobohr
+nmtobohr = 18.8973
+copperconstant = 0.36258*nmtobohr
 # pos_cu55 = copperconstant*ico_55
 AtoBohr = 1.8897259886
 
@@ -239,9 +239,9 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #============================================================#
 #------------------------------------------------------------#
 
-mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+nnp_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
-
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
