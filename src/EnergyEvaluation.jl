@@ -477,7 +477,7 @@ Initialises the energy of an EAM potential. Using the interatomic distances stor
 """
 function get_energy(dist2_mat,pot::EmbeddedAtomPotential)
     componentvec = calc_components(dist2_mat,pot.n,pot.m)
-    return componentvec,calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
+    return componentvec, calc_energies_from_components(componentvec,pot.ean,pot.eCam) 
 end
 
 function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential)
