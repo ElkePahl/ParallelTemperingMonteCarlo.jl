@@ -1,7 +1,7 @@
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo#EmbeddedAtomPotential
 using Random,DelimitedFiles
 
-#cd("$(pwd())/scripts")
+cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
 
