@@ -315,6 +315,9 @@ function check_e_bounds(energy,ebounds)
     if energy < ebounds[1]
         ebounds[1]=energy
     elseif energy > ebounds[2]
+        if energy > 0.
+            println("massive problem")
+        end
         ebounds[2] = energy
     end
     return ebounds
