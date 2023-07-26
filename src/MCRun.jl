@@ -134,7 +134,8 @@ function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new:
 end
 
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
-    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+
+    if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
         
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
     end   
@@ -195,7 +196,9 @@ function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ense
  #   if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
+
         energy_vector, dist2_new, new_component_vector = get_energy(trial_positions,indices,mc_states,pot)
+
         for idx in eachindex(mc_states)
             @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx],new_component_vector[idx])
         end
@@ -259,8 +262,9 @@ function check_e_bounds(energy,ebounds,index)
     elseif energy > ebounds[2]
         if energy > 0.
             println("massive problem at step $index")
-        end
+        else
         ebounds[2] = energy
+        end
     else
     end
     return ebounds
