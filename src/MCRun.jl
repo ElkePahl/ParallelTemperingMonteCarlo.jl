@@ -254,9 +254,12 @@ end
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
 """
 function check_e_bounds(energy,ebounds)
-    if energy<ebounds[1]
+    if energy < ebounds[1]
         ebounds[1]=energy
-    elseif energy>ebounds[2]
+    elseif energy > ebounds[2]
+        if energy > 0.
+            println("massive problem")
+        end
         ebounds[2] = energy
     else
     end
