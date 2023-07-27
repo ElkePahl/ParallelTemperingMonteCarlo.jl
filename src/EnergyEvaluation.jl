@@ -441,7 +441,7 @@ function calc_components(dist2_mat,n,m)
 end
 function calc_components(componentvec,atomindex,old_r2_vec,new_r2_vec,n,m)
 
-    new_component_vec= deepcopy(componentvec)
+    new_component_vec = copy(componentvec)
 
     for j_index in eachindex(new_r2_vec)
 
@@ -457,7 +457,7 @@ end
 Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy.
 """
 function calc_energies_from_components(component_vector,ean,ecam)
-    return sum(ean.*component_vector[:,1] .- ecam*sqrt.(component_vector[:,2]))
+    return sum(ean.*component_vector[:,1] - ecam*sqrt.(component_vector[:,2]))
 end
 """
     calc_new_energy(componentvec,atomindex,old_r2,new_r2,pot::EmbeddedAtomPotential)
