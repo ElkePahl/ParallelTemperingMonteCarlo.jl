@@ -281,10 +281,13 @@ function calc_components(dist2_mat,n,m)
     return component_vector
 end
 function calc_components(componentvec,atomindex,old_r2_vec,new_r2_vec,n,m)
+
     new_component_vec= copy(componentvec)
 
     for j_index in eachindex(new_r2_vec)
-        j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
+
+        j_term = invrexp(new_r2_vec[j_index],n,m) - invrexp(old_r2_vec[j_index],n,m)
+
         new_component_vec[j_index,:] .+= j_term 
         new_component_vec[atomindex,:] .+= j_term 
     end
@@ -302,10 +305,11 @@ end
 Function to calculate updated energy after a move of an atom at `atomindex` resulting in a change in `componentvec` to `new_component_vector`. The `dist2_mat` and `newpos` are used with the potential `pot` to calculate the updated components and `newenergy` 
 """
 function calc_new_energy(mc_state,atomindex,newpos,pot::EmbeddedAtomPotential)
+
     dist2_new = [distance2(newpos,b) for b in mc_state.config.pos]
     dist2_new[atomindex] = 0.
 
-    new_component_vector = calc_components(mc_state.en_atom_vec,atomindex,mc_state.dist2_mat[:,atomindex],dist2_new,pot.n,pot.m)
+    new_component_vector = calc_components(mc_state.en_atom_vec,atomindex,mc_state.dist2_mat[atomindex,:],dist2_new,pot.n,pot.m)
 
     newenergy = calc_energies_from_components(new_component_vector,pot.ean,pot.eCam)
 
