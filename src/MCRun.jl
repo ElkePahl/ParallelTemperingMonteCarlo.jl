@@ -322,16 +322,11 @@ end
     check_e_bounds(energy,ebounds)
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
 """
-function check_e_bounds(energy,ebounds,index)
+function check_e_bounds(energy,ebounds)
     if energy < ebounds[1]
         ebounds[1]=energy
     elseif energy > ebounds[2]
-        if energy > 0.
-            println("massive problem at step $index")
-        else
         ebounds[2] = energy
-        end
-    else
     end
     return ebounds
 end
@@ -363,7 +358,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     for i = 1:mc_params.eq_cycles
         mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)
         for state in mc_states
-            ebounds = check_e_bounds(state.en_tot,ebounds,i)
+            ebounds = check_e_bounds(state.en_tot,ebounds)
         end
 
         if rem(i, mc_params.n_adjust) == 0
