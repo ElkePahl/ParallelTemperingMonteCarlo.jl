@@ -91,7 +91,7 @@ function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
     mc_state.en_tot = en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
-
+    
 end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)
