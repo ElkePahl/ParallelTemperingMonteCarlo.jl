@@ -78,7 +78,9 @@ println(atomicProfile_global)
 filedir = "$dir/configs"
 savedir = "$filedir/classify"
 savefile = open("$savedir/ne13.txt", "w+")
-plt = plot(legend=:none)
+plt = plot(legend=:none, size = (1458,677), title="Bird Poo Plot of Minimised Configurations from Basin Hopping (Purple) and Monte Carlo (Green)")
+plot!(xlabel="Similarity (a.u)")
+plot!(ylabel="Configurational Energy (a.u.)")
 
 folders = ["d=1.1", "d=1.5", "d=1.5(2)"]
 for folder in folders
@@ -131,7 +133,7 @@ for folder in folders
             
         end
 
-        scatter!(similarity, energies; mc=:purple)
+        scatter!(similarity, energies; mc=:purple, markersize=11)
     end
 
 end
@@ -189,7 +191,7 @@ for temp in tgrid
         write(savefile, "$similarity \n")
         write(savefile, "$energies \n")
 
-        scatter!(similarity, energies; mc=:yellowgreen)
+        scatter!(similarity, energies; mc=:yellowgreen, markersize=11)
     end
 
 end

@@ -96,7 +96,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 
 
-# plot(temp.t_grid,results.heat_cap)
+# plot(temp.t_grid,results.heat_cap, legend=:none, size=(922,500), title="Heat Capacity vs Temperature for 13-Atom Neon Cluster", ylabel="C_v (a.u.)", xlabel="Temperature (K)", margon.b=90, margin.l=90)
 
-# data = [results.en_histogram[i] for i in 1:n_traj]
-# plot(data)
+ #data = [results.en_histogram[i] for i in 1:n_traj]
+ #plot(data, legend=:none, size=(912,490), title="Multiple Histogram Plot of Population Per Energy")

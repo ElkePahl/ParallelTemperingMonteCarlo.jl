@@ -14,7 +14,7 @@ using LinearAlgebra
 using Graphs
 
 N_c=1000   #Number of configurations
-N=13    #Number of atoms in each configuration
+N=38    #Number of atoms in each configuration
 cut=7.5
 sigma=2.782
 
@@ -106,8 +106,8 @@ for t in eachindex(tgrid)
                 config_f[i,2] = result[3i-1]
                 config_f[i,3] = result[3i]
             end
-            totalProfiles_i, atomicProfiles_i = CNA(configuration, N, cut, true, 1)
-            classi = cluster_classify(atomicProfiles_i,N)
+            #totalProfiles_i, atomicProfiles_i = CNA(configuration, N, cut, true, 1)
+            #classi = cluster_classify(atomicProfiles_i,N)
             totalProfiles_f, atomicProfiles_f = CNA(config_f, N, cut, true, 1)
             
             en = elj_ne(result)
@@ -123,8 +123,7 @@ for t in eachindex(tgrid)
 
             #println(elj_ne(result))
 
-            write(classifyfile, "$classi => $classf \n")
-            
+            write(classifyfile, "$classf \n")
             
         end
     end
