@@ -69,6 +69,9 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix)
             bcflag = true
         end
     end
+    if sum(x->x^2,pos) > 10.728^2
+        bcflag = true
+    end
     return bcflag
 end
 
