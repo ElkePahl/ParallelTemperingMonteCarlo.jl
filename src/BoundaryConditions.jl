@@ -61,7 +61,7 @@ Returns `true` when atom outside of spherical boundary
 """
 check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
-function check_boundary(bc::AdjacencyBC, dist2_matrix)
+function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
     bcflag = false
     for col in eachcol(find_adjmat(dist2_matrix, bc.r2_cut))
       dummysum = sum(col)
