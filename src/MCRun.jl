@@ -121,7 +121,7 @@ end
 
 function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
 
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
+    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)-1
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
