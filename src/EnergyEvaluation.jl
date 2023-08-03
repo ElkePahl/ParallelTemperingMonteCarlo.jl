@@ -386,6 +386,7 @@ function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
 end
 
 
+
 """
    potential in B
 """
@@ -433,12 +434,12 @@ function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
 end 
 
 function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
-    
+    coeff=[-0.1279111890228638, -1.328138539967966, 12.260941135261255,41.12212408251662]
     r_cut_sqrt=r_cut^0.5
     rc3 = r_cut*r_cut_sqrt
     e_lrc = 0.
-    for i = 1:N
-        e_lrc += pot.coeff_c[i] / rc3 / (2i+1)
+    for i = 1:4
+        e_lrc += coeff[i] / rc3 / (2i+1)
         rc3 *= r_cut
     end
     e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
