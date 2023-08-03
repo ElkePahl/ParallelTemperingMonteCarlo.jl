@@ -118,13 +118,12 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     return delta_en_hist,delta_r2
 end
 
+
 """
     initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
 Function to create the 2D energy-volume histograms.
 """
 function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
-
-    println("ev_hist")
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
@@ -177,6 +176,7 @@ function update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
+      
 """
     update_rdf!(mc_states,results,delta_r2)
 Self explanatory name, iterates over mc_states and adds to the appropriate results.rdf histogram. Type stable by the initialise function specifying a vector of integers.  
@@ -184,8 +184,9 @@ Self explanatory name, iterates over mc_states and adds to the appropriate resul
 """
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
-        for element in mc_states[j_traj].dist2_mat 
-            idx=rdf_index(element,delta_r2)
+        #for element in mc_states[j_traj].dist2_mat 
+        for k_traj in 1:j_traj
+            idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
             if idx != 0 && idx <= results.n_bin*5
                 results.rdf[j_traj][idx] +=1
             end

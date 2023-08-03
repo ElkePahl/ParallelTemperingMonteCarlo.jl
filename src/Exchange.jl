@@ -46,16 +46,8 @@ end
 #end
 
 function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
-    # Joule to hartree -> /2.2937104486906E+17
-    # Bohr^3 to m^3 -> 1.48184743472E-31
     delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)
-    #println("energy difference ",d_en)
-    #println("enthalpy difference ",delta_h)
-    #println("beta ",beta)
-    #println("factor 1 = ",-delta_h*beta)
-    #println("factor 2 = ",N*log(volume_changed/volume_unchanged))
     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
-    #println("p = ",prob_val)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -85,6 +77,19 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
 end 
+function exc_trajectories!(state_1::NNPState, state_2::NNPState)
+    state_1.config,state_2.config = state_2.config,state_1.config
+    state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
+    state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
+    state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
+
+    #then the unique NNP variables
+    state_1.g_matrix, state_2.g_matrix = state_2.g_matrix, state_1.g_matrix
+    state_1.f_matrix, state_2.f_matrix = state_2.f_matrix, state_1.f_matrix
+
+
+    return state_1,state_2
+end
 
 """
     parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
@@ -171,6 +176,38 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     return mc_state
 end
 
+function update_max_stepsize!(mc_state::NNPState, n_update, a, v, r; min_acc = 0.4, max_acc = 0.6)
+    #atom moves
+    acc_rate = mc_state.count_atom[2] / (n_update * a)
+    if acc_rate < min_acc
+        mc_state.max_displ[1] *= 0.9
+    elseif acc_rate > max_acc
+        mc_state.max_displ[1] *= 1.1
+    end
+    mc_state.count_atom[2] = 0
+    #volume moves
+    if v > 0
+        acc_rate = mc_state.count_vol[2] / (n_update * v)
+        #println("acc rate volume = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[2] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[2] *= 1.1
+        end
+        mc_state.count_vol[2] = 0
+    end
+    #rotation moves
+    if r > 0
+        acc_rate = mc_state.count_rot[2] / (n_update * r)
+        if acc_rate < min_acc
+            mc_state.max_displ[3] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[3] *= 1.1
+        end
+        mc_state.count_rot[2] = 0
+    end
+    return mc_state
+end
 
 
 end

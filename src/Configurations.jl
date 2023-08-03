@@ -166,6 +166,7 @@ distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length),
 
 Builds the matrix of squared distances between positions of configuration.
 """
+
 #get_distance2_mat(conf::Config{N}) where N = [distance2(a,b,conf.bc) for a in conf.pos, b in conf.pos]
 
 function get_distance2_mat(conf::Config)
@@ -205,5 +206,6 @@ function get_tantheta_mat(conf::Config)
     end
     return mat
 end
+
 
 end
