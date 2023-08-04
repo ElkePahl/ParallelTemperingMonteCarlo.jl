@@ -19,7 +19,8 @@ cut=7.5
 sigma=2.782
 
 M=32
-tgrid = [5. *(16. /5.)^((i-1)/(M-1)) for i in 1:M]
+tgrid = [5. *(25. /5.)^((i-1)/(M-1)) for i in 1:M]
+templist = [tgrid[1], tgrid[10], tgrid[11], tgrid[12], tgrid[24], tgrid[25], tgrid[26], tgrid[32]]
 
 #ico = [5.294682606677612, 1.74009716698944, 0.9473289631755355, 3.791679084443151, -4.003030763557157, 1.2481962327125617, 3.81120559618501, -1.2068145890118294, -3.997172736460349, 1.8360724389860341, 4.332618355353545, -3.1331031921298242, 1.8044723389262654, -0.19175598302143088, 5.354081496111285, 0.5958439732022384, 4.959959644124769, 2.6462898025669164, -5.2946853312914826, -1.7400980998293896, -0.9473288849184892, -0.5958409506997832, -4.959961299680371, -2.6462896120220933, -1.836070528605722, -4.332620441173307, 3.133103314441934, -1.8044747891440631, 0.19175586145771703, -5.3540817785904125, -3.791676430898504, 4.003034841710014, -1.2481959566841079, -3.8112070445964297, 1.2068156228076719, 3.997172524612168, -9.63184319775816e-7, -3.161696747439155e-7, -1.7197856982327948e-7]
 
@@ -62,12 +63,13 @@ end
 #println()
 filedir = "$dir/configs"
 savedir = "$filedir/classify"
-for t in eachindex(tgrid)
-    temp = tgrid[t]
+for t in eachindex(templist)
+    temp = templist[t]
     classifyfile = open("$savedir/$temp-classify.txt","w+")
     profilefile = open("$savedir/$temp-profiles_and_energies.txt", "w+")
     open("$filedir/$temp.xyz") do f
         for i=1:N_c
+            disp = zeros(3N)
 	        configuration = Array{Float64}(undef,N,3) # Initialise 3D array for the atom coordinates for each configuration in the file.
 	        totalProfiles = Array{Dict{String,Int}} # Initialise array to hold total CNA profiles
     	    atomicProfiles = Any[] # Initialise array to hold atomic CNA profiles
@@ -77,7 +79,9 @@ for t in eachindex(tgrid)
             for j=1:N              # Read the coordinates
                 line = readline(f) 
                 for (k,x) in enumerate((split(line, r" +"))[2:4]) # For each component of the coordinate
-		    	    configuration[j,k] = parse(Float64,x) # Store the component
+		    	    pos = parse(Float64,x)
+                    configuration[j,k] = pos # Store the component
+                    disp[3j-(3-k)] = pos
 		        end
             end
             
@@ -86,20 +90,21 @@ for t in eachindex(tgrid)
             #println(totalProfiles)
             #println(atomicProfiles)
             #println(configuration)
-            x = zeros(3N)
-            for i = 1:N
-                x[3i-2] = configuration[i,1]
-                x[3i-1] = configuration[i,2]
-                x[3i] = configuration[i,3]
+            
+            #for i = 1:N
+            #    x[3i-2] = configuration[i,1]
+            #    x[3i-1] = configuration[i,2]
+            #    x[3i] = configuration[i,3]
 
-            end
+            #end
             #println(x)
             
             
             
             
-            od=OnceDifferentiable(elj_ne,x; autodiff=:forward);     #gradient
-            result = Optim.minimizer(optimize(od, x, ConjugateGradient(),Optim.Options(g_tol=1e-8)))
+            od=OnceDifferentiable(elj_ne,disp; autodiff=:forward);     #gradient
+            result = Optim.minimizer(optimize(od, disp, ConjugateGradient(),Optim.Options(g_tol=1e-8)))
+            
             config_f = Array{Float64}(undef, N, 3)
             for i = 1:N
                 config_f[i,1] = result[3i-2]
