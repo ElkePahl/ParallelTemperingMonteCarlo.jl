@@ -11,14 +11,14 @@ n_atoms = 13
 
 # temperature grid
 ti = 5.
-tf = 25.
+tf = 30.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -67,7 +67,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = init_AdjacencyBC(pos_ne13, 4.38*AtoBohr)  #4.39 Angstrom
+bc_ne13 = init_AdjacencyBC(pos_ne13, 4.38*AtoBohr, n_atoms)  #4.39 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)
@@ -88,12 +88,78 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 plot(temp.t_grid,results.heat_cap)
 
 plot(multihistogram(results,temp), legend = false, xlabel="Temperature", ylabel="Heat Capacity")
-#png("atomloss1")
+png("ne13-multihistogram-after-sphere")
 
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
 
 rdf = [results.rdf[i] for i in 1:n_traj]
 plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
+png("ne-13-adj-rdf-max_length")
 #png("adjacency1M")
 #png("atomloss")
+
+# plot(results.rdf[1])
+# png("1")
+# plot(results.rdf[2])
+# png("2")
+# plot(results.rdf[3])
+# png("3")
+# plot(results.rdf[4])
+# png("4")
+# plot(results.rdf[5])
+# png("5")
+# plot(results.rdf[6])
+# png("6")
+# plot(results.rdf[7])
+# png("7")
+# plot(results.rdf[8])
+# png("8")
+# plot(results.rdf[9])
+# png("9")
+# plot(results.rdf[10])
+# png("10")
+# plot(results.rdf[11])
+# png("11")
+# plot(results.rdf[12])
+# png("12")
+# plot(results.rdf[13])
+# png("13")
+# plot(results.rdf[14])
+# png("14")
+# plot(results.rdf[15])
+# png("15")
+# plot(results.rdf[16])
+# png("16")
+# plot(results.rdf[17])
+# png("17")
+# plot(results.rdf[18])
+# png("18")
+# plot(results.rdf[19])
+# png("19")
+# plot(results.rdf[20])
+# png("20")
+# plot(results.rdf[21])
+# png("21")
+# plot(results.rdf[22])
+# png("22")
+# plot(results.rdf[23])
+# png("23")
+# plot(results.rdf[24])
+# png("24")
+# plot(results.rdf[25])
+# png("25")
+# plot(results.rdf[26])
+# png("26")
+# plot(results.rdf[27])
+# png("27")
+# plot(results.rdf[28])
+# png("28")
+# plot(results.rdf[29])
+# png("29")
+# plot(results.rdf[30])
+# png("30")
+# plot(results.rdf[31])
+# png("31")
+# plot(results.rdf[32])
+# png("32")
