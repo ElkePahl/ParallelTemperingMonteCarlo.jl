@@ -50,7 +50,7 @@ end
 function init_AdjacencyBC(pos, r_cut, n_atoms)
     adj_mat = find_adjmat(pos, r_cut)
     r2_cut = r_cut*r_cut
-    max_length = (round(n_atoms*4)/2)*sqrt(2/3)*r_cut
+    max_length = (round(n_atoms/4))*sqrt(2/3)*r_cut
     max_length_2 = max_length*max_length
 
     return AdjacencyBC(r2_cut, adj_mat, max_length_2)
@@ -72,7 +72,7 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
             bcflag = true
         end
     end
-    if sum(x->x^2,pos) > max_length_2
+    if sum(x->x^2,pos) > bc.max_length_2
         bcflag = true
     end
     return bcflag

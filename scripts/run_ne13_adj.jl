@@ -18,7 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -88,7 +88,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 plot(temp.t_grid,results.heat_cap)
 
 plot(multihistogram(results,temp), legend = false, xlabel="Temperature", ylabel="Heat Capacity")
-png("ne13-multihistogram-after-sphere")
+#png("ne13-multihistogram-after-sphere")
 
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)

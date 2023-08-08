@@ -12,7 +12,7 @@ n_atoms = 38
 
 # temperature grid
 ti = 5.
-tf = 30.
+tf = 25.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -93,7 +93,7 @@ pos_ne38 = pos_ne38 * AtoBohr
 length(pos_ne38) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne38 = init_AdjacencyBC(pos_ne13, 4.38*AtoBohr, n_atoms)
+bc_ne38 = init_AdjacencyBC(pos_ne38, 3.96*AtoBohr, n_atoms)
 
 #starting configuration
 start_config = Config(pos_ne38, bc_ne38)
@@ -112,16 +112,16 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
 
 plot(temp.t_grid,results.heat_cap, xlabel="Temperature", ylabel="Heat Capacity")
-png("Ne38-1m")
+png("Ne38-adj")
 
 plot(multihistogram(results,temp), xlabel="Temperature", ylabel="Heat Capacity")
-png("ne38-multi")
+png("ne38-multi-adj-2")
 
 rdf = [results.rdf[i] for i in 1:n_traj]
 #println(results.rdf[1])
 
-plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
-png("Ne38RDF")
+plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence",)
+png("Ne38RDF-adj")
 
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)

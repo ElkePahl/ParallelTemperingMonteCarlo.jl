@@ -114,7 +114,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 plot(temp.t_grid,results.heat_cap, xlabel="Temperature", ylabel="Heat Capacity")
 png("Ne38-1m")
 
-plot(multihistogram(results,temp))
+plot(multihistogram(results,temp), xlabel="Temperature", ylabel="Heat Capacity")
 png("ne38-multi")
 
 rdf = [results.rdf[i] for i in 1:n_traj]
