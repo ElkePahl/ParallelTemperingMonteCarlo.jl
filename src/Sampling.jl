@@ -77,7 +77,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::AdjacencyBC)
     results.en_max = e_bounds[2] #+ abs(0.02*e_bounds[2])
 
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    delta_r2 = (4*100)/results.n_bin/5                       #testing purposes ONLY
+    delta_r2 = (0.5*bc.max_length_2)/results.n_bin/5                       #testing purposes ONLY
 
     for i_traj in 1:mc_params.n_traj       
 
