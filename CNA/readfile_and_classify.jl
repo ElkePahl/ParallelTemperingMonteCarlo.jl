@@ -16,7 +16,7 @@ using Graphs
 N_c=1000   #Number of configurations
 N=38    #Number of atoms in each configuration
 cut=7.5
-sigma=2.782
+sigma=2.77
 
 M=32
 tgrid = [5. *(25. /5.)^((i-1)/(M-1)) for i in 1:M]
@@ -69,7 +69,7 @@ for t in eachindex(templist)
     profilefile = open("$savedir/$temp-profiles_and_energies.txt", "w+")
     open("$filedir/$temp.xyz") do f
         for i=1:N_c
-            disp = zeros(3N)
+            
 	        configuration = Array{Float64}(undef,N,3) # Initialise 3D array for the atom coordinates for each configuration in the file.
 	        totalProfiles = Array{Dict{String,Int}} # Initialise array to hold total CNA profiles
     	    atomicProfiles = Any[] # Initialise array to hold atomic CNA profiles
@@ -81,7 +81,7 @@ for t in eachindex(templist)
                 for (k,x) in enumerate((split(line, r" +"))[2:4]) # For each component of the coordinate
 		    	    pos = parse(Float64,x)
                     configuration[j,k] = pos # Store the component
-                    disp[3j-(3-k)] = pos
+                    #disp[3j-(3-k)] = pos
 		        end
             end
             
@@ -90,20 +90,20 @@ for t in eachindex(templist)
             #println(totalProfiles)
             #println(atomicProfiles)
             #println(configuration)
-            
-            #for i = 1:N
-            #    x[3i-2] = configuration[i,1]
-            #    x[3i-1] = configuration[i,2]
-            #    x[3i] = configuration[i,3]
+            x = zeros(3N)
+            for i = 1:N
+                x[3i-2] = configuration[i,1]
+                x[3i-1] = configuration[i,2]
+                x[3i] = configuration[i,3]
 
-            #end
+            end
             #println(x)
             
             
             
             
-            od=OnceDifferentiable(elj_ne,disp; autodiff=:forward);     #gradient
-            result = Optim.minimizer(optimize(od, disp, ConjugateGradient(),Optim.Options(g_tol=1e-8)))
+            od=OnceDifferentiable(elj_ne,x; autodiff=:forward);     #gradient
+            result = Optim.minimizer(optimize(od, x, ConjugateGradient(),Optim.Options(g_tol=1e-8)))
             
             config_f = Array{Float64}(undef, N, 3)
             for i = 1:N

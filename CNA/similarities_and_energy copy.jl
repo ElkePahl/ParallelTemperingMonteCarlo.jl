@@ -18,7 +18,7 @@ using Plots
 N_c=1000   #Number of configurations
 N=38    #Number of atoms in each configuration
 cut=7.5
-sigma=2.77
+sigma=2.782
 
 M=32
 tgrid = [5. *(25. /5.)^((i-1)/(M-1)) for i in 1:M]
