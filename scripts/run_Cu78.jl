@@ -1,4 +1,6 @@
-using ParallelTemperingMonteCarlo#EmbeddedAtomPotential
+
+using ParallelTemperingMonteCarlo
+
 using Random,DelimitedFiles
 
 #cd("$(pwd())/scripts")
@@ -11,8 +13,10 @@ n_atoms = 78
 
 
 # temperature grid
+
 ti = 700
 tf = 1100
+
 
 n_traj = 20
 
@@ -21,7 +25,9 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
+
 mc_cycles = 1000000 #default 20% equilibration cycles on top
+
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -126,6 +132,7 @@ pos_cu78 = [[9.20810577, 10.6811792, 12.85775222],
 [12.79744324, 10.11163506, 10.75172547]]
 
 #convert to Bohr
+
 nmtobohr = 18.8973
 
 
@@ -144,6 +151,7 @@ for element in pos_cu78
 end
 
 
+
 length(pos_cu78) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 
@@ -156,6 +164,7 @@ start_config = Config(pos_cu78, bc_cu55)
 
 #histogram information
 n_bin = 100
+
 #----------------------------------------------------------------------------#
 evtohartree = 0.0367493
 
@@ -170,7 +179,6 @@ pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
 suttonchenpot = EmbeddedAtomPotential(9.0,6.0,0.0126*evtohartree,39.432,0.3612*nmtobohr)
 #----------------------------------------------------------------------------#
 
-
 #-------------------------------------------#
 #--------Vector of radial symm values-------#
 #-------------------------------------------#
@@ -184,6 +192,7 @@ X = [ 1    1              0.001   0.000  11.338
  1    0              0.100   0.000  11.338
  1    1              0.400   0.000  11.338
  1    0              0.400   0.000  11.338]
+
 radsymmvec = []
 
 
@@ -256,7 +265,9 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 
+
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results));
+

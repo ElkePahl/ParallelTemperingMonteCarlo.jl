@@ -31,6 +31,7 @@ end
 """
     RadialType2{T}(eta,r_cut,type_vector) 
     RadialType2{T}(eta,r_cut,type_vector::Vector,G_vals::Vector) 
+
 Various definitions of the RadialType2 struct to account for new normalisation factors required by the neural network to simplify the math. One only accepts the standard hyperparameters trained by the neural network and sets the offset and normalisation factors to zero and one respectively. The other accepts G_min,G_max and calculates the normalisation and offset manually
 """
 function RadialType2{T}(eta,r_cut,type_vector) where {T}

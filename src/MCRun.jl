@@ -33,6 +33,7 @@ using ..Initialization
         Second method is used for the EAM potential to ensure the rho and phi components are stored for later use.
         
         Third method applies to the NNPState struct which has several more fields to update.
+
 """
 function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
@@ -44,6 +45,7 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[2] += 1
 
 end
+
 function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
 
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
@@ -65,6 +67,7 @@ function swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
 
     nnp_state.f_matrix[atomindex,:] = nnp_state.new_f_vec
     nnp_state.f_matrix[:,atomindex] = nnp_state.new_f_vec
+
 
     nnp_state.g_matrix = nnp_state.new_g_matrix
 
@@ -92,6 +95,7 @@ function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
 end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+
 
     acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
 
@@ -144,6 +148,7 @@ end
 
 
 """
+
 function mc_step!(mc_states,mc_params,pot,ensemble)
         mc_step!(nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
         mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
@@ -152,6 +157,7 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
         second method relates to the inclusion of a neural network potential. This method could be made redundant by rethinking the current MCState struct, but currently results in three new_something_vector outputs, meaning it is not compatible with the dimer potential with only one new_dist2_vector output.
         
         The Third method relates to the EAM potential, which requires separate pairwise terms that are combined during the energy calcualtion -- calling a separate acc_test version. 
+
 """
 
 function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
@@ -191,6 +197,7 @@ function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,pote
 
     return nnp_states
 end
+
 function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
@@ -210,6 +217,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ense
     
 
 end
+
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
              mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)

@@ -12,7 +12,9 @@ export cutoff_function
 
 #Beginning with basic distance funtions required throughout MLP calculations
 """
+
     dist2(a,b)
+
 squared distance of two vectors `a` `b` 
 """
 dist2(a,b) = (a-b)⋅(a-b)
@@ -27,6 +29,7 @@ find_distance2_mat(pos) = [dist2(a,b) for a in pos, b in pos]
 calculates cosine theta of two vectors `xy,xz` with their sqared-distances `disxy,disxz`. 
 """
 thetacalc(xy,xz,disxy,disxz) = xy⋅xz/(disxy*disxz)
+
 """
     angular_measure(a,b,c,r2ij,r2ik)
     angular_measure(a,b,c)
@@ -42,6 +45,7 @@ function angular_measure(a,b,c)
     return θ,r2_ab,r2_ac,r2_bc
 end
 
+
 function all_angular_measure(a,b,c,r2ab,r2ac,r2bc)
     ab,ac,bc = (a-b),(a-c),(b-c)
     dis2ab,dis2ac,dis2bc = sqrt(r2ab),sqrt(r2ac),sqrt(r2bc)
@@ -54,8 +58,10 @@ end
 #------------------------------------------------------------------#
 """
     cutoff_function(r_scaled)
+
     cutoff_function(r_ij,r_cut)
     cutoff_function(dist_vec::T,r_cut) where {T<:Array}
+
 Implementation of the type 2 cutoff function. Either accepts scaled radius `r_scaled` or the interatomiic distance `r_ij` and the cutoff radius `r_cut`. Calculation is described in the RuNNer documentation, given as 1/2 (cos(πx) + 1) where x is (r_ij - r_i,c)/(rc - r_i,c). As an inner cutoff is not used by the potentials we are interested in, we have not included a method. A third method is included for creating a matrix or vector to match the distances provided. 
 """
 function cutoff_function(r_scaled)

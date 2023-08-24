@@ -150,4 +150,10 @@ function initialisation(restart,mc_states::Vector{NNPState{T,N,BC}}, move_strat,
 end
 
 
+    mc_states = initial_energy_vec(mc_states,pot)
+
+    start_counter = 1
+
+    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
+end
 end
