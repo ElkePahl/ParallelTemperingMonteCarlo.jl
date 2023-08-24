@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -184,7 +184,6 @@ X = [ 1    1              0.001   0.000  11.338
  1    0              0.100   0.000  11.338
  1    1              0.400   0.000  11.338
  1    0              0.400   0.000  11.338]
-
 radsymmvec = []
 
 
@@ -252,7 +251,7 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #============================================================#
 #------------------------------------------------------------#
 
-nnp_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+#nnp_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
@@ -260,4 +259,4 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, suttonchenpot, ensemble, results));
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results));
