@@ -106,7 +106,7 @@ end
 function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
-    trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
+    trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
 function atom_displacement(mc_state,index)
