@@ -64,13 +64,14 @@ check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
 function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
     bcflag = false
-    for col in eachcol(find_adjmat(dist2_matrix, bc.r2_cut))
+    adjmat = find_adjmat(dist2_matrix, bc.r2_cut)
+    for col in eachcol(adjmat)
       dummysum = sum(col)
         if dummysum < 4
             bcflag = true
         end
     end
-    if is_connected(SimpleGraph(bc.adj_mat)) == false
+    if is_connected(SimpleGraph(adjmat)) == false
         bcflag = true
     end
     return bcflag
