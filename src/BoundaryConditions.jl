@@ -71,9 +71,8 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
             bcflag = true
         end
     end
-    if Laplacians.isConnected(sparse(bc.adj_mat)) 
-        bcflag = false
-    else bcflag = true
+    if Laplacians.isConnected(sparse(bc.adj_mat)) == false
+        bcflag = true
     end
     return bcflag
 end
