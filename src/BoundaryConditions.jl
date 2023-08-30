@@ -7,6 +7,7 @@
 module BoundaryConditions
 
 using LinearAlgebra
+using Laplacians
 
 export SphericalBC, AbstractBC, PeriodicBC, AdjacencyBC
 export init_AdjacencyBC, find_adjmat
@@ -44,16 +45,13 @@ end
 mutable struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
     adj_mat::Matrix
-    max_length_2::T
 end
 
-function init_AdjacencyBC(pos, r_cut, n_atoms)
+function init_AdjacencyBC(pos, r_cut)
     adj_mat = find_adjmat(pos, r_cut)
     r2_cut = r_cut*r_cut
-    max_length = (round(n_atoms/4))*sqrt(2/3)*r_cut
-    max_length_2 = max_length*max_length
 
-    return AdjacencyBC(r2_cut, adj_mat, max_length_2)
+    return AdjacencyBC(r2_cut, adj_mat)
 end
 
 """
@@ -72,7 +70,7 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
             bcflag = true
         end
     end
-    if sum(x->x^2,pos) > bc.max_length_2
+    if Laplacians.isConnected(adj_mat) false 
         bcflag = true
     end
     return bcflag
