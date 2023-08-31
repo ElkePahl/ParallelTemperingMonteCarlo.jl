@@ -378,7 +378,8 @@ end
 
 """
     lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
-    The long range correction for the extended Lennard-Jones potential (even).
+The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
+lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
 """
 function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
     
@@ -422,12 +423,16 @@ function ELJPotentialB(a,b,c)
     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
 end
 
+"""
+    dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
+Dimer energy when the distance square between two atom is r2 and the angle between the line connecting them and z-direction is tan.
+When r2 < 5.30, returns 1.
+"""
 function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
     #d^(-6)*c6*(1+a6*t2+b6*t4)+d^(-8)*(c8*(1+a8*t2+b8*t4)+d_inv*(c9*(1+a9*t2+b9*t4)+d_inv*(c10*(1+a10*t2+b10*t4)+d_inv*(c11*(1+a11*t2+b11*t4)+d_inv*c12*(1+a12*t2+b12*t4)))))
     if r2>=5.30
         r6inv = 1/(r2*r2*r2)
         t2=2/(tan^2+1)-1     #cos(2*theta)
-        #t2=0
         t4=2*t2^2-1
         sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1]*t2 + pot.coeff_b[1]*t4)
         r6inv/=r2
@@ -441,6 +446,13 @@ function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
     return sum1
 end 
 
+
+"""
+    lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
+The long range correction for the energy in magnetic field. r_cut is the cutoff distance.
+lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
+At long range, dimer energy changes very little with tan(theta), the coefficients are fitted to energies from theta = 0 to 90 degrees.
+"""
 function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
     coeff=[-0.1279111890228638, -1.328138539967966, 12.260941135261255,41.12212408251662]
     r_cut_sqrt=r_cut^0.5
@@ -553,26 +565,39 @@ function dimer_energy_config(distmat, tanmat, NAtoms, r_cut, pot::AbstractDimerP
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end    
 
+"""
+    energy_update(i_atom, dist2_new, pot::AbstractDimerPotentialB)
+returns new energy when an atom is moved. In magnetuic field, without cutoff distance.
+"""
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotentialB)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
+"""
+    energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotentialB)
+returns new energy when an atom is moved. In magnetuic field, with cutoff distance r_cut.
+"""
 function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotentialB)
     return dimer_energy_atom(i_atom, dist2_new, r_cut, pot)
 end
 
+"""
+    energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
+Gives difference in energy, new distances, new tan when an atom is moved. In magnetic field, without cutoff distance.
+"""
 function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
     tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
     tan_new[i_atom] = 0
-    #println("i_atom ",i_atom)
-    #println("dimer energy atom new ",dimer_energy_atom(i_atom, dist2_new, tan_new, pot))
     d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],pot)
-    #println("d_en= ",d_en)
     return d_en, dist2_new, tan_new
 end
 
+"""
+    energy_update(pos, i_atom, config, dist2_mat, tan_mat, r_cut, pot::AbstractDimerPotentialB)
+Gives difference in energy, new distances, new tan when an atom is moved. In magnetic field, with cutoff distance r_cut.
+"""
 function energy_update(pos, i_atom, config, dist2_mat, tan_mat, r_cut, pot::AbstractDimerPotentialB)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
