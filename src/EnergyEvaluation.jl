@@ -184,14 +184,26 @@ function dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotential
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end    
 
+"""
+    energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
+Gives new energy when an atom is moved. Without cutoff ditance.
+"""
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
+"""
+    energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotential)
+Gives new energy when an atom is moved. With cutoff distance r_cut
+"""
 function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, r_cut, pot)
 end
 
+"""
+    energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
+Gives energy difference and distances when an atom is moved. Without cutoff distance.
+"""
 function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
@@ -199,6 +211,10 @@ function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotenti
     return d_en, dist2_new
 end
 
+"""
+    energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotential)
+Gives energy difference and distances when an atom is moved. With cutoff distance r_cut.
+"""
 function energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
