@@ -68,7 +68,7 @@ end
 
 function MCState(temp, beta, config::Config, pot::AbstractDimerPotentialB; kwargs...) 
     dist2_mat = get_distance2_mat(config)
-    tan_mat = get_tantheta_mat(config)
+    tan_mat = get_tantheta_mat(config,config.bc)
     n_atoms = length(config.pos)
     if typeof(config.bc) == PeriodicBC{Float64}
         en_atom_vec, en_tot = dimer_energy_config(dist2_mat, tan_mat, n_atoms, config.bc.box_length^2/4, pot)
