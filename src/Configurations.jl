@@ -235,7 +235,7 @@ end
 
 Builds the matrix of tan of angles between positions of configuration in a cubic boundary.
 """
-function get_tantheta_mat(conf::Config,bc::CubicBC)
+function get_tantheta_mat(conf::Config,bc::PeriodicBC)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N
