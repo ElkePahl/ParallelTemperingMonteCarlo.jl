@@ -62,15 +62,7 @@ returns the histogram index of a single mc_state energy and returns this value.
 function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
 
     hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
-    #println("energy ",mc_state.en_tot)
-    #println("energy min ",results.en_min)
-    #println("energy max ",results.en_max)
-    #println("volume ",mc_state.config.bc.box_length^3)
-    #println("delta_v ",delta_v_hist)
     hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
-    #println(hist_index_e)
-    #println(hist_index_v)
-    #println()
 
     if hist_index_e < 1
         hist_index_e = 1
