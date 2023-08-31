@@ -1,3 +1,6 @@
+# NPT ensemble multi histogram analysis
+# Now can run separatedly, still needs to be reconstructed into functions
+
 module multihist_NPT
 
 p=ensemble.pressure
@@ -15,6 +18,7 @@ dEhist=(Emax-Emin)/Ebins
 dVhist=(Vmax-Vmin)/Vbins
 EVhistogram=results.ev_histogram
 
+# number of temperatures in multihistogram, now it's 3 times the number of trajectories in the main MC program
 tempnumber_result=tempnumber*3
 temp_grid_result = TempGrid{tempnumber_result}(ti,tf) 
 temp_result=temp_grid_result.t_grid
@@ -75,10 +79,7 @@ for it=1:1000
                 new_free_energy[i]=new_free_energy[i]+quasiprob(betat,m,n)
             end
         end
-        
-        #println(new_free_energy[i])
         new_free_energy[i]=log(new_free_energy[i])
-        #println(new_free_energy[i])
     end
     
     local delta
