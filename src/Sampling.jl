@@ -25,14 +25,12 @@ function to update the current energy and energy squared values for coarse analy
 # end
 function update_energy_tot(mc_states,ensemble)
     if typeof(mc_states[1].config.bc) <: SphericalBC
-        #println("NVT")
         for indx_traj in eachindex(mc_states)      
             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
             #add E,E**2 to the correct positions in the hamiltonian
             mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
         end
     else
-        #println("NPT")
         for indx_traj in eachindex(mc_states)      
             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3
             #add E,E**2 to the correct positions in the hamiltonian
