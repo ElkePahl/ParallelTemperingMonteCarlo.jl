@@ -183,7 +183,7 @@ end
 """
     get_tan(a,b)
 
-tan of the angle between the line connecting two points and the z-direction
+tan of the angle between the line connecting two points a and b, and the z-direction
 """
 function get_tan(a,b)
     tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
@@ -191,12 +191,35 @@ function get_tan(a,b)
 end
 
 """
-    get_theta_mat(conf::Config{N})
+    get_tan(a,b,bc::SphericalBC)
 
-Builds the matrix of tan of angles between positions of configuration.
+tan of the angle between the line connecting two points a and b, and the z-direction in a spherical boundary
+Same as get_tan(a,b)
+"""
+function get_tan(a,b,bc::SphericalBC)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return tan
+end
+"""
+    get_tan(a,b,bc::CubicBC)
+
+tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
+"""
+function get_tan(a,b,bc::CubicBC)
+    b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z = b[3] + bc.box_length*round((a[3]-b[3])/bc.box_length)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return tan
+end
+
+"""
+    get_theta_mat(conf::Config{N},conf.bc::SphericalBC)
+
+Builds the matrix of tan of angles between positions of configuration in a spherical boundary.
 """
 
-function get_tantheta_mat(conf::Config)
+function get_tantheta_mat(conf::Config,bc::SphericalBC)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N
@@ -206,6 +229,23 @@ function get_tantheta_mat(conf::Config)
     end
     return mat
 end
+
+"""
+    get_theta_mat(conf::Config{N},conf.bc::CubicBC)
+
+Builds the matrix of tan of angles between positions of configuration in a cubic boundary.
+"""
+function get_tantheta_mat(conf::Config,bc::CubicBC)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=i+1:N
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j],bc)
+        end
+    end
+    return mat
+end
+
 
 
 end
