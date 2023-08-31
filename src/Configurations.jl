@@ -205,7 +205,7 @@ end
 
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
 """
-function get_tan(a,b,bc::CubicBC)
+function get_tan(a,b,bc::PeriodicBC)
     b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z = b[3] + bc.box_length*round((a[3]-b[3])/bc.box_length)
