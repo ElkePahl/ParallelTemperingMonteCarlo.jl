@@ -232,7 +232,7 @@ end
 function generate_vchange(mc_states,bc::RhombicBC)
     N=length(mc_states)
     trial_configs_all=Array{Config}(undef,N)
-    trial_vchanges=zeros(N,2)
+    trial_vchanges=ones(N,2)
     for i=1:N
         ra=rand(0:2)
         if ra==2

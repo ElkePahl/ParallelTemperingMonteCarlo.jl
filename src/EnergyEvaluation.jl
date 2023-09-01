@@ -342,7 +342,7 @@ function get_energy(trial_configs_all::Vector{Array},mc_states,pot::AbstractDime
     for i=1:n
         en_atom_vec[i],en_tot_new[i]= dimer_energy_config(dist2_mat_new[i], n_atom, get_r_cut(trial_configs_all[1][i].bc), trial_configs_all[1][i].bc, pot)
     end
-    
+
     return dist2_mat_new,en_atom_vec,en_tot_new
 end
 
@@ -472,7 +472,6 @@ function ELJPotentialB(a,b,c)
 end
 
 function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
-    #d^(-6)*c6*(1+a6*t2+b6*t4)+d^(-8)*(c8*(1+a8*t2+b8*t4)+d_inv*(c9*(1+a9*t2+b9*t4)+d_inv*(c10*(1+a10*t2+b10*t4)+d_inv*(c11*(1+a11*t2+b11*t4)+d_inv*c12*(1+a12*t2+b12*t4)))))
     if r2>=5.30
         r6inv = 1/(r2*r2*r2)
         t2=2/(tan^2+1)-1     #cos(2*theta)
