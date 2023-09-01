@@ -148,7 +148,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     acc_rate = mc_state.count_atom[2] / (n_update * a)
     if acc_rate < min_acc
         mc_state.max_displ[1] *= 0.9
-    elseif acc_rate > max_acc && mc_state.max_displ[1]<=10.
+    elseif acc_rate > max_acc
         mc_state.max_displ[1] *= 1.1
     end
     mc_state.count_atom[2] = 0
