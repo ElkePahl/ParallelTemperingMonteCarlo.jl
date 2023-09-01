@@ -141,9 +141,9 @@ end
 scale the whole configuration, including positions and the box length.
 returns the trial configuration as a struct. 
 """
-function volume_change(conf::Config, max_vchange)
+function volume_change(conf::Config, max_vchange, max_length)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    if conf.bc.box_length >= 30. && scale > 1.
+    if conf.bc.box_length >= max_length && scale > 1.
         scale=1.
     end
 
@@ -152,7 +152,7 @@ function volume_change(conf::Config, max_vchange)
 end
 
 function volume_change(mc_state)
-    trial_config = volume_change(mc_state.config,mc_state.max_displ[2])
+    trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_displ[4])
     return trial_config
 end
 
