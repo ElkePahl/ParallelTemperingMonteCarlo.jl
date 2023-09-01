@@ -20,7 +20,20 @@ using ..MCSampling
 using ..Initialization
 
 
-
+"""
+    volume(bc::CubicBC)
+    length^3
+"""
+function volume(bc::CubicBC)
+    return bc.box_length^3
+end
+"""
+    volume(bc::RhombicBC)
+    length*3^0.5/2*length*height
+"""
+function volume(bc::RhombicBC)
+    return 3^0.5*bc.box_length^2*bc.box_height/2
+end
 
 """  
 
@@ -52,13 +65,26 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, tan_new, energy)
 
 end
 
-function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
+function swap_config_v!(mc_state,bc::CubicBC,trial_config,dist2_mat_new,en_vec_new,en_tot)
     #println("swap_v_config")
     #for i=1:length(mc_state.config.pos)
         #mc_state.config.pos[i] = trial_config.pos[i]
     #end
     #mc_state.config.bc.box_length = copy(trial_config.bc.box_length)
-    mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
+    mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
+    mc_state.dist2_mat = dist2_mat_new
+    mc_state.en_atom_vec = en_vec_new
+    mc_state.en_tot = en_tot
+    mc_state.count_vol[1] += 1
+    mc_state.count_vol[2] += 1
+end
+function swap_config_v!(mc_state,bc::RhombicBC,trial_config,dist2_mat_new,en_vec_new,en_tot)
+    #println("swap_v_config")
+    #for i=1:length(mc_state.config.pos)
+        #mc_state.config.pos[i] = trial_config.pos[i]
+    #end
+    #mc_state.config.bc.box_length = copy(trial_config.bc.box_length)
+    mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length,trial_config.bc.box_height))
     mc_state.dist2_mat = dist2_mat_new
     mc_state.en_atom_vec = en_vec_new
     mc_state.en_tot = en_tot
@@ -104,12 +130,12 @@ end
 function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64,pot)
          
     #println("metro ",metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) )
-    if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
+    if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), volume(trial_config.bc), volume(mc_state.config.bc), mc_state.beta) >= rand()
         #println("accepted")
         #println("swap")
 
         #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
-        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
+        swap_config_v!(mc_state,mc_state.config.bc,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
     end 
     #println()
 end
@@ -133,16 +159,14 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
         #println()
     else
         #println("v")
-        trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
+        trial_configs = generate_vchange(mc_states,mc_states[1].config.bc)   #generate_vchange gives an array of configs
+        # When bc is rhombic, the "trial configs" is actually an array "[trial_configs_all,trial_vchanges]", containing which way the coordinates are scaled, and the scaling factor
         #get the new distance matrix, energy matrix and total energy for each trajectory
         dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,mc_states,pot)
-        #if isnan(en_tot_new[3])==true
-            #println(trial_configs[3])
-            #println(dist2_mat_new[3])
-        #end
+        #println(en_tot_new[1])
         
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[1][idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
         end
     end
     #println()

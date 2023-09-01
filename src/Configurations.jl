@@ -157,7 +157,28 @@ distance2(a,b,bc::SphericalBC) = (a-b)⋅(a-b)
     
 Finds the distance between two positions a and the nearest image of b in a cubic box.
 """
-distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
+#distance2(a,b,bc::CubicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
+
+function distance2(a,b,bc::CubicBC)
+    b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z=b[3]+bc.box_length*round((a[3]-b[3])/bc.box_length)
+    return distance2(a,[b_x,b_y,b_z])
+end
+"""
+    distance2(a,b,bc::RhombicBC)
+
+Finds the distance between two positions a and the nearest image of b in a cubic box.
+Minimum image convension in the z-direction is the same as the cubic box.
+In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
+"""
+function distance2(a,b,bc::RhombicBC)
+    b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
+    b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
+    b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
+    return distance2(a,[b_x,b_y,b_z])
+end
+
 
 
 #distance matrix
@@ -188,14 +209,33 @@ function get_tan(a,b)
     tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
     return tan
 end
+function get_tan(a,b,bc::SphericalBC)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return tan
+end
+function get_tan(a,b,bc::CubicBC)
+    b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z = b[3] + bc.box_length*round((a[3]-b[3])/bc.box_length)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return tan
+end
+function get_tan(a,b,bc::RhombicBC)
+    b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
+    b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
+    b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return tan
+end
+
 
 """
-    get_theta_mat(conf::Config{N})
+    get_theta_mat(conf::Config{N},conf.bc::SphericalBC)
 
 Builds the matrix of tan of angles between positions of configuration.
 """
 
-function get_tantheta_mat(conf::Config)
+function get_tantheta_mat(conf::Config,bc::SphericalBC)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N
@@ -205,5 +245,24 @@ function get_tantheta_mat(conf::Config)
     end
     return mat
 end
+
+"""
+    get_theta_mat(conf::Config{N},conf.bc::CubicBC)
+
+Builds the matrix of tan of angles between positions of configuration.
+"""
+
+function get_tantheta_mat(conf::Config,bc::CubicBC)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=i+1:N
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j],bc)
+        end
+    end
+    return mat
+end
+
+
 
 end

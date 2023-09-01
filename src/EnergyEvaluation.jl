@@ -10,6 +10,7 @@ using DFTK
 using LinearAlgebra
 using SplitApplyCombine
 using ..Configurations
+using ..BoundaryConditions
 
 using ..RuNNer
 
@@ -95,6 +96,18 @@ struct ParallelMLPotential <: AbstractMachineLearningPotential
 end
 
 
+"""
+function get_r_cut(mc_state.config.bc::CubicBC)
+"""
+function get_r_cut(bc::CubicBC)
+    return bc.box_length^2/4
+end
+"""
+function get_r_cut(mc_state.config.bc::RhombicBC)
+"""
+function get_r_cut(bc::RhombicBC)
+    return bc.box_length^2*3/16
+end
 
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
@@ -263,24 +276,27 @@ function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentia
     n=length(mc_states)
     r_cut_all=Array{Float64}(undef,n)
     for i=1:n
-        r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+        #r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+        r_cut_all[i]=get_r_cut(mc_states[i].config.bc)
     end
     energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
     # energyvector = mc_state.en_tot .+ delta_energyvector
     return energyvector,dist2_new
 end
 
+
 """
     get_energy function when the whole configuration is scaled
         find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
 """
-function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotential)
+function get_energy(trial_configs_all::Vector{Config{32, CubicBC{Float64}, Float64}},mc_states,pot::AbstractDimerPotential)
     dist2_mat_new = get_distance2_mat.(trial_configs_all)
     #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
-    n=length(trial_configs_all)
+    n=length(mc_states)
     r_cut_all=Array{Float64}(undef,n)
     for i=1:n
-        r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+        #r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+        r_cut_all[i]=get_r_cut(trial_configs_all[i].bc)
     end
     en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), r_cut_all, Ref(pot)))
     #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
@@ -289,7 +305,25 @@ function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotential)
     return dist2_mat_new,en_atom_vec,en_tot_new
 end
 
-# energyvector, dist2new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
+"""
+   get_energy function when the configuration is scaled in xy or z-direction
+"""
+function get_energy(trial_configs_all::Vector{Array},mc_states,pot::AbstractDimerPotential)
+    dist2_mat_new = get_distance2_mat.(trial_configs_all[1])
+    #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
+    n=length(mc_states)
+    r_cut_all=Array{Float64}(undef,n)
+    for i=1:n
+        #r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+        r_cut_all[i]=get_r_cut(trial_configs_all[1][i].bc)
+    end
+    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1][1].pos), r_cut_all, Ref(pot)))
+    #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
+    #println()
+
+    return dist2_mat_new,en_atom_vec,en_tot_new
+end
+
 """
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
@@ -382,6 +416,7 @@ function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
         rc3 *= r_cut
     end
     e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    #e_lrc *= pi*NAtoms^2 /(16/3 * r_cut_sqrt^3)    #for the rhombic boundary, temperary
     return e_lrc
 end
 
@@ -556,7 +591,7 @@ end
 function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
-    tan_new = [get_tan(pos,b) for b in config.pos]
+    tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
     tan_new[i_atom] = 0
     #println("i_atom ",i_atom)
     #println("dimer energy atom new ",dimer_energy_atom(i_atom, dist2_new, tan_new, pot))
@@ -568,7 +603,7 @@ end
 function energy_update(pos, i_atom, config, dist2_mat, tan_mat, r_cut, pot::AbstractDimerPotentialB)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
-    tan_new = [get_tan(pos,b) for b in config.pos]
+    tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
     tan_new[i_atom] = 0
     d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, r_cut, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],r_cut, pot)
     return d_en, dist2_new, tan_new
@@ -614,6 +649,8 @@ function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentia
 end
 #this will be the format for this part of the get_energy function.
 
+
+
 """
     get_energy(trial_positions,indices,r_cut,mc_states,pot::AbstractDimerPotentialB,ensemble::NPT)
 Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
@@ -624,7 +661,8 @@ function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentia
     n=length(mc_states)
     r_cut_all=Array{Float64}(undef,n)
     for i=1:n
-        r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+        #r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+        r_cut_all[i]=get_r_cut(mc_states[i].config.bc)
     end
     energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
     # energyvector = mc_state.en_tot .+ delta_energyvector
@@ -641,7 +679,8 @@ function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotentialB)
     n=length(trial_configs_all)
     r_cut_all=Array{Float64}(undef,n)
     for i=1:n
-        r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+        #r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+        r_cut_all[i]=get_r_cut(trial_configs_all[i].bc)
     end
     tan_mat=Array{Matrix}(undef,n)
     for i=1:n

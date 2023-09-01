@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 100#default 20% equilibration cycles on top
 
 
 
@@ -170,7 +170,7 @@ pos_ne108 = pos_ne108 * AtoBohr
 length(pos_ne108) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne108 = PeriodicBC(13.16 * AtoBohr)   
+bc_ne108 = CubicBC(13.16 * AtoBohr)   
 
 #starting configuration
 start_config = Config(pos_ne108, bc_ne108)

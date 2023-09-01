@@ -46,16 +46,8 @@ end
 #end
 
 function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
-    # Joule to hartree -> /2.2937104486906E+17
-    # Bohr^3 to m^3 -> 1.48184743472E-31
     delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)
-    #println("energy difference ",d_en)
-    #println("enthalpy difference ",delta_h)
-    #println("beta ",beta)
-    #println("factor 1 = ",-delta_h*beta)
-    #println("factor 2 = ",N*log(volume_changed/volume_unchanged))
     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
-    #println("p = ",prob_val)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end

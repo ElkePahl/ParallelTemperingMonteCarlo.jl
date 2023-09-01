@@ -8,7 +8,7 @@ using Random
 
 # number of atoms
 n_atoms = 32
-pressure=101325
+pressure = 101325
 
 # temperature grid
 ti = 20.
@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 
@@ -95,7 +95,7 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne32 = PeriodicBC(8.7674)   
+bc_ne32 = CubicBC(8.7674)   
 
 #starting configuration
 start_config = Config(pos_ne32, bc_ne32)
@@ -110,6 +110,7 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 
 println(mc_states[1].en_tot)
 println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^3)
+#println(mc_states[1].tan_mat)
 
 
 #results = Output(n_bin, max_displ_vec)

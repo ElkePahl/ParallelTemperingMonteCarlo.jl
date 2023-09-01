@@ -119,10 +119,10 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 end
 
 """
-    initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
-Function to create the 2D energy-volume histograms.
+    initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
+Function to create the 2D energy-volume histograms.Volume of a cubic box is length^3
 """
-function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
 
     println("ev_hist")
 
@@ -139,6 +139,38 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
     delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
     #delta_v_hist = (results.v_max - results.v_min) / (results.n_bin - 1)
     delta_r2 =  (3/4*bc.box_length^2*1.1)/results.n_bin/5
+
+    for i_traj in 1:mc_params.n_traj       
+
+        push!(results.en_histogram,zeros(results.n_bin + 2))
+        push!(results.ev_histogram,zeros(results.n_bin + 2,results.n_bin + 2))
+        push!(results.rdf,zeros(results.n_bin*5))
+
+    end
+    return delta_en_hist,delta_r2
+end
+
+"""
+    initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
+Function to create the 2D energy-volume histograms. Volume of a rhombic box is 3^0.5/2*length^2*height
+"""
+function initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
+
+    println("ev_hist")
+
+    # incl 6% leeway
+    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
+
+    results.v_min = 3^0.5/2*bc.box_length^2*bc.box_height*0.8
+    results.v_max = 3^0.5/2*bc.box_length^2*bc.box_height*2.0
+
+    println(results.v_min)
+    println(results.v_max)
+
+    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    #delta_v_hist = (results.v_max - results.v_min) / (results.n_bin - 1)
+    delta_r2 =  (3/4*bc.box_length^2+bc.box_height^2)*1.1/results.n_bin/5
 
     for i_traj in 1:mc_params.n_traj       
 
