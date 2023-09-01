@@ -59,9 +59,9 @@ function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs
     n_atoms = length(config.pos)
     tan_mat = zeros(n_atoms,n_atoms)
     if typeof(config.bc) == CubicBC{Float64}
-        en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, config.bc.box_length^2/4, pot)
+        en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, config.bc.box_length^2/4, config.bc, pot)
     elseif typeof(config.bc) == RhombicBC{Float64}
-        en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, config.bc.box_length^2*3/16, pot)
+        en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, config.bc.box_length^2*3/16, config.bc, pot)
     else
         en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
     end

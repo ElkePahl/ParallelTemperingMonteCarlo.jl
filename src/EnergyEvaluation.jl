@@ -182,7 +182,7 @@ calculates total energy of configuration, with a cutoff distance r_cut
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
-function dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotential)
+function dimer_energy_config(distmat, NAtoms, r_cut, bc::CubicBC, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     #for i in 1:NAtoms #eachindex(),enumerate()..?
@@ -203,6 +203,31 @@ function dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotential
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end    
+"""
+dimer_energy_config for Rhombic boundary
+"""
+function dimer_energy_config(distmat, NAtoms, r_cut, bc::RhombicBC, pot::AbstractDimerPotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    #for i in 1:NAtoms #eachindex(),enumerate()..?
+        #dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], r_cut, pot) #@view distmat[i, :]
+        #energy_tot += dimer_energy_vec[i]
+    #end 
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)*3/4   #no 0.5*energy_tot
+end  
+
 
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
@@ -289,18 +314,17 @@ end
     get_energy function when the whole configuration is scaled
         find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
 """
-function get_energy(trial_configs_all::Vector{Config{32, CubicBC{Float64}, Float64}},mc_states,pot::AbstractDimerPotential)
+function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotential)
     dist2_mat_new = get_distance2_mat.(trial_configs_all)
     #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
     n=length(mc_states)
-    r_cut_all=Array{Float64}(undef,n)
+    n_atom=length(trial_configs_all[1].pos)
+    en_atom_vec = Array{Vector}(undef,n)
+    en_tot_new = Array{Float64}(undef,n)
+    
     for i=1:n
-        #r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
-        r_cut_all[i]=get_r_cut(trial_configs_all[i].bc)
+        en_atom_vec[i],en_tot_new[i]= dimer_energy_config(dist2_mat_new[i], n_atom, get_r_cut(trial_configs_all[i].bc), trial_configs_all[i].bc, pot)
     end
-    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), r_cut_all, Ref(pot)))
-    #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
-    #println()
 
     return dist2_mat_new,en_atom_vec,en_tot_new
 end
@@ -310,17 +334,15 @@ end
 """
 function get_energy(trial_configs_all::Vector{Array},mc_states,pot::AbstractDimerPotential)
     dist2_mat_new = get_distance2_mat.(trial_configs_all[1])
-    #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
     n=length(mc_states)
-    r_cut_all=Array{Float64}(undef,n)
-    for i=1:n
-        #r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
-        r_cut_all[i]=get_r_cut(trial_configs_all[1][i].bc)
-    end
-    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1][1].pos), r_cut_all, Ref(pot)))
-    #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
-    #println()
+    n_atom=length(trial_configs_all[1][1].pos)
+    en_atom_vec = Array{Vector}(undef,n)
+    en_tot_new = Array{Float64}(undef,n)
 
+    for i=1:n
+        en_atom_vec[i],en_tot_new[i]= dimer_energy_config(dist2_mat_new[i], n_atom, get_r_cut(trial_configs_all[1][i].bc), trial_configs_all[1][i].bc, pot)
+    end
+    
     return dist2_mat_new,en_atom_vec,en_tot_new
 end
 

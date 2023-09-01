@@ -166,7 +166,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
         #println(en_tot_new[1])
         
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[1][idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
         end
     end
     #println()
