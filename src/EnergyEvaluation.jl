@@ -14,18 +14,49 @@ using ..Configurations
 
 #using ..RuNNer
 
-export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential
+export AbstractPotential, AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential,SerialMLPotential,ParallelMLPotential
+
 export RuNNerPotential
 
 export DFTPotential
 
-export ELJPotential, ELJPotentialEven
+export ELJPotential, ELJPotentialEven, ELJPotentialB
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
-export getenergy_DFT, get_energy_dimer#,get_energy_RuNNer
+export getenergy_DFT, get_energy_dimer#,get_energy_
 export energy_update
 export get_energy
 export AbstractEnsemble, NVT, NPT
 export EnHist
+
+
+"""
+    AbstractEnsemble
+abstract type for ensemble:
+    - NVT: canonical ensemble
+    - NPT: isothermal, isobaric
+"""
+abstract type AbstractEnsemble end
+
+"""
+    NVT
+ canonical ensemble
+ fieldname: natoms: number of atoms
+"""
+struct NVT <: AbstractEnsemble
+    n_atoms::Int
+end
+
+"""
+    NPT
+ isothermal, isobaric ensemble
+ fieldnames: 
+ - natoms: number of atoms
+ - pressure
+"""
+struct NPT <: AbstractEnsemble
+    n_atoms::Int
+    pressure::Real
+end
 
 """   
     AbstractPotential
@@ -48,6 +79,9 @@ Needs methods for
     - dimer_energy_config [`dimer_energy_config`](@ref)
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
+
+#The potential struct for magnetic field (tan(theta) as variable)
+abstract type AbstractDimerPotentialB <: AbstractPotential end
 
 
 abstract type AbstractMachineLearningPotential <: AbstractPotential end
@@ -73,6 +107,26 @@ function dimer_energy_atom(i, d2vec, pot::AbstractDimerPotential)
     return sum1
 end
 
+
+"""
+    dimer_energy_atom(i, d2vec, r_cut, pot<:AbstractPotential)
+    dimer energy of an atom with other atoms, with a cutoff distance r_cut.
+"""
+function dimer_energy_atom(i, d2vec, r_cut, pot::AbstractDimerPotential)
+    sum1 = 0.
+    for j in 1:i-1
+        if d2vec[j] <= r_cut
+            sum1 += dimer_energy(pot, d2vec[j])
+        end
+    end
+    for j in i+1:size(d2vec,1)
+        if d2vec[j] <= r_cut
+            sum1 += dimer_energy(pot, d2vec[j])
+        end
+    end 
+    return sum1
+end
+
 """
     dimer_energy_config(distmat, NAtoms, pot::AbstractPotential)
 Stores the total of dimer energies of one atom with all other atoms in vector and
@@ -83,21 +137,88 @@ and potential information `pot` [`Abstract_Potential`](@ref)
 function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
-    for i in 1:NAtoms #eachindex(),enumerate()..?
-        dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], pot) #@view distmat[i, :]
-        energy_tot += dimer_energy_vec[i]
+    #This uses dimer_energy_atom for all atoms, which means one dimer energy will be calculated twice.
+    #for i in 1:NAtoms #eachindex(),enumerate()..?
+        #dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], pot) #@view distmat[i, :]
+        #energy_tot += dimer_energy_vec[i]
+    #end 
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            e_ij=dimer_energy(pot,distmat[i,j])
+            dimer_energy_vec[i] += e_ij
+            dimer_energy_vec[j] += e_ij
+            energy_tot += e_ij
+        end
     end 
-    return dimer_energy_vec, 0.5*energy_tot
+    #energy_tot=sum(dimer_energy_vec)
+    return dimer_energy_vec, energy_tot
+end 
+
+
+"""
+    dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractPotential)
+Stores the total of dimer energies of one atom with all other atoms in vector and
+calculates total energy of configuration, with a cutoff distance r_cut
+Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot` [`Abstract_Potential`](@ref) 
+"""
+function dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    #for i in 1:NAtoms #eachindex(),enumerate()..?
+        #dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], r_cut, pot) #@view distmat[i, :]
+        #energy_tot += dimer_energy_vec[i]
+    #end 
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end    
 
+"""
+    energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
+Gives new energy when an atom is moved. Without cutoff ditance.
+"""
 function energy_update(i_atom, dist2_new, pot::AbstractDimerPotential)
     return dimer_energy_atom(i_atom, dist2_new, pot)
 end
 
+"""
+    energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotential)
+Gives new energy when an atom is moved. With cutoff distance r_cut
+"""
+function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotential)
+    return dimer_energy_atom(i_atom, dist2_new, r_cut, pot)
+end
+
+"""
+    energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
+Gives energy difference and distances when an atom is moved. Without cutoff distance.
+"""
 function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
     d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], pot)
+    return d_en, dist2_new
+end
+
+"""
+    energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotential)
+Gives energy difference and distances when an atom is moved. With cutoff distance r_cut.
+"""
+function energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotential)
+    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
+    dist2_new[i_atom] = 0.
+    d_en = dimer_energy_atom(i_atom, dist2_new, r_cut, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], r_cut, pot)
     return d_en, dist2_new
 end
 """
@@ -114,11 +235,26 @@ function get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotential)
     return energy,dist2_new
 end
 """
+    get_energy_dimer(pos,i_atom,r_cut,mc_state,pot)
+A get_energy function similar to the energy_update function. This simply returns the current energy rather than delta_en
+with a cutoff distance r_cut
+"""
+function get_energy_dimer(pos,i_atom,r_cut,mc_state,pot::AbstractDimerPotential)
+    # dist2_new = [distance2(pos,b) for b in mc_state.config.pos]
+    # dist2_new[i_atom] = 0.
+    # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
+
+    delta_energy,dist2_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,r_cut,pot)
+    energy = mc_state.en_tot + delta_energy
+    return energy,dist2_new
+end
+
+"""
     get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential)
 Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
 
 """
-function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential)
+function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential,ensemble::NVT)
     energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
 
     # energyvector = mc_state.en_tot .+ delta_energyvector
@@ -127,13 +263,37 @@ end
 #this will be the format for this part of the get_energy function.
 
 """
-    get_energy function when the whole configuration is scaled
-    find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
+    get_energy(trial_positions,indices,r_cut,mc_states,pot::AbstractDimerPotential,ensemble::NPT)
+Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
+with the cutoff distance r_cut
 """
-function get_energy(trial_configs_all,pot::AbstractDimerPotential)
-    dist2_mat_new = get_distance2_mat.(trial_configs_all)
-    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all), Ref(pot)))
+function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential,ensemble::NPT)
+    
+    n=length(mc_states)
+    r_cut_all=Array{Float64}(undef,n)
+    for i=1:n
+        r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+    end
+    energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
+    # energyvector = mc_state.en_tot .+ delta_energyvector
+    return energyvector,dist2_new
+end
 
+"""
+    get_energy function when the whole configuration is scaled
+        find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
+"""
+function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotential)
+    dist2_mat_new = get_distance2_mat.(trial_configs_all)
+    #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
+    n=length(trial_configs_all)
+    r_cut_all=Array{Float64}(undef,n)
+    for i=1:n
+        r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+    end
+    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), r_cut_all, Ref(pot)))
+    #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
+    #println()
     return dist2_mat_new,en_atom_vec,en_tot_new
 end
 
@@ -215,6 +375,322 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
     end
     return sum1
 end 
+
+"""
+    lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
+The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
+lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
+"""
+function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
+    
+    r_cut_sqrt=r_cut^0.5
+    rc3 = r_cut*r_cut_sqrt
+    e_lrc = 0.
+    for i = 1:N
+        e_lrc += pot.coeff[i] / rc3 / (2i+1)
+        rc3 *= r_cut
+    end
+    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    return e_lrc
+end
+
+
+
+"""
+   potential in B
+"""
+struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
+    coeff_a::SVector{N,T}
+    coeff_b::SVector{N,T}
+    coeff_c::SVector{N,T}
+end
+
+function ELJPotentialB{N}(a,b,c) where N
+    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
+    coeff_a = SVector{N}(a)
+    coeff_b = SVector{N}(b)
+    coeff_c = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+end
+
+function ELJPotentialB(a,b,c) 
+    N = length(c)
+    coeff_a = SVector{N}(a)
+    coeff_b = SVector{N}(b)
+    coeff_c = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+end
+
+"""
+    dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
+Dimer energy when the distance square between two atom is r2 and the angle between the line connecting them and z-direction is tan.
+When r2 < 5.30, returns 1.
+"""
+function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
+    #d^(-6)*c6*(1+a6*t2+b6*t4)+d^(-8)*(c8*(1+a8*t2+b8*t4)+d_inv*(c9*(1+a9*t2+b9*t4)+d_inv*(c10*(1+a10*t2+b10*t4)+d_inv*(c11*(1+a11*t2+b11*t4)+d_inv*c12*(1+a12*t2+b12*t4)))))
+    if r2>=5.30
+        r6inv = 1/(r2*r2*r2)
+        t2=2/(tan^2+1)-1     #cos(2*theta)
+        t4=2*t2^2-1
+        sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1]*t2 + pot.coeff_b[1]*t4)
+        r6inv/=r2
+        for i = 2:N
+            sum1 += pot.coeff_c[i] * r6inv * (1 + pot.coeff_a[i]*t2 + pot.coeff_b[i]*t4)
+            r6inv /= r2^0.5 
+        end
+    else
+        sum1=0.1
+    end
+    return sum1
+end 
+
+
+"""
+    lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
+The long range correction for the energy in magnetic field. r_cut is the cutoff distance.
+lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
+At long range, dimer energy changes very little with tan(theta), the coefficients are fitted to energies from theta = 0 to 90 degrees.
+"""
+function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
+    coeff=[-0.1279111890228638, -1.328138539967966, 12.260941135261255,41.12212408251662]
+    r_cut_sqrt=r_cut^0.5
+    rc3 = r_cut*r_cut_sqrt
+    e_lrc = 0.
+    for i = 1:4
+        e_lrc += coeff[i] / rc3 / (2i+1)
+        rc3 *= r_cut
+    end
+    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    return e_lrc
+end
+
+"""
+    all associated energy calculation function with ELJ potential (with B)
+"""
+
+"""
+    dimer_energy_atom(i, pos, d2vec, pot<:AbstractDimerPotentialB)
+Sums the dimer energies for atom `i` with all other atoms
+Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
+see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot` [`Abstract_Potential`](@ref) 
+"""
+function dimer_energy_atom(i, d2vec, tanvec,pot::AbstractDimerPotentialB)
+    sum1 = 0.
+    for j in 1:i-1
+        sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+    end
+    for j in i+1:size(d2vec,1)
+        sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+    end 
+    return sum1
+end
+
+
+"""
+    dimer_energy_atom(i, d2vec, r_cut, pot<:AbstractDimerPotentialB)
+    dimer energy of an atom with other atoms, with a cutoff distance r_cut.
+"""
+function dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
+    sum1 = 0.
+    for j in 1:i-1
+        if d2vec[j] <= r_cut
+            sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+        end
+    end
+    for j in i+1:size(d2vec,1)
+        if d2vec[j] <= r_cut
+            sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+        end
+    end 
+    return sum1
+end
+
+"""
+    dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotentialB)
+Stores the total of dimer energies of one atom with all other atoms in vector and
+calculates total energy of configuration
+Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot` [`Abstract_Potential`](@ref) 
+"""
+function dimer_energy_config(distmat, tanmat, NAtoms, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    #This uses dimer_energy_atom for all atoms, which means one dimer energy will be calculated twice.
+    #for i in 1:NAtoms #eachindex(),enumerate()..?
+        #dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], pot) #@view distmat[i, :]
+        #energy_tot += dimer_energy_vec[i]
+    #end 
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            e_ij=dimer_energy(pot,distmat[i,j],tanmat[i,j])
+            dimer_energy_vec[i] += e_ij
+            dimer_energy_vec[j] += e_ij
+            energy_tot += e_ij
+        end
+    end 
+    #energy_tot=sum(dimer_energy_vec)
+    return dimer_energy_vec, energy_tot
+end 
+
+
+"""
+    dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotentialB)
+Stores the total of dimer energies of one atom with all other atoms in vector and
+calculates total energy of configuration, with a cutoff distance r_cut
+Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot` [`Abstract_Potential`](@ref) 
+"""
+function dimer_energy_config(distmat, tanmat, NAtoms, r_cut, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    #for i in 1:NAtoms #eachindex(),enumerate()..?
+        #dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], r_cut, pot) #@view distmat[i, :]
+        #energy_tot += dimer_energy_vec[i]
+    #end 
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j],tanmat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
+end    
+
+"""
+    energy_update(i_atom, dist2_new, pot::AbstractDimerPotentialB)
+returns new energy when an atom is moved. In magnetuic field, without cutoff distance.
+"""
+function energy_update(i_atom, dist2_new, pot::AbstractDimerPotentialB)
+    return dimer_energy_atom(i_atom, dist2_new, pot)
+end
+
+"""
+    energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotentialB)
+returns new energy when an atom is moved. In magnetuic field, with cutoff distance r_cut.
+"""
+function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotentialB)
+    return dimer_energy_atom(i_atom, dist2_new, r_cut, pot)
+end
+
+"""
+    energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
+Gives difference in energy, new distances, new tan when an atom is moved. In magnetic field, without cutoff distance.
+"""
+function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
+    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
+    dist2_new[i_atom] = 0.
+    tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
+    tan_new[i_atom] = 0
+    d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],pot)
+    return d_en, dist2_new, tan_new
+end
+
+"""
+    energy_update(pos, i_atom, config, dist2_mat, tan_mat, r_cut, pot::AbstractDimerPotentialB)
+Gives difference in energy, new distances, new tan when an atom is moved. In magnetic field, with cutoff distance r_cut.
+"""
+function energy_update(pos, i_atom, config, dist2_mat, tan_mat, r_cut, pot::AbstractDimerPotentialB)
+    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
+    dist2_new[i_atom] = 0.
+    tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
+    tan_new[i_atom] = 0
+    d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, r_cut, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],r_cut, pot)
+    return d_en, dist2_new, tan_new
+end
+"""
+    get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotentialB)
+A get_energy function similar to the energy_update function. This simply returns the current energy rather than delta_en
+"""
+function get_energy_dimer(pos,i_atom,mc_state,pot::AbstractDimerPotentialB)
+    # dist2_new = [distance2(pos,b) for b in mc_state.config.pos]
+    # dist2_new[i_atom] = 0.
+    # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
+
+    delta_energy,dist2_new,tan_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,mc_state.tan_mat,pot)
+    energy = mc_state.en_tot + delta_energy
+    return energy,[dist2_new,tan_new]
+end
+"""
+    get_energy_dimer(pos,i_atom,r_cut,mc_state,pot::AbstractDimerPotentialB)
+A get_energy function similar to the energy_update function. This simply returns the current energy rather than delta_en
+with a cutoff distance r_cut
+"""
+function get_energy_dimer(pos,i_atom,r_cut,mc_state,pot::AbstractDimerPotentialB)
+    # dist2_new = [distance2(pos,b) for b in mc_state.config.pos]
+    # dist2_new[i_atom] = 0.
+    # delta_energy= dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, mc_state.dist2_mat[:,i_atom], pot)
+
+    delta_energy,dist2_new,tan_new = energy_update(pos,i_atom,mc_state.config,mc_state.dist2_mat,mc_state.tan_mat,r_cut,pot)
+    energy = mc_state.en_tot + delta_energy
+    return energy,[dist2_new,tan_new]
+end
+
+"""
+    get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentialB)
+Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
+
+"""
+function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentialB,ensemble::NVT)
+    energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
+
+    # energyvector = mc_state.en_tot .+ delta_energyvector
+    return energyvector, mats_new
+end
+#this will be the format for this part of the get_energy function.
+
+"""
+    get_energy(trial_positions,indices,r_cut,mc_states,pot::AbstractDimerPotentialB,ensemble::NPT)
+Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
+with the cutoff distance r_cut
+"""
+function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentialB,ensemble::NPT)
+    
+    n=length(mc_states)
+    r_cut_all=Array{Float64}(undef,n)
+    for i=1:n
+        r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+    end
+    energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
+    # energyvector = mc_state.en_tot .+ delta_energyvector
+    return energyvector,mats_new
+end
+
+"""
+    get_energy function when the whole configuration is scaled
+        find the new distance matrix first, and use dimer_energy_config to find the new total energy and energy matrix
+"""
+function get_energy(trial_configs_all,mc_states,pot::AbstractDimerPotentialB)
+    dist2_mat_new = get_distance2_mat.(trial_configs_all)
+    #en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot)))
+    n=length(trial_configs_all)
+    r_cut_all=Array{Float64}(undef,n)
+    for i=1:n
+        r_cut_all[i]=trial_configs_all[i].bc.box_length^2/4
+    end
+    tan_mat=Array{Matrix}(undef,n)
+    for i=1:n
+        tan_mat[i]=mc_states[i].tan_mat
+    end
+    en_atom_vec, en_tot_new = invert(dimer_energy_config.(dist2_mat_new, tan_mat, length(trial_configs_all[1].pos), r_cut_all, Ref(pot)))
+    #println(invert(dimer_energy_config.(dist2_mat_new, length(trial_configs_all[1].pos), Ref(pot))))
+    #println()
+
+    return dist2_mat_new,en_atom_vec,en_tot_new
+end
+"""
+    end here
+"""
+
+
 
 """ 
     DFTPotential 
@@ -339,34 +815,6 @@ function get_energy(trial_positions,indices,nnp_states,pot::RuNNerPotential)
 end
 
 #---------------------------------------------#
-"""
-    AbstractEnsemble
-abstract type for ensemble:
-    - NVT: canonical ensemble
-    - NPT: isothermal, isobaric
-"""
-abstract type AbstractEnsemble end
-
-"""
-    NVT
- canonical ensemble
- fieldname: natoms: number of atoms
-"""
-struct NVT <: AbstractEnsemble
-    n_atoms::Int
-end
-
-"""
-    NPT
- isothermal, isobaric ensemble
- fieldnames: 
- - natoms: number of atoms
- - pressure
-"""
-struct NPT <: AbstractEnsemble
-    n_atoms::Int
-    pressure::Real
-end
 
 """
     EnHist(n_bin, en_min::T, en_max::T)

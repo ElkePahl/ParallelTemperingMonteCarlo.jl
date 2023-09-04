@@ -40,6 +40,21 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.count_atom[2] += 1
 
 end
+
+
+function swap_config!(mc_state, i_atom, trial_pos, dist2_new, tan_new, energy)
+
+    mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
+    mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
+    mc_state.dist2_mat[:,i_atom] = dist2_new    
+    mc_state.tan_mat[i_atom,:] = tan_new
+    mc_state.tan_mat[:,i_atom] = tan_new    
+    mc_state.en_tot = energy
+    mc_state.count_atom[1] += 1
+    mc_state.count_atom[2] += 1
+
+end
+
 function swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
 
     nnp_state.config.pos[atomindex] = trial_pos
@@ -60,6 +75,7 @@ function swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
 
     return nnp_state
 end
+
 function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
     #println("swap_v_config")
     #for i=1:length(mc_state.config.pos)
@@ -85,32 +101,35 @@ end
 NB: this method becomes redundant if we change the output and format of the getenergy function for the dimer potential: waiting on an email. 
 
 """
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector)
+
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot::AbstractDimerPotential)
     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
         #println("swap")
+
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
 end
-function acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
+    #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
+    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+        #println("swap")
 
-    if metropolis_condition(ensemble,(new_energy - nnp_state.en_tot),nnp_state.beta) >= rand()
-
-        swap_config!(nnp_state,i_atom,trial_pos,new_energy)
-
-    end
-
+        swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
+    end   
 end
-function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64)
 
-
+function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64,pot)
+         
+    #println("metro ",metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) )
     if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
         #println("accepted")
         #println("swap")
 
         #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
         swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
-    end   
+    end 
+    #println()
 end
 
 """
@@ -122,26 +141,31 @@ end
 """
 
 function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
-
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
-        energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
+        energy_vector, mats_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx])
+            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],mats_new[idx],pot)
         end
+        #println(mc_states[1].en_tot)
+        #println()
     else
         #println("v")
         trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
         #get the new distance matrix, energy matrix and total energy for each trajectory
-        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,pot::AbstractDimerPotential)
-        #println(en_tot_new)
+        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,mc_states,pot)
+        #if isnan(en_tot_new[3])==true
+            #println(trial_configs[3])
+            #println(dist2_mat_new[3])
+        #end
+        
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx])
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
         end
     end
-
+    #println()
     return mc_states
     
 
@@ -173,18 +197,42 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     end
 
     if rand() < 0.1 #attempt to exchange trajectories
-        parallel_tempering_exchange!(mc_states,mc_params)
+        parallel_tempering_exchange!(mc_states,mc_params,ensemble)
     end
 
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble::NVT ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
 
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-    sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    sampling_step!(mc_params,mc_states,ensemble,i,results,delta_en_hist,delta_r2)
+    
+    #step adjustment
+    if rem(i, mc_params.n_adjust) == 0
+        for i_traj = 1:mc_params.n_traj
+            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+        end 
+    end
+
+    if save == true
+        if rem(i,1000) == 0
+            save_states(mc_params,mc_states,i,save_dir)
+            save_results(results,save_dir)
+        end
+    end
+
+end
+       
+
+function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble::NPT ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
+
+
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+
+    sampling_step!(mc_params,mc_states,ensemble,i,results,delta_en_hist,delta_v_hist,delta_r2)
     
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
@@ -230,7 +278,39 @@ Determines the parameters of a fully thermalised set of mc_states. The method in
 outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
 
 """
-function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble::NVT,n_steps,a,v,r)
+
+    for mc_state in mc_states
+        push!(mc_state.ham, 0)
+        push!(mc_state.ham, 0)
+    end
+
+    ebounds = [100. , -100.]
+
+    for i = 1:mc_params.eq_cycles
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
+        for state in mc_states
+            ebounds = check_e_bounds(state.en_tot,ebounds)
+        end
+
+        if rem(i, mc_params.n_adjust) == 0
+            for state in mc_states
+                update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+            end
+        end        
+    end
+    #reset counter-variables
+    for state in mc_states
+        reset_counters(state)
+    end
+
+
+    delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
+    return mc_states,results,delta_en_hist,delta_r2
+
+end
+
+function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble::NPT,n_steps,a,v,r)
 
     for mc_state in mc_states
         push!(mc_state.ham, 0)
@@ -269,7 +349,21 @@ while initialisation sets mc_states,params etc we require something to thermalis
 
 
 """
-function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble::NVT,n_steps,a,v,r,restart)
+    if restart == true
+
+        delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+        delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
+
+    else
+        mc_states,results,delta_en_hist,delta_r2 = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+
+    end
+
+    return mc_states,results,delta_en_hist,delta_r2
+end
+
+function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble::NPT,n_steps,a,v,r,restart)
     if restart == true
 
         delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
@@ -307,29 +401,34 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     #first we initialise the simulation with arguments matching the initialise function's various methods
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
     #equilibration thermalises new simulaitons and sets the histograms and results
+
     mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
-
-   
     println("equilibration done")
-
+    #println(results.v_max)
+    #println(results.v_min)
+    delta_v_hist = (results.v_max-results.v_min)/results.n_bin
+    #println("delta_v_hist ",delta_v_hist)
 
 
     if save == true
         save_states(mc_params,mc_states,0,save_dir,move_strat,ensemble)
     end
-    
-    #main MC loop
 
 
     for i = start_counter:mc_params.mc_cycles
 
-        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
-    
+        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
+
+        #if rem(i,10000)==0
+            #println(i/10000)
+        #end
+        
     end
+
+
+   
   
     println("MC loop done.")
-    println("cc")
-
 
     results = finalise_results(mc_states,mc_params,results)
     #TO DO
