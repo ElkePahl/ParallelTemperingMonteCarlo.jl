@@ -381,6 +381,8 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     writedlm(cvfile, ["T" "Z" "Cv" "dCv" "S(T)"])
     writedlm(cvfile, [T Z C dC S_T])
     close(cvfile)
+    println(T)
+    println(C)
        
 end
 

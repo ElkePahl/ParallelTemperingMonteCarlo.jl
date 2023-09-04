@@ -11,10 +11,8 @@ n_atoms = 32
 pressure=101325
 
 # temperature grid
-
-ti = 15.
-tf = 35.
-
+ti = 20.
+tf = 40.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -22,7 +20,9 @@ temp = TempGrid{n_traj}(ti,tf)
 # MC simulation details
 
 
+
 mc_cycles = 10000 #default 20% equilibration cycles on top
+
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -41,17 +41,17 @@ move_strat = MoveStrategy(atom_moves = n_atoms, vol_moves = 1)
 #move_strat = MoveStrategy(atom_moves = n_atoms) 
 
 #ensemble
-
 ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
-
 #ensemble = NVT(n_atoms)
 
 #ELJpotential for neon
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
 #elj_ne1 = ELJPotential{11}(c1)
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
-pot = ELJPotentialEven{6}(c)
+a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
+b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
+c=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
+pot = ELJPotentialB{6}(a,b,c)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -89,14 +89,13 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886
-pos_ne32 = pos_ne32 * AtoBohr
+#AtoBohr = 1.8897259886
+#pos_ne32 = pos_ne32 * AtoBohr
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-box_length = 8.7674 * AtoBohr
-bc_ne32 = PeriodicBC(box_length)   
+bc_ne32 = PeriodicBC(8.7674)   
 
 #starting configuration
 start_config = Config(pos_ne32, bc_ne32)
@@ -107,10 +106,9 @@ n_bin = 100
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ = [0.1,0.1,1.], max_boxlength = box_length*1.8) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 println(mc_states[1].en_tot)
-
 println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^3)
 
 

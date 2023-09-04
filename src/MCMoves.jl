@@ -106,7 +106,7 @@ end
 function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
-    trial_pos -= [round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
+    trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
 function atom_displacement(mc_state,index)
@@ -141,14 +141,18 @@ end
 scale the whole configuration, including positions and the box length.
 returns the trial configuration as a struct. 
 """
-function volume_change(conf::Config, max_vchange)
+function volume_change(conf::Config, max_vchange, max_length)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
+    if conf.bc.box_length >= max_length && scale > 1.
+        scale=1.
+    end
+
     trial_config = Config(conf.pos * scale,PeriodicBC(conf.bc.box_length * scale))
     return trial_config
 end
 
 function volume_change(mc_state)
-    trial_config = volume_change(mc_state.config,mc_state.max_displ[2])
+    trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
     return trial_config
 end
 

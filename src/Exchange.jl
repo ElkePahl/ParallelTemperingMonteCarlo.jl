@@ -46,9 +46,7 @@ end
 #end
 
 function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
-    # Joule to hartree -> /2.2937104486906E+17
-    # Bohr^3 to m^3 -> 1.48184743472E-31
-    delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)*3.398928944382626e-14
+    delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)
     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
@@ -74,6 +72,7 @@ information contained in `state_1` and `state_2`, see [`MCState`](@ref)
 function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
+    state_1.tan_mat, state_2.tan_mat = state_2.tan_mat, state_1.tan_mat
     state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
     return state_1, state_2
@@ -93,10 +92,10 @@ function exc_trajectories!(state_1::NNPState, state_2::NNPState)
 end
 
 """
-    parallel_tempering_exchange!(mc_states,mc_params)
+    parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 """
-function parallel_tempering_exchange!(mc_states,mc_params)
+function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NVT)
     n_exc = rand(1:mc_params.n_traj-1)
 
     mc_states[n_exc].count_exc[1] += 1
@@ -105,6 +104,29 @@ function parallel_tempering_exchange!(mc_states,mc_params)
     
 
     if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
+        mc_states[n_exc].count_exc[2] += 1
+        mc_states[n_exc+1].count_exc[2] += 1
+
+        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+    end
+
+    return mc_states
+end
+
+"""
+    parallel_tempering_exchange!(mc_states,mc_params,ensemble:NPT)
+This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
+Acceptance is determined by enthalpy instead of energy. 
+"""
+function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
+    n_exc = rand(1:mc_params.n_traj-1)
+
+    mc_states[n_exc].count_exc[1] += 1
+    mc_states[n_exc+1].count_exc[1] += 1
+
+    
+
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc+1].count_exc[2] += 1
 
@@ -153,6 +175,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     end
     return mc_state
 end
+
 function update_max_stepsize!(mc_state::NNPState, n_update, a, v, r; min_acc = 0.4, max_acc = 0.6)
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * a)
