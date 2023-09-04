@@ -93,7 +93,8 @@ pos_ne32 = pos_ne32 * AtoBohr
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne32 = CubicBC(8.7674 * AtoBohr)
+box_length = 8.7674
+bc_ne32 = CubicBC(box_length * AtoBohr)
 
 #starting configuration
 start_config = Config(pos_ne32, bc_ne32)
@@ -104,7 +105,7 @@ n_bin = 100
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.1,0.1]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.1,0.1,30.]) for i in 1:n_traj]
 
 
 println(mc_states[1].en_tot)

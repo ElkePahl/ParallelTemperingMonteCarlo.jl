@@ -160,16 +160,17 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     else
         #println("v")
         trial_configs = generate_vchange(mc_states,mc_states[1].config.bc)   #generate_vchange gives an array of configs
-        # When bc is rhombic, the "trial configs" is actually an array "[trial_configs_all,trial_vchanges]", containing which way the coordinates are scaled, and the scaling factor
+        # When bc is rhombic, the "trial configs" is an array "[trial_configs_all,trial_vchanges]", containing which way the coordinates are scaled, and the scaling factor
         #get the new distance matrix, energy matrix and total energy for each trajectory
         dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,mc_states,pot)
         #println(en_tot_new[1])
-        println("1 ",trial_configs[2][1,1]," ",trial_configs[2][1,2])
-        println("10 ",trial_configs[2][10,1]," ",trial_configs[2][10,2])
-        println()
+        
+        if typeof(trial_configs)==Vector{Array}
+            trial_configs=trial_configs[1]
+        end
         
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[1][idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
         end
     end
     #println()
