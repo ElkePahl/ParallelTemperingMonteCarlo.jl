@@ -152,7 +152,7 @@ function volume_change(conf::Config, max_vchange, max_length)
 end
 
 function volume_change(mc_state)
-    trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_displ[4])
+    trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
     return trial_config
 end
 
