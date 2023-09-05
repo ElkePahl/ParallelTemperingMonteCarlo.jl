@@ -167,7 +167,7 @@ n_bin = 100
 
 #----------------------------------------------------------------------------#
 evtohartree = 0.0367493
-
+#parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
 n = 8.482
 m = 4.692
 ϵ = evtohartree*0.0370
@@ -175,6 +175,7 @@ a = 0.25*nmtobohr
 C = 27.561
 
 pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
+# sutton chen potential as used by Doye et al for the cambridge cluster database energy landscape
 
 suttonchenpot = EmbeddedAtomPotential(9.0,6.0,0.0126*evtohartree,39.432,0.3612*nmtobohr)
 #----------------------------------------------------------------------------#

@@ -428,7 +428,7 @@ function calc_components(eatomvec,distancevec,n,m)
     return eatomvec
 end
 """
-    calc_all_components(dist2_mat,n,m) 
+    calc_components(dist2_mat,n,m) 
     calc_components(componentvec,atomindex,old_r2_vec,new_r2_vec,n,m)
 Given a matrix `dist2_mat` of each square-radial distance and the exponents `n,m` calculates the Nx2 vector of ϕ and ρ components for each atom and returning them as a `component_vector`.
 
