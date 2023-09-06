@@ -41,6 +41,22 @@ writes the MCParam struct to a savefile. Second method also writes the move stra
     write(savefile,"avr: $(atom_move_frequency(move_strat)) $(vol_move_frequency(move_strat)) $(rot_move_frequency(move_strat)) \n")
    #  close(savefile)
 end
+
+"""
+    save_min(directory::String,config::Config,energy)
+saves the minimum energy configuration, useful option to find the minimum energy config during the equilibration cycle.
+
+"""
+function save_min(directory::String,config::Config,energy)
+    savefile = open("$(directory)/energymin.dat","w+")
+    write(savefile,"Energy :: $energy \n")
+    write(savefile,"configuration \n")
+    for row in mc_state.config.pos
+        write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
+    end
+    close(savefile)
+end
+
 """
     save_state(savefile::IOStream,mc_state::MCState)
 saves a single `mc_state` struct to `savefile`
