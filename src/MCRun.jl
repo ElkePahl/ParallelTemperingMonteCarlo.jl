@@ -107,24 +107,60 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
-
+function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, results, save, i, save_dir, delta_en_hist, delta_r2)
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-    sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
-    
-    #step adjustment
-    if rem(i, mc_params.n_adjust) == 0
-        for i_traj = 1:mc_params.n_traj
-            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-        end 
-    end
+    if typeof(bc) == AdjacencyBC
+        bcflag = false
+        adjmat = find_adjmat(dist2_matrix, bc.r2_cut)
+        for col in eachcol(adjmat)
+            n_connect = sum(col)
+            if n_connect < 4
+                bcflag = true
+            end
+        end
+        if is_connected(SimpleGraph(adjmat)) == false
+            bcflag = true
+        end
+        return bcflag
 
-    if save == true
-        if rem(i,1000) == 0
-            save_states(mc_params,mc_states,i,save_dir)
-            save_results(results,save_dir)
+        if bcflag == false
+            sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    
+            #step adjustment
+            if rem(i, mc_params.n_adjust) == 0
+                for i_traj = 1:mc_params.n_traj
+                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+                end 
+            end
+
+            if save == true
+                if rem(i,1000) == 0
+                    save_states(mc_params,mc_states,i,save_dir)
+                    save_results(results,save_dir)
+                end
+            end
+
+            old_pos = deepcopy(pos)
+
+        else pos = old_pos
+        end
+
+    else sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    
+        #step adjustment
+        if rem(i, mc_params.n_adjust) == 0
+            for i_traj = 1:mc_params.n_traj
+                update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+            end 
+        end
+
+        if save == true
+            if rem(i,1000) == 0
+                save_states(mc_params,mc_states,i,save_dir)
+                save_results(results,save_dir)
+            end
         end
     end
 
