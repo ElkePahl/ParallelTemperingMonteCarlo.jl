@@ -35,7 +35,7 @@ mutable struct MCState{T,N,BC}
     dist2_mat::Matrix{T}
 
     tan_mat::Matrix{T}
-    en_atom_vec::Array{T}
+    en_atom_vec :: Array
 
     en_tot::T
     ham::Vector{T}
