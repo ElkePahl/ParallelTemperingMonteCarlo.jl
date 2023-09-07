@@ -53,8 +53,7 @@ function MCState(
 ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC}(
-        temp, beta, deepcopy(config), copy(dist2_mat), copy(tan_mat),copy(en_atom_vec), en_tot, 
-        ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
+        temp, beta, deepcopy(config), copy(dist2_mat), copy(tan_mat),copy(en_atom_vec), en_tot, ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
         )
 end
 
