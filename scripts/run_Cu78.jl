@@ -1,5 +1,5 @@
 
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo#potential_variable_struct
 
 using Random,DelimitedFiles
 
@@ -26,7 +26,7 @@ temp = TempGrid{n_traj}(ti,tf)
 # MC simulation details
 
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 
