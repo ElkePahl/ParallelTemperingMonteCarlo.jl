@@ -12,9 +12,9 @@ using SplitApplyCombine
 using ..MachineLearningPotential
 using ..Configurations
 
-#using ..RuNNer
+export AbstractPotential, AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential,EmbeddedAtomPotential
 
-export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotential,EmbeddedAtomPotential
+
 export RuNNerPotential
 
 export DFTPotential
@@ -84,10 +84,15 @@ abstract type AbstractDimerPotentialB <: AbstractPotential end
 
 
 abstract type AbstractMachineLearningPotential <: AbstractPotential end
+"""
+    PotentialVariables
+An abstract type defining a class of mutable struct containing all the relevant vectors and arrays each potential will need throughout the course of a simulation to prevent over-definitions inside the MCState struct.
+"""
+abstract type PotentialVariables end
 
-
-
-
+#-----------------------------------------------------------------------#
+##
+#-----------------------------------------------------------------------#
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
 Sums the dimer energies for atom `i` with all other atoms
