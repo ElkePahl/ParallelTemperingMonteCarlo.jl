@@ -109,32 +109,38 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 end
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, results, save, i, save_dir, delta_en_hist, delta_r2)
 
-    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-
-    if typeof(bc) == AdjacencyBC
-        if check_boundary == false
-            sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    if typeof(mc_states[1].config.bc) == AdjacencyBC
+        for state in mc_states
+            state.config.bc.pos = deepcopy(state.config.pos)
+        end
     
-            #step adjustment
-            if rem(i, mc_params.n_adjust) == 0
-                for i_traj = 1:mc_params.n_traj
-                    update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-                end 
-            end
+        mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-            if save == true
-                if rem(i,1000) == 0
-                    save_states(mc_params,mc_states,i,save_dir)
-                    save_results(results,save_dir)
+        for state in mc_states
+            if check_boundary(state) == false
+                sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+        
+                #step adjustment
+                if rem(i, mc_params.n_adjust) == 0
+                    for i_traj = 1:mc_params.n_traj
+                        update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+                    end 
                 end
+
+                if save == true
+                    if rem(i,1000) == 0
+                        save_states(mc_params,mc_states,i,save_dir)
+                        save_results(results,save_dir)
+                    end
+                end
+
+            else state.config.pos = deepcopy(state.config.bc.pos)
             end
-
-            old_pos = deepcopy(pos)
-
-        else pos = old_pos
         end
 
-    else sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    else mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)
+        
+        sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
     
         #step adjustment
         if rem(i, mc_params.n_adjust) == 0
@@ -193,7 +199,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     for i = 1:mc_params.eq_cycles
         mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r) 
 
-        if typeof(bc) == AdjacencyBC
+        if typeof(mc_states[1].config.bc) == AdjacencyBC
             if check_boundary == false
                 for state in mc_states
                     ebounds = check_e_bounds(state.en_tot,ebounds)
