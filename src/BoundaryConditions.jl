@@ -63,20 +63,20 @@ Returns `true` when atom outside of spherical boundary
 """
 check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
-# function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
-#     bcflag = false
-#     adjmat = find_adjmat(dist2_matrix, bc.r2_cut)
-#     for col in eachcol(adjmat)
-#       n_connect = sum(col)
-#         if n_connect < 4
-#             bcflag = true
-#         end
-#     end
-#     if is_connected(SimpleGraph(adjmat)) == false
-#         bcflag = true
-#     end
-#     return bcflag
-# end
+function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
+    bcflag = false
+    adjmat = find_adjmat(dist2_matrix, bc.r2_cut)
+    for col in eachcol(adjmat)
+      n_connect = sum(col)
+        if n_connect < 4
+            bcflag = true
+        end
+    end
+    if is_connected(SimpleGraph(adjmat)) == false
+        bcflag = true
+    end
+    return bcflag
+end
 
 
 """

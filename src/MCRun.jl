@@ -112,20 +112,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
     if typeof(bc) == AdjacencyBC
-        bcflag = false
-        adjmat = find_adjmat(dist2_matrix, bc.r2_cut)
-        for col in eachcol(adjmat)
-            n_connect = sum(col)
-            if n_connect < 4
-                bcflag = true
-            end
-        end
-        if is_connected(SimpleGraph(adjmat)) == false
-            bcflag = true
-        end
-        return bcflag
-
-        if bcflag == false
+        if check_boundary == false
             sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
     
             #step adjustment
@@ -204,16 +191,35 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     ebounds = [100. , -100.]
 
     for i = 1:mc_params.eq_cycles
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
-        for state in mc_states
-            ebounds = check_e_bounds(state.en_tot,ebounds)
-        end
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r) 
 
-        if rem(i, mc_params.n_adjust) == 0
-            for state in mc_states
-                update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+        if typeof(bc) == AdjacencyBC
+            if check_boundary == false
+                for state in mc_states
+                    ebounds = check_e_bounds(state.en_tot,ebounds)
+                end
+        
+                if rem(i, mc_params.n_adjust) == 0
+                    for state in mc_states
+                        update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+                    end
+                end 
+    
+                old_pos = deepcopy(pos)
+    
+            else pos = old_pos
             end
-        end        
+    
+        else for state in mc_states
+                ebounds = check_e_bounds(state.en_tot,ebounds)
+             end
+        
+            if rem(i, mc_params.n_adjust) == 0
+                for state in mc_states
+                    update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+                end
+            end    
+        end
     end
     #reset counter-variables
     for state in mc_states

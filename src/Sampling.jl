@@ -150,6 +150,7 @@ function sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
 
     end   
 end
+
 """
     finalise_results(mc_states,mc_params,results)
 Function designed to take a complete mc simulation and calculate the averages. 

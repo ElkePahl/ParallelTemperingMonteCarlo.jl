@@ -105,22 +105,22 @@ end
 function atom_displacement(state, index, max_displacement, bc::AdjacencyBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = state.config.pos[index] + delta_move
-    count = 0
-    trial_dist2mat = copy(state.dist2_mat)
-    for (ind,i) in enumerate(state.config.pos)
-        trial_dist2mat[index,ind] = distance2(trial_pos,i)
-        trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
-    end
-    while check_boundary(bc, trial_dist2mat, trial_pos)         #displace the atom until it's inside the binding sphere
-        count += 1
-        delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-        trial_pos = state.config.pos[index] + delta_move
-        for (ind,i) in enumerate(state.config.pos)
-            trial_dist2mat[index,ind] = distance2(trial_pos,i)
-            trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
-        end
-        count == 10000 && error("Error: too many moves out of boundary")
-    end
+    # count = 0
+    # trial_dist2mat = copy(state.dist2_mat)
+    # for (ind,i) in enumerate(state.config.pos)
+    #     trial_dist2mat[index,ind] = distance2(trial_pos,i)
+    #     trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
+    # end
+    # while check_boundary(bc, trial_dist2mat, trial_pos)         #displace the atom until it's inside the binding sphere
+    #     count += 1
+    #     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    #     trial_pos = state.config.pos[index] + delta_move
+    #     for (ind,i) in enumerate(state.config.pos)
+    #         trial_dist2mat[index,ind] = distance2(trial_pos,i)
+    #         trial_dist2mat[ind,index] = trial_dist2mat[index,ind]
+    #     end
+    #     count == 10000 && error("Error: too many moves out of boundary")
+    # end
     return trial_pos
 end
 function atom_displacement(state, index, max_displacement, bc::PeriodicBC)
