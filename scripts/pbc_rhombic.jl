@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 1 #default 20% equilibration cycles on top
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 
@@ -153,13 +153,13 @@ pos_ne32 = [[ 1.56624152,  0.90426996,  0.        ],
 
 
 #convert to Bohr
-AtoBohr = 1.8897259886
+AtoBohr = 1.8897259886 *0.98
 pos_ne32 = pos_ne32 * AtoBohr
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne32 = RhombicBC(12.5299 * AtoBohr, 15.346 * AtoBohr)   
+bc_ne32 = RhombicBC(12.52993216 * AtoBohr, 15.34597014 * AtoBohr)   
 
 #starting configuration
 start_config = Config(pos_ne32, bc_ne32)
@@ -173,7 +173,7 @@ n_bin = 100
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 println(mc_states[1].en_tot)
-println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^3)
+println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^2*mc_states[1].config.bc.box_height*3^0.5/2)
 
 
 #results = Output(n_bin, max_displ_vec)

@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1 #default 20% equilibration cycles on top
 
 
 
@@ -105,7 +105,7 @@ n_bin = 100
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.1,0.1,30.]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.1,0.1]) for i in 1:n_traj]
 
 
 println(mc_states[1].en_tot)

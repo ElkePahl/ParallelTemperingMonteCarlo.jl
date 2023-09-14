@@ -99,7 +99,7 @@ end
         The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. The method for a float64 only calculates the dist2 vector if it's required, as for RuNNer, where the distance matrix is not given during energy calculation.
 
 """
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot::AbstractDimerPotential)
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector{Float64},pot::AbstractDimerPotential)
     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
         #println("swap")
@@ -107,12 +107,12 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
     end   
 end
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
+function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, vecs_new::Vector{Vector{Float64}},pot::AbstractDimerPotentialB)
     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
         #println("swap")
 
-        swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
+        swap_config!(mc_state,i_atom,trial_pos,vecs_new[1], vecs_new[2], energy)
     end   
 end
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Float64)
@@ -151,23 +151,18 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
-        energy_vector, mats_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
+        energy_vector, vecs_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
+        # when B = 0, vecs_new in each trajectory is just the new distance vector
+        # when B is not 0, vecs_new in each trajectory is an array of the new distance vector and the new tan vector
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],mats_new[idx],pot)
+            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],vecs_new[idx],pot)
         end
-        #println(mc_states[1].en_tot)
         #println()
     else
         #println("v")
         trial_configs = generate_vchange(mc_states,mc_states[1].config.bc)   #generate_vchange gives an array of configs
-        # When bc is rhombic, the "trial configs" is an array "[trial_configs_all,trial_vchanges]", containing which way the coordinates are scaled, and the scaling factor
-        #get the new distance matrix, energy matrix and total energy for each trajectory
         dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,mc_states,pot)
         #println(en_tot_new[1])
-        
-        if typeof(trial_configs)==Vector{Array}
-            trial_configs=trial_configs[1]
-        end
         
         for idx in eachindex(mc_states)
             @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)

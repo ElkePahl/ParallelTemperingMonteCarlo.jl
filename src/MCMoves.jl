@@ -149,7 +149,7 @@ returns the trial configuration as a struct.
 """
 function volume_change(conf::Config, bc::CubicBC, max_vchange)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    if conf.bc.box_length >= 30. && scale > 1.
+    if conf.bc.box_length >= 50. && scale > 1.
         scale=1.
     end
 
@@ -169,6 +169,30 @@ end
 
 """
     volume change functions for rhombic boundary
+"""
+function volume_change(conf::Config, bc::RhombicBC, max_vchange)
+    scale = exp((rand()-0.5)*max_vchange)^(1/3)
+    if conf.bc.box_length >= 50. && scale > 1.
+        scale=1.
+    end
+
+    trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
+    return trial_config
+end
+
+function volume_change(mc_state)
+    trial_config = volume_change(mc_state.config,mc_state.config.bc,mc_state.max_displ[2])
+    return trial_config
+end
+
+#function generate_vchange(mc_states,bc::RhombicBC)
+    #trial_configs_all = volume_change.(mc_states)
+    #return trial_configs_all
+#end
+
+
+"""
+    volume change when xy and z directions are separated
 """
 function scale_xy(pos,scale)
     N=length(pos)
@@ -191,7 +215,7 @@ end
 
 function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange_xy)
     scale = exp((rand()-0.5)*max_vchange_xy)^(1/3)
-    if conf.bc.box_length >= 30. && scale > 1.
+    if conf.bc.box_length >= 50. && scale > 1.
         scale=1.
     end
     #if conf.bc.box_length >= 1.5*conf.bc.box_height && scale > 1.
@@ -200,13 +224,14 @@ function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange_xy)
         #scale=1.
     #end
     #trial_config = Config(scale_xy(conf.pos,scale), RhombicBC(bc.box_length * scale,bc.box_height))
-    trial_config = Config(scale_xy(conf.pos,scale), RhombicBC(bc.box_length * scale,bc.box_height*scale))
-    return trial_config,scale
+    #trial_config = Config(scale_xy(conf.pos,scale), RhombicBC(bc.box_length * scale,bc.box_height*scale))
+    trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
+    return trial_config
 end
 
 function volume_change_z(conf::Config, bc::RhombicBC, max_vchange_z)
     scale = exp((rand()-0.5)*max_vchange_z)^(1/3)
-    if conf.bc.box_length >= 30. && scale > 1.
+    if conf.bc.box_length >= 50. && scale > 1.
         scale=1.
     end
     #if conf.bc.box_height >= 0.9*conf.bc.box_length && scale > 1.
@@ -215,33 +240,34 @@ function volume_change_z(conf::Config, bc::RhombicBC, max_vchange_z)
         #scale=1.
     #end
     #trial_config = Config(scale_z(conf.pos,scale), RhombicBC(bc.box_length,bc.box_height * scale))
-    trial_config = Config(scale_z(conf.pos,scale), RhombicBC(bc.box_length*scale,bc.box_height * scale))
-    return trial_config,scale
+    #trial_config = Config(scale_z(conf.pos,scale), RhombicBC(bc.box_length*scale,bc.box_height * scale))
+    trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
+    return trial_config
 end
 
 function volume_change_xy(mc_state)
-    trial_config,scale = volume_change_xy(mc_state.config,mc_state.config.bc,mc_state.max_displ[2])
-    return trial_config,scale
+    trial_config = volume_change_xy(mc_state.config,mc_state.config.bc,mc_state.max_displ[2])
+    return trial_config
 end
 
 function volume_change_z(mc_state)
-    trial_config,scale = volume_change_z(mc_state.config,mc_state.config.bc,mc_state.max_displ[2])
-    return trial_config,scale
+    trial_config = volume_change_z(mc_state.config,mc_state.config.bc,mc_state.max_displ[2])
+    return trial_config
 end
 
 function generate_vchange(mc_states,bc::RhombicBC)
     N=length(mc_states)
     trial_configs_all=Array{Config}(undef,N)
-    trial_vchanges=ones(N,2)
     for i=1:N
-        ra=rand(0:2)
-        if ra==2
-            trial_configs_all[i],trial_vchanges[i,2]=volume_change_z(mc_states[i])
-        else
-            trial_configs_all[i],trial_vchanges[i,1]=volume_change_xy(mc_states[i])
-        end
+        #ra=rand(0:2)
+        #trial_configs_all[i]=volume_change_z(mc_states[i])
+        #if ra==2
+            #trial_configs_all[i]=volume_change_z(mc_states[i])
+        #else
+            #trial_configs_all[i]=volume_change_xy(mc_states[i])
+        #end
     end
-    return [trial_configs_all,trial_vchanges]
+    return trial_configs_all
 end
 
 

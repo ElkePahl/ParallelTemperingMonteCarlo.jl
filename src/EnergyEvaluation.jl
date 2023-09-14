@@ -225,7 +225,7 @@ function dimer_energy_config(distmat, NAtoms, r_cut, bc::RhombicBC, pot::Abstrac
         end
     end 
 
-    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)*3/4   #no 0.5*energy_tot
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)*3/4 * bc.box_length/bc.box_height
 end  
 
 
@@ -663,10 +663,10 @@ Top scope get energy function for dimer potentials returning the energy vector a
 
 """
 function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentialB,ensemble::NVT)
-    energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
+    energyvector, vecs_new = invert(get_energy_dimer.(trial_positions,indices,mc_states,Ref(pot)))
 
     # energyvector = mc_state.en_tot .+ delta_energyvector
-    return energyvector, mats_new
+    return energyvector, vecs_new
 end
 #this will be the format for this part of the get_energy function.
 
@@ -685,9 +685,9 @@ function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentia
         #r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
         r_cut_all[i]=get_r_cut(mc_states[i].config.bc)
     end
-    energyvector, mats_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
+    energyvector, vecs_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
     # energyvector = mc_state.en_tot .+ delta_energyvector
-    return energyvector,mats_new
+    return energyvector,vecs_new
 end
 
 """
