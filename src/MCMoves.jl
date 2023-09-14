@@ -260,7 +260,7 @@ function generate_vchange(mc_states,bc::RhombicBC)
     trial_configs_all=Array{Config}(undef,N)
     for i=1:N
         #ra=rand(0:2)
-        #trial_configs_all[i]=volume_change_z(mc_states[i])
+        trial_configs_all[i]=volume_change_z(mc_states[i])
         #if ra==2
             #trial_configs_all[i]=volume_change_z(mc_states[i])
         #else
