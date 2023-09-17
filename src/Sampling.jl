@@ -109,7 +109,7 @@ Self explanatory name, iterates over mc_states and adds to the appropriate resul
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         for element in mc_states[j_traj].dist2_mat 
-            idx=rdf_index(element,delta_r2)
+            idx = rdf_index(element,delta_r2)
              if 0 < idx < (results.n_bin*5)
                  results.rdf[j_traj][idx] +=1
             elseif idx >= (results.n_bin*5)

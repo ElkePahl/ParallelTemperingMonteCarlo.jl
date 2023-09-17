@@ -196,42 +196,51 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
 
     ebounds = [100. , -100.]
 
-    for i = 1:mc_params.eq_cycles
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r) 
+    if typeof(mc_states[1].config.bc) == AdjacencyBC
+        for state in mc_states
+            state.config.bc.pos = deepcopy(state.config.pos)
+        end
+    
+        mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-        if typeof(mc_states[1].config.bc) == AdjacencyBC
-            if check_boundary == false
-                for state in mc_states
-                    ebounds = check_e_bounds(state.en_tot,ebounds)
-                end
-        
+        for state in mc_states
+            if check_boundary(state) == false
+                ebounds = check_e_bounds(state.en_tot,ebounds)
+
                 if rem(i, mc_params.n_adjust) == 0
                     for state in mc_states
                         update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
                     end
-                end 
-    
-                old_pos = deepcopy(pos)
-    
-            else pos = old_pos
+                end        
+                    
+                #reset counter-variables
+                for state in mc_states
+                    reset_counters(state)
+                end
+
+            else state.config.pos = deepcopy(state.config.bc.pos)
             end
-    
-        else for state in mc_states
+        end
+
+    else mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)
+        
+        for i = 1:mc_params.eq_cycles
+            mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
+            for state in mc_states
                 ebounds = check_e_bounds(state.en_tot,ebounds)
-             end
+            end
         
             if rem(i, mc_params.n_adjust) == 0
                 for state in mc_states
                     update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
                 end
-            end    
+            end        
+        end
+        #reset counter-variables
+        for state in mc_states
+            reset_counters(state)
         end
     end
-    #reset counter-variables
-    for state in mc_states
-        reset_counters(state)
-    end
-
 
     delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
     return mc_states,results,delta_en_hist,delta_r2
