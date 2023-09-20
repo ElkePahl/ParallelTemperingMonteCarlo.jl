@@ -109,7 +109,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 end
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, results, save, i, save_dir, delta_en_hist, delta_r2)
 
-    if typeof(mc_states[1].config.bc) == AdjacencyBC
+    if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
         for state in mc_states
             state.config.bc.pos = deepcopy(state.config.pos)
         end
@@ -117,7 +117,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
         for state in mc_states
-            if check_boundary(state) == false
+            if check_boundary(state.config.bc, state.dist2_mat) == false
                 sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
         
                 #step adjustment
@@ -196,29 +196,30 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
 
     ebounds = [100. , -100.]
 
-    if typeof(mc_states[1].config.bc) == AdjacencyBC
+    if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
         for state in mc_states
             state.config.bc.pos = deepcopy(state.config.pos)
         end
-    
-        mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+        for i = 1:mc_params.eq_cycles
+            mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
 
-        for state in mc_states
-            if check_boundary(state) == false
-                ebounds = check_e_bounds(state.en_tot,ebounds)
+            for state in mc_states
+                if check_boundary(state.config.bc, state.dist2_mat) == false
+                    ebounds = check_e_bounds(state.en_tot,ebounds)
 
-                if rem(i, mc_params.n_adjust) == 0
+                    if rem(i, mc_params.n_adjust) == 0
+                        for state in mc_states
+                            update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+                        end
+                    end        
+                        
+                    #reset counter-variables
                     for state in mc_states
-                        update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+                        reset_counters(state)
                     end
-                end        
-                    
-                #reset counter-variables
-                for state in mc_states
-                    reset_counters(state)
+            
+                else state.config.pos = deepcopy(state.config.bc.pos)
                 end
-
-            else state.config.pos = deepcopy(state.config.bc.pos)
             end
         end
 

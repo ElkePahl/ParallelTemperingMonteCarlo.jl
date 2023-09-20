@@ -17,7 +17,7 @@ Fieldnames:
 - `temp`: temperature
 - `beta`: inverse temperature
 - `config`: actual configuration in Markov chain [`Config`](@ref)  
-- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
+- `dist2_mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
 - `en_atom_vec`: vector of energy contributions per atom i; generated automatically when `pot` given
 - `en_tot`: total energy of `config`; generated automatically when `pot` given
 - `ham`: vector containing sampled energies - generated in MC run
