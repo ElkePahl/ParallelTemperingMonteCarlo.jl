@@ -7,7 +7,7 @@
 module BoundaryConditions
 
 using LinearAlgebra
-using Graphs
+using Laplacians
 
 export SphericalBC, AbstractBC, PeriodicBC, AdjacencyBC
 export init_AdjacencyBC, find_adjmat
@@ -45,13 +45,14 @@ end
 mutable struct AdjacencyBC{T} <: AbstractBC{T}
     r2_cut::T
     adj_mat::Matrix
+    pos::Vector
 end
 
 function init_AdjacencyBC(pos, r_cut)
     adj_mat = find_adjmat(pos, r_cut)
     r2_cut = r_cut*r_cut
 
-    return AdjacencyBC(r2_cut, adj_mat)
+    return AdjacencyBC(r2_cut, adj_mat, pos)
 end
 
 """
@@ -62,7 +63,7 @@ Returns `true` when atom outside of spherical boundary
 """
 check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
-function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
+function check_boundary(bc::AdjacencyBC, dist2_matrix)
     bcflag = false
     adjmat = find_adjmat(dist2_matrix, bc.r2_cut)
     for col in eachcol(adjmat)
@@ -71,7 +72,7 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix, pos)
             bcflag = true
         end
     end
-    if is_connected(SimpleGraph(adjmat)) == false
+    if isConnected(Laplacians.sparse(adjmat)) == false
         bcflag = true
     end
     return bcflag
