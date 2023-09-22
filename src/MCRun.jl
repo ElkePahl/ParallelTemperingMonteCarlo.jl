@@ -22,16 +22,16 @@ using ..Initialization
 
 
 
-"""  
+"""
 
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
     swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
     swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
-        Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
-        If the Metropolis condition is satisfied, these are used to update mc_state. 
+        Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy.
+        If the Metropolis condition is satisfied, these are used to update mc_state.
 
         Second method is used for the EAM potential to ensure the rho and phi components are stored for later use.
-        
+
         Third method applies to the NNPState struct which has several more fields to update.
 
 """
@@ -39,7 +39,7 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
 
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-    mc_state.dist2_mat[:,i_atom] = dist2_new    
+    mc_state.dist2_mat[:,i_atom] = dist2_new
     mc_state.en_tot = energy
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
@@ -50,11 +50,11 @@ end
 function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy::Float64,new_component_vector)
   mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
   mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-  mc_state.dist2_mat[:,i_atom] = dist2_new  
+  mc_state.dist2_mat[:,i_atom] = dist2_new
   mc_state.en_tot = energy
   mc_state.count_atom[1] += 1
   mc_state.count_atom[2] += 1
-  
+
   mc_state.en_atom_vec = new_component_vector
 end
 
@@ -64,10 +64,10 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, tan_new::Array, en
 
     mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-    mc_state.dist2_mat[:,i_atom] = dist2_new    
+    mc_state.dist2_mat[:,i_atom] = dist2_new
 
     mc_state.tan_mat[i_atom,:] = tan_new
-    mc_state.tan_mat[:,i_atom] = tan_new    
+    mc_state.tan_mat[:,i_atom] = tan_new
 
     mc_state.en_tot = energy
     mc_state.count_atom[1] += 1
@@ -112,23 +112,23 @@ function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
     mc_state.en_tot = en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
-    
+
 end
 """
-    acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)  
+    acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)
 
 
     acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
 
     acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
 
-        The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster. 
+        The acc_test function works in tandem with the swap_config function, only adding the metropolis condition. Separate functions was benchmarked as very marginally faster.
 
-        The second method involes the NNPState subtype of the MCState, it follows the same basic functions as the other version, but accounts for the different output of the getenergy function. 
-        
+        The second method involes the NNPState subtype of the MCState, it follows the same basic functions as the other version, but accounts for the different output of the getenergy function.
+
         The third method is used for the EmbeddedAtomPotential, since we need to have the components of that potential stored separately.
 
-NB: this method becomes redundant if we change the output and format of the getenergy function for the dimer potential: waiting on an email. 
+NB: this method becomes redundant if we change the output and format of the getenergy function for the dimer potential: waiting on an email.
 
 """
 
@@ -138,7 +138,7 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vec
         #println("swap")
 
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
-    end   
+    end
 end
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
@@ -146,11 +146,11 @@ function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vect
         #println("swap")
 
         swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
-    end   
+    end
 end
 
 function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64,pot)
-         
+
     #println("metro ",metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) )
     if metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) >= rand()
         #println("accepted")
@@ -158,18 +158,27 @@ function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new:
 
         #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
         swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
-    end 
+    end
     #println()
 end
 
 function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
 
     if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
-        
+
         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
-    end   
+    end
 end
 
+function acc_test!(ensemble, nnp_state::NNPState, new_energy, i_atom, trial_pos)
+
+    if metropolis_condition(ensemble, (new_energy - nnp_state.en_tot), nnp_state.beta) >= rand()
+
+        swap_config!(nnp_state, i_atom, trial_pos, new_energy)
+
+    end
+
+end
 
 """
 
@@ -177,10 +186,10 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
         mc_step!(nnp_states::NNPState,move_strat,mc_params,potential,ensemble)
         mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
         New mc_step function, vectorised displacements and energies are batch-passed to the acceptance test function, which determines whether or not to accept the moves.
-            
+
         second method relates to the inclusion of a neural network potential. This method could be made redundant by rethinking the current MCState struct, but currently results in three new_something_vector outputs, meaning it is not compatible with the dimer potential with only one new_dist2_vector output.
-        
-        The Third method relates to the EAM potential, which requires separate pairwise terms that are combined during the energy calcualtion -- calling a separate acc_test version. 
+
+        The Third method relates to the EAM potential, which requires separate pairwise terms that are combined during the energy calcualtion -- calling a separate acc_test version.
 
 """
 
@@ -204,20 +213,20 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
             #println(trial_configs[3])
             #println(dist2_mat_new[3])
         #end
-        
+
         for idx in eachindex(mc_states)
             @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
         end
     end
     #println()
     return mc_states
-    
+
 
 end
 function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,potential,ensemble) where T where N where BC
 
     indices,trial_positions = generate_displacements(nnp_states,mc_params)
-    
+
     energy_vector, nnp_states = get_energy(trial_positions,indices,nnp_states,potential)
 
     Threads.@threads for idx in eachindex(nnp_states)
@@ -243,16 +252,16 @@ function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ense
 #    end
 
     return mc_states
-    
+
 
 end
 
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
              mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
-        Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant. 
+        Current iteration of mc_cycle! using the vectorised mc_step! followed by an attempted trajectory exchange. Ultimately we will add more move types requiring the move strat to be implemented, but this is presently redundant.
 
-        second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save functions. 
+        second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save functions.
 """
 
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
@@ -271,15 +280,15 @@ end
 function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble::NVT ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
 
 
-    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)
 
     sampling_step!(mc_params,mc_states,ensemble,i,results,delta_en_hist,delta_r2)
-    
+
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
         for i_traj = 1:mc_params.n_traj
             update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-        end 
+        end
     end
 
     if save == true
@@ -290,20 +299,20 @@ function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble::NVT ,n_steps 
     end
 
 end
-       
+
 
 function mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble::NPT ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
 
 
-    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)
 
     sampling_step!(mc_params,mc_states,ensemble,i,results,delta_en_hist,delta_v_hist,delta_r2)
-    
+
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
         for i_traj = 1:mc_params.n_traj
             update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-        end 
+        end
     end
 
     if save == true
@@ -336,8 +345,8 @@ end
 
 """
     equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble)
-    
-Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future. 
+
+Determines the parameters of a fully thermalised set of mc_states. The method involving complete parameters assumes we begin our simulation from the same set of mc_states. In theory we could pass it one single mc_state which it would then duplicate, passing much more responsibility on to this function. An idea to discuss in future.
 
 outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
 
@@ -352,7 +361,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     ebounds = [100. , -100.]
 
     for i = 1:mc_params.eq_cycles
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot,ebounds)
         end
@@ -361,7 +370,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
             for state in mc_states
                 update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
             end
-        end        
+        end
     end
     #reset counter-variables
     for state in mc_states
@@ -384,7 +393,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
     ebounds = [100. , -100.]
 
     for i = 1:mc_params.eq_cycles
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot,ebounds)
         end
@@ -393,7 +402,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
             for state in mc_states
                 update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
             end
-        end        
+        end
     end
     #reset counter-variables
     for state in mc_states
@@ -447,9 +456,9 @@ end
 
 Main function, controlling the parallel tempering MC run.
 Calculates number of MC steps per cycle.
-Performs equilibration and main MC loop.  
-Energy is sampled after `mc_sample` MC cycles. 
-Step size adjustment is done after `n_adjust` MC cycles.    
+Performs equilibration and main MC loop.
+Energy is sampled after `mc_sample` MC cycles.
+Step size adjustment is done after `n_adjust` MC cycles.
 Evaluation: including calculation of inner energy, heat capacity, energy histograms;
 saved in `results`.
 
@@ -486,12 +495,12 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
         #if rem(i,10000)==0
             #println(i/10000)
         #end
-        
+
     end
 
 
-   
-  
+
+
     println("MC loop done.")
 
     results = finalise_results(mc_states,mc_params,results)
@@ -501,14 +510,14 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     # rdfs
 
     println("done")
-    return 
+    return
 end
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
 """
 
--- TO IMPLEMENT -- 
+-- TO IMPLEMENT --
 
 This version is not complete. While "under the hood" is working as it should, not a lot of effort has been put into:
     - organising the dependencies, properly categorising these is a job for the future.
