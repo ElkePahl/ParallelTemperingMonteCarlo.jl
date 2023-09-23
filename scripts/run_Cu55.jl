@@ -2,6 +2,9 @@ using ParallelTemperingMonteCarlo
 
 using Random,DelimitedFiles
 
+script_folder = @__DIR__ # folder where this script is located
+data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
+
 #cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
@@ -18,7 +21,7 @@ tf = 900
 n_traj = 20
 
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
@@ -36,7 +39,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(atom_moves = n_atoms)  
+move_strat = MoveStrategy(atom_moves = n_atoms)
 
 #ensemble
 ensemble = NVT(n_atoms)
@@ -126,7 +129,7 @@ AtoBohr = 1.8897259886
 length(pos_cu55) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 
-#boundary conditions 
+#boundary conditions
 bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
 bc_cu13 = SphericalBC(radius=8*AtoBohr)
 #starting configuration
@@ -163,7 +166,7 @@ angularsymmvec = []
 #-------------------------------------------#
 #-----------Including scaling data----------#
 #-------------------------------------------#
-file = open("$(pwd())/scaling.data")
+file = open(joinpath(data_path,"scaling.data")) # full path "./data/scaling.data"
 scalingvalues = readdlm(file)
 close(file)
 G_value_vec = []
@@ -183,7 +186,7 @@ end
 let n_index = 10
 
 for element in V
-    for types in T 
+    for types in T
 
         n_index += 1
 
@@ -205,7 +208,7 @@ totalsymmvec = vcat(radsymmvec,angularsymmvec)
 #--------------------------------------------------#
 num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
-file = open("weights.029.data","r+")
+file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
 weights=readdlm(file)
 close(file)
 weights = vec(weights)
@@ -231,4 +234,3 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 # plot(data)
 # histplot = plot(data)
 # savefig(histplot,"histograms.png")
-
