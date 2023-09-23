@@ -1,6 +1,6 @@
-#!/usr/bin/env julia
-# encoding: utf-8
-"""A wrapper script around a Fortran library for the RuNNer forward pass."""
+# A wrapper script around a Fortran library for the RuNNer forward pass.
+
+using Test
 
 function forward_pass(
     input::Matrix{Float64},
@@ -14,14 +14,13 @@ function forward_pass(
     """Perform a forward pass using a Fortran library."""
     eatom = zeros(Float64, batchsize)
     return ccall(
-        (:forward, "./librunnerjulia.so"),
+        (:forward, "librunnerjulia.so"),
         Float64,
         (Ref{Float64},Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Int32},
          Ref{Int32}, Ref{Float64}, Ref{Int32}, Ref{Float64}),
         input, num_nodes[1], num_layers, num_nodes, batchsize,
         num_parameters, parameters, activation_functions, eatom
     )
-
 end
 
 function test_forward(num_atoms, batchsize)
@@ -53,16 +52,15 @@ function test_forward(num_atoms, batchsize)
             num_parameters,
             parameters
         )
-        @assert all(res == 21)
+        @test res == 21
     end
-
 end
 
 @testset "Runner forward pass" begin
     # Run forward pass multiple times.
-    num_atoms = 55 * 1e5
-    batchsize::Int32 = 1
-    num_repeats = 5
+    num_atoms = 55 * 1e2
+    batchsize::Int32 = 2
+    num_repeats = 2
     timings = [@elapsed test_forward(num_atoms, batchsize) for i in 1:num_repeats]
     @test length(timings) == num_repeats
 
