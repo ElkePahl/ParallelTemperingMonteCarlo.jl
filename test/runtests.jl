@@ -1,4 +1,5 @@
 using Test
+using SafeTestsets
 using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
@@ -7,7 +8,7 @@ using StaticArrays, LinearAlgebra
 #     @test p1.x == p1.y == p1.z == 1.
 
 #     pointarray = [Point(rand(),rand(),rand()) for _ in 1:10]
-#     bc = SphericalBC(1.0)    
+#     bc = SphericalBC(1.0)
 #     config = @inferred Config{10}(pointarray,bc)
 #     @test length(config) == 10
 #     @test_throws ErrorException @inferred Config(pointarray,bc)
@@ -61,7 +62,7 @@ end
 @testset "TemperatureGrid" begin
     n_traj = 32
     temp = TempGrid{n_traj}(2, 16)
-    kB = 3.16681196E-6 
+    kB = 3.16681196E-6
     @test temp.t_grid[1] ≈ 2.0
     @test length(temp.t_grid) == n_traj
     @test length(temp.beta_grid) == n_traj
@@ -94,4 +95,8 @@ end
     en_vec,en_tot = dimer_energy_config(d2mat,3,pot)
     @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
     #@test en_vec
+end
+
+@safetestset "RuNNer" begin
+    include("test_runner_forward.jl")
 end
