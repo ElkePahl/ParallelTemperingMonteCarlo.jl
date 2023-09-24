@@ -1,6 +1,8 @@
 # A wrapper script around a Fortran library for the RuNNer forward pass.
 
 using Test
+using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
 
 function forward_pass(
     input::Matrix{Float64},
@@ -14,7 +16,7 @@ function forward_pass(
     """Perform a forward pass using a Fortran library."""
     eatom = zeros(Float64, batchsize)
     return ccall(
-        (:forward, "librunnerjulia.so"),
+        (:forward, joinpath(lib_path, "librunnerjulia.so")),
         Float64,
         (Ref{Float64},Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Int32},
          Ref{Int32}, Ref{Float64}, Ref{Int32}, Ref{Float64}),
