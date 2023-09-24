@@ -252,12 +252,63 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
 end 
 #----------------------------------------------------------#
 
+
+#-----------------------------------------------------------#
+#----------------Machine Learning Potentials----------------#
+#-----------------------------------------------------------#
+
+abstract type AbstractMachineLearningPotential <: AbstractPotential end
+"""
+    RuNNerPotential <: AbstractMachineLearningPotential
+Contains the important structs required for a neural network potential defined in the MachineLearningPotential package:
+    Fields are:
+    nnp -- a struct containing the weights, biases and neural network parameters.
+    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
+    r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
+"""
+struct  RuNNerPotential <: AbstractMachineLearningPotential
+    nnp::NeuralNetworkPotential
+    symmetryfunctions::Vector{AbstractSymmFunction}
+    r_cut::Float64
+end
+function RuNNerPotential(nnp,symmetryfunction)
+    r_cut = symmetryfunction[1].r_cut
+    return RuNNerPotential(nnp,symmetryfunction,r_cut)
+end
+
+"""
+    get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
+Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `nnp_state` according to the variables in `pot`.
+"""
+function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
+
+    nnp_state.potential_variables.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
+    nnp_state.potential_variables.new_dist2_vec[atomindex] = 0.
+    
+    nnp_state.potential_variables.new_f_vec = cutoff_function.(sqrt.(nnp_state.potential_variables.new_dist2_vec),Ref(pot.r_cut))
+
+
+    nnp_state.potential_variables.new_g_matrix = copy(nnp_state.potential_variables.g_matrix)
+
+    nnp_state.potential_variables.new_g_matrix = total_thr_symm!(nnp_state.potential_variables.new_g_matrix,nnp_state.config.pos,trial_pos,nnp_state.dist2_mat,nnp_state.potential_variables.new_dist2_vec,nnp_state.potential_variables.f_matrix,nnp_state.potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
+
+    return nnp_state
+end
+"""
+    takes an `nnp_state` containing `potential_variables` and calcualtes the `new_energy`  based on the `pot`
+"""
+function calc_new_runner_energy!(nnp_state,pot::RuNNerPotential)
+    nnp_state.potential_variables.new_en_atom = forward_pass(nnp_state.new_g_matrix,length(nnp_state.en_atom_vec),pot.nnp)
+    return nnp_state
+end
+
+
 #----------------------------------------------------------#
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
 """
     energy_update(trial_pos,index,mc_state,pot::AbstractDimerPotential)
-
+    energy_update!(trial_pos,index,state,pot::RuNNerPotential)
 Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` contained in `mc_state`. Using `pot` the potential. 
     
     This function is designed as a curry function. The generic get_energy function operates on a __vector__ of states, this function takes each state and the set potential and calls the potential specific energy_update function.
@@ -268,16 +319,24 @@ function energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotential)
 
     return mc_state
 end
-
+function energy_update!(trial_pos,index,state,pot::RuNNerPotential)
+    state = get_new_state_vars(trial_pos,index,state,pot)
+    state = calc_new_runner_energy!(state,pot)
+    state.potential_variables.new_en = sum(state.potential_variables.new_en_atom)
+    return state
+end
 
 """
     get_energy(trial_positions,indices,mc_states,pot)
+    get_energy(trial_positions,indices,mc_states,pot::RuNNerPotential)
 curry function used as the top call within each mc_step. Passes a vector of `mc_states` with updated `trial_positions` for atom at `index` where we use `pot` to calculate the new energy in the non-vectorised energy_update function. 
+
 """
 
 function get_energy(trial_positions,indices,mc_states,pot)
     return energy_update!.(trial_positions,indices,mc_states,Ref(pot))
 end
+
 
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
@@ -285,8 +344,12 @@ end
 """
     initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
     initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::AbstractDimerPotential)
+    initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::RuNNerPotential)
 
-Initialise energy is a function to set the starting parameters of the 
+Initialise energy is used during the MCState call to set the starting energy of a `config` according to the potential as `pot` and the configurational variables `potential_variables`. Written with general input means the top-level is type-invariant. 
+Methods included for:
+    - Dimer Potential in both Ensembles
+    - Machine Learning Potentials 
 """
 function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
     potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),pot)
@@ -298,16 +361,29 @@ function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::Abstr
 
     return en_tot,potential_variables
 end
+function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::RuNNerPotential)
+    en_tot = forward_pass(potential_variables.g_matrix,length(config),pot.nnp)
+
+    return en_tot,potential_variables
+end
 """
+    set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
     set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
 initialises the PotentialVariable struct for the various potentials. 
     -   Method one functions for abstract dimer potentials such as the ELJ
-    -   
+    -   The RuNNer Potential involving the cutoff and symmetry matrix.
     
 """
 function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
     return DimerPotentialVariable(zeros(length(config)),0. )
 end
-
+function set_variables(config,dist2_mat,pot::RuNNerPotential)
+    
+    n_atoms = length(config)
+    f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
+    g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
+    
+    return NNPVariables(0. ,zeros(n_atoms),zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
+end
 
 end
