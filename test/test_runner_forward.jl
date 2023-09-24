@@ -16,7 +16,7 @@ function forward_pass(
     """Perform a forward pass using a Fortran library."""
     eatom = zeros(Float64, batchsize)
     return ccall(
-        (:forward, joinpath(lib_path, "librunnerjulia.so")),
+        (:forward, joinpath(lib_path(), "librunnerjulia.so")),
         Float64,
         (Ref{Float64},Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Int32},
          Ref{Int32}, Ref{Float64}, Ref{Int32}, Ref{Float64}),
