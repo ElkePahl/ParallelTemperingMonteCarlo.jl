@@ -253,6 +253,87 @@ end
 #----------------------------------------------------------#
 
 
+#----------------------------------------------------------#
+#-------------------Embedded Atom Model--------------------#
+#----------------------------------------------------------#
+"""
+    EmbeddedAtomPotential
+Struct containing the important quantities for calculating EAM (specifically Sutton-Chen type) potentials.
+    Fields:
+    `n` the exponent for the two-body repulsive ϕ component
+    `m` the exponent for the embedded electron density ρ
+    `ean` multiplicative factor ϵa^n /2 for ϕ
+    `eCam` multiplicative factor ϵCa^(m/2) for ρ 
+
+"""
+struct EmbeddedAtomPotential <: AbstractDimerPotential
+    n::Float64
+    m::Float64
+    ean::Float64
+    eCam::Float64
+end
+"""
+    EmbeddedAtomPotential(n,m,ϵ,C,a)
+Function to initalise the EAM struct given the actual constants cited in papers. The exponents `n`,`m`, the energy constant `ϵ` the distance constant `a` standard in all EAM models, and a dimensionless parameter `C` scaling ρ with respect to ϕ.
+"""
+function EmbeddedAtomPotential(n,m,ϵ,C,a)
+    epsan = ϵ * a^n / 2
+    epsCam = ϵ * C * a^(m/2)
+    return EmbeddedAtomPotential(n,m,epsan,epsCam)
+end
+
+mutable struct EmbeddedAtomVariables <: PotentialVariables
+    new_en::Float64
+    new_dist2_vec::Vector
+    component_vector::Matrix
+    new_component_vector::Matrix
+end
+#-------------------Component Calculation------------------#
+"""
+    invrexp(r2,n,m)
+Function to calculate the `ϕ,ρ` components given a square distance `r2` and the exponents `n,m`
+"""
+function invrexp(r2,n,m)
+    if r2 != 0.
+        r_term = 1/sqrt(r2)
+        return r_term^n , r_term^m
+    else
+        return 0. , 0.
+    end    
+end
+"""
+    calc_components(eatomvec,distancevec,n,m)
+    calc_components(new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
+
+Primary calculation of ϕ,ρ for atom i, given each other atom's distance to i in `distancevec`. `eatomvec` stores the ϕ and ρ components.
+
+Second method also includes an existing `new_component_vec` `atomindex` and old and new interatomic distances from an atom at `atomindex` stored in vectors `new_r2_vec,old_r2_vec`. This calculates the `new_component_vec` based on the updated distances and returns this.
+"""
+function calc_components(componentvec,distancevec,n,m)
+    for dist in distancevec
+        componentvec .+= invrexp(dist,n,m)
+    end
+    return componentvec
+end
+function calc_components(new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
+
+    for j_index in eachindex(new_r2_vec)
+
+        j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
+
+        new_component_vec[j_index,:] .+= j_term 
+        new_component_vec[atomindex,:] .+= j_term 
+    end
+
+    return new_component_vec
+end
+"""
+    calc_energies_from_components(component_vector,ean,ecam)
+Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy.
+"""
+function calc_energies_from_components(component_vector,ean,ecam)
+    return sum(ean.*component_vector[:,1] - ecam*sqrt.(component_vector[:,2]))
+end
 #-----------------------------------------------------------#
 #----------------Machine Learning Potentials----------------#
 #-----------------------------------------------------------#
@@ -276,6 +357,16 @@ function RuNNerPotential(nnp,symmetryfunction)
     return RuNNerPotential(nnp,symmetryfunction,r_cut)
 end
 
+
+mutable struct NNPVariables <: PotentialVariables
+    new_en::Float64
+    new_dist2_vec::Vector
+    new_en_atom::Vector
+    g_matrix::Array
+    f_matrix::Array
+    new_g_matrix::Array
+    new_f_vec::Vector
+end
 """
     get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
 Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `nnp_state` according to the variables in `pot`.
@@ -325,7 +416,19 @@ function energy_update!(trial_pos,index,state,pot::RuNNerPotential)
     state.potential_variables.new_en = sum(state.potential_variables.new_en_atom)
     return state
 end
+function energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
+    mc_state.potential_variables.dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
+    mc_state.potential_variables.dist2_new[atomindex] = 0.
+
+    mc_state.potential_variables.new_component_vector = deepcopy(mc_state.potential_variables.component_vector)
+    
+    mc_state.potential_variables.new_component_vector = calc_components(mc_state.potential_variables.new_component_vector,atomindex,mc_state.dist2_mat[atomindex,:],mc_state.potential_variables.dist2_new,pot.n,pot.m)
+
+    mc_state.potential_variables.new_en = calc_energies_from_components(new_component_vector,pot.ean,pot.eCam)
+
+    return  mc_state
+end
 """
     get_energy(trial_positions,indices,mc_states,pot)
     get_energy(trial_positions,indices,mc_states,pot::RuNNerPotential)
@@ -361,21 +464,36 @@ function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::Abstr
 
     return en_tot,potential_variables
 end
-function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::RuNNerPotential)
-    en_tot = forward_pass(potential_variables.g_matrix,length(config),pot.nnp)
+function initialise_energy(config,dist2_mat,potential_variables,pot::EmbeddedAtomPotential)
+    en_tot = calc_energies_from_components(potential_variables.component_vector,pot.ean,pot.eCam)
 
     return en_tot,potential_variables
 end
+function initialise_energy(config,dist2_mat,potential_variables,pot::RuNNerPotential)
+    potential_variables.en_atom_vec = forward_pass(potential_variables.g_matrix,length(config),pot.nnp)
+    en_tot = sum(potential_variables.en_atom_vec)
+    return en_tot,potential_variables
+end
+
 """
     set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
     set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
 initialises the PotentialVariable struct for the various potentials. 
     -   Method one functions for abstract dimer potentials such as the ELJ
+    -   Embeded Atom Potential involving the dimer and density components
     -   The RuNNer Potential involving the cutoff and symmetry matrix.
     
 """
 function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
     return DimerPotentialVariable(zeros(length(config)),0. )
+end
+function set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
+    n_atoms = length(config)
+    componentvec = zeros(n_atoms,2)
+    for row_index in 1:n_atoms
+        componentvec[row_index,:] = calc_components(componentvec[row_index,:],dist2_matrix[row_index,:],pot.n,pot.m)
+    end
+    return EmbeddedAtomVariables(0. ,zeros(n_atoms),componentvec,zeros(n_atoms,2))
 end
 function set_variables(config,dist2_mat,pot::RuNNerPotential)
     
