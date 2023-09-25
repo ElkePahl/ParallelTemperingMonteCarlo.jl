@@ -386,10 +386,12 @@ function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
     return nnp_state
 end
 """
-    takes an `nnp_state` containing `potential_variables` and calcualtes the `new_energy`  based on the `pot`
+    calc_new_runner_energy!(potential_variables,pot)
+function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
 """
-function calc_new_runner_energy!(nnp_state,pot::RuNNerPotential)
-    nnp_state.potential_variables.new_en_atom = forward_pass(nnp_state.new_g_matrix,length(nnp_state.en_atom_vec),pot.nnp)
+function calc_new_runner_energy!(potential_variables,pot)
+    potential_variables.new_en_atom = forward_pass(potential_variables.new_g_matrix,length(potential_variables.en_atom_vec),pot.nnp)
+    potential_variables.new_en = sum(potential_variables.new_en_atom)
     return nnp_state
 end
 
@@ -403,18 +405,17 @@ end
 Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` contained in `mc_state`. Using `pot` the potential. 
     
     This function is designed as a curry function. The generic get_energy function operates on a __vector__ of states, this function takes each state and the set potential and calls the potential specific energy_update function.
+
+        Methods defined for :
+            - AbstractDimerPotential
+            - EmbeddedAtomPotential
+            - RuNNerPotential
 """
 function energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotential)
 
     mc_state.potential_variables.new_dist2_vec,mc_state.potential_variables.new_en = dimer_energy_update!(trial_pos,index,mc_state.config,mc_state.dist2_mat,mc_state.potential_variables.new_dist2_vec,mc_state.en_tot,pot)
 
     return mc_state
-end
-function energy_update!(trial_pos,index,state,pot::RuNNerPotential)
-    state = get_new_state_vars(trial_pos,index,state,pot)
-    state = calc_new_runner_energy!(state,pot)
-    state.potential_variables.new_en = sum(state.potential_variables.new_en_atom)
-    return state
 end
 function energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
     mc_state.potential_variables.dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
@@ -429,6 +430,15 @@ function energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
 
     return  mc_state
 end
+function energy_update!(trial_pos,index,state,pot::RuNNerPotential)
+
+    state = get_new_state_vars(trial_pos,index,state,pot)
+
+
+    state.potential_variables = calc_new_runner_energy!(state.potential_variables,pot)
+    return state
+end
+
 """
     get_energy(trial_positions,indices,mc_states,pot)
     get_energy(trial_positions,indices,mc_states,pot::RuNNerPotential)
@@ -456,11 +466,6 @@ Methods included for:
 """
 function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
     potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),pot)
-
-    return en_tot,potential_variables
-end
-function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::AbstractDimerPotential)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),r_cut,pot)
 
     return en_tot,potential_variables
 end
