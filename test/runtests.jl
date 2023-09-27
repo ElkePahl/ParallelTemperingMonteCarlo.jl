@@ -113,15 +113,17 @@ end
     println("starting script testing. Hang on tight ...")
     @testset "Cu55" begin
         include("../scripts/test_Cu55.jl")
-        # 171.521199 seconds (2.98 G allocations: 224.055 GiB, 10.82% gc time, 0.70% compilation time)
+        # 46.922331 seconds (765.86 M allocations: 57.507 GiB, 10.54% gc time, 0.01% compilation time)
 
         step, configdata = read_save_data("save.data")
-        step_ref, configdata_ref = read_save_data(joinpath(@__DIR__, "testing_data/save.data"))
+        # reference data has been produced on a single thread
+        step_ref, configdata_ref = read_save_data("testing_data/save.data")
+
         @test step == step_ref # the script successfully finished
-        # @test configdata == configdata_ref # identical configurations
+        @test configdata == configdata_ref # identical configurations
 
         # clean up
-        rm("save.data")
-        rm("params.data")
+        # rm("save.data")
+        # rm("params.data")
     end
 end
