@@ -1,0 +1,2 @@
+# put any .data files here that are needed as input for tests
+!*.data
