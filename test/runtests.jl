@@ -114,7 +114,7 @@ end
 
     println("starting script testing. Hang on tight ...")
     @testset "Cu55" begin
-        include("../scripts/test_Cu55.jl")
+        include("test_Cu55.jl")
         # 46.922331 seconds (765.86 M allocations: 57.507 GiB, 10.54% gc time, 0.01% compilation time)
 
         step, configdata = read_save_data("save.data")
