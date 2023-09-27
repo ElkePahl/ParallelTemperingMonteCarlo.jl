@@ -41,14 +41,8 @@ jobs:
         run: |
           export JULIA_PROJECT=@.
           julia -e "using InteractiveUtils; versioninfo(verbose=true)"
-          # julia --project=@. -e "using Pkg; Pkg.instantiate(); Pkg.build()"
-          # julia --project=@. -e "using InteractiveUtils; versioninfo(verbose=true)"
-          # julia --project=@. -e "using Pkg; Pkg.instantiate(); Pkg.build()"
-          # export PATH=$PATH:/home/runner/.julia/bin
           # Run regular tests
           julia -e "using Pkg; Pkg.test(\"ParallelTemperingMonteCarlo\"; coverage=true);"
-          # julia --project=@. -e "using Pkg; Pkg.test(\"ParallelTemperingMonteCarlo\"; coverage=true);"
-          # julia --project=@. -t2 -e "using Pkg; Pkg.test(\"Rimu\"; coverage=true);"
 
       - name: "Process coverage"
         uses: julia-actions/julia-processcoverage@latest
@@ -58,10 +52,3 @@ jobs:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ./lcov.info
         if: ${{ matrix.julia-version == '1' }}
-
-      # - uses: julia-actions/julia-processcoverage@latest
-      # - uses: coverallsapp/github-action@v1.1.2
-      #   with:
-      #     github-token: ${{ secrets.github_token }}
-      #     path-to-lcov: ./lcov.info
-      
