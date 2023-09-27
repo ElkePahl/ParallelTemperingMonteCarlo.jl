@@ -555,13 +555,17 @@ end
 
 Initialise energy is used during the MCState call to set the starting energy of a `config` according to the potential as `pot` and the configurational variables `potential_variables`. Written with general input means the top-level is type-invariant. 
 Methods included for:
-    - Dimer Potential in both Ensembles
+    - Dimer Potential 
     - Machine Learning Potentials 
 """
 function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
     potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),pot)
 
     return en_tot,potential_variables
+end
+function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotentialB)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,potential_variables.tan_mat,length(config),pot)
+    return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,pot::EmbeddedAtomPotential)
     en_tot = calc_energies_from_components(potential_variables.component_vector,pot.ean,pot.eCam)
@@ -592,7 +596,7 @@ function set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPot
     n_atoms = length(config)
     tan_matrix = get_tantheta_mat(config,config.pos)
 
-    return ELJPotentialB(zeros(n_atoms),tan_matrix,zeros(n_atoms))
+    return ELJPotentialBVariables(0.,zeros(n_atoms),tan_matrix,zeros(n_atoms))
 end
 function set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
     n_atoms = length(config)
