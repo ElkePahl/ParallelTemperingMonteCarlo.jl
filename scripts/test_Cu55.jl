@@ -1,12 +1,16 @@
 using ParallelTemperingMonteCarlo
 using Random, DelimitedFiles
 
-# takes about 100 seconds on 5 threads
+# takes about 100 seconds on 1 thread on CI
 
 script_folder = @__DIR__ # folder where this script is located
 data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
 
-#cd("$(pwd())/scripts")
+## When moving this script to a different folder it may be necessary to adjust the
+## location of the shared library "librunner.so". Uncomment and adjust the next line for this.
+# ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass.lib_path() = joinpath(@__DIR__, "../MachineLearningPotential/lib/")
+
+
 #set random seed - for reproducibility
 Random.seed!(1234)
 

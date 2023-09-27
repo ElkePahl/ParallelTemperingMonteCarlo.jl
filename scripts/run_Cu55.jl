@@ -5,9 +5,10 @@ using Random,DelimitedFiles
 script_folder = @__DIR__ # folder where this script is located
 data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
 
-ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass.lib_path() = joinpath(@__DIR__, "../MachineLearningPotential/lib/")
+## When moving this script to a different folder it may be necessary to adjust the
+## location of the shared library "librunner.so". Uncomment and adjust the next line for this.
+# ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass.lib_path() = joinpath(@__DIR__, "../MachineLearningPotential/lib/")
 
-#cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
 
@@ -27,7 +28,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 2 #default 20% equilibration cycles on top
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
