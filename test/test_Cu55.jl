@@ -3,7 +3,7 @@ using Random, DelimitedFiles
 
 # takes about 100 seconds on 1 thread on CI
 
-script_folder = @__DIR__ # folder where this script is located
+script_folder = "../scripts/" # folder where the scripts are located
 data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
 
 ## When moving this script to a different folder it may be necessary to adjust the
