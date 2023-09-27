@@ -127,7 +127,7 @@ end
         @test all(mycompare.(configdata, configdata_ref)) # identical configurations
 
         # clean up
-        # rm("save.data")
-        # rm("params.data")
+        rm("save.data")
+        rm("params.data")
     end
 end
