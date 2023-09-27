@@ -109,6 +109,8 @@ end
         close(readfile)
         return step, configdata
     end
+    mycompare(a, b) = a == b
+    mycompare(a::Number, b::Number) = a ≈ b
 
     println("starting script testing. Hang on tight ...")
     @testset "Cu55" begin
@@ -120,7 +122,9 @@ end
         step_ref, configdata_ref = read_save_data("testing_data/save.data")
 
         @test step == step_ref # the script successfully finished
-        @test configdata == configdata_ref # identical configurations
+
+        # The matrix `configdata` has strings and numbers
+        @test all(mycompare.(configdata, configdata_ref)) # identical configurations
 
         # clean up
         # rm("save.data")
