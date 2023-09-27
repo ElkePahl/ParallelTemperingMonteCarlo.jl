@@ -724,7 +724,7 @@ function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDim
     dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
     dist2_new[i_atom] = 0.
     tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
-    tan_new[i_atom] = 0
+    tan_new[i_atom] = 0.
     d_en = dimer_energy_atom(i_atom, dist2_new, tan_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], tan_mat[:,i_atom],pot)
     return d_en, dist2_new, tan_new
 end

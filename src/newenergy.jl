@@ -80,14 +80,14 @@ abstract type AbstractDimerPotential <: AbstractPotential end
 The struct contains only the new_dist2_vec as this doesn't explicitly require any particular special features.
 """
 mutable struct DimerPotentialVariables <: PotentialVariables
-    new_dist2_vec::Vector
-    en_atom_vec::Vector
-    new_en::Float64
+    #new_dist2_vec::Vector
+    #en_atom_vec::Vector
+    #new_en::Float64
 end
 
 """
     dimer_energy_atom(i, pos, d2vec, pot<:AbstractPotential)
-    dimer_energy_atom(i, d2vec, r_cut, pot::AbstractDimerPotential)
+    dimer_energy_atom(i, d2vec, r_cut, pot:abstract type AbstractDimerPotential <: AbstractPotential end:AbstractDimerPotential)
 
 Sums the dimer energies for atom `i` with all other atomsdimer_energy_update(pos,index,config,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
@@ -250,8 +250,7 @@ function ELJPotentialB(a,b,c)
 end
 
 mutable struct ELJPotentialBVariables <: PotentialVariables
-    new_en::Float64
-    new_dist2_vec::Vector
+
     tan_mat::Array
     new_tan_vec::Vector
 end
@@ -261,7 +260,7 @@ Dimer energy when the distance square between two atom is r2 and the angle betwe
 When r2 < 5.30, returns 1.
 """
 function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
-    #d^(-6)*c6*(1+a6*t2+b6*t4)+d^(-8)*(c8*(1+a8*t2+b8*t4)+d_inv*(c9*(1+a9*t2+b9*t4)+d_inv*(c10*(1+a10*t2+b10*t4)+d_inv*(c11*(1+a11*t2+b11*t4)+d_inv*c12*(1+a12*t2+b12*t4)))))
+   
     if r2>=5.30
         r6inv = 1/(r2*r2*r2)
         t2=2/(tan^2+1)-1     #cos(2*theta)
@@ -306,11 +305,7 @@ and potential information `pot` [`Abstract_Potential`](@ref)
 function dimer_energy_config(distmat, tanmat, NAtoms, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
-    #This uses dimer_energy_atom for all atoms, which means one dimer energy will be calculated twice.
-    #for i in 1:NAtoms #eachindex(),enumerate()..?
-        #dimer_energy_vec[i] = dimer_energy_atom(i, distmat[:, i], pot) #@view distmat[i, :]
-        #energy_tot += dimer_energy_vec[i]
-    #end 
+
     for i in 1:NAtoms
         for j=i+1:NAtoms
             e_ij=dimer_energy(pot,distmat[i,j],tanmat[i,j])
@@ -325,9 +320,9 @@ end
 function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,pot::AbstractDimerPotentialB)
     # new_dist2_vec = [distance2(pos,b,config.bc) for b in config.pos]
     # new_dist2_vec[index] = 0.
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[inedx,:],tanmat[index,:], pot)
+    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
 
-    return new_tan_vec, delta_en + en_tot
+    return  delta_en + en_tot
 end
 #----------------------------------------------------------#
 #-------------------Embedded Atom Model--------------------#
@@ -359,8 +354,7 @@ function EmbeddedAtomPotential(n,m,ϵ,C,a)
 end
 
 mutable struct EmbeddedAtomVariables <: PotentialVariables
-    new_en::Float64
-    new_dist2_vec::Vector
+    
     component_vector::Matrix
     new_component_vector::Matrix
 end
@@ -437,7 +431,6 @@ end
 
 mutable struct NNPVariables <: PotentialVariables
     new_en::Float64
-    new_dist2_vec::Vector
     new_en_atom::Vector
     g_matrix::Array
     f_matrix::Array
@@ -466,10 +459,10 @@ end
     calc_new_runner_energy!(potential_variables,pot)
 function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
 """
-function calc_new_runner_energy!(potential_variables,pot)
-    potential_variables.new_en_atom = forward_pass(potential_variables.new_g_matrix,length(potential_variables.en_atom_vec),pot.nnp)
-    potential_variables.new_en = sum(potential_variables.new_en_atom)
-    return nnp_state
+function calc_new_runner_energy!(mc_state,pot)
+    mc_state.new_en_atom = forward_pass(mc_state.potential_variables.new_g_matrix,length(mc_state.en_atom_vec),pot.nnp)
+    mc_state.new_en = sum(mc_state.potential_variables.new_en_atom)
+    return mc_state
 end
 
 
@@ -493,43 +486,43 @@ Energy update function for use within a cycle. at the top level this is called w
 """
 function energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotential)
 
-    mc_state.potential_variables.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.potential_variables.new_dist2_vec[index] = 0.
+    mc_state.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
+    mc_state.new_dist2_vec[index] = 0.
 
-    mc_state.potential_variables.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.potential_variables.new_dist2_vec,mc_state.en_tot,pot)
+    mc_state.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
 
     return mc_state
 end
 function energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotentialB)
 
-    mc_state.potential_variables.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.potential_variables.new_dist2_vec[index] = 0.
+    mc_state.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
+    mc_state.new_dist2_vec[index] = 0.
 
-    mc_state.new_tan_vec = [get_tan(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.new_tan_vec[index] = 0
+    mc_state.potential_variables.new_tan_vec = [get_tan(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
+    mc_state.potential_variables.new_tan_vec[index] = 0
 
-    mc_state.potential_variables.new_tan_vec,mc_state.potential_variables.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.potential_variables.tan_mat,mc_state.potential_variables.new_dist2_vec,mc_state.potential_variables.new_tan_vec,mc_state.en_tot,pot)
+    mc_state.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.potential_variables.tan_mat,mc_state.new_dist2_vec,mc_state.potential_variables.new_tan_vec,mc_state.en_tot,pot)
 
     return mc_state
 end
 function energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
-    mc_state.potential_variables.dist2_new = [distance2(trial_pos,b) for b in mc_state.config.pos]
+    mc_state.new_dist2_vec = [distance2(trial_pos,b) for b in mc_state.config.pos]
 
-    mc_state.potential_variables.dist2_new[atomindex] = 0.
+    mc_state.new_dist2_vec[atomindex] = 0.
 
     mc_state.potential_variables.new_component_vector = deepcopy(mc_state.potential_variables.component_vector)
     
-    mc_state.potential_variables.new_component_vector = calc_components(mc_state.potential_variables.new_component_vector,atomindex,mc_state.dist2_mat[atomindex,:],mc_state.potential_variables.dist2_new,pot.n,pot.m)
+    mc_state.potential_variables.new_component_vector = calc_components(mc_state.potential_variables.new_component_vector,atomindex,mc_state.dist2_mat[atomindex,:],mc_state.new_dist2_vec,pot.n,pot.m)
 
-    mc_state.potential_variables.new_en = calc_energies_from_components(new_component_vector,pot.ean,pot.eCam)
+    mc_state.new_en = calc_energies_from_components(mc_state.potential_variables.new_component_vector,pot.ean,pot.eCam)
 
     return  mc_state
 end
 function energy_update!(trial_pos,index,mc_state,pot::RuNNerPotential)
 
-    state = get_new_state_vars(trial_pos,index,mc_state,pot)
+    mc_state = get_new_state_vars(trial_pos,index,mc_state,pot)
 
-    state.potential_variables = calc_new_runner_energy!(mc_state.potential_variables,pot)
+    mc_state = calc_new_runner_energy!(mc_state,pot)
     return mc_state
 end
 
@@ -590,7 +583,7 @@ initialises the PotentialVariable struct for the various potentials.
     
 """
 function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
-    return DimerPotentialVariable(zeros(length(config)),0. )
+    return DimerPotentialVariable()
 end
 function set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPotentialB)
     n_atoms = length(config)
