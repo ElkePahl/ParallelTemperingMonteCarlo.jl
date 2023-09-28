@@ -14,14 +14,14 @@ n_atoms = 13
 
 # temperature grid
 ti = 5.
-tf = 20.
+tf = 30.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles

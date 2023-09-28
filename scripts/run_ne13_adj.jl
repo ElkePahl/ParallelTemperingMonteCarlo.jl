@@ -18,7 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -83,19 +83,19 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
 
 plot(temp.t_grid,results.heat_cap)
 
 plot(multihistogram(results,temp), legend = false, xlabel="Temperature", ylabel="Heat Capacity")
-png("ne13-multihistogram-graphs.jl")
+# png("ne13-multihistogram-graphs.jl")
 
-data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
+# data = [results.en_histogram[i] for i in 1:n_traj]
+# plot(data)
 
-rdf = [results.rdf[i] for i in 1:n_traj]
-plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
-png("rdf-ne13-adj-1M")
+# rdf = [results.rdf[i] for i in 1:n_traj]
+# plot([rdf]; minorticks=10, color=(:thermal), line_z = (1:32)', legend = false, colorbar=true, xlabel="Bins", ylabel="Frequency of occurrence")
+# png("rdf-ne13-adj-1M")
 # png("ne-13-adj-rdf-something-is-wrong")
 #png("adjacency1M")
 #png("atomloss")
