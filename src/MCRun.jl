@@ -100,46 +100,40 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
     end
 
-    if rand() < 0.1 #attempt to exchange trajectories
-        parallel_tempering_exchange!(mc_states,mc_params)
+    sampling_flag = true
+    for state in mc_states
+        if check_boundary(state.config.bc, state.dist2_mat) == true
+            sampling_flag = false   
+        end
+    end
+
+    if sampling_flag == false 
+        for state in mc_states
+            state.config.pos = deepcopy(state.config.bc.pos)
+        end
+    else
+        if rand() < 0.1 #attempt to exchange trajectories
+            parallel_tempering_exchange!(mc_states,mc_params)
+        end
     end
 
 
-    return mc_states
+    return mc_states, sampling_flag
 end
+
 function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, results, save, i, save_dir, delta_en_hist, delta_r2)
 
     if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
+        count_cycles = 0
         for state in mc_states
             state.config.bc.pos = deepcopy(state.config.pos)
         end
+    end
     
-        mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-
-        for state in mc_states
-            if check_boundary(state.config.bc, state.dist2_mat) == false
-                sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
+    mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
         
-                #step adjustment
-                if rem(i, mc_params.n_adjust) == 0
-                    for i_traj = 1:mc_params.n_traj
-                        update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-                    end 
-                end
-
-                if save == true
-                    if rem(i,1000) == 0
-                        save_states(mc_params,mc_states,i,save_dir)
-                        save_results(results,save_dir)
-                    end
-                end
-
-            else state.config.pos = deepcopy(state.config.bc.pos)
-            end
-        end
-
-    else mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)
-        
+    if sampling_flag == true
+        count_cycles += 1
         sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
     
         #step adjustment
@@ -156,8 +150,9 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
             end
         end
     end
-
+    return count_cycles
 end
+
 """
     check_e_bounds(energy,ebounds)
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
@@ -196,54 +191,33 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
 
     ebounds = [100. , -100.]
 
-    if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
-        for state in mc_states
-            state.config.bc.pos = deepcopy(state.config.pos)
-        end
-        for i = 1:mc_params.eq_cycles
-            mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+    for i = 1:mc_params.eq_cycles
 
+        if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
             for state in mc_states
-                if check_boundary(state.config.bc, state.dist2_mat) == false
-                    ebounds = check_e_bounds(state.en_tot,ebounds)
-
-                    if rem(i, mc_params.n_adjust) == 0
-                        for state in mc_states
-                            update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
-                        end
-                    end        
-                        
-                    #reset counter-variables
-                    for state in mc_states
-                        reset_counters(state)
-                    end
-            
-                else state.config.pos = deepcopy(state.config.bc.pos)
-                end
+                state.config.bc.pos = deepcopy(state.config.pos)
             end
         end
 
-    else mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)
-        
-        for i = 1:mc_params.eq_cycles
-            mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,a,v,r)       
+        mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+
+        if sampling_flag == true
             for state in mc_states
                 ebounds = check_e_bounds(state.en_tot,ebounds)
-            end
-        
-            if rem(i, mc_params.n_adjust) == 0
-                for state in mc_states
+                if rem(i, mc_params.n_adjust) == 0   
                     update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
-                end
-            end        
+                end    
+            end  
         end
-        #reset counter-variables
-        for state in mc_states
-            reset_counters(state)
-        end
+    end      
+
+    #reset counter-variables
+    for state in mc_states
+        reset_counters(state)
     end
 
     delta_en_hist,delta_r2 = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
+
     return mc_states,results,delta_en_hist,delta_r2
 
 end
@@ -307,18 +281,15 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     #main MC loop
 
     for i = start_counter:mc_params.mc_cycles
-
-        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+        count_cycles = @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
     end
-  
+    
+    if count_cycles != mc_params.mc_cycles
+        print("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
+        mc_params.mc_cycles = count_cycles
     println("MC loop done.")
 
-
     results = finalise_results(mc_states,mc_params,results)
-    #TO DO
-    # volume (NPT ensemble),rot moves ...
-    # move boundary condition from config to mc_params?
-    # rdfs
 
     println("done")
     return 
