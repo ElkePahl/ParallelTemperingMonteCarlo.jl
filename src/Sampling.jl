@@ -155,18 +155,29 @@ end
     finalise_results(mc_states,mc_params,results)
 Function designed to take a complete mc simulation and calculate the averages. 
 """
-function finalise_results(mc_states,mc_params,results)
+function finalise_results(mc_states,mc_params,results,count_cycles)
 
     #Energy average
-    n_sample = mc_params.mc_cycles / mc_params.mc_sample
-    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
-    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
-    results.en_avg = en_avg
-    #heat capacity
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
-    #count stats 
-    results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
-    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+    if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
+        en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+        en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
+        results.en_avg = en_avg
+        #heat capacity
+        results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+        #count stats 
+        results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * count_cycles) for i_traj in 1:mc_params.n_traj]
+        results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+    else    
+        n_sample = mc_params.mc_cycles / mc_params.mc_sample
+        en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
+        en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
+        results.en_avg = en_avg
+        #heat capacity
+        results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+        #count stats 
+        results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
+        results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+    end
 
     println(results.heat_cap)
 

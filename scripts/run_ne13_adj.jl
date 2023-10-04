@@ -67,7 +67,7 @@ pos_ne13 = pos_ne13 * AtoBohr
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne13 = init_AdjacencyBC(pos_ne13, 4.39*AtoBohr)  #4.39 Angstrom
+bc_ne13 = init_AdjacencyBC(pos_ne13, 4.39 * AtoBohr)  #4.39 Angstrom
 
 #starting configuration
 start_config = Config(pos_ne13, bc_ne13)

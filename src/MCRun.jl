@@ -101,15 +101,18 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     end
 
     sampling_flag = true
-    for state in mc_states
-        if check_boundary(state.config.bc, state.dist2_mat) == true
-            sampling_flag = false   
-        end
+
+    if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
+        for state in mc_states
+            if check_boundary(state.config.bc, state.dist2_mat) == true
+                sampling_flag = false   
+            end
+        end 
     end
 
     if sampling_flag == false 
         for state in mc_states
-            state.config.pos = deepcopy(state.config.bc.pos)
+            state.config.pos .= state.config.bc.pos
         end
     else
         if rand() < 0.1 #attempt to exchange trajectories
@@ -121,10 +124,9 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     return mc_states, sampling_flag
 end
 
-function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, results, save, i, save_dir, delta_en_hist, delta_r2)
+function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, results, save, i, save_dir, delta_en_hist, delta_r2,count_cycles)
 
     if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
-        count_cycles = 0
         for state in mc_states
             state.config.bc.pos = deepcopy(state.config.pos)
         end
@@ -150,7 +152,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
             end
         end
     end
-    return count_cycles
+    return
 end
 
 """
@@ -277,19 +279,22 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     if save == true
         save_states(mc_params,mc_states,0,save_dir,move_strat,ensemble)
     end
+    count_cycles = 0
     
     #main MC loop
 
     for i = start_counter:mc_params.mc_cycles
-        count_cycles = @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
+        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2,count_cycles)
     end
-    
+
     if count_cycles != mc_params.mc_cycles
-        print("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
-        mc_params.mc_cycles = count_cycles
+        println("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
+        #mc_params.mc_cycles = count_cycles
+    end
+
     println("MC loop done.")
 
-    results = finalise_results(mc_states,mc_params,results)
+    results = finalise_results(mc_states,mc_params,results,count_cycles)
 
     println("done")
     return 
