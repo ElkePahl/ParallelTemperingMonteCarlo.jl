@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 20 #default 20% equilibration cycles on top
 
 
 

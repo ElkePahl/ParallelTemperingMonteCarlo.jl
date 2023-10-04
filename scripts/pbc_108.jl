@@ -8,7 +8,7 @@ using Random
 
 # number of atoms
 n_atoms = 108
-pressure=101325
+pressure=101325*10000
 
 # temperature grid
 ti = 15.

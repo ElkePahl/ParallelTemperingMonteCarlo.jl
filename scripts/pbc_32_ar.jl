@@ -9,11 +9,11 @@ using Random
 
 # number of atoms
 n_atoms = 32
-pressure=101325
+pressure=101325*10000
 
 # temperature grid
-ti = 20.
-tf = 40.
+ti = 300.
+tf = 1000.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -49,7 +49,8 @@ ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
 #elj_ne1 = ELJPotential{11}(c1)
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
 pot = ELJPotentialEven{6}(c)
 
 #starting configurations
@@ -88,7 +89,7 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886
+AtoBohr = 1.8897259886 * 1.219364208487978
 pos_ne32 = pos_ne32 * AtoBohr
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
