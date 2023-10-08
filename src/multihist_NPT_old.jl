@@ -62,7 +62,7 @@ function quasiprob(betat,m,n)
 end
 
 
-for it=1:1000
+for it=1:1
     println("iteration=",it)
     for i=1:tempnumber
         local betat

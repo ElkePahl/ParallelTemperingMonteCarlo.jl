@@ -8,7 +8,7 @@ using Random
 
 # number of atoms
 n_atoms = 108
-pressure=101325*10000
+pressure=101325
 
 # temperature grid
 ti = 15.
@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 1#default 20% equilibration cycles on top
+mc_cycles = 100#default 20% equilibration cycles on top
 
 
 
