@@ -17,6 +17,7 @@ include("Initialization.jl")
 include("MCRun.jl")
 include("multihist.jl")
 include("multihist_NPT.jl")
+include("multihist_NVT.jl")
 include("parallelrun.jl")
 
 
@@ -35,7 +36,7 @@ include("parallelrun.jl")
  @reexport using .MCRun
  @reexport using .Multihistogram
  @reexport using .Multihistogram_NPT
-
+ @reexport using .Multihistogram_NVT
  
 
  @reexport using .ParallelRun
