@@ -159,6 +159,7 @@ function finalise_results(mc_states,mc_params,results,count_cycles)
 
     #Energy average
     if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
+        n_sample = count_cycles / mc_params.mc_sample
         en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
         en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
         results.en_avg = en_avg

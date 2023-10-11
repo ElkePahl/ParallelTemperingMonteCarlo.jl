@@ -132,18 +132,18 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         end
     end
     
-    mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
-        
+    mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)   
+
+    #step adjustment
+    if rem(i, mc_params.n_adjust) == 0
+        for i_traj = 1:mc_params.n_traj
+            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+         end 
+    end
+
     if sampling_flag == true
         count_cycles += 1
-        sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)
-    
-        #step adjustment
-        if rem(i, mc_params.n_adjust) == 0
-            for i_traj = 1:mc_params.n_traj
-                update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
-            end 
-        end
+        sampling_step!(mc_params,mc_states,i,results,delta_en_hist,delta_r2)   
 
         if save == true
             if rem(i,1000) == 0
@@ -152,7 +152,8 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
             end
         end
     end
-    return
+       
+    return count_cycles
 end
 
 """
@@ -284,13 +285,13 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     #main MC loop
 
     for i = start_counter:mc_params.mc_cycles
-        @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2,count_cycles)
+        count_cycles = @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2,count_cycles)
     end
 
-    if count_cycles != mc_params.mc_cycles
-        println("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
+    #if count_cycles != mc_params.mc_cycles
+    println("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
         #mc_params.mc_cycles = count_cycles
-    end
+    #end
 
     println("MC loop done.")
 
