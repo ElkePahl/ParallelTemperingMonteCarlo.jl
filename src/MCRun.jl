@@ -239,7 +239,7 @@ function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_ste
         delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
 
     else
-        mc_states,results,delta_en_hist,delta_r2 = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+        mc_states,results,delta_en_hist,delta_r2 = equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r, count_cycles)
 
     end
 
