@@ -7,7 +7,7 @@
 module BoundaryConditions
 
 using LinearAlgebra
-using Graphs
+using Laplacians
 
 export SphericalBC, AbstractBC, PeriodicBC, AdjacencyBC
 export init_AdjacencyBC, find_adjmat
@@ -72,7 +72,7 @@ function check_boundary(bc::AdjacencyBC, dist2_matrix)
             bcflag = true
         end
     end
-    if is_connected(SimpleGraph(adjmat)) == false
+    if isConnected(Laplacians.sparse(adjmat)) == false
         bcflag = true
     end
     return bcflag
