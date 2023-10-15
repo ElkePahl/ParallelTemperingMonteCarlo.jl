@@ -185,7 +185,7 @@ Determines the parameters of a fully thermalised set of mc_states. The method in
 outputs are: thermalised states(mc_states),initialised results(results),the histogram stepsize(delta_en_hist),rdf histsize(delta_r2),starting step for restarts(start_counter),n_steps,a,v,r
 
 """
-function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r)
+function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r, count_cycles)
 
     for mc_state in mc_states
         push!(mc_state.ham, 0)
