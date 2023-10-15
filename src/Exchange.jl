@@ -87,7 +87,7 @@ function parallel_tempering_exchange!(mc_states,mc_params)
 end
 
 """
-    update_max_stepsize!(mc_state::MCState, n_update, a, v, r)
+    update_max_stepsize!(mc_state::MCState, n_update, a, v, r, count_cycles)
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
 if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
 each cycle consists of `a` atom, `v` volume and `r` rotation moves.

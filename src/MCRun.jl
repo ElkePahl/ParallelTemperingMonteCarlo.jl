@@ -137,7 +137,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
         for i_traj = 1:mc_params.n_traj
-            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r)
+            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r, count_cycles)
          end 
     end
 
@@ -208,7 +208,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
             for state in mc_states
                 ebounds = check_e_bounds(state.en_tot,ebounds)
                 if rem(i, mc_params.n_adjust) == 0   
-                    update_max_stepsize!(state,mc_params.n_adjust,a,v,r)
+                    update_max_stepsize!(state,mc_params.n_adjust,a,v,r, count_cycles)
                 end    
             end  
         end

@@ -39,7 +39,7 @@ function equilibration_cycle!(states,move_strat, mc_params, potential, ensemble,
 
     if rem(dindex, mc_params.n_adjust) == 0 #adjust stepsize
         for i_update = 1:mc_params.n_traj
-            update_max_stepsize!(states[i_update], mc_params.n_adjust, a, v, r)
+            update_max_stepsize!(states[i_update], mc_params.n_adjust, a, v, r, count_cycles)
         end 
     end
     return states,ebounds
