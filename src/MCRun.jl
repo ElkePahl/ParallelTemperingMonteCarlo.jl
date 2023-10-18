@@ -276,7 +276,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     #first we initialise the simulation with arguments matching the initialise function's various methods
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r,count_cycles = initialisation(restart,input...; startfile=startfile)
     #equilibration thermalises new simulations and sets the histograms and results
-    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,count_cycles, restart)
+    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r, restart)
 
    
     println("equilibration done")
@@ -286,7 +286,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     if save == true
         save_states(mc_params,mc_states,0,save_dir,move_strat,ensemble)
     end
-    count_cycles = [0, 0, 0]
+    count_cycles = 0
     
     #main MC loop
 
