@@ -8,6 +8,7 @@ module Exchange
 
 
 using ..MCStates
+using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 
@@ -87,48 +88,39 @@ function parallel_tempering_exchange!(mc_states,mc_params)
 end
 
 """
-    update_max_stepsize!(mc_state::MCState, n_update, a, v, r, count_cycles)
+    update_max_stepsize!(mc_state::MCState, mc_params n_update, a, v, r)
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
 if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
 each cycle consists of `a` atom, `v` volume and `r` rotation moves.
 Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).  
 """
-function update_max_stepsize!(mc_state::MCState, n_update, a, v, r, count_cycles; min_acc = 0.4, max_acc = 0.6)
-    println(count_cycles)
-    if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
-        acc_rate = count_cycles / mc_params.mc_sample
+function update_max_stepsize!(mc_state::MCState, mc_params, n_update, a, v, r; min_acc = 0.4, max_acc = 0.6)
+    acc_rate = mc_state.count_atom[2] / (n_update * a) # atom move
+    if acc_rate < min_acc
+        mc_state.max_displ[1] *= 0.9
+    elseif acc_rate > max_acc
+        mc_state.max_displ[1] *= 1.1
+    end
+    mc_state.count_atom[2] = 0
+    #volume moves
+    if v > 0
+        acc_rate = mc_state.count_vol[2] / (n_update * v)
         if acc_rate < min_acc
-            mc_state.max_displ[1] *= 0.9
+            mc_state.max_displ[2] *= 0.9
         elseif acc_rate > max_acc
-            mc_state.max_displ[1] *= 1.1
+            mc_state.max_displ[2] *= 1.1
         end
-    else acc_rate = mc_state.count_atom[2] / (n_update * a) # atom move
+        mc_state.count_vol[2] = 0
+    end
+    #rotation moves
+    if r > 0
+        acc_rate = mc_state.count_rot[2] / (n_update * r)
         if acc_rate < min_acc
-            mc_state.max_displ[1] *= 0.9
+            mc_state.max_displ[3] *= 0.9
         elseif acc_rate > max_acc
-            mc_state.max_displ[1] *= 1.1
+            mc_state.max_displ[3] *= 1.1
         end
-        mc_state.count_atom[2] = 0
-        #volume moves
-        if v > 0
-            acc_rate = mc_state.count_vol[2] / (n_update * v)
-            if acc_rate < min_acc
-                mc_state.max_displ[2] *= 0.9
-            elseif acc_rate > max_acc
-                mc_state.max_displ[2] *= 1.1
-            end
-            mc_state.count_vol[2] = 0
-        end
-        #rotation moves
-        if r > 0
-            acc_rate = mc_state.count_rot[2] / (n_update * r)
-            if acc_rate < min_acc
-                mc_state.max_displ[3] *= 0.9
-            elseif acc_rate > max_acc
-                mc_state.max_displ[3] *= 1.1
-            end
-            mc_state.count_rot[2] = 0
-        end
+        mc_state.count_rot[2] = 0
     end
     return mc_state
 end

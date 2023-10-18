@@ -34,8 +34,7 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new    
     mc_state.en_tot = energy
-    mc_state.count_atom[1] += 1
-    mc_state.count_atom[2] += 1
+    mc_state.count_atom[3] += 1
 
 end
 """
@@ -94,7 +93,7 @@ end
 
         second method used to be called ptmc_cycle! this is used in the main run as it includes sampling results and save functions. 
 """
-function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
+function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r, count_cycles)
 
     for i_steps = 1:n_steps
         mc_states = mc_step!(mc_states,mc_params,pot,ensemble)
@@ -112,14 +111,21 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
 
     if sampling_flag == false 
         for state in mc_states
-            state.config.pos .= state.config.bc.pos
+            state.config.pos .= state.config.bc.pos    
         end
+
     else
         if rand() < 0.1 #attempt to exchange trajectories
             parallel_tempering_exchange!(mc_states,mc_params)
         end
+        for state in mc_states
+            state.count_atom[1] += state.count_atom[3]
+            state.count_atom[2] += state.count_atom[3]
+        end
     end
-
+    for state in mc_states
+        state.count_atom[3] = 0
+    end
 
     return mc_states, sampling_flag
 end
@@ -132,12 +138,12 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, 
         end
     end
     
-    mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r)   
+    mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r, count_cycles)   
 
     #step adjustment
     if rem(i, mc_params.n_adjust) == 0
         for i_traj = 1:mc_params.n_traj
-            update_max_stepsize!(mc_states[i_traj], mc_params.n_adjust, a, v, r, count_cycles)
+            update_max_stepsize!(mc_states[i_traj], mc_params, mc_params.n_adjust, a, v, r)
          end 
     end
 
@@ -171,7 +177,7 @@ function check_e_bounds(energy,ebounds)
 end
 
 function reset_counters(state)
-    state.count_atom = [0,0]
+    state.count_atom = [0,0,0]
     state.count_vol = [0,0]
     state.count_rot = [0,0]
     state.count_exc = [0,0]
@@ -202,13 +208,13 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,results,pot,ensembl
             end
         end
 
-        mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r) 
+        mc_states, sampling_flag = mc_cycle!(mc_states, move_strat, mc_params, pot,  ensemble, n_steps, a, v, r, count_cycles) 
 
         if sampling_flag == true
             for state in mc_states
                 ebounds = check_e_bounds(state.en_tot,ebounds)
                 if rem(i, mc_params.n_adjust) == 0   
-                    update_max_stepsize!(state,mc_params.n_adjust,a,v,r, count_cycles)
+                    update_max_stepsize!(state, mc_params, mc_params.n_adjust,a,v,r)
                 end    
             end  
         end
@@ -232,7 +238,7 @@ while initialisation sets mc_states,params etc we require something to thermalis
 
 
 """
-function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+function equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r, count_cycles, restart)
     if restart == true
 
         delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
@@ -268,9 +274,9 @@ restart: this controls whether to run an equilibration cycle, it additionally re
 function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
 
     #first we initialise the simulation with arguments matching the initialise function's various methods
-    mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
-    #equilibration thermalises new simulaitons and sets the histograms and results
-    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+    mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r,count_cycles = initialisation(restart,input...; startfile=startfile)
+    #equilibration thermalises new simulations and sets the histograms and results
+    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,count_cycles, restart)
 
    
     println("equilibration done")
@@ -280,7 +286,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     if save == true
         save_states(mc_params,mc_states,0,save_dir,move_strat,ensemble)
     end
-    count_cycles = 0
+    count_cycles = [0, 0, 0]
     
     #main MC loop
 
@@ -288,10 +294,10 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
         count_cycles = @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2,count_cycles)
     end
 
-    #if count_cycles != mc_params.mc_cycles
+    
     println("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
-        #mc_params.mc_cycles = count_cycles
-    #end
+    println("Proportion of cycles accepted:", (count_cycles/mc_params.mc_cycles)*100 , "%")
+
 
     println("MC loop done.")
 

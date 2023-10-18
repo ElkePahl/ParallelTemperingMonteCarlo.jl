@@ -87,6 +87,7 @@ function initialisation(restart::Bool, pot, save_dir;eq_percentage = 0.2,startfi
     else
         mc_states,move_strat,mc_params,pot,ensemble,results = init_sim(pot,"$(save_dir)/$(startfile)",eq_percentage)
         start_counter = 1
+        count_cycles = 0
     end
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
@@ -96,17 +97,18 @@ function initialisation(restart::Bool, pot, save_dir;eq_percentage = 0.2,startfi
     println()
 
 
-    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
+    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r,count_cycles
 
 end
 function initialisation(restart,mc_states, move_strat, mc_params, pot, ensemble, results;save=true,save_dir=pwd(),startfile="input.data")
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
     n_steps = a + v + r
+    count_cycles = 0
 
     start_counter = 1
 
-    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
+    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r,count_cycles
 end
 
 end

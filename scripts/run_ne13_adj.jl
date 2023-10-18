@@ -11,7 +11,7 @@ n_atoms = 13
 
 # temperature grid
 ti = 5.
-tf = 20.
+tf = 25.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -25,7 +25,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 displ_atom = 0.1 # Angstrom
-n_adjust = 100
+n_adjust = 100000
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
@@ -88,7 +88,6 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 plot(temp.t_grid,results.heat_cap)
 
 plot(multihistogram(results,temp), legend = false, xlabel="Temperature", ylabel="Heat Capacity")
-# png("ne13-multihistogram-graphs.jl")
 
 # data = [results.en_histogram[i] for i in 1:n_traj]
 # plot(data)

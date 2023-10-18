@@ -39,7 +39,7 @@ function equilibration_cycle!(states,move_strat, mc_params, potential, ensemble,
 
     if rem(dindex, mc_params.n_adjust) == 0 #adjust stepsize
         for i_update = 1:mc_params.n_traj
-            update_max_stepsize!(states[i_update], mc_params.n_adjust, a, v, r, count_cycles)
+            update_max_stepsize!(states[i_update], mc_params, mc_params.n_adjust, a, v, r)
         end 
     end
     return states,ebounds
@@ -184,7 +184,7 @@ function mc_cycle!(mc_states, move_strat, mc_params, pot::ParallelMLPotential, e
             if metropolis_condition(ensemble, (energyvec[indx] - mc_states[indx].en_tot), mc_states[indx].beta ) >=rand()
                 mc_states[indx].config.pos[indices[indx]] = trials[indx]
                 mc_states[indx].en_tot = energyvec[indx]
-                mc_states[indx].count_atom[1] +=1
+                mc_states[indx].count_atom[1] += 1
                 mc_states[indx].count_atom[2] += 1
             end
         end

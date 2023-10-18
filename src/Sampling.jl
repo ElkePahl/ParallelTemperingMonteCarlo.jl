@@ -155,7 +155,7 @@ end
     finalise_results(mc_states,mc_params,results)
 Function designed to take a complete mc simulation and calculate the averages. 
 """
-function finalise_results(mc_states,mc_params,results,count_cycles)
+function finalise_results(mc_states,mc_params,results, count_cycles)
 
     #Energy average
     if typeof(mc_states[1].config.bc) == AdjacencyBC{Float64}
