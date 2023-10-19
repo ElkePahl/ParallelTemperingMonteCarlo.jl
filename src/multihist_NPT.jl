@@ -8,7 +8,7 @@ export multihistgram_NPT
 
 function temp_trajectories(temp)
     tempnumber = length(temp.t_grid)
-    tempnumber_result = tempnumber * 3
+    tempnumber_result = tempnumber * 10
     return tempnumber,tempnumber_result
 end
 
