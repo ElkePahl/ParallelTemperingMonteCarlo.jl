@@ -14,7 +14,7 @@ pressure=101325
 # temperature grid
 ti = 20.
 tf = 40.
-n_traj = 32
+n_traj = 3
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 
