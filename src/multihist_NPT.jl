@@ -4,7 +4,7 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
 
-export multihistgram_NPT
+export multihistogram_NPT
 
 function temp_trajectories(temp)
     tempnumber = length(temp.t_grid)
@@ -80,12 +80,12 @@ end
 
 """
 Multihistogram analysis for NPT
-    multihistgram_NPT(ensemble, temp, results, conv_threshold, readfile)
+    multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile)
     conv_threshold is the convergence threshold, which user can choose.
     Now "readfile" can only be false.
-    Example: multihistgram_NPT(ensemble, temp, results, 10^(-3), false)
+    Example: multihistogram_NPT(ensemble, temp, results, 10^(-3), false)
 """
-function multihistgram_NPT(ensemble, temp, results, conv_threshold, readfile)
+function multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile)
     if readfile==false
         tempnumber,tempnumber_result = temp_trajectories(temp)
         p,k,temp_o,beta,Emin,Vmin,Ebins,Vbins,dEhist,dVhist,EVhistogram = histogram_initialise(ensemble,temp,results)
@@ -169,6 +169,8 @@ function multihistgram_NPT(ensemble, temp, results, conv_threshold, readfile)
     end
     println("temperature array: ",temp_result)
     println("heat capacity array: ",cp)
+
+    return cp
 end
 
 

@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 
@@ -88,7 +88,10 @@ pos_ne32 = pos_ne32 * AtoBohr
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne32 = RhombicBC(9.3974 * AtoBohr, 7.673* AtoBohr)   
+n_layer=3
+n_length=3
+ratio = (2/3)^0.5*n_layer/n_length
+bc_ne32 = RhombicBC(9.39744912 * AtoBohr, 9.39744912 * ratio * AtoBohr)   
 
 #starting configuration
 start_config = Config(pos_ne32, bc_ne32)

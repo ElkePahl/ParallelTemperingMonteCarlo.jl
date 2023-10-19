@@ -143,6 +143,8 @@ function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
     end
     println("temperature array: ",temp_result)
     println("heat capacity array: ",cv)
+
+    return cv
 end
 
 
