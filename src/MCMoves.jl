@@ -200,8 +200,8 @@ function scale_xy(pos,scale)
     N=length(pos)
     new_pos=Array{Array}(undef,N)
     for i=1:N
-        #new_pos[i]=[pos[i][1]*scale, pos[i][2]*scale,pos[i][3]]
-        new_pos[i]=pos[i]*scale
+        new_pos[i]=[pos[i][1]*scale, pos[i][2]*scale,pos[i][3]]
+        #new_pos[i]=pos[i]*scale
     end
     return new_pos
 end
@@ -209,41 +209,47 @@ function scale_z(pos,scale)
     N=length(pos)
     new_pos=Array{Array}(undef,N)
     for i=1:N
-        #new_pos[i]=[pos[i][1], pos[i][2],pos[i][3]*scale]
-        new_pos[i]=pos[i]*scale
+        new_pos[i]=[pos[i][1], pos[i][2],pos[i][3]*scale]
+        #new_pos[i]=pos[i]*scale
     end
     return new_pos
 end
 
 function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange_xy)
-    scale = exp((rand()-0.5)*max_vchange_xy)^(1/3)
-    if conf.bc.box_length >= 50. && scale > 1.
-        scale=1.
-    end
-    #if conf.bc.box_length >= 1.5*conf.bc.box_height && scale > 1.
-        #scale=1.
-    #elseif conf.bc.box_length <= 1.1*conf.bc.box_height && scale < 1.
+    scale = exp((rand()-0.5)*max_vchange_xy)^(1/2)
+
+    #if conf.bc.box_length >= 50. && scale > 1.
         #scale=1.
     #end
-    #trial_config = Config(scale_xy(conf.pos,scale), RhombicBC(bc.box_length * scale,bc.box_height))
+
+    if conf.bc.box_length >= 1.43*conf.bc.box_height && scale > 1.
+        scale=1/scale
+    elseif conf.bc.box_length <= 1.11*conf.bc.box_height && scale < 1.
+        scale=1/scale
+    end
+    trial_config = Config(scale_xy(conf.pos,scale), RhombicBC(bc.box_length * scale,bc.box_height))
     #trial_config = Config(scale_xy(conf.pos,scale), RhombicBC(bc.box_length * scale,bc.box_height*scale))
-    trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
+
+    #trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
     return trial_config
 end
 
 function volume_change_z(conf::Config, bc::RhombicBC, max_vchange_z)
-    scale = exp((rand()-0.5)*max_vchange_z)^(1/3)
-    if conf.bc.box_length >= 50. && scale > 1.
-        scale=1.
-    end
-    #if conf.bc.box_height >= 0.9*conf.bc.box_length && scale > 1.
-        #scale=1.
-    #elseif conf.bc.box_height <= 0.6*conf.bc.box_length && scale < 1.
+    scale = exp((rand()-0.5)*max_vchange_z)
+
+    #if conf.bc.box_length >= 50. && scale > 1.
         #scale=1.
     #end
-    #trial_config = Config(scale_z(conf.pos,scale), RhombicBC(bc.box_length,bc.box_height * scale))
+
+    if conf.bc.box_height >= 0.9*conf.bc.box_length && scale > 1.
+        scale=1/scale
+    elseif conf.bc.box_height <= 0.7*conf.bc.box_length && scale < 1.
+        scale=1/scale
+    end
+    trial_config = Config(scale_z(conf.pos,scale), RhombicBC(bc.box_length,bc.box_height * scale))
     #trial_config = Config(scale_z(conf.pos,scale), RhombicBC(bc.box_length*scale,bc.box_height * scale))
-    trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
+
+    #trial_config = Config(conf.pos * scale, RhombicBC(bc.box_length * scale, bc.box_height * scale))
     return trial_config
 end
 
@@ -261,13 +267,13 @@ function generate_vchange(mc_states,bc::RhombicBC)
     N=length(mc_states)
     trial_configs_all=Array{Config}(undef,N)
     for i=1:N
-        #ra=rand(0:2)
-        trial_configs_all[i]=volume_change_z(mc_states[i])
-        #if ra==2
-            #trial_configs_all[i]=volume_change_z(mc_states[i])
-        #else
-            #trial_configs_all[i]=volume_change_xy(mc_states[i])
-        #end
+        ra=rand(0:2)
+        #trial_configs_all[i]=volume_change_z(mc_states[i])
+        if ra==2
+            trial_configs_all[i]=volume_change_z(mc_states[i])
+        else
+            trial_configs_all[i]=volume_change_xy(mc_states[i])
+        end
     end
     return trial_configs_all
 end
