@@ -71,11 +71,11 @@ end
     @test d2mat[1,3] == 36.0
     @test d2mat[2,1] == d2mat[1,2]
 
-   # max_vchange = 0.1
-    #trial_config = volume_change(conf2,bc,max_vchange)
-   # @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_vchange)^(1/3)
-   # @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_vchange)^(1/3)
-   # @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <= 10^(-15)
+    max_vchange = 0.1
+    trial_config = volume_change(conf2,bc,max_vchange)
+    @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_vchange)^(1/3)
+    @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_vchange)^(1/3)
+    @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <= 10^(-15)
 
     displ = 0.1
     trial_pos = atom_displacement(v1,displ,bc)
