@@ -194,7 +194,7 @@ end
 
     cv=multihistogram_NVT(ensemble, temp, results, 10^-3, false)
 
-    @test length(cv)=320
+    @test length(cv)==320
     @test cv[1]==6.49886214556265e-5
     @test cv[100]==7.424573223567753e-5
     @test cv[200]==0.0001441400362161417
