@@ -34,7 +34,13 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new    
     mc_state.en_tot = energy
-    mc_state.count_atom[3] += 1
+
+    if typeof(mc_state.config.bc) == AdjacencyBC{Float64}
+        mc_state.count_atom[3] += 1
+    else 
+        mc_state.count_atom[1] += 1
+        mc_state.count_atom[2] += 1
+    end
 
 end
 """
@@ -276,7 +282,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
     #first we initialise the simulation with arguments matching the initialise function's various methods
     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r,count_cycles = initialisation(restart,input...; startfile=startfile)
     #equilibration thermalises new simulations and sets the histograms and results
-    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r, restart)
+    mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r, count_cycles, restart)
 
    
     println("equilibration done")
@@ -296,7 +302,7 @@ function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,
 
     
     println("Rejected cycles as boundary condition not met: ",mc_params.mc_cycles - count_cycles)
-    println("Proportion of cycles accepted:", (count_cycles/mc_params.mc_cycles)*100 , "%")
+    println("Proportion of cycles accepted: ", (count_cycles/mc_params.mc_cycles)*100 , "%")
 
 
     println("MC loop done.")
