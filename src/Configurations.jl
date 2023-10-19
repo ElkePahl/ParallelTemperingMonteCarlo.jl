@@ -157,8 +157,14 @@ distance2(a,b,bc::SphericalBC) = (a-b)⋅(a-b)
     
 Finds the distance between two positions a and the nearest image of b in a cubic box.
 """
-distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
+#distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
 
+function distance2(a,b,bc::PeriodicBC)
+    b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z=b[3]+bc.box_length*round((a[3]-b[3])/bc.box_length)
+    return distance2(a,[b_x,b_y,b_z])
+end
 
 #distance matrix
 """
