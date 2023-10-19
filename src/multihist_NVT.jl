@@ -72,11 +72,11 @@ function quasiprob(betat,m,ncycles,dEhist,Emin,tempnumber,ENhistogram,beta,free_
 end
 
 """
-Multihistogram analysis for NPT
-    multihistgram_NPT(ensemble, temp, results, conv_threshold, readfile)
+Multihistogram analysis for NVT
+    multihistgram_NVT(ensemble, temp, results, conv_threshold, readfile)
     conv_threshold is the convergence threshold, which user can choose.
     Now "readfile" can only be false.
-    Example: multihistgram_NPT(ensemble, temp, results, 10^(-3), false)
+    Example: multihistogram_NVT(ensemble, temp, results, 10^(-3), false)
 """
 function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
     if readfile==false
