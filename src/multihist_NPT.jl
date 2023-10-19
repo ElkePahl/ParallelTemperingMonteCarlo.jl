@@ -80,10 +80,10 @@ end
 
 """
 Multihistogram analysis for NPT
-    multihistgram_NPT(ensemble, temp, results, conv_threshold, readfile)
+    multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile)
     conv_threshold is the convergence threshold, which user can choose.
     Now "readfile" can only be false.
-    Example: multihistgram_NPT(ensemble, temp, results, 10^(-3), false)
+    Example: multihistogram_NPT(ensemble, temp, results, 10^(-3), false)
 """
 function multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile)
     if readfile==false
