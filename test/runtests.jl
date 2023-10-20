@@ -51,6 +51,61 @@ using StaticArrays, LinearAlgebra
     @test move_atom.frequency == 10
 end
 
+@testset "Config_cubic" begin
+    bc = PeriodicBC(10.0)
+    v1 = SVector(1., 2., 3.)
+    conf = Config{3}([v1,v1,v1],bc)
+
+    @test conf.bc.box_length == 10.0
+    @test conf.pos[1] == v1
+
+    v2 = SVector(2.,4.,6.)
+    @test distance2(v1,v2,bc) == 14.0
+
+    v3 = SVector(3., 6., 9.)
+    @test distance2(v1,v3) == 56.0
+    @test distance2(v1,v3,bc) == 36.0
+    
+    conf2 = Config{3}([v1,v2,v3],bc)
+    d2mat = get_distance2_mat(conf2)
+    @test d2mat[1,3] == 36.0
+    @test d2mat[2,1] == d2mat[1,2]
+
+    max_v = 0.1
+    trial_config = volume_change(conf2,max_v,50)
+    @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_v)^(1/3)
+    @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_v)^(1/3)
+    @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <= 10^(-15)
+
+    displ = 0.1
+    trial_pos = atom_displacement(v1,displ,bc)
+    @test norm(trial_pos-v1) < displ
+
+    move_atom=AtomMove(10, displ)
+    @test move_atom.frequency == 10
+end
+
+@testset "Tangent" begin
+    bc = SphericalBC(radius=10.0)
+    v1 = SVector(5., 0., 0.)
+    v2 = SVector(-3.,0.,4.)
+    v3 = SVector(-2.,0., -3.)
+    conf = Config{3}([v1,v2,v3],bc)
+    mat = get_tantheta_mat(conf,bc)
+
+    @test mat[1,2]==-2.0
+    @test mat[1,3]==7/3
+    @test mat[2,3]==1/7
+    
+    bc = PeriodicBC(10.0)
+    conf = Config{3}([v1,v2,v3],bc)
+    mat = get_tantheta_mat(conf,bc)
+
+    @test mat[1,2]==-1/2
+    @test mat[1,3]==1.0
+    @test mat[2,3]==-1/3
+end
+
 @testset "BoundaryConditions" begin
     bc = SphericalBC(radius=1.0)
     @test bc.radius2 == 1.
@@ -130,4 +185,8 @@ end
         rm("save.data")
         rm("params.data")
     end
+end
+
+@safetestset "multihist" begin
+    include("multihist_test.jl")
 end
