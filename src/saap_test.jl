@@ -25,16 +25,16 @@ function saap2(a::Vector,r)
 end
 
 function elj2(pot::Vector,r2)
-    #r6inv = 1/(r2*r2*r2)
+    r6inv = 1/(r2*r2*r2)
 
     r2inv=1/r2
-    r6inv=r2inv^3
+    #r6inv=r2inv^3
 
     sum = 0.
     for i = 1:6
         sum += pot[i] * r6inv
-        #r6inv /= r2
-        r6inv *= r2inv
+        r6inv /= r2
+        #r6inv *= r2inv
     end
     return sum
 end
