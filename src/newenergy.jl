@@ -8,7 +8,13 @@ using StaticArrays,LinearAlgebra,DFTK
 using ..MachineLearningPotential
 using ..Configurations
 
+export AbstractEnsemble,NVT,NPT
+export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven
+export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
+export PotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
+export EmbeddedAtomVariables,NNPVariables
 
+export energy_update!,set_variables,initialise_energy
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
@@ -81,7 +87,7 @@ The struct contains only the new_dist2_vec as this doesn't explicitly require an
 """
 mutable struct DimerPotentialVariables <: PotentialVariables
     #new_dist2_vec::Vector
-    #en_atom_vec::Vector
+    en_atom_vec::Vector
     #new_en::Float64
 end
 
@@ -250,7 +256,7 @@ function ELJPotentialB(a,b,c)
 end
 
 mutable struct ELJPotentialBVariables <: PotentialVariables
-
+    en_atom_vec::Array
     tan_mat::Array
     new_tan_vec::Vector
 end
@@ -354,7 +360,6 @@ function EmbeddedAtomPotential(n,m,ϵ,C,a)
 end
 
 mutable struct EmbeddedAtomVariables <: PotentialVariables
-    
     component_vector::Matrix
     new_component_vector::Matrix
 end
@@ -430,6 +435,7 @@ end
 
 
 mutable struct NNPVariables <: PotentialVariables
+    en_atom_vec::Vector
     new_en::Float64
     new_en_atom::Vector
     g_matrix::Array
@@ -583,13 +589,13 @@ initialises the PotentialVariable struct for the various potentials.
     
 """
 function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
-    return DimerPotentialVariable()
+    return DimerPotentialVariables()
 end
 function set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPotentialB)
     n_atoms = length(config)
     tan_matrix = get_tantheta_mat(config,config.pos)
 
-    return ELJPotentialBVariables(0.,zeros(n_atoms),tan_matrix,zeros(n_atoms))
+    return ELJPotentialBVariables(tan_matrix,zeros(n_atoms))
 end
 function set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
     n_atoms = length(config)
@@ -597,7 +603,7 @@ function set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
     for row_index in 1:n_atoms
         componentvec[row_index,:] = calc_components(componentvec[row_index,:],dist2_matrix[row_index,:],pot.n,pot.m)
     end
-    return EmbeddedAtomVariables(0. ,zeros(n_atoms),componentvec,zeros(n_atoms,2))
+    return EmbeddedAtomVariables(componentvec,zeros(n_atoms,2))
 end
 function set_variables(config,dist2_mat,pot::RuNNerPotential)
     
@@ -605,7 +611,7 @@ function set_variables(config,dist2_mat,pot::RuNNerPotential)
     f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
     g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
     
-    return NNPVariables(0. ,zeros(n_atoms),zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
+    return NNPVariables(0. ,zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
 end
 
 end
