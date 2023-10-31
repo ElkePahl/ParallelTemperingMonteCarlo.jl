@@ -497,6 +497,7 @@ function get_energy(trial_positions,indices,mc_states,pot::EmbeddedAtomPotential
     energyvector,dist2_new,new_components = invert(calc_new_energy.(mc_states,indices,trial_positions,Ref(pot)))
 
 
+
     return energyvector,dist2_new,new_components
 end
 """
