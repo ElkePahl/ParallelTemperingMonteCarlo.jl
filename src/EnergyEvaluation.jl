@@ -17,7 +17,7 @@ export AbstractPotential, AbstractDimerPotential, AbstractMachineLearningPotenti
 
 #export DFTPotential
 
-export ELJPotential, ELJPotentialEven
+export ELJPotential, ELJPotentialEven, ELJPotentialB
 export dimer_energy, dimer_energy_atom, dimer_energy_config 
 # export getenergy_DFT 
 export get_energy_dimer,get_energy_RuNNer
