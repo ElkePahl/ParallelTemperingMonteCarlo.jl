@@ -37,7 +37,7 @@ mutable struct MCState{T,N,BC}
     new_en::T
     en_tot::T
 
-    potentialvariables
+    potential_variables
 
     ham::Vector{T}
     max_displ::Vector{T}
@@ -57,16 +57,16 @@ function MCState(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
         )
 end
-function MCState(temp,beta,config::Config,pot<:AbstractPotential;
-    kwargs...)
+function MCState(temp,beta,config::Config,pot::Ptype;
+    kwargs...) where Ptype <: AbstractPotential
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
 
-    potentialvariables = set_variables(config,dist2_mat,pot)
+    potential_variables = set_variables(config,dist2_mat,pot)
 
-    en_tot, potentialvariables=initialise_energy(config,dist2_mat,potentialvariables,pot)
+    en_tot, potential_variables=initialise_energy(config,dist2_mat,potential_variables,pot)
 
-    MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potentialvariables;kwargs...
+    MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables;kwargs...
     )
 
 end

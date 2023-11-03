@@ -591,13 +591,13 @@ initialises the PotentialVariable struct for the various potentials.
     
 """
 function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
-    return DimerPotentialVariables()
+    return DimerPotentialVariables(zeros(length(config)))
 end
 function set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPotentialB)
     n_atoms = length(config)
     tan_matrix = get_tantheta_mat(config,config.pos)
 
-    return ELJPotentialBVariables(tan_matrix,zeros(n_atoms))
+    return ELJPotentialBVariables(zeros(n_atoms),tan_matrix,zeros(n_atoms))
 end
 function set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
     n_atoms = length(config)
@@ -613,7 +613,7 @@ function set_variables(config,dist2_mat,pot::RuNNerPotential)
     f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
     g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
     
-    return NNPVariables(0. ,zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
+    return NNPVariables(zeros(n_atoms),0. ,zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
 end
 
 end
