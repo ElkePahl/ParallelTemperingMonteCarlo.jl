@@ -438,7 +438,7 @@ end
 
 mutable struct NNPVariables <: PotentialVariables
     en_atom_vec::Vector
-    new_en::Float64
+
     new_en_atom::Vector
     g_matrix::Array
     f_matrix::Array
@@ -613,7 +613,7 @@ function set_variables(config,dist2_mat,pot::RuNNerPotential)
     f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
     g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
     
-    return NNPVariables(zeros(n_atoms),0. ,zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
+    return NNPVariables(zeros(n_atoms) ,zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
 end
 
 end

@@ -13,9 +13,12 @@ using ..InputParams
 using ..BoundaryConditions
 
 """
-    update_energy_tot(mc_state)
+    update_energy_tot(mc_state,ensemble::NVT)
+    update_energy_tot(mc_state,ensemble::NPT)
 
-function to update the current energy and energy squared values for coarse analysis of averages at the end. 
+function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
+    
+    Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
 # function update_energy_tot(mc_state)
 #     mc_state.ham[1] +=mc_state.en_tot
@@ -23,20 +26,34 @@ function to update the current energy and energy squared values for coarse analy
 
 #     return mc_state
 # end
-function update_energy_tot(mc_states,ensemble)
-    if typeof(mc_states[1].config.bc) <: SphericalBC
-        for indx_traj in eachindex(mc_states)      
-            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
-            #add E,E**2 to the correct positions in the hamiltonian
-            mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+# function update_energy_tot(mc_states,ensemble)
+#     if typeof(mc_states[1].config.bc) <: SphericalBC
+#         for indx_traj in eachindex(mc_states)      
+#             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
+#             #add E,E**2 to the correct positions in the hamiltonian
+#             mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
+#         end
+#     else
+#         for indx_traj in eachindex(mc_states)      
+#             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3
+#             #add E,E**2 to the correct positions in the hamiltonian
+#             mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3))
+#         end
+#     end
+# end
+
+function update_energy_tot(mc_states,ensemble::NVT)
+        for state in mc_states
+            state.ham[1] += state.en_tot 
+            state.ham[2] += (state.en_tot*state.en_tot)
         end
-    else
-        for indx_traj in eachindex(mc_states)      
-            mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3
-            #add E,E**2 to the correct positions in the hamiltonian
-            mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3))
-        end
+end
+function update_energy_tot(mc_states,ensemble::NPT)
+    for state in mc_states
+        state.ham[1] += state.en_tot + ensemble.pressure*state.config.bc.box_length^3
+        state.ham[2] += (state.en_tot + ensemble.pressure*state.config.bc.box_length^3)*(state.en_tot + ensemble.pressure*state.config.bc.box_length^3)
     end
+
 end
 """
     find_hist_index(mc_state,results,delta_en_hist)
