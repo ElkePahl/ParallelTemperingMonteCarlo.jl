@@ -37,7 +37,7 @@ mutable struct MCState{T,N,BC}
     new_en::T
     en_tot::T
 
-    potential_variables
+    potential_variables::PotentialVariables
 
     ham::Vector{T}
     max_displ::Vector{T}

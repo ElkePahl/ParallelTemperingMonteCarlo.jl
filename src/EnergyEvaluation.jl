@@ -451,15 +451,15 @@ Function for finding the new state variables for calculating an NNP. Redefines n
 """
 function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
 
-    nnp_state.potential_variables.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
-    nnp_state.potential_variables.new_dist2_vec[atomindex] = 0.
+    nnp_state.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
+    nnp_state.new_dist2_vec[atomindex] = 0.
     
-    nnp_state.potential_variables.new_f_vec = cutoff_function.(sqrt.(nnp_state.potential_variables.new_dist2_vec),Ref(pot.r_cut))
+    nnp_state.potential_variables.new_f_vec = cutoff_function.(sqrt.(nnp_state.new_dist2_vec),Ref(pot.r_cut))
 
 
     nnp_state.potential_variables.new_g_matrix = copy(nnp_state.potential_variables.g_matrix)
 
-    nnp_state.potential_variables.new_g_matrix = total_thr_symm!(nnp_state.potential_variables.new_g_matrix,nnp_state.config.pos,trial_pos,nnp_state.dist2_mat,nnp_state.potential_variables.new_dist2_vec,nnp_state.potential_variables.f_matrix,nnp_state.potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
+    nnp_state.potential_variables.new_g_matrix = total_thr_symm!(nnp_state.potential_variables.new_g_matrix,nnp_state.config.pos,trial_pos,nnp_state.dist2_mat,nnp_state.new_dist2_vec,nnp_state.potential_variables.f_matrix,nnp_state.potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
 
     return nnp_state
 end
@@ -468,7 +468,7 @@ end
 function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
 """
 function calc_new_runner_energy!(mc_state,pot)
-    mc_state.new_en_atom = forward_pass(mc_state.potential_variables.new_g_matrix,length(mc_state.en_atom_vec),pot.nnp)
+    mc_state.potential_variables.new_en_atom = forward_pass(mc_state.potential_variables.new_g_matrix,length(mc_state.potential_variables.en_atom_vec),pot.nnp)
     mc_state.new_en = sum(mc_state.potential_variables.new_en_atom)
     return mc_state
 end
@@ -528,7 +528,7 @@ function energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
 end
 function energy_update!(trial_pos,index,mc_state,pot::RuNNerPotential)
 
-    mc_state = get_new_state_vars(trial_pos,index,mc_state,pot)
+    mc_state = get_new_state_vars!(trial_pos,index,mc_state,pot)
 
     mc_state = calc_new_runner_energy!(mc_state,pot)
     return mc_state
@@ -595,7 +595,7 @@ function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
 end
 function set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPotentialB)
     n_atoms = length(config)
-    tan_matrix = get_tantheta_mat(config,config.pos)
+    tan_matrix = get_tantheta_mat(config,config.bc)
 
     return ELJPotentialBVariables(zeros(n_atoms),tan_matrix,zeros(n_atoms))
 end
