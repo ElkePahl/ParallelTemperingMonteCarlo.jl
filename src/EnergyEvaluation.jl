@@ -238,17 +238,21 @@ function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotential)
 end
 
 function energy_update(pos, i_atom, config, dist2_mat, pot::AbstractDimerPotential)
-    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
+    dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
+    tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
+    tan_new[i_atom] = 0
     d_en = dimer_energy_atom(i_atom, dist2_new, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], pot)
-    return d_en, dist2_new
+    return d_en, dist2_new, tan_new
 end
 
 function energy_update(pos, i_atom, config, dist2_mat, r_cut, pot::AbstractDimerPotential)
-    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
+    dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
+    tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
+    tan_new[i_atom] = 0
     d_en = dimer_energy_atom(i_atom, dist2_new, r_cut, pot) - dimer_energy_atom(i_atom, dist2_mat[:,i_atom], r_cut, pot)
-    return d_en, dist2_new
+    return d_en, dist2_new, tan_new
 end
 """
     get_energy_dimer(pos,i_atom,mc_state,pot)
@@ -610,7 +614,7 @@ function energy_update(i_atom, dist2_new, r_cut, pot::AbstractDimerPotentialB)
 end
 
 function energy_update(pos, i_atom, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB)
-    dist2_new = [distance2(pos,b,config.bc) for b in config.pos]
+    dist2_new = [distance2(pos,b) for b in config.pos]
     dist2_new[i_atom] = 0.
     tan_new = [get_tan(pos,b,config.bc) for b in config.pos]
     tan_new[i_atom] = 0
