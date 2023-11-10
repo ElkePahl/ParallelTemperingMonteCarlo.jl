@@ -82,7 +82,7 @@ function mc_step!(mc_states,mc_params,pot,ensemble)
     indices,trial_positions = generate_displacements(mc_states,mc_params)
 
 
-    energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot)
+    energy_vector, dist2_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
 
 
     for idx in eachindex(mc_states)

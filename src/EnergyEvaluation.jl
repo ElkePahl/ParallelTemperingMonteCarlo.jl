@@ -296,18 +296,18 @@ end
 Top scope get energy function for dimer potentials returning the energy vector and new distance squared vector as this must be calculated in order to calculate the potential.
 with the cutoff distance r_cut
 """
-function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential,ensemble::NPT)
+# function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential,ensemble::NPT)
     
-    n=length(mc_states)
-    r_cut_all=Array{Float64}(undef,n)
-    for i=1:n
-        #r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
-        r_cut_all[i]=get_r_cut(mc_states[i].config.bc)
-    end
-    energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
-    # energyvector = mc_state.en_tot .+ delta_energyvector
-    return energyvector,dist2_new
-end
+#     n=length(mc_states)
+#     r_cut_all=Array{Float64}(undef,n)
+#     for i=1:n
+#         #r_cut_all[i]=mc_states[i].config.bc.box_length^2/4
+#         r_cut_all[i]=get_r_cut(mc_states[i].config.bc)
+#     end
+#     energyvector, dist2_new = invert(get_energy_dimer.(trial_positions,indices,r_cut_all,mc_states,Ref(pot)))
+#     # energyvector = mc_state.en_tot .+ delta_energyvector
+#     return energyvector,dist2_new
+# end
 
 
 """

@@ -1,5 +1,5 @@
 """
-    module Exchange
+module Exchange
 
 Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle. Includes update_max_stepsize which controls the frequency of
 """
@@ -63,7 +63,9 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.tan_mat, state_2.tan_mat = state_2.tan_mat, state_1.tan_mat
     state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
-    return state_1, state_2
+return state_1, state_2
+
+end 
 
 """
     parallel_tempering_exchange!(mc_states,mc_params)
@@ -125,6 +127,4 @@ function update_max_stepsize!(mc_state::MCState, mc_params, n_update, a, v, r; m
     return mc_state
 end
 
-
-
-end
+end #module
