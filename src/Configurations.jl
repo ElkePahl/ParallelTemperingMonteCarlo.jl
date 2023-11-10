@@ -18,7 +18,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance2_mat, move_atom!
+export distance2, get_distance2_mat, move_atom!, get_tan, get_tantheta_mat
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -165,5 +165,60 @@ distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length),
 Builds the matrix of squared distances between positions of configuration.
 """
 get_distance2_mat(conf::Config{N}) where N = [distance2(a,b) for a in conf.pos, b in conf.pos]
+
+"""
+    get_tan(a,b)
+
+tan of the angle between the line connecting two points a and b, and the z-direction
+"""
+function get_tan(a,b)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return tan
+end
+
+"""
+    get_tan(a,b,bc::SphericalBC)
+
+tan of the angle between the line connecting two points a and b, and the z-direction in a spherical boundary
+Same as get_tan(a,b)
+"""
+function get_tan(a,b,bc::SphericalBC)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return tan
+end
+
+function get_tan(a,b,bc::AdjacencyBC)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return tan
+end
+
+
+"""
+    get_theta_mat(conf::Config{N},conf.bc::SphericalBC)
+
+Builds the matrix of tan of angles between positions of configuration in a spherical boundary.
+"""
+
+function get_tantheta_mat(conf::Config,bc::SphericalBC)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=i+1:N
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j])
+        end
+    end
+    return mat
+end
+
+function get_tantheta_mat(conf::Config,bc::AdjacencyBC)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=i+1:N
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j])
+        end
+    end
+    return mat
+end
 
 end

@@ -34,6 +34,8 @@ function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
     mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
     mc_state.dist2_mat[:,i_atom] = dist2_new    
     mc_state.en_tot = energy
+    mc_state.tan_mat[i_atom,:] = tan_new
+    mc_state.tan_mat[:,i_atom] = tan_new
 
     if typeof(mc_state.config.bc) == AdjacencyBC{Float64}
         mc_state.count_atom[3] += 1
