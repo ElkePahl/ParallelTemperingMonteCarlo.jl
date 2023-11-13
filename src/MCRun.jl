@@ -38,23 +38,6 @@ include("swap_config.jl")
 NB: this method becomes redundant if we change the output and format of the getenergy function for the dimer potential: waiting on an email.
 
 """
-
-# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot::AbstractDimerPotential)
-#     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
-#     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-#         #println("swap")
-#         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
-#     end
-# end
-# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
-#     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
-#     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-#         #println("swap")
-
-#         swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
-#     end
-# end
-
 function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64,pot)
 
     #println("metro ",metropolis_condition(ensemble, ensemble.n_atoms, (en_tot_new-mc_state.en_tot), trial_config.bc.box_length^3, mc_state.config.bc.box_length^3, mc_state.beta) )
@@ -63,25 +46,10 @@ function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new:
         #println("swap")
 
         #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
-        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
+        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new)
     end   
 end
 
-# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
-
-#     if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
-        
-#         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
-#     end   
-# end
-
-# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
-
-#     if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
-        
-#         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
-#     end   
-# end
 function acc_test!(mc_state,i_atom,trial_pos,ensemble)
     if metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.beta) >= rand()
         swap_config!(mc_state,i_atom,trial_pos)
@@ -131,18 +99,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
 
 
 end
-function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,potential,ensemble) where T where N where BC
 
-    indices,trial_positions = generate_displacements(nnp_states,mc_params)
-
-    energy_vector, nnp_states = get_energy(trial_positions,indices,nnp_states,potential)
-
-    Threads.@threads for idx in eachindex(nnp_states)
-        acc_test!(ensemble,nnp_states[idx],energy_vector[idx],indices[idx],trial_positions[idx])
-    end
-
-    return nnp_states
-end
 
 function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
 
@@ -163,18 +120,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ense
 
 
 end
-function mc_step!(nnp_states::Vector{NNPState{T,N,BC}},move_strat,mc_params,potential,ensemble) where T where N where BC
 
-    indices,trial_positions = generate_displacements(nnp_states,mc_params)
-    
-    energy_vector, nnp_states = get_energy(trial_positions,indices,nnp_states,potential)
-
-    Threads.@threads for idx in eachindex(nnp_states)
-        acc_test!(ensemble,nnp_states[idx],energy_vector[idx],indices[idx],trial_positions[idx])
-    end
-
-    return nnp_states
-end
 function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
 
     a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
