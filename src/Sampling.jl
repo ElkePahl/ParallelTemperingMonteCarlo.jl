@@ -20,27 +20,7 @@ function to update the current energy and energy squared values for coarse analy
     
     Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
-# function update_energy_tot(mc_state)
-#     mc_state.ham[1] +=mc_state.en_tot
-#     mc_state.ham[2] +=(mc_state.en_tot*mc_state.en_tot)
 
-#     return mc_state
-# end
-# function update_energy_tot(mc_states,ensemble)
-#     if typeof(mc_states[1].config.bc) <: SphericalBC
-#         for indx_traj in eachindex(mc_states)      
-#             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot
-#             #add E,E**2 to the correct positions in the hamiltonian
-#             mc_states[indx_traj].ham[2] += (mc_states[indx_traj].en_tot*mc_states[indx_traj].en_tot)            
-#         end
-#     else
-#         for indx_traj in eachindex(mc_states)      
-#             mc_states[indx_traj].ham[1] += mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3
-#             #add E,E**2 to the correct positions in the hamiltonian
-#             mc_states[indx_traj].ham[2] += ((mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3)*(mc_states[indx_traj].en_tot+ensemble.pressure*mc_states[indx_traj].config.bc.box_length^3))
-#         end
-#     end
-# end
 
 function update_energy_tot(mc_states,ensemble::NVT)
         for state in mc_states
@@ -240,15 +220,7 @@ function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en
         update_rdf!(mc_states,results,delta_r2)
     end 
 end
-#function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_v_hist)
-    #if rem(save_index, mc_params.mc_sample) == 0
 
-        #update_energy_tot(mc_states,ensemble)
-        
-        #update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
-
-    #end   
-#end
 """
     finalise_results(mc_states,mc_params,results)
 Function designed to take a complete mc simulation and calculate the averages. 

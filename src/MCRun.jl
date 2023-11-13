@@ -74,7 +74,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
-        energy_vector, mats_new = get_energy(trial_positions,indices,mc_states,pot,ensemble)
+        mc_states = get_energy(trial_positions,indices,mc_states,pot,ensemble)
         for idx in eachindex(mc_states)
             @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],mats_new[idx],pot)
         end
@@ -100,46 +100,6 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
 
 end
 
-
-function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
- #   if rand(1:a+v+r)<=a
-        #println("d")
-        indices,trial_positions = generate_displacements(mc_states,mc_params)
-
-        energy_vector, dist2_new, new_component_vector = get_energy(trial_positions,indices,mc_states,pot)
-
-        for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx],new_component_vector[idx])
-        end
-
-#    end
-
-    return mc_states
-
-
-end
-
-function mc_step!(mc_states,move_strat,mc_params,pot::EmbeddedAtomPotential,ensemble)
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
- #   if rand(1:a+v+r)<=a
-        #println("d")
-        indices,trial_positions = generate_displacements(mc_states,mc_params)
-
-        energy_vector, dist2_new, new_component_vector = get_energy(trial_positions,indices,mc_states,pot)
-
-        for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],dist2_new[idx],new_component_vector[idx])
-        end
-
-#    end
-
-    return mc_states
-    
-
-end
 """
     function mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, a, v, r)
              mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps ,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_r2)
