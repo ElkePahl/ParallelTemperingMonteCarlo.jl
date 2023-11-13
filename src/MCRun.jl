@@ -20,94 +20,8 @@ using ..MCSampling
 using ..Initialization
 
 
+include("swap_config.jl")
 
-
-"""
-
-    swap_config!(mc_state, i_atom, trial_pos, dist2_new, new_energy)
-    swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
-    swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy,new_component_vector)
-    swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
-        Designed to input one mc_state, the atom to be changed, the trial position, the new distance squared vector and the new energy. 
-        If the Metropolis condition is satisfied, these are used to update mc_state. 
-
-        Second method is used for the EAM potential to ensure the rho and phi components are stored for later use.
-        
-        Third method applies to the NNPState struct which has several more fields to update.
-"""
-function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy)
-
-    mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-    mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-    mc_state.dist2_mat[:,i_atom] = dist2_new
-    mc_state.en_tot = energy
-    mc_state.count_atom[1] += 1
-    mc_state.count_atom[2] += 1
-
-end
-
-
-function swap_config!(mc_state, i_atom, trial_pos, dist2_new, energy::Float64,new_component_vector)
-  mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-  mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-  mc_state.dist2_mat[:,i_atom] = dist2_new  
-  mc_state.en_tot = energy
-  mc_state.count_atom[1] += 1
-  mc_state.count_atom[2] += 1
-  
-  mc_state.en_atom_vec = new_component_vector
-end
-
-
-function swap_config!(mc_state, i_atom, trial_pos, dist2_new, tan_new::Array, energy)
-
-
-    mc_state.config.pos[i_atom] = trial_pos #copy(trial_pos)
-    mc_state.dist2_mat[i_atom,:] = dist2_new #copy(dist2_new)
-    mc_state.dist2_mat[:,i_atom] = dist2_new    
-    mc_state.en_tot = energy
-    mc_state.count_atom[1] += 1
-    mc_state.count_atom[2] += 1
-
-    mc_state.en_atom_vec = new_component_vector
-
-end
-function swap_config!(nnp_state::NNPState,atomindex,trial_pos,new_energy)
-
-    nnp_state.config.pos[atomindex] = trial_pos
-
-    nnp_state.dist2_mat[atomindex,:] = nnp_state.new_dist2_vec
-    nnp_state.dist2_mat[:,atomindex] = nnp_state.new_dist2_vec
-
-    nnp_state.f_matrix[atomindex,:] = nnp_state.new_f_vec
-    nnp_state.f_matrix[:,atomindex] = nnp_state.new_f_vec
-
-
-    nnp_state.g_matrix = nnp_state.new_g_matrix
-
-    nnp_state.en_atom_vec = nnp_state.new_en_atom
-    nnp_state.en_tot = new_energy
-
-    nnp_state.count_atom[1] +=1
-    nnp_state.count_atom[2] +=1
-
-    return nnp_state
-end
-
-function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot)
-    #println("swap_v_config")
-    #for i=1:length(mc_state.config.pos)
-        #mc_state.config.pos[i] = trial_config.pos[i]
-    #end
-    #mc_state.config.bc.box_length = copy(trial_config.bc.box_length)
-    mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
-    mc_state.dist2_mat = dist2_mat_new
-    mc_state.en_atom_vec = en_vec_new
-    mc_state.en_tot = en_tot
-    mc_state.count_vol[1] += 1
-    mc_state.count_vol[2] += 1
-    
-end
 """
     acc_test!(ensemble, mc_state, new_energy, i_atom, trial_pos, dist2_new::Vector)
 
@@ -125,21 +39,21 @@ NB: this method becomes redundant if we change the output and format of the gete
 
 """
 
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot::AbstractDimerPotential)
-    #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
-    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-        #println("swap")
-        swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
-    end
-end
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
-    #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
-    if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
-        #println("swap")
+# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,pot::AbstractDimerPotential)
+#     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
+#     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+#         #println("swap")
+#         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy)
+#     end
+# end
+# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, mats_new::Vector,pot::AbstractDimerPotentialB)
+#     #println(metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta))
+#     if metropolis_condition(ensemble,(energy -mc_state.en_tot), mc_state.beta) >= rand()
+#         #println("swap")
 
-        swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
-    end
-end
+#         swap_config!(mc_state,i_atom,trial_pos,mats_new[1], mats_new[2], energy)
+#     end
+# end
 
 function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new::Matrix, en_vec_new::Vector, en_tot_new::Float64,pot)
 
@@ -153,22 +67,26 @@ function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new:
     end   
 end
 
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
+# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
 
-    if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
+#     if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
         
-        swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
-    end   
-end
+#         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
+#     end   
+# end
 
-function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
+# function acc_test!(ensemble, mc_state, energy, i_atom, trial_pos, dist2_new::Vector,new_component_vector)
 
-    if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
+#     if metropolis_condition(ensemble,(energy - mc_state.en_tot), mc_state.beta) >= rand()
         
-        swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
-    end   
+#         swap_config!(mc_state,i_atom,trial_pos,dist2_new, energy,new_component_vector)
+#     end   
+# end
+function acc_test!(mc_state,i_atom,trial_pos,ensemble)
+    if metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.beta) >= rand()
+        swap_config!(mc_state,i_atom,trial_pos)
+    end
 end
-
 
 """
 

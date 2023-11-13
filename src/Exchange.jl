@@ -72,24 +72,11 @@ information contained in `state_1` and `state_2`, see [`MCState`](@ref)
 function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
-    state_1.tan_mat, state_2.tan_mat = state_2.tan_mat, state_1.tan_mat
-    state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
+    state1.potential_variables,state2.potential_variables = state2.potential_variables,state1.potential_variables
     return state_1, state_2
 end 
-function exc_trajectories!(state_1::NNPState, state_2::NNPState)
-    state_1.config,state_2.config = state_2.config,state_1.config
-    state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
-    state_1.en_atom_vec, state_2.en_atom_vec = state_2.en_atom_vec, state_1.en_atom_vec
-    state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
 
-    #then the unique NNP variables
-    state_1.g_matrix, state_2.g_matrix = state_2.g_matrix, state_1.g_matrix
-    state_1.f_matrix, state_2.f_matrix = state_2.f_matrix, state_1.f_matrix
-
-
-    return state_1,state_2
-end
 
 """
     parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
