@@ -10,7 +10,7 @@ Random.seed!(1234)
 n_atoms = 38
 
 # temperature grid
-ti = 3.
+ti = 10.
 tf = 20.
 n_traj = 32
 
@@ -135,8 +135,8 @@ results_1 = Output{Float64}(n_bin; en_min = mc_states_1[1].en_tot)
 
 @time ptmc_run!((mc_states_1, move_strat, mc_params, pot, ensemble, results_1); save=true)
 
-plot([multihistogram(results,temp), (multihistogram(results_1,temp))], label = ["Spherical boundary condition" "Adjacency boundary condition"], legend =:bottomright, xlabel="Temperature", ylabel="Heat Capacity")
-png("magfields-38-4")
+plot([multihistogram(results,temp), (multihistogram(results_1,temp))], label = ["Spherical boundary condition" "Adjacency boundary condition"], legend =:topright, xlabel="Temperature", ylabel="Heat Capacity", xlim=(11, 20), ylim=(0.0003, 0.0006))
+png("magfields-38-5")
 
 
 
