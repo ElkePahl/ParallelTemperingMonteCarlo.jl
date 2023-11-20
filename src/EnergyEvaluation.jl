@@ -16,7 +16,7 @@ export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotenti
 export PotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
 export EmbeddedAtomVariables,NNPVariables
 
-export energy_update!,set_variables,initialise_energy
+export energy_update!,set_variables,initialise_energy,get_energy!
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
@@ -541,7 +541,7 @@ curry function used as the top call within each mc_step. Passes a vector of `mc_
 
 """
 
-function get_energy(trial_positions,indices,mc_states,pot)
+function get_energy!(trial_positions,indices,mc_states,pot,ensemble)
     return energy_update!.(trial_positions,indices,mc_states,Ref(pot))
 end
 

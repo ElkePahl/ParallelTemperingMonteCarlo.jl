@@ -11,6 +11,7 @@ using ..MCStates
 using ..Configurations
 using ..InputParams
 using ..BoundaryConditions
+using ..EnergyEvaluation
 
 """
     update_energy_tot(mc_state,ensemble::NVT)

@@ -89,33 +89,33 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
 
 end
-function save_state(savefile::IOStream,mc_state::NNPState)
-    write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
-    write(savefile,"total_energy: $(mc_state.en_tot)\n")
-    write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
-    write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
+# function save_state(savefile::IOStream,mc_state::NNPState)
+#     write(savefile,"temp_beta: $(mc_state.temp) $(mc_state.beta) \n")
+#     write(savefile,"total_energy: $(mc_state.en_tot)\n")
+#     write(savefile,"max_displacement: $(mc_state.max_displ[1]) $(mc_state.max_displ[2]) $(mc_state.max_displ[3])\n")
+#     write(savefile, "counts_a/v/r/ex:  $(mc_state.count_atom[1])   $(mc_state.count_atom[2]) $(mc_state.count_vol[1]) $(mc_state.count_vol[2]) $(mc_state.count_rot[1]) $(mc_state.count_rot[2]) $(mc_state.count_exc[1]) $(mc_state.count_exc[2]) \n")
 
-    if length(mc_state.ham) > 2
-        ham1 = sum(mc_state.ham)
-        ham2 = sum( mc_state.ham .* mc_state.ham)
-    elseif length(mc_state.ham) == 2
-        ham1 = mc_state.ham[1]
-        ham2 = mc_state.ham[2]
-    else
-        ham1 = 0
-        ham2 = 0
-    end
-    write(savefile, "E,E2: $ham1 $ham2 \n")
-    if typeof(mc_state.config.bc) == SphericalBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(sqrt(mc_state.config.bc.radius2)) \n")
-    elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
-        write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
-    end
-    write(savefile,"configuration \n")
-    for row in mc_state.config.pos
-        write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
-    end
-end
+#     if length(mc_state.ham) > 2
+#         ham1 = sum(mc_state.ham)
+#         ham2 = sum( mc_state.ham .* mc_state.ham)
+#     elseif length(mc_state.ham) == 2
+#         ham1 = mc_state.ham[1]
+#         ham2 = mc_state.ham[2]
+#     else
+#         ham1 = 0
+#         ham2 = 0
+#     end
+#     write(savefile, "E,E2: $ham1 $ham2 \n")
+#     if typeof(mc_state.config.bc) == SphericalBC{Float64}
+#         write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(sqrt(mc_state.config.bc.radius2)) \n")
+#     elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
+#         write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
+#     end
+#     write(savefile,"configuration \n")
+#     for row in mc_state.config.pos
+#         write(savefile,"$(row[1]) $(row[2]) $(row[3]) \n")
+#     end
+# end
 """
     save_results(results::Output, directory)
 Saves the on the fly results and histogram information for re-reading.

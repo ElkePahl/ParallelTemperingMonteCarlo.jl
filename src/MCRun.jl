@@ -74,9 +74,9 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
     if rand(1:a+v+r)<=a
         #println("d")
         indices,trial_positions = generate_displacements(mc_states,mc_params)
-        mc_states = get_energy(trial_positions,indices,mc_states,pot,ensemble)
+        mc_states = get_energy!(trial_positions,indices,mc_states,pot,ensemble)
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble,mc_states[idx],energy_vector[idx],indices[idx],trial_positions[idx],mats_new[idx],pot)
+            @inbounds acc_test!(mc_states[idx],indices[idx],trial_positions[idx],ensemble)
         end
         #println(mc_states[1].en_tot)
         #println()
@@ -84,7 +84,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
         #println("v")
         trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
         #get the new distance matrix, energy matrix and total energy for each trajectory
-        dist2_mat_new,en_mat_new,en_tot_new = get_energy(trial_configs,mc_states,pot)
+        #dist2_mat_new,en_mat_new,en_tot_new = get_energy!(trial_configs,mc_states,pot,ensemble)
         #if isnan(en_tot_new[3])==true
             #println(trial_configs[3])
             #println(dist2_mat_new[3])
