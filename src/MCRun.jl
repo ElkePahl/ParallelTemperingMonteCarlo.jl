@@ -79,22 +79,24 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
             @inbounds acc_test!(mc_states[idx],indices[idx],trial_positions[idx],ensemble)
         end
         #println(mc_states[1].en_tot)
-        #println()
+
     else
         #println("v")
-        trial_configs = generate_vchange(mc_states)   #generate_vchange gives an array of configs
-        #get the new distance matrix, energy matrix and total energy for each trajectory
-        #dist2_mat_new,en_mat_new,en_tot_new = get_energy!(trial_configs,mc_states,pot,ensemble)
-        #if isnan(en_tot_new[3])==true
-            #println(trial_configs[3])
-            #println(dist2_mat_new[3])
-        #end
+        trial_configs = generate_vchange(mc_states)   
+
+        #Untill we have implemented the ensemblevariables, this is how we have to handle the volume change.
+        #Incompatible with ELJB for the time being, 
 
         for idx in eachindex(mc_states)
-            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new[idx], en_mat_new[idx], en_tot_new[idx],pot)
+            r_cut = trial_configs[idx].bc.box_length^2/4 
+            dist2_mat_new = get_distance2_mat(trial_configs[idx])
+            new_en_vec,new_en_tot = dimer_energy_config(dist2_mat_new,mc_params.n_atoms,r_cut,pot)
+
+
+            @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new, new_en_vec,new_en_tot,pot)
         end
     end
-    #println()
+
     return mc_states
 
 
