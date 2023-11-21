@@ -46,7 +46,7 @@ function acc_test!(ensemble::NPT, mc_state, trial_config::Config, dist2_mat_new:
         #println("swap")
 
         #swap_config!(mc_state, trial_config, dist2_mat_new, en_vec_new, en_tot_new)
-        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new)
+        swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,en_tot_new)
     end   
 end
 
@@ -90,7 +90,7 @@ function mc_step!(mc_states,move_strat,mc_params,pot,ensemble)
         for idx in eachindex(mc_states)
             r_cut = trial_configs[idx].bc.box_length^2/4 
             dist2_mat_new = get_distance2_mat(trial_configs[idx])
-            new_en_vec,new_en_tot = dimer_energy_config(dist2_mat_new,mc_params.n_atoms,r_cut,pot)
+            new_en_vec,new_en_tot = dimer_energy_config(dist2_mat_new,mc_params.n_atoms,mc_states[idx].potential_variables,r_cut,pot)
 
 
             @inbounds acc_test!(ensemble, mc_states[idx], trial_configs[idx], dist2_mat_new, new_en_vec,new_en_tot,pot)

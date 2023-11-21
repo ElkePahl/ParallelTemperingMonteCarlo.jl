@@ -11,11 +11,11 @@ function swap_config!(mc_state,i_atom,trial_pos)
     swap_vars!(i_atom,mc_state.potential_variables)
     
 end
-function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new)
+function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
     mc_state.dist2_mat = dist2_mat_new
     mc_state.en_atom_vec = en_vec_new
-    mc_state.en_tot = mc_state.new_en
+    mc_state.en_tot = new_en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
 end
