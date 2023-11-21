@@ -137,7 +137,7 @@ calculates total energy of configuration
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
-function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
+function dimer_energy_config(distmat, NAtoms, potential_variables::DimerPotentialVariables,pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -152,7 +152,7 @@ function dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -377,13 +377,13 @@ calculates total energy of configuration
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
-function dimer_energy_config(distmat, tanmat, NAtoms, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
-            e_ij=dimer_energy(pot,distmat[i,j],tanmat[i,j])
+            e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
             energy_tot += e_ij
@@ -392,14 +392,14 @@ function dimer_energy_config(distmat, tanmat, NAtoms, pot::AbstractDimerPotentia
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, tanmat, NAtoms, r_cut, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
             if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tanmat[i,j])
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                 dimer_energy_vec[i] += e_ij
                 dimer_energy_vec[j] += e_ij
                 energy_tot += e_ij
@@ -674,21 +674,21 @@ Methods included for:
     - Machine Learning Potentials 
 """
 function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,pot)
 
     return en_tot,potential_variables
 end
 function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::AbstractDimerPotential)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),r_cut,pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,r_cut,pot)
 
     return en_tot,potential_variables
 end
 function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotentialB)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,potential_variables.tan_mat,length(config),pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,pot)
     return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::AbstractDimerPotentialB)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,potential_variables.tan_mat,length(config),r_cut,pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,r_cut,pot)
     return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,pot::EmbeddedAtomPotential)
