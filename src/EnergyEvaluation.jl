@@ -187,23 +187,7 @@ end
 #----------------------------------------------------------#
 #-----------------Specific Dimer Potentials----------------#
 #----------------------------------------------------------#
-"""
-    lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
-The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
-lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
-"""
-function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
-    
-    r_cut_sqrt=r_cut^0.5
-    rc3 = r_cut*r_cut_sqrt
-    e_lrc = 0.
-    for i = 1:N
-        e_lrc += pot.coeff[i] / rc3 / (2i+1)
-        rc3 *= r_cut
-    end
-    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
-    return e_lrc
-end
+
 """
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
@@ -281,6 +265,23 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
     end
     return sum1
 end 
+"""
+    lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
+The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
+lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
+"""
+function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
+    
+    r_cut_sqrt=r_cut^0.5
+    rc3 = r_cut*r_cut_sqrt
+    e_lrc = 0.
+    for i = 1:N
+        e_lrc += pot.coeff[i] / rc3 / (2i+1)
+        rc3 *= r_cut
+    end
+    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    return e_lrc
+end
 #----------------------------------------------------------#
 
 #-----------------Magnetic Dimer Potential-----------------#
