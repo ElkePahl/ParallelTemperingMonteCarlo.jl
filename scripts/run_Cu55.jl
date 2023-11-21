@@ -12,10 +12,9 @@ n_atoms = 55
 
 
 # temperature grid
-ti = 550
-tf = 900
-ti = 550
-tf = 900
+ti = 750
+tf = 1200
+
 
 n_traj = 20
 
@@ -217,7 +216,15 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #------------------------------------------------------------#
 #============================================================#
 #------------------------------------------------------------#
+evtohartree = 0.0367493
+#parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
+n = 8.482
+m = 4.692
+ϵ = evtohartree*0.0370
+a = 0.25*nmtobohr
+C = 27.561
 
+pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
 # mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
@@ -230,6 +237,6 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 # plot(temp.t_grid,results.heat_cap)
 
  data = [results.en_histogram[i] for i in 1:n_traj]
-# plot(data)
-# histplot = plot(data)
+plot(data)
+histplot = plot(data)
 # savefig(histplot,"histograms.png")

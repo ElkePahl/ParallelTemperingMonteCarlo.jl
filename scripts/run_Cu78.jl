@@ -29,7 +29,7 @@ temp = TempGrid{n_traj}(ti,tf)
 # MC simulation details
 
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 
@@ -267,7 +267,6 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 
 
 #results = Output(n_bin, max_displ_vec)
