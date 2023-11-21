@@ -16,7 +16,7 @@ export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotenti
 export PotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
 export EmbeddedAtomVariables,NNPVariables
 
-export energy_update!,set_variables,initialise_energy,get_energy!
+export energy_update!,set_variables,initialise_energy,get_energy!,dimer_energy_config
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
