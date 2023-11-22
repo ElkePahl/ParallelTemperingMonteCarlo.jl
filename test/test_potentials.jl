@@ -18,10 +18,13 @@
     bc = SphericalBC(radius=2.0)
     conf2 = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf2)
+
+    vars = set_variables(conf2,d2mat,pot1)
     @test dimer_energy_atom(2,d2mat[2,:],pot) < 0
-    en_vec,en_tot = dimer_energy_config(d2mat,3,pot)
+    en_vec,en_tot = dimer_energy_config(d2mat,3,vars,pot)
     @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
-    #@test en_vec
+    en,vars = initialise_energy(conf2,d2mat,vars,pot)
+    @test en ≈ en_tot
 end
 @testset "EmbeddedAtomTest" begin
     v1 = SVector(1., 2., 3.)
