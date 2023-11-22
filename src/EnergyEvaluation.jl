@@ -16,6 +16,10 @@ export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotenti
 export PotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
 export EmbeddedAtomVariables,NNPVariables
 
+
+export dimer_energy,dimer_energy_atom,dimer_energy_config
+#export 
+
 export energy_update!,set_variables,initialise_energy,get_energy!,dimer_energy_config
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
@@ -435,7 +439,7 @@ Struct containing the important quantities for calculating EAM (specifically Sut
     `eCam` multiplicative factor ϵCa^(m/2) for ρ 
 
 """
-struct EmbeddedAtomPotential <: AbstractDimerPotential
+struct EmbeddedAtomPotential <: AbstractPotential
     n::Float64
     m::Float64
     ean::Float64
