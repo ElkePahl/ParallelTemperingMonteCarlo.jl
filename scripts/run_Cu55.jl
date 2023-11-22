@@ -2,13 +2,7 @@ using ParallelTemperingMonteCarlo
 
 using Random,DelimitedFiles
 
-script_folder = @__DIR__ # folder where this script is located
-data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
-
-## When moving this script to a different folder it may be necessary to adjust the
-## location of the shared library "librunner.so". Uncomment and adjust the next line for this.
-# ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass.lib_path() = joinpath(@__DIR__, "../MachineLearningPotential/lib/")
-
+#cd("$(pwd())/scripts")
 #set random seed - for reproducibility
 Random.seed!(1234)
 
@@ -18,8 +12,9 @@ n_atoms = 55
 
 
 # temperature grid
-ti = 550
-tf = 900
+ti = 750
+tf = 1200
+
 
 n_traj = 20
 
@@ -169,7 +164,7 @@ angularsymmvec = []
 #-------------------------------------------#
 #-----------Including scaling data----------#
 #-------------------------------------------#
-file = open(joinpath(data_path,"scaling.data")) # full path "./data/scaling.data"
+file = open("$(pwd())/scaling.data")
 scalingvalues = readdlm(file)
 close(file)
 G_value_vec = []
@@ -189,7 +184,7 @@ end
 let n_index = 10
 
 for element in V
-    for types in T
+    for types in T 
 
         n_index += 1
 
@@ -211,7 +206,7 @@ totalsymmvec = vcat(radsymmvec,angularsymmvec)
 #--------------------------------------------------#
 num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
-file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
+file = open("weights.029.data","r+")
 weights=readdlm(file)
 close(file)
 weights = vec(weights)
@@ -221,19 +216,27 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #------------------------------------------------------------#
 #============================================================#
 #------------------------------------------------------------#
+evtohartree = 0.0367493
+#parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
+n = 8.482
+m = 4.692
+ϵ = evtohartree*0.0370
+a = 0.25*nmtobohr
+C = 27.561
 
-mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-
+pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
+# mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results));
 
 # plot(temp.t_grid,results.heat_cap)
 
- data = [results.en_histogram[i] for i in 1:n_traj]
-# plot(data)
-# histplot = plot(data)
+ #data = [results.en_histogram[i] for i in 1:n_traj]
+#plot(data)
+#histplot = plot(data)
 # savefig(histplot,"histograms.png")
