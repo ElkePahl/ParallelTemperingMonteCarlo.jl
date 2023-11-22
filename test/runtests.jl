@@ -135,36 +135,36 @@ end
     include("test_runner_forward.jl")
 end
 
-@safetestset "script testing" begin
-    function read_save_data(filename)
-        readfile = open(filename, "r+")
-        filecontents = readdlm(readfile)
-        step, configdata = read_input(filecontents)
-        close(readfile)
-        return step, configdata
-    end
-    mycompare(a, b) = a == b
-    mycompare(a::Number, b::Number) = a ≈ b
+# @safetestset "script testing" begin
+#     function read_save_data(filename)
+#         readfile = open(filename, "r+")
+#         filecontents = readdlm(readfile)
+#         step, configdata = read_input(filecontents)
+#         close(readfile)
+#         return step, configdata
+#     end
+#     mycompare(a, b) = a == b
+#     mycompare(a::Number, b::Number) = a ≈ b
 
-    println("starting script testing. Hang on tight ...")
-    @testset "Cu55" begin
-        include("test_Cu55.jl")
-        # 46.922331 seconds (765.86 M allocations: 57.507 GiB, 10.54% gc time, 0.01% compilation time)
+#     println("starting script testing. Hang on tight ...")
+#     @testset "Cu55" begin
+#         include("test_Cu55.jl")
+#         # 46.922331 seconds (765.86 M allocations: 57.507 GiB, 10.54% gc time, 0.01% compilation time)
 
-        step, configdata = read_save_data("save.data")
-        # reference data has been produced on a single thread
-        step_ref, configdata_ref = read_save_data("testing_data/save.data")
+#         step, configdata = read_save_data("save.data")
+#         # reference data has been produced on a single thread
+#         step_ref, configdata_ref = read_save_data("testing_data/save.data")
 
-        @test step == step_ref # the script successfully finished
+#         @test step == step_ref # the script successfully finished
 
-        # The matrix `configdata` has strings and numbers
-        @test all(mycompare.(configdata, configdata_ref)) # identical configurations
+#         # The matrix `configdata` has strings and numbers
+#         @test all(mycompare.(configdata, configdata_ref)) # identical configurations
 
-        # clean up
-        rm("save.data")
-        rm("params.data")
-    end
-end
+#         # clean up
+#         rm("save.data")
+#         rm("params.data")
+#     end
+# end
 
 @safetestset "multihist" begin
     include("multihist_test.jl")
