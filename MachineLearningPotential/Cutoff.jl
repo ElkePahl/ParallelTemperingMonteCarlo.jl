@@ -12,7 +12,9 @@ export cutoff_function
 
 #Beginning with basic distance funtions required throughout MLP calculations
 """
+
     dist2(a,b)
+
 squared distance of two vectors `a` `b` 
 """
 dist2(a,b) = (a-b)⋅(a-b)
