@@ -126,31 +126,10 @@ end
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
 end
 
-# @testset "Potentials" begin
-#     c = [-2.,0.,1.]
-#     pot =  ELJPotential{3}(c)
-#     @test dimer_energy(pot,1.) == -1.0
-#     c1 = [-2.,1.]
-#     pot1 = ELJPotentialEven{2}(c1)
-#     @test dimer_energy(pot1,1.) == -1.0
-#     @test dimer_energy(pot1,2.) == dimer_energy(pot,2.)
-#     c=[-1.,2.,3.,-4.,5.]
-#     pot =  ELJPotential{5}(c)
-#     @test dimer_energy(pot,1.) == sum(c)
-#     pot1 = ELJPotential(c)
-#     @test dimer_energy(pot1,1.) == sum(c)
-#     @test dimer_energy(pot,2.) == dimer_energy(pot1,2.)
-#     v1 = SVector(1., 2., 3.)
-#     v2 = SVector(2.,4.,6.)
-#     v3 = SVector(0., 1., 0.)
-#     bc = SphericalBC(radius=2.0)
-#     conf2 = Config{3}([v1,v2,v3],bc)
-#     d2mat = get_distance2_mat(conf2)
-#     @test dimer_energy_atom(2,d2mat[2,:],pot) < 0
-#     en_vec,en_tot = dimer_energy_config(d2mat,3,pot)
-#     @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
-#     #@test en_vec
-# end
+@testset "Potentials" begin 
+    include("test_potentials.jl")
+end
+
 
 @safetestset "RuNNer" begin
     include("test_runner_forward.jl")

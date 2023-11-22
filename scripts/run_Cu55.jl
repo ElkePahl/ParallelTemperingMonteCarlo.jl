@@ -226,17 +226,17 @@ C = 27.561
 
 pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
 # mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
+mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results));
 
 # plot(temp.t_grid,results.heat_cap)
 
- data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
-histplot = plot(data)
+ #data = [results.en_histogram[i] for i in 1:n_traj]
+#plot(data)
+#histplot = plot(data)
 # savefig(histplot,"histograms.png")
