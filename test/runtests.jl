@@ -15,7 +15,12 @@ using StaticArrays, LinearAlgebra
 #     p2 = Point(-1.,-1.,-1.)
 #     @test dist2(p1,p2) == 12.0
 # end
+@testset "Ensembles" begin
+    x = MoveStrategy(NVT(),10,0,1)
 
+    
+    @test length(x.movestrat) == length(x)
+end
 @testset "Config" begin
     bc = SphericalBC(radius=2.0)
     v1 = SVector(1., 2., 3.)

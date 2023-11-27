@@ -92,9 +92,7 @@ abstract type AbstractDimerPotential <: AbstractPotential end
 The struct contains only the new_dist2_vec as this doesn't explicitly require any particular special features.
 """
 mutable struct DimerPotentialVariables <: PotentialVariables
-    #new_dist2_vec::Vector
     en_atom_vec::Vector
-    #new_en::Float64
 end
 
 """
