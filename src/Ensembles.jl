@@ -1,6 +1,12 @@
 module Ensembles 
 
+using .Configurations
+
+
 export AbstractEnsemble,NVT,NPT 
+
+export EnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
+
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
 """
@@ -11,6 +17,12 @@ abstract type for ensemble:
 """
 abstract type AbstractEnsemble end
 """
+    abstract type EnsembleVariables
+
+Basic type for the struct containing mutable variables, this will sit in MCStates and be changed in the displacement steps.
+"""
+abstract type EnsembleVariables end
+"""
     NVT
 canonical ensemble
 fieldname: natoms: number of atoms   
@@ -18,6 +30,11 @@ fieldname: natoms: number of atoms
 struct NVT <: AbstractEnsemble
     n_atoms::Int
 end
+mutable struct  NVTVariables <: EnsembleVariables
+    index::Int
+    trial_move:: Vector
+end
+
 """
     NPT
 isothermal, isobaric ensemble
@@ -28,6 +45,19 @@ fieldnames:
 struct NPT <: AbstractEnsemble
     pressure::Real
     n_atoms::Int
+end
+mutable struct NPTVariables <: EnsembleVariables
+    index::Int
+    trial_move::Vector
+    trial_config::Config
+    r_cut::Real
+end
+
+function set_ensemble_variables(config, ensemble::NVT)
+    return NVTVariables(1,[0.,0.,0.])
+end
+function set_ensemble_variables(config,ensemble::NPT)
+    return NPTVariables(1,[0.,0.,0.],deepcopy(config),config.bc.box_length^2/4)
 end
 
 """

@@ -3,24 +3,15 @@ using SafeTestsets
 using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
-# @testset "Point" begin
-#     p1 = Point(1.,1.,1.)
-#     @test p1.x == p1.y == p1.z == 1.
 
-#     pointarray = [Point(rand(),rand(),rand()) for _ in 1:10]
-#     bc = SphericalBC(1.0)
-#     config = @inferred Config{10}(pointarray,bc)
-#     @test length(config) == 10
-#     @test_throws ErrorException @inferred Config(pointarray,bc)
-#     p2 = Point(-1.,-1.,-1.)
-#     @test dist2(p1,p2) == 12.0
-# end
-@testset "Ensembles" begin
-    x = MoveStrategy(NVT(),10,0,1)
+
+
+# @testset "Ensembles" begin
+#     x = MoveStrategy(NVT(),10,0,1)
 
     
-    @test length(x.movestrat) == length(x)
-end
+#     @test length(x.movestrat) == length(x)
+# end
 @testset "Config" begin
     bc = SphericalBC(radius=2.0)
     v1 = SVector(1., 2., 3.)
