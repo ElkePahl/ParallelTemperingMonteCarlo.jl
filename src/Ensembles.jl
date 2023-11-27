@@ -1,6 +1,6 @@
 module Ensembles 
 
-using .Configurations
+using ..Configurations
 
 
 export AbstractEnsemble,NVT,NPT 
