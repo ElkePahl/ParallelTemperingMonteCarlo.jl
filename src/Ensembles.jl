@@ -43,8 +43,8 @@ fieldnames:
 - pressure
 """
 struct NPT <: AbstractEnsemble
-    pressure::Real
     n_atoms::Int
+    pressure::Real
 end
 mutable struct NPTVariables <: EnsembleVariables
     index::Int
