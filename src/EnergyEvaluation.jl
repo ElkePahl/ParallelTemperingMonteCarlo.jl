@@ -9,8 +9,9 @@ using StaticArrays,LinearAlgebra#,DFTK
 
 using ..MachineLearningPotential
 using ..Configurations
+using ..Ensembles 
 
-export AbstractEnsemble,NVT,NPT
+# export AbstractEnsemble,NVT,NPT
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven
 export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
 export PotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
@@ -26,34 +27,34 @@ export energy_update!,set_variables,initialise_energy,get_energy!,dimer_energy_c
 #-------------------------------------------------------------#
 
 #--------------------------Ensembles--------------------------#
-"""
-    AbstractEnsemble
-abstract type for ensemble:
-    - NVT: canonical ensemble
-    - NPT: isothermal, isobaric
-"""
-abstract type AbstractEnsemble end
+# """
+#     AbstractEnsemble
+# abstract type for ensemble:
+#     - NVT: canonical ensemble
+#     - NPT: isothermal, isobaric
+# """
+# abstract type AbstractEnsemble end
 
-"""
-    NVT
- canonical ensemble
- fieldname: natoms: number of atoms
-"""
-struct NVT <: AbstractEnsemble
-    n_atoms::Int
-end
+# """
+#     NVT
+#  canonical ensemble
+#  fieldname: natoms: number of atoms
+# """
+# struct NVT <: AbstractEnsemble
+#     n_atoms::Int
+# end
 
-"""
-    NPT
- isothermal, isobaric ensemble
- fieldnames: 
- - natoms: number of atoms
- - pressure
-"""
-struct NPT <: AbstractEnsemble
-    n_atoms::Int
-    pressure::Real
-end
+# """
+#     NPT
+#  isothermal, isobaric ensemble
+#  fieldnames: 
+#  - natoms: number of atoms
+#  - pressure
+# """
+# struct NPT <: AbstractEnsemble
+#     n_atoms::Int
+#     pressure::Real
+# end
 
 #-------------------------------------------------------------#
 """   

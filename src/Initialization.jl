@@ -17,7 +17,7 @@ using ..MCMoves
 using ..EnergyEvaluation
 using ..Exchange
 using ..ReadSave
-
+using ..Ensembles
 
 """
     init_sim(pot ;dir=pwd())

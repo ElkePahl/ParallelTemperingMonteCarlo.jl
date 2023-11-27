@@ -10,7 +10,7 @@ module Exchange
 using ..MCStates
 using ..Configurations
 using ..EnergyEvaluation
-
+using ..Ensembles
 export metropolis_condition, exc_acceptance,exc_trajectories!
 
 export parallel_tempering_exchange!,update_max_stepsize!

@@ -11,7 +11,7 @@ using StaticArrays
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
-
+using ..Ensembles
 """
     MoveStrategy(atom_moves, vol_moves, rot_moves)
     MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)

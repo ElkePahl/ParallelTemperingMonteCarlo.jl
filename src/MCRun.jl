@@ -13,7 +13,7 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 using ..Exchange
-
+using ..Ensembles
 using ..ReadSave
 using ..MCSampling
 

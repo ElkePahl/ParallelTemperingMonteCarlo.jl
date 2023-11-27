@@ -4,6 +4,7 @@ using ..BoundaryConditions
 using ..Configurations
 using ..MachineLearningPotential
 using ..EnergyEvaluation
+using ..Ensembles
 #using ..InputParams
 
 export MCState#, NNPState

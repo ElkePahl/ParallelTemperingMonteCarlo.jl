@@ -12,7 +12,7 @@ using ..Configurations
 using ..InputParams
 using ..BoundaryConditions
 using ..EnergyEvaluation
-
+using ..Ensemble
 """
     update_energy_tot(mc_state,ensemble::NVT)
     update_energy_tot(mc_state,ensemble::NPT)
