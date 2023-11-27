@@ -3,7 +3,7 @@ module Multihistogram_NPT
 using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
-
+using ..Ensembles
 export multihistogram_NPT
 
 function temp_trajectories(temp)
