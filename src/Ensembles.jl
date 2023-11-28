@@ -69,10 +69,10 @@ defines the type of move to establish the movestrat struct. Basic types are:
 """
 abstract type MoveType end
 
-abstract type atommove <: MoveType end
+struct atommove <: MoveType end
 
-abstract type volumemove <: MoveType end
-abstract type atomswap <: MoveType end
+struct volumemove <: MoveType end
+struct atomswap <: MoveType end
 """
     struct MoveStrategy
 
@@ -85,13 +85,13 @@ end
 function MoveStrategy(ensemble,a,v,s)
     movestrat = []
     for m_index in 1:a
-        push!(movestrat,atommove)
+        push!(movestrat,atommove())
     end
     for m_index in 1:v
-        push!(movestrat,volumemove)
+        push!(movestrat,volumemove())
     end
     for m_index in 1:s
-        push!(movestrat,atomswap)
+        push!(movestrat,atomswap())
     end
 
     return MoveStrategy{a+v+s}(ensemble,movestrat)

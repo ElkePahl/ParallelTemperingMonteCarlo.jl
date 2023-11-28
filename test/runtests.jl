@@ -7,7 +7,7 @@ using StaticArrays, LinearAlgebra
 
 
 @testset "Ensembles" begin
-    x = MoveStrategy(NVT(),10,0,1)    
+    x = MoveStrategy(NVT(10),10,0,1)    
     @test length(x.movestrat) == length(x)
 end
 @testset "Config" begin
