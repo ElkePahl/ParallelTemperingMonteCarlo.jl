@@ -1,8 +1,8 @@
 module MCMoves
 
-export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
-export AbstractMove, StatMove
-export AtomMove
+#export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
+#export AbstractMove, StatMove
+#export AtomMove
 export atom_displacement,generate_displacements #, update_max_stepsize!
 export volume_change,generate_vchange
 
@@ -12,70 +12,70 @@ using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
 using ..Ensembles
-"""
-    MoveStrategy(atom_moves, vol_moves, rot_moves)
-    MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
-Type that implements move strategy containing information of frequencies of moves:
- - atom_moves:  frequency of atom moves
- - vol_moves:  frequency of volume moves
- - rot_moves:  frequency of rotation moves
-"""
-struct MoveStrategy{A,V,R}
-end 
+# """
+#     MoveStrategy(atom_moves, vol_moves, rot_moves)
+#     MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
+# Type that implements move strategy containing information of frequencies of moves:
+#  - atom_moves:  frequency of atom moves
+#  - vol_moves:  frequency of volume moves
+#  - rot_moves:  frequency of rotation moves
+# """
+# struct MoveStrategy{A,V,R}
+# end 
 
-function MoveStrategy(a,v,r)
-    return MoveStrategy{a,v,r}()
-end
+# function MoveStrategy(a,v,r)
+#     return MoveStrategy{a,v,r}()
+# end
 
-function MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
-    return MoveStrategy(atom_moves,vol_moves,rot_moves)
-end 
+# function MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
+#     return MoveStrategy(atom_moves,vol_moves,rot_moves)
+# end 
 
-"""
-    atom_move_frequency(ms::MoveStrategy{A,V,R})
-gives frequency of atom moves    
-"""
-atom_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = A 
-"""
-    vol_move_frequency(ms::MoveStrategy{A,V,R})
-gives frequency of volume moves    
-"""
-vol_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = V
-"""
-    rot_move_frequency(ms::MoveStrategy{A,V,R})
-gives frequency of rotation moves    
-"""
-rot_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = R
+# """
+#     atom_move_frequency(ms::MoveStrategy{A,V,R})
+# gives frequency of atom moves    
+# """
+# atom_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = A 
+# """
+#     vol_move_frequency(ms::MoveStrategy{A,V,R})
+# gives frequency of volume moves    
+# """
+# vol_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = V
+# """
+#     rot_move_frequency(ms::MoveStrategy{A,V,R})
+# gives frequency of rotation moves    
+# """
+# rot_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = R
 
-"""
-    AbstractMove
-abstract type for possible Monte Carlo moves
-implemented: 
-    - AtomMove
-"""
-abstract type AbstractMove end
+# """
+#     AbstractMove
+# abstract type for possible Monte Carlo moves
+# implemented: 
+#     - AtomMove
+# """
+# abstract type AbstractMove end
 
-"""
-    AtomMove
-implements type for atom move (random displacement of randomly selected atom)
-field name: frequency: number of moves per Monte Carlo cycle
-            max_displacement: max. displacement for move per temperature (updated during MC run)
-            n_update_stepsize: number of MC cycles between update of max. displacement
-            count_acc: total number of accepted atom moves
-            count_acc_adj: number of accepted moves between stepsize adjustments 
-"""
-mutable struct AtomMove{T} <: AbstractMove
-    frequency::Int
-    max_displacement::T
-    n_update_stepsize::Int
-    count_acc::Int       
-    count_acc_adj::Int 
-end
+# """
+#     AtomMove
+# implements type for atom move (random displacement of randomly selected atom)
+# field name: frequency: number of moves per Monte Carlo cycle
+#             max_displacement: max. displacement for move per temperature (updated during MC run)
+#             n_update_stepsize: number of MC cycles between update of max. displacement
+#             count_acc: total number of accepted atom moves
+#             count_acc_adj: number of accepted moves between stepsize adjustments 
+# """
+# mutable struct AtomMove{T} <: AbstractMove
+#     frequency::Int
+#     max_displacement::T
+#     n_update_stepsize::Int
+#     count_acc::Int       
+#     count_acc_adj::Int 
+# end
 
-function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_adj=0)
-    T = eltype(displ)
-    return AtomMove{T}(frequency, displ, update_stepsize, count_acc, count_acc_adj)
-end
+# function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_adj=0)
+#     T = eltype(displ)
+#     return AtomMove{T}(frequency, displ, update_stepsize, count_acc, count_acc_adj)
+# end
 
 """
     atom_displacement(pos, max_displacement, bc)
