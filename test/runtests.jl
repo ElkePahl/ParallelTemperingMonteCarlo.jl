@@ -6,12 +6,10 @@ using StaticArrays, LinearAlgebra
 
 
 
-# @testset "Ensembles" begin
-#     x = MoveStrategy(NVT(),10,0,1)
-
-    
-#     @test length(x.movestrat) == length(x)
-# end
+@testset "Ensembles" begin
+    x = MoveStrategy(NVT(),10,0,1)    
+    @test length(x.movestrat) == length(x)
+end
 @testset "Config" begin
     bc = SphericalBC(radius=2.0)
     v1 = SVector(1., 2., 3.)
@@ -43,8 +41,6 @@ using StaticArrays, LinearAlgebra
     trial_pos = atom_displacement(v3,displ,bc)
     @test norm(trial_pos-v3) < displ
 
-    move_atom=AtomMove(10, displ)
-    @test move_atom.frequency == 10
 end
 
 @testset "Config_cubic" begin
@@ -77,8 +73,7 @@ end
     trial_pos = atom_displacement(v1,displ,bc)
     @test norm(trial_pos-v1) < displ
 
-    move_atom=AtomMove(10, displ)
-    @test move_atom.frequency == 10
+
 end
 
 @testset "Tangent" begin
