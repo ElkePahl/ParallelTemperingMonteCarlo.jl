@@ -39,6 +39,7 @@ mutable struct MCState{T,N,BC}
     en_tot::T
 
     potential_variables::PotentialVariables
+    ensemble_variables::EnsembleVariables
 
     ham::Vector{T}
     max_displ::Vector{T}
@@ -50,24 +51,24 @@ mutable struct MCState{T,N,BC}
 end    
 
 function MCState(
-    temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables; 
+    temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; 
     max_displ = [0.1,0.1,1.], max_boxlength = 10., count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC}(
-        temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
+        temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_rot), copy(count_exc)
         )
 end
-function MCState(temp,beta,config::Config,pot::Ptype;
-    kwargs...) where Ptype <: AbstractPotential
+function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
+    kwargs...) where Ptype <: AbstractPotential where Etype <: EnsembleVariables
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
 
     potential_variables = set_variables(config,dist2_mat,pot)
-
+    ensemble_variables = set_ensemble_variables(config,ensemble)
     en_tot, potential_variables=initialise_energy(config,dist2_mat,potential_variables,pot)
 
-    MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables;kwargs...
+    MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables,ensemble_variables;kwargs...
     )
 
 end

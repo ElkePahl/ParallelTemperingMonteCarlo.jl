@@ -1,7 +1,7 @@
 module Ensembles 
 
 using ..Configurations
-
+using StaticArrays
 
 export AbstractEnsemble,NVT,NPT 
 
@@ -32,7 +32,7 @@ struct NVT <: AbstractEnsemble
 end
 mutable struct  NVTVariables <: EnsembleVariables
     index::Int
-    trial_move:: Vector
+    trial_move:: SVector
 end
 
 """
@@ -48,16 +48,18 @@ struct NPT <: AbstractEnsemble
 end
 mutable struct NPTVariables <: EnsembleVariables
     index::Int
-    trial_move::Vector
+    trial_move::SVector
     trial_config::Config
+    new_dist2_mat::Matrix
     r_cut::Real
+    new_r_cut::Real
 end
 
 function set_ensemble_variables(config, ensemble::NVT)
-    return NVTVariables(1,[0.,0.,0.])
+    return NVTVariables(1,SVector{3}(zeros(3)))
 end
 function set_ensemble_variables(config,ensemble::NPT)
-    return NPTVariables(1,[0.,0.,0.],deepcopy(config),config.bc.box_length^2/4)
+    return NPTVariables(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),config.bc.box_length^2/4,0.)
 end
 
 """

@@ -73,6 +73,7 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
+    state_1.ensemble_variables,state2.ensemble_variables = state_2.ensemble_variables,state_1.ensemble_variables
     state_1.potential_variables,state_2.potential_variables = state_2.potential_variables,state_1.potential_variables
     return state_1, state_2
 end 
@@ -162,38 +163,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, a, v, r; min_acc = 0.
     end
     return mc_state
 end
-# function update_max_stepsize!(mc_state::NNPState, n_update, a, v, r; min_acc = 0.4, max_acc = 0.6)
-#     #atom moves
-#     acc_rate = mc_state.count_atom[2] / (n_update * a)
-#     if acc_rate < min_acc
-#         mc_state.max_displ[1] *= 0.9
-#     elseif acc_rate > max_acc
-#         mc_state.max_displ[1] *= 1.1
-#     end
-#     mc_state.count_atom[2] = 0
-#     #volume moves
-#     if v > 0
-#         acc_rate = mc_state.count_vol[2] / (n_update * v)
-#         #println("acc rate volume = ",acc_rate)
-#         if acc_rate < min_acc
-#             mc_state.max_displ[2] *= 0.9
-#         elseif acc_rate > max_acc
-#             mc_state.max_displ[2] *= 1.1
-#         end
-#         mc_state.count_vol[2] = 0
-#     end
-#     #rotation moves
-#     if r > 0
-#         acc_rate = mc_state.count_rot[2] / (n_update * r)
-#         if acc_rate < min_acc
-#             mc_state.max_displ[3] *= 0.9
-#         elseif acc_rate > max_acc
-#             mc_state.max_displ[3] *= 1.1
-#         end
-#         mc_state.count_rot[2] = 0
-#     end
-#     return mc_state
-# end
+
 
 
 end

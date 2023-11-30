@@ -9,6 +9,15 @@ using StaticArrays, LinearAlgebra
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10),10,0,1)    
     @test length(x.movestrat) == length(x)
+
+    bc = SphericalBC(radius=2.0)
+    v1 = SVector(1., 2., 3.)
+    conf = Config{3}([v1,v1,v1],bc)
+
+    envars_nvt = set_ensemble_variables(conf,NVT(1))
+    @test typeof(envars_nvt) == NVTVariables
+    @test typeof(envars_nvt.index) == Int 
+    @test length(envars_nvt.trial_move) == 3
 end
 @testset "Config" begin
     bc = SphericalBC(radius=2.0)

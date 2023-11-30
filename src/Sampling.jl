@@ -211,7 +211,6 @@ function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en
 
     end   
 end
-
 function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_v_hist,delta_r2)
     if rem(save_index, mc_params.mc_sample) == 0
 

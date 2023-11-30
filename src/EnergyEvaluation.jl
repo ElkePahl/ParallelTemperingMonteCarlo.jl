@@ -26,35 +26,6 @@ export energy_update!,set_variables,initialise_energy,get_energy!,dimer_energy_c
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
 
-#--------------------------Ensembles--------------------------#
-# """
-#     AbstractEnsemble
-# abstract type for ensemble:
-#     - NVT: canonical ensemble
-#     - NPT: isothermal, isobaric
-# """
-# abstract type AbstractEnsemble end
-
-# """
-#     NVT
-#  canonical ensemble
-#  fieldname: natoms: number of atoms
-# """
-# struct NVT <: AbstractEnsemble
-#     n_atoms::Int
-# end
-
-# """
-#     NPT
-#  isothermal, isobaric ensemble
-#  fieldnames: 
-#  - natoms: number of atoms
-#  - pressure
-# """
-# struct NPT <: AbstractEnsemble
-#     n_atoms::Int
-#     pressure::Real
-# end
 
 #-------------------------------------------------------------#
 """   
@@ -650,21 +621,27 @@ function energy_update!(trial_pos,index,mc_state,pot::RuNNerPotential)
 end
 
 """
-    get_energy(trial_positions,indices,mc_states,pot)
-    get_energy(trial_positions,indices,mc_states,pot::RuNNerPotential)
-curry function used as the top call within each mc_step. Passes a vector of `mc_states` with updated `trial_positions` for atom at `index` where we use `pot` to calculate the new energy in the non-vectorised energy_update function. 
+    get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
+    get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
+    get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
+Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
+    atom move:
+        - NVT ensemble without r_cut
+        - NPT ensemble with r_cut
+    volume move 
+        - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
 
 """
-
-function get_energy!(trial_positions,indices,mc_states,pot,ensemble::NVT)
-    return energy_update!.(trial_positions,indices,mc_states,Ref(pot))
+function get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
+    return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
 end
-function get_energy!(trial_positions,indices,mc_states,pot,ensemble::NPT)
-    r_cut_all = [state.config.bc.box_length^2/4 for state in mc_states]
-    return energy_update!.(trial_positions,indices,mc_states,r_cut_all,Ref(pot))
+function get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
+    return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
 end
-
-
+function get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
+    mc_states.potential_variables.en_atom_vec,mc_states.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_states.ensemble_variables.new_r_cut,pot)
+    return mc_states
+end
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
 #------------------------------------------------------------#
