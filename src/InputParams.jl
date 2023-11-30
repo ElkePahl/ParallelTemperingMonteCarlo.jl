@@ -41,12 +41,15 @@ struct MCParams
     n_traj::Int
     n_atoms::Int
     n_adjust::Int
+    n_bin::Int
+    
 end 
 
-function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100)
+function MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100, n_bin = 100)
+
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
-    return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust)
+    return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust,n_bin)
 end
 
 """
