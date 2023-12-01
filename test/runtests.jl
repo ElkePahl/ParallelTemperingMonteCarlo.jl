@@ -7,7 +7,7 @@ using StaticArrays, LinearAlgebra
 
 
 @testset "Ensembles" begin
-    x = MoveStrategy(NVT(10),10,0,1)    
+    x = MoveStrategy(NVT(10))    
     @test length(x.movestrat) == length(x)
 
     bc = SphericalBC(radius=2.0)

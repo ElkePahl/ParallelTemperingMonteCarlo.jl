@@ -192,67 +192,6 @@ function ptmc_run!(mc_params::MCParams,temps::TempGrid,start_config::Config,pote
     return mc_states,results
 end
 
-# """
-#     ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results)
-
-# Main function, controlling the parallel tempering MC run.
-# Calculates number of MC steps per cycle.
-# Performs equilibration and main MC loop.
-# Energy is sampled after `mc_sample` MC cycles.
-# Step size adjustment is done after `n_adjust` MC cycles.
-# Evaluation: including calculation of inner energy, heat capacity, energy histograms;
-# saved in `results`.
-
-# The booleans control:
-# save_ham: whether or not to save every energy in a vector, or calculate averages on the fly.
-# save: whether or not to save the parameters and configurations every 1000 steps
-# restart: this controls whether to run an equilibration cycle, it additionally requires an integer restartindex which says from which cycle we have restarted the process.
-# """
-
-# #function ptmc_run!(mc_states, move_strat, mc_params, pot, ensemble, results; save::Bool=true, restart::Bool=false,save_dir = pwd())
-# function ptmc_run!(input ; restart=false,startfile="input.data",save::Bool=true,save_dir = pwd())
-
-#     #first we initialise the simulation with arguments matching the initialise function's various methods
-#     mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r = initialisation(restart,input...; startfile=startfile)
-#     #equilibration thermalises new simulaitons and sets the histograms and results
-
-#     mc_states,results,delta_en_hist,delta_r2= equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
-#     println("equilibration done")
-#     #println(results.v_max)
-#     #println(results.v_min)
-#     delta_v_hist = (results.v_max-results.v_min)/results.n_bin
-#     #println("delta_v_hist ",delta_v_hist)
-
-
-#     if save == true
-#         save_states(mc_params,mc_states,0,save_dir,move_strat,ensemble)
-#     end
-
-
-#     for i = start_counter:mc_params.mc_cycles
-
-#         @inbounds mc_cycle!(mc_states,move_strat, mc_params, pot, ensemble ,n_steps,a ,v ,r,results,save,i,save_dir,delta_en_hist,delta_v_hist,delta_r2)
-
-#         #if rem(i,10000)==0
-#             #println(i/10000)
-#         #end
-
-#     end
-
-
-
-
-#     println("MC loop done.")
-
-#     results = finalise_results(mc_states,mc_params,results)
-#     #TO DO
-#     # volume (NPT ensemble),rot moves ...
-#     # move boundary condition from config to mc_params?
-#     # rdfs
-
-#     println("done")
-#     return
-# end
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
@@ -265,9 +204,6 @@ This version is not complete. While "under the hood" is working as it should, no
     - Making the input script order-invariant by making the I/O smarter
     - Organising the keyword arguments to be more intuitive
     - Expanding the initialise functions to set the type of results we wish to collect (eg no RDF, save configs as well as checkpoints)
-
-
-
 """
 
 #---------------------------------------------------------#
