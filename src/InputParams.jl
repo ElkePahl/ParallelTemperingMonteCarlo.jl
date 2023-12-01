@@ -102,12 +102,12 @@ mutable struct Output{T}
     en_max::T
     v_min::T
     v_max::T
-    max_displ::Vector{T}
-    en_avg::Vector{T}
-    heat_cap::Vector{T}
     delta_en_hist::T
     delta_v_hist::T
     delta_r2::T
+    max_displ::Vector{T}
+    en_avg::Vector{T}
+    heat_cap::Vector{T}
     en_histogram::Vector{Vector{T}}
     ev_histogram::Vector{Matrix{T}}
     rdf::Vector{Vector{T}}
