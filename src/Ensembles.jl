@@ -25,11 +25,21 @@ abstract type EnsembleVariables end
 """
     NVT
 canonical ensemble
-fieldname: natoms: number of atoms   
+fieldname: 
+    -n_atoms: number of atoms
+    -n_atom_moves: number of atom moves; defaults to n_atoms
+    -n_swap_moves: number of atom exchanges made; defaults to 0
+   
 """
 struct NVT <: AbstractEnsemble
     n_atoms::Int
+    n_atom_moves::Int
+    n_swap_moves::Int
 end
+function NVT(n_atoms)
+    return NVT(n_atoms,n_atoms,0)
+end
+
 mutable struct  NVTVariables <: EnsembleVariables
     index::Int
     trial_move:: SVector
@@ -39,12 +49,21 @@ end
     NPT
 isothermal, isobaric ensemble
 fieldnames: 
-- natoms: number of atoms
-- pressure
+    -n_atoms: number of atoms
+    -n_atom_moves: number of atom moves; defaults to n_atoms
+    -n_volume_moves: number of volume moves; defaults to 1
+    -n_swap_moves: number of atom exchanges made; defaults to 0
+    -pressure: the fixed pressure of the system
 """
 struct NPT <: AbstractEnsemble
     n_atoms::Int
+    n_atom_moves::Int
+    n_volume_moves::Int
+    n_atom_swaps::Int
     pressure::Real
+end
+function NPT(n_atoms,pressure)
+    return NPT(n_atoms,n_atoms,1,0,pressure)
 end
 mutable struct NPTVariables <: EnsembleVariables
     index::Int
@@ -84,21 +103,31 @@ struct MoveStrategy{N}
     ensemble::AbstractEnsemble
     movestrat::Vector
 end
-function MoveStrategy(ensemble,a,v,s)
+function MoveStrategy(ensemble::NPT)
     movestrat = []
-    for m_index in 1:a
+    for m_index in 1:ensemble.n_atom_moves
         push!(movestrat,atommove())
     end
-    for m_index in 1:v
+    for m_index in 1:ensemble.n_volume_moves
         push!(movestrat,volumemove())
     end
-    for m_index in 1:s
+    for m_index in 1:ensemble.n_atom_swaps
         push!(movestrat,atomswap())
     end
 
-    return MoveStrategy{a+v+s}(ensemble,movestrat)
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves}(ensemble,movestrat)
 end
+function MoveStrategy(ensemble::NVT)
+    movestrat = []
+    for m_index in 1:ensemble.n_atom_moves
+        push!(movestrat,atommove())
+    end
+    for m_index in 1:ensemble.n_atom_swaps
+        push!(movestrat,atomswap())
+    end
 
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps}(ensemble,movestrat)
+end
 Base.length(::MoveStrategy{N}) where N = N
 
 

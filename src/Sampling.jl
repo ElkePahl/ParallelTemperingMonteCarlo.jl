@@ -94,8 +94,8 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     results.en_min = e_bounds[1] #- abs(0.02*e_bounds[1])
     results.en_max = e_bounds[2] #+ abs(0.02*e_bounds[2])
 
-    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    delta_r2 = 4*bc.radius2/results.n_bin/5 
+    results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+    results.delta_r2 = 4*bc.radius2/results.n_bin/5 
 
     for i_traj in 1:mc_params.n_traj       
 
@@ -103,7 +103,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
         push!(results.rdf,zeros(results.n_bin*5))
 
     end
-    return delta_en_hist,delta_r2
+    return results
 end
 
 
@@ -123,9 +123,9 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
     println(results.v_min)
     println(results.v_max)
 
-    delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    #delta_v_hist = (results.v_max - results.v_min) / (results.n_bin - 1)
-    delta_r2 =  (3/4*bc.box_length^2*1.1)/results.n_bin/5
+    results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+
+    results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
 
     for i_traj in 1:mc_params.n_traj       
 
@@ -134,7 +134,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
         push!(results.rdf,zeros(results.n_bin*5))
 
     end
-    return delta_en_hist,delta_r2
+    return results
 end
 
 """
@@ -183,41 +183,44 @@ function update_rdf!(mc_states,results,delta_r2)
     
 end
 """
-    sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist,delta_r2)
-    sampling_step!(mc_params,mc_states,save_index,results,delta_en_hist)
+    sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results)
+    sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
 
 Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
+
+N.B. we have now included the delta_en, delta_v and delta_r2 values in the results struct to allow for more general methods such as this.  
+
 Second method does not perform the rdf calculation. This is designed to improve the speed of sampling where the rdf is not required.
 
 
 TO IMPLEMENT:
 This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
 """
-function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_r2)
+function sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results)
     if rem(save_index, mc_params.mc_sample) == 0
 
         update_energy_tot(mc_states,ensemble)
         
-        update_histograms!(mc_states,results,delta_en_hist)
-        update_rdf!(mc_states,results,delta_r2)
+        update_histograms!(mc_states,results,results.delta_en_hist)
+        update_rdf!(mc_states,results,results.delta_r2)
     end 
 end
-function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist)
+# function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
+#     if rem(save_index, mc_params.mc_sample) == 0
+
+#         update_energy_tot(mc_states,ensemble)
+        
+#         update_histograms!(mc_states,results,delta_en_hist)
+
+#     end   
+# end
+function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
     if rem(save_index, mc_params.mc_sample) == 0
 
         update_energy_tot(mc_states,ensemble)
         
-        update_histograms!(mc_states,results,delta_en_hist)
-
-    end   
-end
-function sampling_step!(mc_params,mc_states,ensemble,save_index,results,delta_en_hist,delta_v_hist,delta_r2)
-    if rem(save_index, mc_params.mc_sample) == 0
-
-        update_energy_tot(mc_states,ensemble)
-        
-        update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
-        update_rdf!(mc_states,results,delta_r2)
+        update_histograms!(mc_states,results,results.delta_en_hist,results.delta_v_hist)
+        update_rdf!(mc_states,results,results.delta_r2)
     end 
 end
 

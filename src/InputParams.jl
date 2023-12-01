@@ -105,6 +105,9 @@ mutable struct Output{T}
     max_displ::Vector{T}
     en_avg::Vector{T}
     heat_cap::Vector{T}
+    delta_en_hist::T
+    delta_v_hist::T
+    delta_r2::T
     en_histogram::Vector{Vector{T}}
     ev_histogram::Vector{Matrix{T}}
     rdf::Vector{Vector{T}}
@@ -119,6 +122,9 @@ function Output{T}(n_bin; en_min = 0) where T
     en_max = 0.
     v_min = 0.
     v_max = 0.
+    delta_en_hist=0.
+    delta_v_hist=0.
+    delta_r2=0.
     max_displ = T[]
     en_avg = T[]
     heat_cap = T[]
@@ -129,7 +135,7 @@ function Output{T}(n_bin; en_min = 0) where T
     count_stat_vol = T[]
     count_stat_rot = T[]
     count_stat_exc = T[]
-    return Output{T}(n_bin, en_min, en_max, v_min, v_max, max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
+    return Output{T}(n_bin, en_min, en_max, v_min, v_max,delta_en_hist,delta_v_hist,delta_r2 , max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
 
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
