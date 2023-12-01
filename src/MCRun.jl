@@ -37,7 +37,7 @@ end
 basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES
 """
 function mc_move!(mc_state,move_strat,pot,ensemble)
-    #moveindex = rand(1:length(move_strat))
+
     mc_state.ensemble_variables.index = rand(1:length(move_strat))
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index])
@@ -45,7 +45,6 @@ function mc_move!(mc_state,move_strat,pot,ensemble)
     mc_state = get_energy!(mc_state,pot,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
 
     acc_test!(mc_state,ensemble,movetype)
-
 end
 """
     mc_step!(mc_states,move_strat,pot,ensemble)
