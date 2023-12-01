@@ -90,8 +90,6 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #             save_results(results,save_dir)
 #         end
 #     end
-
-
     return mc_states 
 end
 """
@@ -117,8 +115,6 @@ end
 """
     equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
 Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles defined in `mc_params` are completed without updating the results before initialising the `results` struct according to the maximum and minimum energy determined throughout the equilibration cycle. 
-
-
 """
 function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
     #set initial hamiltonian values and ebounds
@@ -147,21 +143,14 @@ end
 while initialisation sets mc_states,params etc we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the equilibration_cycle! function that optionally removes the thermalisation from restart.
 
     N.B. Restart is currently non-functional, do not try use it
-
-
 """
 function equilibration(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,restart)
     if restart == true
         println("Restart not implemented yet")
-        # delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-        # delta_r2 = 4*mc_states[1].config.bc.radius2/results.n_bin/5
-
     else
         return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
 
     end
-
-    # return mc_states,results
 end
 """
     ptmc_run!(mc_params::MCParams,temps::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
@@ -196,7 +185,6 @@ end
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
 """
-
 -- TO IMPLEMENT --
 
 This version is not complete. While "under the hood" is working as it should, not a lot of effort has been put into:
@@ -206,5 +194,4 @@ This version is not complete. While "under the hood" is working as it should, no
     - Expanding the initialise functions to set the type of results we wish to collect (eg no RDF, save configs as well as checkpoints)
 """
 
-#---------------------------------------------------------#
 end

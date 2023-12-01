@@ -34,7 +34,7 @@ fieldname:
 struct NVT <: AbstractEnsemble
     n_atoms::Int
     n_atom_moves::Int
-    n_swap_moves::Int
+    n_atom_swaps::Int
 end
 function NVT(n_atoms)
     return NVT(n_atoms,n_atoms,0)
