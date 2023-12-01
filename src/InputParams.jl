@@ -137,11 +137,11 @@ function Output{T}(n_bin; en_min = 0) where T
     count_stat_exc = T[]
     return Output{T}(n_bin, en_min, en_max, v_min, v_max,delta_en_hist,delta_v_hist,delta_r2 , max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
-function Output{T}(n_bin, en_min, en_max, v_min, v_max, max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
+function Output{T}(n_bin, en_min, en_max, v_min, v_max, max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc) where T
     delta_en_hist = (en_max-en_min)/(n_bin-1)
     delta_v_hist = (v_max - v_min)/n_bin
     delta_r2 = 0.
-    returnOutput{T}(n_bin, en_min, en_max, v_min, v_max,delta_en_hist,delta_v_hist,delta_r2 , max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
+    return Output{T}(n_bin, en_min, en_max, v_min, v_max,delta_en_hist,delta_v_hist,delta_r2 , max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
 #struct DisplacementParamsAtomMove{T} <: AbstractDisplacementParams{T}
 #    max_displacement::Vector{T} #maximum atom displacement in Angstrom
