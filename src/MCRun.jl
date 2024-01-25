@@ -164,7 +164,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     mc_states,move_strategy,results,n_steps = initialisation(mc_params,temp,start_config,potential,ensemble)
     println("params set")
     #Equilibration 
-    mc_states,results = equilibration(mc_states,move_strat,mc_params,potential,ensemble,n_steps,results,restart)
+    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
     println("equilibration complete")
 
     #main loop 
