@@ -82,5 +82,5 @@ start_config = Config(pos_ne13, bc_ne13)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 
-@time ptmc_run!(mc_params,temps,start_config,pot)
+@time ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
