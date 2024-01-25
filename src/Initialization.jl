@@ -51,7 +51,7 @@ function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,
 
     results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
 
-    return mc_states,move_strategy,results,start_counter,n_steps
+    return mc_states,move_strategy,results,n_steps
 end
 
 
