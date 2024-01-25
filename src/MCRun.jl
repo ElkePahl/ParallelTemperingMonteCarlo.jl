@@ -107,7 +107,6 @@ end
 function reset_counters(state)
     state.count_atom = [0,0]
     state.count_vol = [0,0]
-    state.count_rot = [0,0]
     state.count_exc = [0,0]
 end
 
