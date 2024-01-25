@@ -118,8 +118,8 @@ Function to thermalise a set of `mc_states` ensuring that the number of equilibr
 function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
     #set initial hamiltonian values and ebounds
     for state in mc_states
-        push!(mc_state.ham, 0)
-        push!(mc_state.ham, 0)
+        push!(state.ham, 0)
+        push!(state.ham, 0)
     end
     ebounds = [100. , -100.]
     #begin equilibration
