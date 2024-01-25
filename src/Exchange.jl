@@ -95,7 +95,7 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
-    state_1.ensemble_variables,state2.ensemble_variables = state_2.ensemble_variables,state_1.ensemble_variables
+    state_1.ensemble_variables,state_2.ensemble_variables = state_2.ensemble_variables,state_1.ensemble_variables
     state_1.potential_variables,state_2.potential_variables = state_2.potential_variables,state_1.potential_variables
     return state_1, state_2
 end 
