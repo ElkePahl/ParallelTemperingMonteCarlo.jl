@@ -44,7 +44,7 @@ function mc_move!(mc_state,move_strat,pot,ensemble)
 
     mc_state = get_energy!(mc_state,pot,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
 
-    acc_test!(mc_state,ensemble,movetype)
+    acc_test!(mc_state,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
 end
 """
     mc_step!(mc_states,move_strat,pot,ensemble)
