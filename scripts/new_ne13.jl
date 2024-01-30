@@ -14,15 +14,15 @@ Random.seed!(1234)
 n_atoms = 13
 
 # temperature grid
-ti = 9.
+ti = 4.
 tf = 16.
-n_traj = 32
+n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 1000000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -52,7 +52,7 @@ move_strat = MoveStrategy(ensemble)
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
 #-------------------------------------------------------------#
-bc_ne13 = SphericalBC(radius=5.32)   #5.32 Angstrom
+bc_ne13 = SphericalBC(radius=7.)   #5.32 Angstrom
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
 pos_ne13 = [[2.64403563493521, 0.7912322223900569, -0.565831477176502],
@@ -71,8 +71,8 @@ pos_ne13 = [[2.64403563493521, 0.7912322223900569, -0.565831477176502],
 
 
 #convert to Bohr
-#AtoBohr = 1.8897259886
-#pos_ne13 = pos_ne13 * AtoBohr
+AtoBohr = 1.8897259886
+pos_ne13 = pos_ne13 * AtoBohr
 
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -82,5 +82,6 @@ start_config = Config(pos_ne13, bc_ne13)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 
-@time ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+@time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
+## 
