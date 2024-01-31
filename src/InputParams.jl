@@ -89,6 +89,12 @@ TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 Collects output of MC calculation:
 - `n_bin`: number of energy bins for histograms
 - `en_min`: minimum energy found during calculation
+- `en_max` : maximum energy found during calculation
+- `v_min` : min volume
+- `v_max` : max volume
+- `delta_en_hist` : the step size associated with the energy histogram 
+- `delta_v_hist` : step size associated with volume histogram
+- `delta_r2` : step size associated with the rdf histogram
 - `max_displ`: final maximum displacements
 - `en_avg`: inner energy U(T) (as average over sampled energies)
 - `heat_cap`: heat capacities C(T) 

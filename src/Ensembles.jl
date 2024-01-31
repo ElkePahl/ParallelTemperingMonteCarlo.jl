@@ -39,7 +39,13 @@ end
 function NVT(n_atoms)
     return NVT(n_atoms,n_atoms,0)
 end
-
+"""
+    NVTVariables <: EnsembleVariables 
+Fields for the NVT ensemble include
+        - Index 
+        - trial_move 
+    When trialing a new configuration we select an atom at `index` to move to `trial_move`
+"""
 mutable struct  NVTVariables <: EnsembleVariables
     index::Int
     trial_move:: SVector
@@ -65,6 +71,17 @@ end
 function NPT(n_atoms,pressure)
     return NPT(n_atoms,n_atoms,1,0,pressure)
 end
+"""
+    NPTVariables <: EnsembleVariables 
+Fields for the NPT ensemble include
+        - Index 
+        - trial_move 
+        - trial_config
+        - new_dist2_mat
+        - r_cut 
+        - new_r_cut
+    When trialing a new configuration we select an atom at `index` to move to `trial_move`, the index can be over n_atoms in which case we trial a scaled `new_config` with a `new_r_cut` having a `new_dist2_mat`
+"""
 mutable struct NPTVariables <: EnsembleVariables
     index::Int
     trial_move::SVector
@@ -96,7 +113,9 @@ struct volumemove <: MoveType end
 struct atomswap <: MoveType end
 """
     struct MoveStrategy
-
+        - MoveStrategy(ensemble::NPT)
+        - MoveStrategy(ensemble::NVT)
+A struct containing an ensemble and a movestrategy vector. This vector has movetypes in the appropriate ratio so that when we generate a trial index, we select the appropriate move type. 
 """
 
 struct MoveStrategy{N} 

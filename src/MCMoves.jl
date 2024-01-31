@@ -53,7 +53,7 @@ function atom_displacement(mc_state)
 end 
 
 """
-    function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
+    volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
 returns the trial configuration as a struct. 
 """

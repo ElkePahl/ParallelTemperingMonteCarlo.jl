@@ -1,6 +1,22 @@
 """
     module EnergyEvaluation
-Rewrite of the original energyevaluation module to standardise and clean the functions up. 
+Structs and functions relating to the calculation of energy. Includes both low and high level functions from individual PES calculations to state-specific functions. The structure is as follows:
+    Define abstract potential and potential_variables
+    -Define PES functions
+        -  DimerPotential 
+        -  ELJB 
+        -  Embedded Atom Model 
+        -  Machine Learning Potentials 
+    -EnergyUpdate function
+        Calculates a new energy based on a trialpos for each PES type 
+    -GetEnergy function 
+            sorts energy calculations into different movetypes and ensembles.
+    - InitialiseEnergy function 
+            Calculates potentialvariables and total energy from a new config to be used when initialising MCStates 
+    -SetVariables function 
+            Initialises the potential variables, aka creates a blank version of the struct for each type of PES
+            
+
 """
 
 module EnergyEvaluation 
@@ -105,7 +121,7 @@ function dimer_energy_atom(i, d2vec, r_cut, pot::AbstractDimerPotential)
 end
 """
     dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
-
+    dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, pot::AbstractDimerPotential)
 Stores the total of dimer energies of one atom with all other atoms in vector and
 calculates total energy of configuration
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
@@ -315,7 +331,8 @@ function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
 end 
 
 """
-    dimer_energy_atom(i, pos, d2vec, pot<:AbstractDimerPotentialB)
+    dimer_energy_atom(i, d2vec, tanvec,pot::AbstractDimerPotentialB)
+    dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
 Sums the dimer energies for atom `i` with all other atoms
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
 see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
@@ -346,9 +363,11 @@ function dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB
     return sum1
 end
 """
-    dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, pot::AbstractDimerPotentialB)
+
 Stores the total of dimer energies of one atom with all other atoms in vector and
-calculates total energy of configuration
+calculates total energy of a configuration
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
@@ -528,8 +547,8 @@ function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
     return nnp_state
 end
 """
-    calc_new_runner_energy!(potential_variables,pot)
-function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
+    calc_new_runner_energy!(mc_state,pot)
+function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `mc_state.potential_variables` struct.
 """
 function calc_new_runner_energy!(mc_state,pot)
     mc_state.potential_variables.new_en_atom = forward_pass(mc_state.potential_variables.new_g_matrix,length(mc_state.potential_variables.en_atom_vec),pot.nnp)
@@ -542,11 +561,13 @@ end
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
 """
-    energy_update(trial_pos,index,mc_state,pot::AbstractDimerPotential)
+    energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotential)
     energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotentialB)
     energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
     energy_update!(trial_pos,index,state,pot::RuNNerPotential)
 Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` contained in `mc_state`. Using `pot` the potential. 
+
+    Has additional methods including `r_cut` where appropriate for use with periodic boundary conditions
     
     This function is designed as a curry function. The generic get_energy function operates on a __vector__ of states, this function takes each state and the set potential and calls the potential specific energy_update function.
 
@@ -651,7 +672,8 @@ end
 
 Initialise energy is used during the MCState call to set the starting energy of a `config` according to the potential as `pot` and the configurational variables `potential_variables`. Written with general input means the top-level is type-invariant. 
 Methods included for:
-    - Dimer Potential 
+    - Dimer Potential with and without magnetic field and with and without PBC 
+    - EmbeddedAtomModel 
     - Machine Learning Potentials 
 """
 function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
@@ -685,13 +707,11 @@ end
 
 """
     set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
+    set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPotentialB)
     set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
     set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
 
-initialises the PotentialVariable struct for the various potentials. 
-    -   Method one functions for abstract dimer potentials such as the ELJ
-    -   Embeded Atom Potential involving the dimer and density components
-    -   The RuNNer Potential involving the cutoff and symmetry matrix.
+initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the MCState function as this must be type-invariant with respect to the potential. 
     
 """
 function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)

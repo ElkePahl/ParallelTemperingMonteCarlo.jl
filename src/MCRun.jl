@@ -34,7 +34,11 @@ function acc_test!(mc_state,ensemble,movetype)
 end
 """
     mc_move!(mc_state,move_strat,pot,ensemble)
-basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES
+basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES.
+     calculates an index for the move
+     generates either a volume or atom move depending on movestrat[index]
+     calculates energy based on the pot and new move 
+     tests acc and swaps if relevant 
 """
 function mc_move!(mc_state,move_strat,pot,ensemble)
 
@@ -103,7 +107,10 @@ function check_e_bounds(energy,ebounds)
     end
     return ebounds
 end
-
+"""
+    reset_counters(state)
+        after equilibration this resets the count stats to zero
+"""
 function reset_counters(state)
     state.count_atom = [0,0]
     state.count_vol = [0,0]
@@ -185,8 +192,7 @@ end
 -- TO IMPLEMENT --
 
 This version is not complete. While "under the hood" is working as it should, not a lot of effort has been put into:
-    - organising the dependencies, properly categorising these is a job for the future.
-    - Making the input script order-invariant by making the I/O smarter
+
     - Organising the keyword arguments to be more intuitive
     - Expanding the initialise functions to set the type of results we wish to collect (eg no RDF, save configs as well as checkpoints)
 """

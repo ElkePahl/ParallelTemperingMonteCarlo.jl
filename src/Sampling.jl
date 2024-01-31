@@ -205,15 +205,6 @@ function sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results)
         update_rdf!(mc_states,results,results.delta_r2)
     end 
 end
-# function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
-#     if rem(save_index, mc_params.mc_sample) == 0
-
-#         update_energy_tot(mc_states,ensemble)
-        
-#         update_histograms!(mc_states,results,delta_en_hist)
-
-#     end   
-# end
 function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
     if rem(save_index, mc_params.mc_sample) == 0
 

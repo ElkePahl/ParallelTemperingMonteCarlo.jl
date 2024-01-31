@@ -2,12 +2,12 @@
 
 """
     swap_config!(mc_state,movetype::atommove)
-    swap_config!(mc_state,i_atom,trial_pos)
     swap_config!(mc_state,movetype::volumemove)
+    swap_config!(mc_state,i_atom,trial_pos)
 Basic function for replacing the existing mc_state values with the updated values assuming the metropolis condition is met. 
     - First method applies where the `movetype` is an atommove and distributes the new ensemblevariables such as `i_atom` and `trial_pos` into the second method, which actually swaps the variables. 
     - Second method applies where `movetype` is a volumemove, this splits the ensemble variables into the swap_config_v! function to replace the `trial_config` the `new_dist2_mat` the `en_vec_new` and the `new_en_tot` into their appropriate place in the mc_state struct
-
+    - Final method is called by the first, where the actual swapping occurs.
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
 function swap_config!(mc_state,movetype::atommove)
