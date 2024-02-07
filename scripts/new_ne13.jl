@@ -1,5 +1,6 @@
-using ParallelTemperingMonteCarlo
-using Random
+using ParallelTemperingMonteCarlo#feature/ensemble_variables
+
+using Random, Profile
 
 #demonstration of the new verison of the new code   
 
@@ -22,7 +23,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -82,6 +83,6 @@ start_config = Config(pos_ne13, bc_ne13)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 
-@time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+@profview states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 
