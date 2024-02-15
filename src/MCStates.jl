@@ -61,7 +61,7 @@ function MCState(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_exc)
         )
 end
-function MCState(temp,beta,config::Config{N,BC,T},ensemble::Etype,pot::Ptype;
+function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
     kwargs...) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
@@ -70,7 +70,7 @@ function MCState(temp,beta,config::Config{N,BC,T},ensemble::Etype,pot::Ptype;
     ensemble_variables = set_ensemble_variables(config,ensemble)
     en_tot, potential_variables=initialise_energy(config,dist2_mat,potential_variables,pot)
 
-    MCState{T,N,BC}(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables,ensemble_variables;kwargs...
+    MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables,ensemble_variables;kwargs...
     )
 
 end
