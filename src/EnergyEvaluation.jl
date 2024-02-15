@@ -660,8 +660,8 @@ function get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
     return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
 end
 function get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
-    mc_states.potential_variables.en_atom_vec,mc_states.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_states.ensemble_variables.new_r_cut,pot)
-    return mc_states
+    mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
+    return mc_state
 end
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
