@@ -31,7 +31,7 @@ Fieldnames:
 
 - `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
 """
-mutable struct MCState{T,N,BC}
+mutable struct MCState{T,N,BC,PVType,EVType}
     temp::T
     beta::T
     config::Config{N,BC,T}
@@ -41,8 +41,8 @@ mutable struct MCState{T,N,BC}
     new_en::T
     en_tot::T
 
-    potential_variables::PotentialVariables
-    ensemble_variables::EnsembleVariables
+    potential_variables::PVType
+    ensemble_variables::EVType
 
     ham::Vector{T}
     max_displ::Vector{T}
@@ -57,11 +57,11 @@ function MCState(
     max_displ = [0.1,0.1,1.], max_boxlength = 10., count_atom = [0,0], count_vol = [0,0], count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
-    MCState{T,N,BC}(
+    MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_exc)
         )
 end
-function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
+function MCState(temp,beta,config::Config{N,BC,T},ensemble::Etype,pot::Ptype;
     kwargs...) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
@@ -70,7 +70,7 @@ function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
     ensemble_variables = set_ensemble_variables(config,ensemble)
     en_tot, potential_variables=initialise_energy(config,dist2_mat,potential_variables,pot)
 
-    MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables,ensemble_variables;kwargs...
+    MCState{T,N,BC}(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables,ensemble_variables;kwargs...
     )
 
 end
