@@ -20,7 +20,7 @@ using StaticArrays, LinearAlgebra
     @test length(envars_nvt.trial_move) == 3
 
     y = MoveStrategy(NPT(5,101325))
-    @testlength(y.movestrat) == length(y)
+    @test length(y.movestrat) == length(y)
     conf2 = Config{3}([v1,v1,v1] , PeriodicBC(8.7674))
     envars_npt = set_ensemble_variables(conf2,NPT(3,101325))
 
