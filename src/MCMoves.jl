@@ -26,7 +26,7 @@ Implemented for:
 
 The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
+function displace!(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     count = 0
@@ -38,7 +38,7 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     end
     return trial_pos
 end
-function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+function displace!(pos, max_displacement, bc::PeriodicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
@@ -46,7 +46,7 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
 end
 function atom_displacement(mc_state)
 
-    mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+    mc_state.ensemble_variables.trial_move = displace!(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
 
 
     return mc_state
