@@ -8,7 +8,7 @@
     @test dimer_energy(pot1,2.) == dimer_energy(pot,2.)
     c=[-1.,2.,3.,-4.,5.]
     pot =  ELJPotential{5}(c)
-    @test dimer_energy(pot,1.) == sum(c)
+    @test dimer_energy(pot1,1.) == sum(c)
 
     @test dimer_energy(pot1,1.) == sum(c)
     @test dimer_energy(pot,2.) == dimer_energy(pot1,2.)
