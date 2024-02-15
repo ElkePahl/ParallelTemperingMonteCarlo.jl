@@ -19,12 +19,17 @@
     conf2 = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf2)
 
-    vars = set_variables(conf2,d2mat,pot1)
+    vars = set_variables(conf2,d2mat,pot)
     @test dimer_energy_atom(2,d2mat[2,:],pot) < 0
     en_vec,en_tot = dimer_energy_config(d2mat,3,vars,pot)
     @test en_vec[2] == dimer_energy_atom(2,d2mat[2,:],pot)
     en,vars = initialise_energy(conf2,d2mat,vars,pot)
     @test en ≈ en_tot
+
+    en_vec_pbc,en_tot_pbc = dimer_energy_config(d2mat,3,vars,4.,pot1)
+    @test en_vec_pbc[2] == dimer_energy_atom(2,d2mat[2,:],4.,pot)
+    en_pbc,vars_pbc = initialise_energy(conf2,d2mat,vars,4.,pot1)
+    @test en_pbc == en_tot_pbc
 end
 @testset "EmbeddedAtomTest" begin
     v1 = SVector(1., 2., 3.)

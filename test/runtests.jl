@@ -18,7 +18,18 @@ using StaticArrays, LinearAlgebra
     @test typeof(envars_nvt) == NVTVariables
     @test typeof(envars_nvt.index) == Int 
     @test length(envars_nvt.trial_move) == 3
+
+    y = MoveStrategy(NPT(5,101325))
+    @testlength(y.movestrat) == length(y)
+    conf2 = Config{3}([v1,v1,v1] , PeriodicBC(8.7674))
+    envars_npt = set_ensemble_variables(conf2,NPT(3,101325))
+
+    @test envars_npt.r_cut == conf2.bc.box_length^2/4
+    @test size(envars_npt.new_dist2_mat) ==  (3,3)
+
+
 end
+
 @testset "Config" begin
     bc = SphericalBC(radius=2.0)
     v1 = SVector(1., 2., 3.)

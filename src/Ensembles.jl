@@ -147,6 +147,7 @@ function MoveStrategy(ensemble::NVT)
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps}(ensemble,movestrat)
 end
+
 Base.length(::MoveStrategy{N}) where N = N
 
 
