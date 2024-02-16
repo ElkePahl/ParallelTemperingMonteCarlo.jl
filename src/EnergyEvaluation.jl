@@ -653,13 +653,13 @@ Curry function designed to separate energy calculations into their respective en
         - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
 
 """
-function get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
+function get_energy!(mc_state::MCState,pot::PType,ensemble::NVT,movetype::atommove) where PType <: AbstractPotential
     return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
 end
-function get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
+function get_energy!(mc_state::MCState,pot::PType,ensemble::NPT,movetype::atommove) where PType <: AbstractPotential
     return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
 end
-function get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
+function get_energy!(mc_state::MCState,pot::PType,ensemble::NPT,movetype::volumemove) where PType <: AbstractPotential
     mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
     return mc_state
 end
