@@ -714,30 +714,28 @@ end
 initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the MCState function as this must be type-invariant with respect to the potential. 
     
 """
-function set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
-    return DimerPotentialVariables(zeros(length(config)))
+function set_variables(config::Config{N,BC,T},dist_2_mat,pot::AbstractDimerPotential) where {N,BC,T}
+    return DimerPotentialVariables(zeros(N))
 end
-function set_variables(config::Config,dist2_matrix::Matrix,pot::AbstractDimerPotentialB)
-    n_atoms = length(config)
+function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::AbstractDimerPotentialB) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
-    return ELJPotentialBVariables(zeros(n_atoms),tan_matrix,zeros(n_atoms))
+    return ELJPotentialBVariables(zeros(N),tan_matrix,zeros(N))
 end
-function set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
-    n_atoms = length(config)
-    componentvec = zeros(n_atoms,2)
-    for row_index in 1:n_atoms
+function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPotential) where {N,BC,T}
+    
+    componentvec = zeros(N,2)
+    for row_index in 1:N
         componentvec[row_index,:] = calc_components(componentvec[row_index,:],dist2_matrix[row_index,:],pot.n,pot.m)
     end
-    return EmbeddedAtomVariables(componentvec,zeros(n_atoms,2))
+    return EmbeddedAtomVariables(componentvec,zeros(N,2))
 end
-function set_variables(config,dist2_mat,pot::RuNNerPotential)
+function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential) where {N,BC,T}
     
-    n_atoms = length(config)
     f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
     g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
     
-    return NNPVariables(zeros(n_atoms) ,zeros(n_atoms),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(n_atoms))
+    return NNPVariables(zeros(N) ,zeros(N),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(N))
 end
 
 end
