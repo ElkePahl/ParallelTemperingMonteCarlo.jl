@@ -44,6 +44,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove
 end
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
+    
     return mc_state
 
 end
@@ -56,7 +57,7 @@ end
     acc_test!(mc_state,ensemble,movetype)
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
 """
-function acc_test!(mc_state,ensemble,movetype)
+function acc_test!(mc_state::MCState,ensemble::Etype,movetype::Mtype) where Etype <: AbstractEnsemble where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
     end
@@ -206,6 +207,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i)
     end
     println("MC loop done.")
+    println("testing revise")
     #Finalisation of results
     results = finalise_results(mc_states,mc_params,results)
     println("done")
