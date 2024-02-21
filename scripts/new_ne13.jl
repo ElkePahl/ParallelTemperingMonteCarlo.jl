@@ -1,5 +1,5 @@
-using ParallelTemperingMonteCarlo#feature/ensemble_variables
-
+using Revise
+using ParallelTemperingMonteCarlo
 using Random, Profile
 
 #demonstration of the new verison of the new code   

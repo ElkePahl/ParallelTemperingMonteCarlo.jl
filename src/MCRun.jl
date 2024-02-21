@@ -44,7 +44,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove
 end
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
-    
+
     return mc_state
 
 end
@@ -207,7 +207,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i)
     end
     println("MC loop done.")
-    println("testing revise")
+    println("testing revise pt2")
     #Finalisation of results
     results = finalise_results(mc_states,mc_params,results)
     println("done")

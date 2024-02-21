@@ -10,10 +10,10 @@ Basic function for replacing the existing mc_state values with the updated value
     - Final method is called by the first, where the actual swapping occurs.
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
-function swap_config!(mc_state::MCState,movetype::atommove)
+function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
     swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
 end
-function swap_config!(mc_state::MCState,movetype::volumemove)
+function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
     swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
 end
 function swap_atom_config!(mc_state::MCState,i_atom,trial_pos)
