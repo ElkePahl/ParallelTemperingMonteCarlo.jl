@@ -10,13 +10,13 @@ Basic function for replacing the existing mc_state values with the updated value
     - Final method is called by the first, where the actual swapping occurs.
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
-function swap_config!(mc_state,movetype::atommove)
+function swap_config!(mc_state::MCState,movetype::atommove)
     swap_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
 end
-function swap_config!(mc_state,movetype::volumemove)
+function swap_config!(mc_state::MCState,movetype::volumemove)
     swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
 end
-function swap_config!(mc_state,i_atom,trial_pos)
+function swap_config!(mc_state::MCState,i_atom,trial_pos)
     mc_state.config.pos[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom,:] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:,i_atom] = mc_state.new_dist2_vec
@@ -31,7 +31,7 @@ end
     swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
 secondary function where a volume move has been made, takes the new ensemble variables and puts them into the appropriate current state of the struct.
 """
-function swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
+function swap_config_v!(mc_state::MCState,trial_config::Config,dist2_mat_new,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
     mc_state.dist2_mat = dist2_mat_new
     mc_state.potential_variables.en_atom_vec = en_vec_new

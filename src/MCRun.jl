@@ -68,7 +68,7 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
      calculates energy based on the pot and new move 
      tests acc and swaps if relevant 
 """
-function mc_move!(mc_state::MCState,move_strat::MoveStrategy,pot,ensemble)
+function mc_move!(mc_state::MCState,move_strat::MoveS,pot,ensemble)
 
     mc_state.ensemble_variables.index = rand(1:length(move_strat))
 
