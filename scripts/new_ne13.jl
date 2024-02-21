@@ -83,6 +83,7 @@ start_config = Config(pos_ne13, bc_ne13)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 
-@profview states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+@profview  ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 

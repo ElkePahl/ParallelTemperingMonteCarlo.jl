@@ -37,7 +37,7 @@ export EmbeddedAtomVariables,NNPVariables
 export dimer_energy,dimer_energy_atom,dimer_energy_config
 #export 
 
-export energy_update!,set_variables,initialise_energy,get_energy!,dimer_energy_config
+export energy_update!,set_variables,initialise_energy,dimer_energy_config#,get_energy!
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
@@ -529,31 +529,31 @@ mutable struct NNPVariables <: PotentialVariables
     new_f_vec::Vector
 end
 """
-    get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
-Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `nnp_state` according to the variables in `pot`.
+    get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot)
+Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `potential_variables` according to the variables in `pot`.
 """
-function get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
+function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot)
 
-    nnp_state.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
-    nnp_state.new_dist2_vec[atomindex] = 0.
+    new_dist2_vec = [ distance2(trial_pos,b,config.bc) for b in config.pos]
+    new_dist2_vec[atomindex] = 0.
     
-    nnp_state.potential_variables.new_f_vec = cutoff_function.(sqrt.(nnp_state.new_dist2_vec),Ref(pot.r_cut))
+    potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec),Ref(pot.r_cut))
 
 
-    nnp_state.potential_variables.new_g_matrix = copy(nnp_state.potential_variables.g_matrix)
+    potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
 
-    nnp_state.potential_variables.new_g_matrix = total_thr_symm!(nnp_state.potential_variables.new_g_matrix,nnp_state.config.pos,trial_pos,nnp_state.dist2_mat,nnp_state.new_dist2_vec,nnp_state.potential_variables.f_matrix,nnp_state.potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
+    potential_variables.new_g_matrix = total_thr_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
 
-    return nnp_state
+    return new_dist2_vec,potential_variables
 end
 """
-    calc_new_runner_energy!(mc_state,pot)
-function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `mc_state.potential_variables` struct.
+    calc_new_runner_energy!(potential_variables::NNPVariables,new_en,pot)
+function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
 """
-function calc_new_runner_energy!(mc_state,pot)
-    mc_state.potential_variables.new_en_atom = forward_pass(mc_state.potential_variables.new_g_matrix,length(mc_state.potential_variables.en_atom_vec),pot.nnp)
-    mc_state.new_en = sum(mc_state.potential_variables.new_en_atom)
-    return mc_state
+function calc_new_runner_energy!(potential_variables::NNPVariables,new_en,pot)
+    potential_variables.new_en_atom = forward_pass(potential_variables.new_g_matrix,length(potential_variables.en_atom_vec),pot.nnp)
+    new_en = sum(potential_variables.new_en_atom)
+    return potential_variables,new_en
 end
 
 
@@ -577,92 +577,96 @@ Energy update function for use within a cycle. at the top level this is called w
             - EmbeddedAtomPotential
             - RuNNerPotential
 """
-function energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotential)
+function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,new_en,pot::AbstractDimerPotential)
 
-    mc_state.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.new_dist2_vec[index] = 0.
+    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    new_dist2_vec[index] = 0.
 
-    mc_state.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
+    new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot)
 
-    return mc_state
+    return potential_variables,new_dist2_vec,new_en
 end
-function energy_update!(trial_pos,index,mc_state,r_cut,pot::AbstractDimerPotential)
+function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,new_en,r_cut,pot::AbstractDimerPotential)
 
-    mc_state.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.new_dist2_vec[index] = 0.
+    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    new_dist2_vec[index] = 0.
 
-    mc_state.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,r_cut,pot)
+    new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot)
 
-    return mc_state
+    return potential_variables,new_dist2_vec,new_en
 end
 
-function energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotentialB)
+function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,new_en,pot::AbstractDimerPotentialB)
 
-    mc_state.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.new_dist2_vec[index] = 0.
+    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    new_dist2_vec[index] = 0.
 
-    mc_state.potential_variables.new_tan_vec = [get_tan(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.potential_variables.new_tan_vec[index] = 0
+    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[index] = 0
 
-    mc_state.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.potential_variables.tan_mat,mc_state.new_dist2_vec,mc_state.potential_variables.new_tan_vec,mc_state.en_tot,pot)
+    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
 
-    return mc_state
+    return potential_variables,new_dist2_vec,new_en
 end
-function energy_update!(trial_pos,index,mc_state,r_cut,pot::AbstractDimerPotentialB)
+function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,new_en,r_cut,pot::AbstractDimerPotentialB)
 
-    mc_state.new_dist2_vec = [distance2(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.new_dist2_vec[index] = 0.
+    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    new_dist2_vec[index] = 0.
 
-    mc_state.potential_variables.new_tan_vec = [get_tan(trial_pos,b,mc_state.config.bc) for b in mc_state.config.pos]
-    mc_state.potential_variables.new_tan_vec[index] = 0
+    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[index] = 0
 
-    mc_state.new_en = dimer_energy_update!(index,mc_state.dist2_mat,mc_state.potential_variables.tan_mat,mc_state.new_dist2_vec,mc_state.potential_variables.new_tan_vec,mc_state.en_tot,r_cut,pot)
+    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
 
-    return mc_state
+    return potential_variables,new_dist2_vec,new_en
 end
-function energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
-    mc_state.new_dist2_vec = [distance2(trial_pos,b) for b in mc_state.config.pos]
+function energy_update!(trial_pos,index,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,new_en,pot::EmbeddedAtomPotential)
+    new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
 
-    mc_state.new_dist2_vec[atomindex] = 0.
+    new_dist2_vec[atomindex] = 0.
 
-    mc_state.potential_variables.new_component_vector = deepcopy(mc_state.potential_variables.component_vector)
+    potential_variables.new_component_vector = deepcopy(potential_variables.component_vector)
     
-    mc_state.potential_variables.new_component_vector = calc_components(mc_state.potential_variables.new_component_vector,atomindex,mc_state.dist2_mat[atomindex,:],mc_state.new_dist2_vec,pot.n,pot.m)
+    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,atomindex,dist2_mat[atomindex,:],new_dist2_vec,pot.n,pot.m)
 
-    mc_state.new_en = calc_energies_from_components(mc_state.potential_variables.new_component_vector,pot.ean,pot.eCam)
+    new_en = calc_energies_from_components(potential_variables.new_component_vector,pot.ean,pot.eCam)
 
-    return  mc_state
+    return potential_variables,new_dist2_vec,new_en
 end
-function energy_update!(trial_pos,index,mc_state,pot::RuNNerPotential)
+function energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,new_en,pot::RuNNerPotential)
 
-    mc_state = get_new_state_vars!(trial_pos,index,mc_state,pot)
+    mc_state = get_new_state_vars!(trial_pos,index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
-    mc_state = calc_new_runner_energy!(mc_state,pot)
+    potential_variables,new_en = calc_new_runner_energy!(potential_variables,new_en,pot)
     return mc_state
 end
 
-"""
-    get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
-    get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
-    get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
-Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
-    atom move:
-        - NVT ensemble without r_cut
-        - NPT ensemble with r_cut
-    volume move 
-        - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
+# """
+#     get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
+#     get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
+#     get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
+# Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
+#     atom move:
+#         - NVT ensemble without r_cut
+#         - NPT ensemble with r_cut
+#     volume move 
+#         - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
 
-"""
-function get_energy!(mc_state,pot::PType,ensemble::NVT,movetype::atommove) where PType <: AbstractPotential
-    return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
-end
-function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::atommove) where PType <: AbstractPotential
-    return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
-end
-function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::volumemove) where PType <: AbstractPotential
-    mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
-    return mc_state
-end
+# """
+# function get_energy!(mc_state,pot::PType,ensemble::NVT,movetype::atommove) where PType <: AbstractPotential
+#     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,pot)
+#     return mc_state
+#     #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
+# end
+# function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::atommove) where PType <: AbstractPotential
+#     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,mc_state.ensemble_variables.r_cut,pot)
+#     return mc_state
+#     #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
+# end
+# function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::volumemove) where PType <: AbstractPotential
+#     mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
+#     return mc_state
+# end
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
 #------------------------------------------------------------#

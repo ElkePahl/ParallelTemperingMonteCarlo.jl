@@ -44,7 +44,7 @@ function atom_displacement(pos, max_displacement, bc::PeriodicBC)
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
-function atom_displacement(mc_state)
+function atom_displacement(mc_state::MCState)
 
     mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
 

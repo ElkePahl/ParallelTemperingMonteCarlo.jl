@@ -1,7 +1,7 @@
 module MCRun
 
 
-export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results
+export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results,get_energy!
 export atom_move!
 export exc_acceptance, exc_trajectories!
 
@@ -23,6 +23,34 @@ using ..Initialization
 
 include("swap_config.jl")
 
+
+"""
+    get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
+    get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
+    get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
+Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
+    atom move:
+        - NVT ensemble without r_cut
+        - NPT ensemble with r_cut
+    volume move 
+        - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
+
+"""
+function get_energy!(mc_state,pot::PType,ensemble::NVT,movetype::atommove) where PType <: AbstractPotential
+    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,pot)
+    return mc_state
+    #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
+end
+function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::atommove) where PType <: AbstractPotential
+    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,mc_state.ensemble_variables.r_cut,pot)
+    return mc_state
+    #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
+end
+function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::volumemove) where PType <: AbstractPotential
+    mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
+    return mc_state
+end
+
 """
     acc_test!(mc_state,ensemble,movetype)
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
@@ -40,7 +68,7 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
      calculates energy based on the pot and new move 
      tests acc and swaps if relevant 
 """
-function mc_move!(mc_state,move_strat,pot,ensemble)
+function mc_move!(mc_state::MCState,move_strat,pot,ensemble)
 
     mc_state.ensemble_variables.index = rand(1:length(move_strat))
 
@@ -54,7 +82,7 @@ end
     mc_step!(mc_states,move_strat,pot,ensemble)
 Distributes each state in `mc_state` to the mc_move function in accordance with a `move_strat`, `ensemble` and `pot`
 """
-function mc_step!(mc_states,move_strat,pot,ensemble)
+function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
     for state in mc_states
         state = mc_move!(state,move_strat,pot,ensemble)
     end
