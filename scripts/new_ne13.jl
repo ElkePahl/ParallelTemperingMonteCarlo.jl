@@ -84,6 +84,6 @@ start_config = Config(pos_ne13, bc_ne13)
 #----------------------------------------------------------------#
 
 @profview  ptmc_run!(mc_params,temp,start_config,pot,ensemble)
-@time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+#@time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 
