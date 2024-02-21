@@ -36,18 +36,19 @@ Curry function designed to separate energy calculations into their respective en
         - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
 
 """
-function get_energy!(mc_state::MCState,pot::PType,ensemble::NVT,movetype::atommove) where PType <: AbstractPotential
-    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,pot)
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove) where PType <: AbstractPotential where {T,N,BC,P,E<:NVTVariables}
+
+    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
     return mc_state
-    #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
+
 end
-function get_energy!(mc_state::MCState,pot::PType,ensemble::NPT,movetype::atommove) where PType <: AbstractPotential
-    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,mc_state.ensemble_variables.r_cut,pot)
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove) where PType <: AbstractPotential where {T,N,BC,P,E<:NPTVariables}
+    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
     return mc_state
-    #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
+
 end
-function get_energy!(mc_state::MCState,pot::PType,ensemble::NPT,movetype::volumemove) where PType <: AbstractPotential
-    mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::volumemove) where PType <: AbstractPotential where {T,N,BC,P,E<:NPTVariables}
+    mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,N,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
     return mc_state
 end
 
@@ -68,13 +69,13 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
      calculates energy based on the pot and new move 
      tests acc and swaps if relevant 
 """
-function mc_move!(mc_state::MCState,move_strat::MoveS,pot,ensemble)
+function mc_move!(mc_state::MCState,move_strat::MoveStrategy,pot,ensemble)
 
     mc_state.ensemble_variables.index = rand(1:length(move_strat))
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index])
 
-    mc_state = get_energy!(mc_state,pot,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+    mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
     acc_test!(mc_state,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
 end
