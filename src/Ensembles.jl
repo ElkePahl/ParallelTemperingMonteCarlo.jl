@@ -32,9 +32,9 @@ fieldname:
    
 """
 struct NVT <: AbstractEnsemble
-    n_atoms::Int
-    n_atom_moves::Int
-    n_atom_swaps::Int
+    n_atoms::Int64
+    n_atom_moves::Int64
+    n_atom_swaps::Int64
 end
 function NVT(n_atoms)
     return NVT(n_atoms,n_atoms,0)
@@ -46,9 +46,9 @@ Fields for the NVT ensemble include
         - trial_move 
     When trialing a new configuration we select an atom at `index` to move to `trial_move`
 """
-mutable struct  NVTVariables <: EnsembleVariables
-    index::Int
-    trial_move:: SVector
+mutable struct  NVTVariables{T} <: EnsembleVariables
+    index::Int64
+    trial_move:: SVector{3,T}
 end
 
 """
@@ -82,20 +82,20 @@ Fields for the NPT ensemble include
         - new_r_cut
     When trialing a new configuration we select an atom at `index` to move to `trial_move`, the index can be over n_atoms in which case we trial a scaled `new_config` with a `new_r_cut` having a `new_dist2_mat`
 """
-mutable struct NPTVariables <: EnsembleVariables
-    index::Int
-    trial_move::SVector
+mutable struct NPTVariables{T} <: EnsembleVariables
+    index::Int64
+    trial_move::SVector{3,T}
     trial_config::Config
-    new_dist2_mat::Matrix
-    r_cut::Real
-    new_r_cut::Real
+    new_dist2_mat::Matrix{T}
+    r_cut::T
+    new_r_cut::T
 end
 
-function set_ensemble_variables(config, ensemble::NVT)
-    return NVTVariables(1,SVector{3}(zeros(3)))
+function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
+    return NVTVariables{T}(1,SVector{3}(zeros(3)))
 end
-function set_ensemble_variables(config,ensemble::NPT)
-    return NPTVariables(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),config.bc.box_length^2/4,0.)
+function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
+    return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),config.bc.box_length^2/4,0.)
 end
 
 """
@@ -118,8 +118,8 @@ struct atomswap <: MoveType end
 A struct containing an ensemble and a movestrategy vector. This vector has movetypes in the appropriate ratio so that when we generate a trial index, we select the appropriate move type. 
 """
 
-struct MoveStrategy{N} 
-    ensemble::AbstractEnsemble
+struct MoveStrategy{N,Etype}
+    ensemble::Etype
     movestrat::Vector
 end
 function MoveStrategy(ensemble::NPT)
@@ -134,7 +134,7 @@ function MoveStrategy(ensemble::NPT)
         push!(movestrat,atomswap())
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves}(ensemble,movestrat)
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)}(ensemble,movestrat)
 end
 function MoveStrategy(ensemble::NVT)
     movestrat = []
@@ -145,7 +145,7 @@ function MoveStrategy(ensemble::NVT)
         push!(movestrat,atomswap())
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps}(ensemble,movestrat)
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
 end
 
 Base.length(::MoveStrategy{N}) where N = N

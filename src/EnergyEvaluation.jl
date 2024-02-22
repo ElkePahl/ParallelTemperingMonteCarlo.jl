@@ -79,8 +79,8 @@ abstract type AbstractDimerPotential <: AbstractPotential end
     DimerPotenitalVariables
 The struct contains only the new_dist2_vec as this doesn't explicitly require any particular special features.
 """
-mutable struct DimerPotentialVariables <: PotentialVariables
-    en_atom_vec::Vector
+mutable struct DimerPotentialVariables{T} <: PotentialVariables
+    en_atom_vec::Vector{T}
 end
 
 """
@@ -720,7 +720,7 @@ initialises the PotentialVariable struct for the various potentials. Defined in 
     
 """
 function set_variables(config::Config{N,BC,T},dist_2_mat,pot::AbstractDimerPotential) where {N,BC,T}
-    return DimerPotentialVariables(zeros(N))
+    return DimerPotentialVariables{T}(zeros(N))
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::AbstractDimerPotentialB) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)

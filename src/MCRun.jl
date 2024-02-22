@@ -70,14 +70,14 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
      calculates energy based on the pot and new move 
      tests acc and swaps if relevant 
 """
-function mc_move!(mc_state::MCState,move_strat::MoveStrategy,pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
-    mc_state.ensemble_variables.index = rand(1:length(move_strat))
+function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
+    mc_state.ensemble_variables.index = rand(1:N)
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index])
 
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
-    acc_test!(mc_state,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+    acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
     return mc_state
 end
 """
