@@ -78,6 +78,7 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy,pot::Ptype,ensemble
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
     acc_test!(mc_state,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+    return mc_state
 end
 """
     mc_step!(mc_states,move_strat,pot,ensemble)

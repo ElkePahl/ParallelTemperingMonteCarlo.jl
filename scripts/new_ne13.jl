@@ -1,6 +1,5 @@
-using Revise
 using ParallelTemperingMonteCarlo
-using Random, Profile
+using Random,Profile,JET
 
 #demonstration of the new verison of the new code   
 

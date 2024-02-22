@@ -3,11 +3,10 @@
 """
     swap_config!(mc_state,movetype::atommove)
     swap_config!(mc_state,movetype::volumemove)
-    swap_config!(mc_state,i_atom,trial_pos)
+
 Basic function for replacing the existing mc_state values with the updated values assuming the metropolis condition is met. 
     - First method applies where the `movetype` is an atommove and distributes the new ensemblevariables such as `i_atom` and `trial_pos` into the second method, which actually swaps the variables. 
     - Second method applies where `movetype` is a volumemove, this splits the ensemble variables into the swap_config_v! function to replace the `trial_config` the `new_dist2_mat` the `en_vec_new` and the `new_en_tot` into their appropriate place in the mc_state struct
-    - Final method is called by the first, where the actual swapping occurs.
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
 function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
@@ -16,7 +15,10 @@ end
 function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
     swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
 end
-function swap_atom_config!(mc_state::MCState,i_atom,trial_pos)
+"""
+    swap_atom_config(mc_state::MCState,i_atom,trial_pos)
+"""
+function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
     mc_state.config.pos[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom,:] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:,i_atom] = mc_state.new_dist2_vec
