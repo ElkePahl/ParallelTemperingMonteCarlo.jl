@@ -15,8 +15,8 @@ using StaticArrays, LinearAlgebra
     conf = Config{3}([v1,v1,v1],bc)
 
     envars_nvt = set_ensemble_variables(conf,NVT(1))
-    @test typeof(envars_nvt) == NVTVariables
-    @test typeof(envars_nvt.index) == Int 
+    @test typeof(envars_nvt) == NVTVariables{Float64}
+    @test typeof(envars_nvt.index) == Int64 
     @test length(envars_nvt.trial_move) == 3
 
     y = MoveStrategy(NPT(5,101325))
