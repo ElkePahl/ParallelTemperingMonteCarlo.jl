@@ -120,18 +120,18 @@ A struct containing an ensemble and a movestrategy vector. This vector has movet
 # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps. 
 struct MoveStrategy{N,Etype}
     ensemble::Etype
-    movestrat::Vector{Int64}
+    movestrat::Vector{String}
 end
 function MoveStrategy(ensemble::NPT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,0)
+        push!(movestrat,"atommove")
     end
     for m_index in 1:ensemble.n_volume_moves
-        push!(movestrat,1)
+        push!(movestrat,"volumemove")
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,2)
+        push!(movestrat,"atomswap")
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)}(ensemble,movestrat)
@@ -139,10 +139,10 @@ end
 function MoveStrategy(ensemble::NVT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,0)
+        push!(movestrat,"atommove")
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,2)
+        push!(movestrat,"atomswap")
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)

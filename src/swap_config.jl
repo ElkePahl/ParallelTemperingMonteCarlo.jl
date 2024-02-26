@@ -10,8 +10,8 @@ Basic function for replacing the existing mc_state values with the updated value
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
 
-function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::Int64) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
-    if movetype == 0
+function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+    if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
     else
         swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)

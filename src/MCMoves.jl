@@ -82,8 +82,8 @@ end
     generate_move!(mc_state,movetype::volumemove)
 generate move is the currying function that takes mc_state and a movetype and generates the variables required inside of the ensemblevariables struct within mc_state. 
 """
-function generate_move!(mc_state,movetype::Int64)
-    if movetype == 0
+function generate_move!(mc_state,movetype::String)
+    if movetype == "atommove"
         return atom_displacement(mc_state)
     else
         return volume_change(mc_state)
