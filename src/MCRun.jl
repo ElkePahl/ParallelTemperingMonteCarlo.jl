@@ -36,20 +36,25 @@ Curry function designed to separate energy calculations into their respective en
         - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
 
 """
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
-
-    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::Int64) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
+    if movetype == 0
+        mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
+    end
     return mc_state
 
 end
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::atommove) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
-    mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
+# function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::Int64) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
+#     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
 
-    return mc_state
+#     return mc_state
 
-end
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::volumemove) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
-    mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,N,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
+# end
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::Int64) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
+    if movetype == 1
+        mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,N,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
+    else
+        mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
+    end
     return mc_state
 end
 
@@ -57,7 +62,7 @@ end
     acc_test!(mc_state,ensemble,movetype)
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
 """
-function acc_test!(mc_state::MCState,ensemble::Etype,movetype::Mtype) where Etype <: AbstractEnsemble where Mtype <: MoveType
+function acc_test!(mc_state::MCState,ensemble::Etype,movetype::Int64) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
     end

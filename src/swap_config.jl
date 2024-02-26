@@ -9,12 +9,21 @@ Basic function for replacing the existing mc_state values with the updated value
     - Second method applies where `movetype` is a volumemove, this splits the ensemble variables into the swap_config_v! function to replace the `trial_config` the `new_dist2_mat` the `en_vec_new` and the `new_en_tot` into their appropriate place in the mc_state struct
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
-function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
-    swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
+
+function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::Int64) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+    if movetype == 0
+        swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
+    else
+        swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
+    end
+
 end
-function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
-    swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
-end
+# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+#     swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
+# end
+# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+#     swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
+# end
 """
     swap_atom_config(mc_state::MCState,i_atom,trial_pos)
 """

@@ -68,12 +68,20 @@ function metropolis_condition(ensemble, delta_energy,volume_changed,volume_uncha
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
-function metropolis_condition(::atommove,mc_state,ensemble)
-    return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
+
+function metropolis_condition(inde::Int64,mc_state,ensemble)
+    if inde == 0
+        return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
+    else
+        return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_states.config.bc.box_length^3,mc_state.beta )
+    end
 end
-function metropolis_condition(::volumemove,mc_state,ensemble)
-    return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_states.config.bc.box_length^3,mc_state.beta )
-end
+# function metropolis_condition(::atommove,mc_state,ensemble)
+#     return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
+# end
+# function metropolis_condition(::volumemove,mc_state,ensemble)
+#     return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_states.config.bc.box_length^3,mc_state.beta )
+# end
 """
     exc_acceptance(beta_1, beta_2, en_1, en_2)
 Returns probability to exchange configurations of two trajectories with energies `en_1` and `en_2` 

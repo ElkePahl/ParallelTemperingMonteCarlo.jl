@@ -117,21 +117,21 @@ struct atomswap <: MoveType end
         - MoveStrategy(ensemble::NVT)
 A struct containing an ensemble and a movestrategy vector. This vector has movetypes in the appropriate ratio so that when we generate a trial index, we select the appropriate move type. 
 """
-
+# for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps. 
 struct MoveStrategy{N,Etype}
     ensemble::Etype
-    movestrat::Vector
+    movestrat::Vector{Int64}
 end
 function MoveStrategy(ensemble::NPT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,atommove())
+        push!(movestrat,0)
     end
     for m_index in 1:ensemble.n_volume_moves
-        push!(movestrat,volumemove())
+        push!(movestrat,1)
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,atomswap())
+        push!(movestrat,2)
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)}(ensemble,movestrat)
@@ -139,10 +139,10 @@ end
 function MoveStrategy(ensemble::NVT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,atommove())
+        push!(movestrat,0)
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,atomswap())
+        push!(movestrat,2)
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
