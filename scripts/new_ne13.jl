@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo
-using Random,Profile,JET,BenchmarkTools
+using Random,Profile,BenchmarkTools
 
 #demonstration of the new verison of the new code   
 

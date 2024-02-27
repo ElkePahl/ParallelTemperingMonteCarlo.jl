@@ -302,10 +302,10 @@ function ELJPotentialB(a,b,c)
     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
 end
 
-mutable struct ELJPotentialBVariables <: PotentialVariables
-    en_atom_vec::Array
-    tan_mat::Array
-    new_tan_vec::Vector
+mutable struct ELJPotentialBVariables{T} <: PotentialVariables
+    en_atom_vec::Array{T}
+    tan_mat::Array{T}
+    new_tan_vec::Vector{T}
 end
 """
     dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
@@ -444,9 +444,9 @@ function EmbeddedAtomPotential(n,m,ϵ,C,a)
     return EmbeddedAtomPotential(n,m,epsan,epsCam)
 end
 
-mutable struct EmbeddedAtomVariables <: PotentialVariables
-    component_vector::Matrix
-    new_component_vector::Matrix
+mutable struct EmbeddedAtomVariables{T} <: PotentialVariables
+    component_vector::Matrix{T}
+    new_component_vector::Matrix{T}
 end
 #-------------------Component Calculation------------------#
 """
@@ -519,14 +519,14 @@ function RuNNerPotential(nnp,symmetryfunction)
 end
 
 
-mutable struct NNPVariables <: PotentialVariables
-    en_atom_vec::Vector
+mutable struct NNPVariables{T} <: PotentialVariables
+    en_atom_vec::Vector{T}
 
-    new_en_atom::Vector
-    g_matrix::Array
-    f_matrix::Array
-    new_g_matrix::Array
-    new_f_vec::Vector
+    new_en_atom::Vector{T}
+    g_matrix::Array{T}
+    f_matrix::Array{T}
+    new_g_matrix::Array{T}
+    new_f_vec::Vector{T}
 end
 """
     get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot)
@@ -561,11 +561,14 @@ end
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
 """
-    energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotential)
-    energy_update!(trial_pos,index,mc_state,pot::AbstractDimerPotentialB)
-    energy_update!(trial_pos,atomindex,mc_state,pot::EmbeddedAtomPotential)
-    energy_update!(trial_pos,index,state,pot::RuNNerPotential)
-Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` contained in `mc_state`. Using `pot` the potential. 
+    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,pot::AbstractDimerPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
+    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotentialB)
+    energy_update!(trial_pos,index,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,en_tot,pot::RuNNerPotential)
+
+Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` it operates on the `potential_variables` along with the `dist2_mat`. Using `pot` the potential to find the `new_en`. 
 
     Has additional methods including `r_cut` where appropriate for use with periodic boundary conditions
     
@@ -641,33 +644,6 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::NNPV
 
     return potential_variables,new_dist2_vec,new_en
 end
-
-# """
-#     get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
-#     get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
-#     get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
-# Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
-#     atom move:
-#         - NVT ensemble without r_cut
-#         - NPT ensemble with r_cut
-#     volume move 
-#         - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
-
-# """
-# function get_energy!(mc_state,pot::PType,ensemble::NVT,movetype::atommove) where PType <: AbstractPotential
-#     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,pot)
-#     return mc_state
-#     #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,pot)
-# end
-# function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::atommove) where PType <: AbstractPotential
-#     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.new_en,mc_state.ensemble_variables.r_cut,pot)
-#     return mc_state
-#     #return energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state,mc_state.ensemble_variables.r_cut,pot)
-# end
-# function get_energy!(mc_state,pot::PType,ensemble::NPT,movetype::volumemove) where PType <: AbstractPotential
-#     mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.dist2_mat_new,ensemble.n_atoms,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,pot)
-#     return mc_state
-# end
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
 #------------------------------------------------------------#
@@ -725,7 +701,7 @@ end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::AbstractDimerPotentialB) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
-    return ELJPotentialBVariables(zeros(N),tan_matrix,zeros(N))
+    return ELJPotentialBVariables{T}(zeros(N),tan_matrix,zeros(N))
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPotential) where {N,BC,T}
     
@@ -733,14 +709,14 @@ function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPote
     for row_index in 1:N
         componentvec[row_index,:] = calc_components(componentvec[row_index,:],dist2_matrix[row_index,:],pot.n,pot.m)
     end
-    return EmbeddedAtomVariables(componentvec,zeros(N,2))
+    return EmbeddedAtomVariables{T}(componentvec,zeros(N,2))
 end
 function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential) where {N,BC,T}
     
     f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
     g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
     
-    return NNPVariables(zeros(N) ,zeros(N),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(N))
+    return NNPVariables{T}(zeros(N) ,zeros(N),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(N))
 end
 
 end

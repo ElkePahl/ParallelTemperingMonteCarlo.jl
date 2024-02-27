@@ -25,16 +25,12 @@ include("swap_config.jl")
 
 
 """
-    get_energy!(mc_state,pot,ensemble::NVT,movetype::atommove)
-    get_energy!(mc_state,pot,ensemble::NPT,movetype::atommove)
-    get_energy!(mc_state,pot,ensemble::NPT,movetype::volumemove)
+    get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
+    get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
 Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
-    atom move:
+
         - NVT ensemble without r_cut
         - NPT ensemble with r_cut
-    volume move 
-        - NPT ensemble only, calculates the energy of the new configuration based on the updated variables. 
-
 """
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
     if movetype == "atommove"
@@ -59,7 +55,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
 end
 
 """
-    acc_test!(mc_state,ensemble,movetype)
+    acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
@@ -68,7 +64,7 @@ function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Ety
     end
 end
 """
-    mc_move!(mc_state,move_strat,pot,ensemble)
+    mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
 basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES.
      calculates an index for the move
      generates either a volume or atom move depending on movestrat[index]
@@ -86,7 +82,7 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
     return mc_state
 end
 """
-    mc_step!(mc_states,move_strat,pot,ensemble)
+    mc_step!((mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
 Distributes each state in `mc_state` to the mc_move function in accordance with a `move_strat`, `ensemble` and `pot`
 """
 function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
@@ -179,7 +175,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_step
 end
 """
 
-    equilibration(mc_states,move_strat,mc_params,results,pot,ensemble,n_steps,a,v,r,restart)
+    equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
 while initialisation sets mc_states,params etc we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the equilibration_cycle! function that optionally removes the thermalisation from restart.
 
     N.B. Restart is currently non-functional, do not try use it
