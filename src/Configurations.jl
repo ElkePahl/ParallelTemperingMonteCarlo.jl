@@ -159,7 +159,7 @@ Finds the distance between two positions a and the nearest image of b in a cubic
 """
 #distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
 
-function distance2(a,b,bc::PeriodicBC)
+function distance2(a,b,bc::CubicBC)
     b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z=b[3]+bc.box_length*round((a[3]-b[3])/bc.box_length)
@@ -211,7 +211,7 @@ end
 
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
 """
-function get_tan(a,b,bc::PeriodicBC)
+function get_tan(a,b,bc::CubicBC)
     b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z = b[3] + bc.box_length*round((a[3]-b[3])/bc.box_length)
@@ -241,7 +241,7 @@ end
 
 Builds the matrix of tan of angles between positions of configuration in a cubic boundary.
 """
-function get_tantheta_mat(conf::Config,bc::PeriodicBC)
+function get_tantheta_mat(conf::Config,bc::CubicBC)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N

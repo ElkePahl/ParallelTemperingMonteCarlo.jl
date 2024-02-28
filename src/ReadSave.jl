@@ -80,7 +80,7 @@ function save_state(savefile::IOStream,mc_state::MCState)
     write(savefile, "E,E2: $ham1 $ham2 \n")
     if typeof(mc_state.config.bc) == SphericalBC{Float64}
         write(savefile, "Boundary: $(typeof(mc_state.config.bc))  $(sqrt(mc_state.config.bc.radius2)) \n")
-    elseif typeof(mc_state.config.bc) == PeriodicBC{Float64}
+    elseif typeof(mc_state.config.bc) == CubicBC{Float64}
         write(savefile, "Boundary: $(typeof(mc_state.config.bc))$(mc_state.config.bc.box_length) \n" )
     end
     write(savefile,"configuration \n")

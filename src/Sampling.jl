@@ -111,7 +111,7 @@ end
     initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
 Function to create the 2D energy-volume histograms.
 """
-function initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])

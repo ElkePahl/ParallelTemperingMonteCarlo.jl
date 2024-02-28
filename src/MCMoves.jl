@@ -38,7 +38,7 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     end
     return trial_pos
 end
-function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+function atom_displacement(pos, max_displacement, bc::CubicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
@@ -63,7 +63,7 @@ function volume_change(conf::Config, max_vchange, max_length)
         scale=1.
     end
 
-    trial_config = Config(conf.pos * scale,PeriodicBC(conf.bc.box_length * scale))
+    trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
     return trial_config
 end
 function volume_change(mc_state)

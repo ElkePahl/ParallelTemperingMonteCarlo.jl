@@ -43,7 +43,7 @@ end
 secondary function where a volume move has been made, takes the new ensemble variables and puts them into the appropriate current state of the struct.
 """
 function swap_config_v!(mc_state::MCState,trial_config::Config,dist2_mat_new,en_vec_new,new_en_tot)
-    mc_state.config = Config(trial_config.pos,PeriodicBC(trial_config.bc.box_length))
+    mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
     mc_state.dist2_mat = dist2_mat_new
     mc_state.potential_variables.en_atom_vec = en_vec_new
     mc_state.en_tot = new_en_tot

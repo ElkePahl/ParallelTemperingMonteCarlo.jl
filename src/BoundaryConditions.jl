@@ -6,7 +6,7 @@
 """
 module BoundaryConditions
 
-export SphericalBC, AbstractBC, PeriodicBC
+export SphericalBC, AbstractBC, CubicBC
 export check_boundary
 
 # include("SphericalBC.jl")
@@ -34,7 +34,7 @@ struct SphericalBC{T} <: AbstractBC{T}
     SphericalBC(; radius::T) where T = new{T}(radius*radius)
 end
 
-struct PeriodicBC{T} <: AbstractBC{T}
+struct CubicBC{T} <: AbstractBC{T}
     box_length::T
 end
 
