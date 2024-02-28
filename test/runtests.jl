@@ -21,7 +21,7 @@ using StaticArrays, LinearAlgebra
 
     y = MoveStrategy(NPT(5,101325))
     @test length(y.movestrat) == length(y)
-    conf2 = Config{3}([v1,v1,v1] , PeriodicBC(8.7674))
+    conf2 = Config{3}([v1,v1,v1] , CubicBC(8.7674))
     envars_npt = set_ensemble_variables(conf2,NPT(3,101325))
 
     @test envars_npt.r_cut == conf2.bc.box_length^2/4
@@ -64,7 +64,7 @@ end
 end
 
 @testset "Config_cubic" begin
-    bc = PeriodicBC(10.0)
+    bc = CubicBC(10.0)
     v1 = SVector(1., 2., 3.)
     conf = Config{3}([v1,v1,v1],bc)
 
@@ -108,7 +108,7 @@ end
     @test mat[1,3]==7/3
     @test mat[2,3]==1/7
     
-    bc = PeriodicBC(10.0)
+    bc = CubicBC(10.0)
     conf = Config{3}([v1,v2,v3],bc)
     mat = get_tantheta_mat(conf,bc)
 
