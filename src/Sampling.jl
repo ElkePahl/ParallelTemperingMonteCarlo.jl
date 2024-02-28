@@ -174,6 +174,8 @@ function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         #for element in mc_states[j_traj].dist2_mat 
         for k_traj in 1:j_traj
+            println(delta_r2)
+            println(mc_states[j_traj].dist2_mat[k_traj])
             idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
             if idx != 0 && idx <= results.n_bin*5
                 results.rdf[j_traj][idx] +=1
@@ -211,7 +213,7 @@ function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
         update_energy_tot(mc_states,ensemble)
         
         update_histograms!(mc_states,results,results.delta_en_hist,results.delta_v_hist)
-        update_rdf!(mc_states,results,results.delta_r2)
+        #update_rdf!(mc_states,results,results.delta_r2)
     end 
 end
 

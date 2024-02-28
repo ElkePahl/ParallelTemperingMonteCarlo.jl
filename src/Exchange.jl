@@ -174,16 +174,16 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT; min_ac
     end
     mc_state.count_atom[2] = 0
     #volume moves
-    if v > 0
-        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
-        #println("acc rate volume = ",acc_rate)
-        if acc_rate < min_acc
-            mc_state.max_displ[2] *= 0.9
-        elseif acc_rate > max_acc
-            mc_state.max_displ[2] *= 1.1
-        end
-        mc_state.count_vol[2] = 0
+    #if v > 0
+    acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
+    #println("acc rate volume = ",acc_rate)
+    if acc_rate < min_acc
+        mc_state.max_displ[2] *= 0.9
+    elseif acc_rate > max_acc
+        mc_state.max_displ[2] *= 1.1
     end
+    mc_state.count_vol[2] = 0
+    #end
 
 
     return mc_state
