@@ -22,7 +22,7 @@ These variables are additionally contained in `mc_state` where the pos is determ
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+    - `CubicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
 
 The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
