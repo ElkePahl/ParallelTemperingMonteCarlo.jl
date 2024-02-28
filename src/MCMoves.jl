@@ -66,7 +66,7 @@ function volume_change(conf::Config, max_vchange, max_length)
     trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
     return trial_config
 end
-function volume_change(mc_state)
+function volume_change(mc_state::MCState)
     #change volume
     mc_state.ensemble_variables.trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
     #change r_cut
@@ -82,7 +82,7 @@ end
     generate_move!(mc_state,movetype::volumemove)
 generate move is the currying function that takes mc_state and a movetype and generates the variables required inside of the ensemblevariables struct within mc_state. 
 """
-function generate_move!(mc_state,movetype::String)
+function generate_move!(mc_state::MCState,movetype::String)
     if movetype == "atommove"
         return atom_displacement(mc_state)
     else
