@@ -1,12 +1,11 @@
 using ParallelTemperingMonteCarlo
-using Random,Profile,BenchmarkTools
+using Random
 
 #demonstration of the new verison of the new code   
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
 #-------------------------------------------------------#
-
 
 Random.seed!(1234)
 
@@ -22,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -52,7 +51,6 @@ move_strat = MoveStrategy(ensemble)
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
 #-------------------------------------------------------------#
-bc_ne13 = SphericalBC(radius=7.)   #5.32 Angstrom
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
 pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
@@ -84,6 +82,8 @@ start_config = Config(pos_ne13, bc_ne13)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+
+#to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
