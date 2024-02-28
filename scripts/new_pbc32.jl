@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -102,10 +102,10 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+#mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
-#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 

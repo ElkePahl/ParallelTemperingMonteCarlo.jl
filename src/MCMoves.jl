@@ -64,16 +64,15 @@ function volume_change(conf::Config, max_vchange, max_length)
     end
 
     trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
-    return trial_config
+    return trial_config,scale
 end
 function volume_change(mc_state::MCState)
     #change volume
-    mc_state.ensemble_variables.trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
+    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
     #change r_cut
     mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
     #get the new dist2 matrix
-    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
-
+    mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat .* scale
     return mc_state
 end
 
