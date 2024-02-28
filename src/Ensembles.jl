@@ -62,11 +62,11 @@ fieldnames:
     -pressure: the fixed pressure of the system
 """
 struct NPT <: AbstractEnsemble
-    n_atoms::Int
-    n_atom_moves::Int
-    n_volume_moves::Int
-    n_atom_swaps::Int
-    pressure::Real
+    n_atoms::Int64
+    n_atom_moves::Int64
+    n_volume_moves::Int64
+    n_atom_swaps::Int64
+    pressure::Float64
 end
 function NPT(n_atoms,pressure)
     return NPT(n_atoms,n_atoms,1,0,pressure)

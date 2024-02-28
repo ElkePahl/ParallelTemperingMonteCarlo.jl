@@ -60,7 +60,7 @@ function metropolis_condition(delta_energy, beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-function metropolis_condition(ensemble, delta_energy,volume_changed,volume_unchanged,beta)
+function metropolis_condition(ensemble::Etype, delta_energy,volume_changed,volume_unchanged,beta) where Etype <: NPT
     delta_h = delta_energy + ensemble.pressure*(volume_changed-volume_unchanged)
     prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
@@ -69,10 +69,10 @@ function metropolis_condition(ensemble, delta_energy,volume_changed,volume_uncha
 end
 
 
-function metropolis_condition(movetype::String,mc_state,ensemble)
+function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: NPT
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
-    else
+    elseif movetype == "volumemove"
         return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
     end
 end
