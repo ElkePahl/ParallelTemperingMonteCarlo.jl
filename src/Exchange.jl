@@ -73,7 +73,7 @@ function metropolis_condition(movetype::String,mc_state,ensemble)
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
     else
-        return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_states.config.bc.box_length^3,mc_state.beta )
+        return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
     end
 end
 # function metropolis_condition(::atommove,mc_state,ensemble)

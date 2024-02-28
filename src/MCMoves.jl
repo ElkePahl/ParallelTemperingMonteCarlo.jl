@@ -72,7 +72,7 @@ function volume_change(mc_state)
     #change r_cut
     mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
     #get the new dist2 matrix
-    mc_state.ensemble_variables.dist2_mat_new = get_distance2_mat(mc_state.ensemble_variables.trial_config)
+    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
 
     return mc_state
 end
