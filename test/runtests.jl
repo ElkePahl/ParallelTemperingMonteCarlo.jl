@@ -64,7 +64,7 @@ end
 end
 
 @testset "Config_cubic" begin
-    bc = PeriodicBC(10.0)
+    bc = CubicBC(10.0)
     v1 = SVector(1., 2., 3.)
     conf = Config{3}([v1,v1,v1],bc)
 
