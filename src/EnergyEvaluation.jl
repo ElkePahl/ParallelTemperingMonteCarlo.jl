@@ -623,7 +623,7 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
 
     return potential_variables,new_dist2_vec,new_en
 end
-function energy_update!(trial_pos,index,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
+function energy_update!(trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
     new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
 
     new_dist2_vec[atomindex] = 0.
