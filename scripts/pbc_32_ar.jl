@@ -3,16 +3,17 @@ using ParallelTemperingMonteCarlo
 using Random
 
 
+
 #set random seed - for reproducibility
 #Random.seed!(1234)
 
 # number of atoms
-n_atoms = 27
-pressure=101325
+n_atoms = 32
+pressure=101325*10000
 
 # temperature grid
-ti = 20.
-tf = 40.
+ti = 300.
+tf = 1000.
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -21,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 
@@ -48,47 +49,54 @@ ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
 #elj_ne1 = ELJPotential{11}(c1)
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
 pot = ELJPotentialEven{6}(c)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
-pos_ne32 = [[ 1.56624152,  0.90426996,  0.        ],
-       [ 4.69872456,  0.90426996,  0.        ],
-       [ 7.8312076 ,  0.90426996,  0.        ],
-       [ 3.13248304,  3.61707985,  0.        ],
-       [ 6.26496608,  3.61707985,  0.        ],
-       [ 9.39744912,  3.61707985,  0.        ],
-       [ 4.69872456,  6.32988974,  0.        ],
-       [ 7.8312076 ,  6.32988974,  0.        ],
-       [10.96369064,  6.32988974,  0.        ],
-       [ 9.39744912,  1.80853993,  2.55766169],
-       [ 3.13248304,  1.80853993,  2.55766169],
-       [ 6.26496608,  1.80853993,  2.55766169],
-       [10.96369064,  4.52134982,  2.55766169],
-       [ 4.69872456,  4.52134982,  2.55766169],
-       [ 7.8312076 ,  4.52134982,  2.55766169],
-       [12.52993216,  7.23415971,  2.55766169],
-       [ 6.26496608,  7.23415971,  2.55766169],
-       [ 9.39744912,  7.23415971,  2.55766169],
-       [ 0.        ,  0.        ,  5.11532339],
-       [ 3.13248304,  0.        ,  5.11532339],
-       [ 6.26496608,  0.        ,  5.11532339],
-       [ 1.56624152,  2.71280989,  5.11532339],
-       [ 4.69872456,  2.71280989,  5.11532339],
-       [ 7.8312076 ,  2.71280989,  5.11532339],
-       [ 3.13248304,  5.42561978,  5.11532339],
-       [ 6.26496608,  5.42561978,  5.11532339],
-       [ 9.39744912,  5.42561978,  5.11532339]]
+pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
+  [-2.1918,       -2.1918,       -4.3837],
+  [-2.1918,       -4.3837,       -2.1918],
+  [-4.3837,       -2.1918,       -2.1918],
+  [-4.3837,       -4.3837,        0.0000],
+  [-2.1918,       -2.1918,        0.0000],
+  [-2.1918,       -4.3837,        2.1918],
+  [-4.3837,       -2.1918,        2.1918],
+  [-4.3837,        0.0000,       -4.3837],
+  [-2.1918,        2.1918,       -4.3837],
+  [-2.1918,        0.0000,       -2.1918],
+  [-4.3837,        2.1918,       -2.1918],
+  [-4.3837,        0.0000,        0.0000],
+  [-2.1918,        2.1918,        0.0000],
+  [-2.1918,        0.0000,        2.1918],
+  [-4.3837,        2.1918,        2.1918],
+ [0.0000,       -4.3837,       -4.3837],
+ [2.1918,       -2.1918,       -4.3837],
+ [2.1918,       -4.3837,       -2.1918],
+ [0.0000,       -2.1918,       -2.1918],
+ [0.0000,       -4.3837,        0.0000],
+ [2.1918,       -2.1918,        0.0000],
+ [2.1918,       -4.3837,        2.1918],
+ [0.0000,       -2.1918,        2.1918],
+ [0.0000,        0.0000,       -4.3837],
+ [2.1918,        2.1918,       -4.3837],
+ [2.1918,        0.0000,       -2.1918],
+ [0.0000,        2.1918,       -2.1918],
+ [0.0000,        0.0000,        0.0000],
+ [2.1918,        2.1918,       0.0000],
+ [2.1918,        0.0000,        2.1918],
+ [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 0.98
+AtoBohr = 1.8897259886 * 1.219364208487978
 pos_ne32 = pos_ne32 * AtoBohr
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne32 = RhombicBC(9.3974 * AtoBohr, 7.673* AtoBohr)   
+box_length = 8.7674
+bc_ne32 = CubicBC(box_length * AtoBohr)
 
 #starting configuration
 start_config = Config(pos_ne32, bc_ne32)
@@ -101,8 +109,9 @@ n_bin = 100
 #construct array of MCState (for each temperature)
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot; max_displ=[max_displ_atom[i],0.1,0.1]) for i in 1:n_traj]
 
+
 println(mc_states[1].en_tot)
-println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^2*mc_states[1].config.bc.box_height*3^0.5/2)
+println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^3)
 
 
 #results = Output(n_bin, max_displ_vec)
@@ -110,6 +119,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 Random.seed!(1234)
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
+#@profview ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
 
 
 

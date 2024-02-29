@@ -285,7 +285,7 @@ function finalise_results(mc_states,mc_params,results)
     en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
     results.en_avg = en_avg
     #heat capacity
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta for i in 1:mc_params.n_traj]
+    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta^2 for i in 1:mc_params.n_traj]
     #count stats 
     results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
     results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]

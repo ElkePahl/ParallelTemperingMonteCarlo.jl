@@ -3,6 +3,7 @@ using ParallelTemperingMonteCarlo
 using Random
 
 
+
 #set random seed - for reproducibility
 #Random.seed!(1234)
 
@@ -13,7 +14,7 @@ pressure=101325
 # temperature grid
 ti = 20.
 tf = 40.
-n_traj = 32
+n_traj = 3
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -21,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 
 
-mc_cycles = 1 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 
@@ -117,6 +118,7 @@ results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 Random.seed!(1234)
 @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
+#@profview ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
 
 
 
