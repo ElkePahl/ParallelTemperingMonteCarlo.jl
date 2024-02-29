@@ -69,7 +69,7 @@ function metropolis_condition(ensemble::Etype, delta_energy,volume_changed,volum
 end
 
 
-function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: NPT
+function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
     elseif movetype == "volumemove"
