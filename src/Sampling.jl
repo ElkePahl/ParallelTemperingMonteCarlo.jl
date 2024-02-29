@@ -175,7 +175,7 @@ function update_rdf!(mc_states,results,delta_r2)
         #for element in mc_states[j_traj].dist2_mat 
         for k_traj in 1:j_traj
 #            println(delta_r2)
-            println(mc_states[j_traj].dist2_mat[k_traj])
+#            println(mc_states[j_traj].dist2_mat[k_traj])
             idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
             if idx != 0 && idx <= results.n_bin*5
                 results.rdf[j_traj][idx] +=1
