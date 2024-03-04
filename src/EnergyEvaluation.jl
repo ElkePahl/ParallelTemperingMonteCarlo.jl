@@ -304,7 +304,7 @@ end
 
 mutable struct ELJPotentialBVariables{T} <: PotentialVariables
     en_atom_vec::Array{T}
-    tan_mat::Array{T}
+    tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
 end
 """
