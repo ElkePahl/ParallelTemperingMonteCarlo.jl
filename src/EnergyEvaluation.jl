@@ -415,6 +415,21 @@ function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,e
 
     return  delta_en + en_tot
 end
+"""
+    lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) for B
+"""
+function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
+    coeff=[-0.1279111890228638, -1.328138539967966, 12.260941135261255,41.12212408251662]
+    r_cut_sqrt=r_cut^0.5
+    rc3 = r_cut*r_cut_sqrt
+    e_lrc = 0.
+    for i = 1:4
+        e_lrc += coeff[i] / rc3 / (2i+1)
+        rc3 *= r_cut
+    end
+    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    return e_lrc
+end
 #----------------------------------------------------------#
 #-------------------Embedded Atom Model--------------------#
 #----------------------------------------------------------#
