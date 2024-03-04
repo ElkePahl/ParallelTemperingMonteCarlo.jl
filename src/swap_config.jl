@@ -49,6 +49,8 @@ function swap_config_v!(mc_state::MCState,trial_config::Config,new_dist2_mat,en_
     mc_state.en_tot = new_en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
+
+    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 """
     swap_vars!(i_atom,potential_variables::V)
