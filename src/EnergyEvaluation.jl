@@ -496,8 +496,11 @@ function calc_components(new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
 
         j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
 
-        new_component_vec[j_index,:] .+= j_term 
-        new_component_vec[atomindex,:] .+= j_term 
+
+        
+@views        new_component_vec[j_index,:] .+= j_term 
+@views        new_component_vec[atomindex,:] .+= j_term 
+
     end
 
     return new_component_vec

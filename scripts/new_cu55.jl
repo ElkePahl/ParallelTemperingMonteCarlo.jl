@@ -19,7 +19,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100  #default 20% equilibration cycles on top
+mc_cycles = 1000  #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -212,6 +212,6 @@ n_bin = 100
 bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
 start_config = Config(pos_cu55, bc_cu55)
 
-#@time ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-@time ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble)
+#@time ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble)
