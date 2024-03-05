@@ -497,7 +497,7 @@ function calc_components(new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
         j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
 
 
-        
+
 @views        new_component_vec[j_index,:] .+= j_term 
 @views        new_component_vec[atomindex,:] .+= j_term 
 
@@ -505,13 +505,35 @@ function calc_components(new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
 
     return new_component_vec
 end
+
+# function calc_components(component_vec,new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
+#     for j_index in eachindex(new_r2_vec)
+
+#         j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
+
+#         new_component_vec[j_index,1] = component_vec[j_index,1] + j_term[1]
+#         new_component_vec[atomindex,1]=component_vec[atomindex,1] + j_term[1] 
+#         new_component_vec[j_index,2] = component_vec[j_index,2] + j_term[2]
+#         new_component_vec[atomindex,2]=component_vec[atomindex,2] + j_term[2] 
+#     end
+
+#     return new_component_vec
+# end
 """
     calc_energies_from_components(component_vector,ean,ecam)
-Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy.
+Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy. Commented version used more allocations due to broadcasting defaulting to copying arrays. New version uses minimal allocations. 
 """
+# function calc_energies_from_components(component_vector,ean,ecam)
+# @views    return sum(ean.*component_vector[:,1] - ecam*sqrt.(component_vector[:,2]))
+# end
 function calc_energies_from_components(component_vector,ean,ecam)
-    return sum(ean.*component_vector[:,1] - ecam*sqrt.(component_vector[:,2]))
+    en_val = 0.
+    for componentrow in eachrow(component_vector)
+        en_val += ean*componentrow[1] - ecam*sqrt(componentrow[2])
+    end
+return en_val
 end
+
 #-----------------------------------------------------------#
 #----------------Machine Learning Potentials----------------#
 #-----------------------------------------------------------#
@@ -646,7 +668,7 @@ function energy_update!(trial_pos,atomindex,config::Config,potential_variables::
 
     new_dist2_vec[atomindex] = 0.
 
-    potential_variables.new_component_vector = deepcopy(potential_variables.component_vector)
+    potential_variables.new_component_vector = copy(potential_variables.component_vector)
     
     potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,atomindex,dist2_mat[atomindex,:],new_dist2_vec,pot.n,pot.m)
 
@@ -675,30 +697,30 @@ Methods included for:
     - EmbeddedAtomModel 
     - Machine Learning Potentials 
 """
-function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotential)
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NVTVariables,pot::AbstractDimerPotential)
     potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,pot)
 
     return en_tot,potential_variables
 end
-function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::AbstractDimerPotential)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,r_cut,pot)
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NPTVariables,pot::AbstractDimerPotential)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut,pot)
 
     return en_tot,potential_variables
 end
-function initialise_energy(config,dist2_mat,potential_variables,pot::AbstractDimerPotentialB)
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NVTVariables,pot::AbstractDimerPotentialB)
     potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,pot)
     return en_tot,potential_variables 
 end
-function initialise_energy(config,dist2_mat,potential_variables,r_cut,pot::AbstractDimerPotentialB)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,r_cut,pot)
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NPTVariables,pot::AbstractDimerPotentialB)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut,pot)
     return en_tot,potential_variables 
 end
-function initialise_energy(config,dist2_mat,potential_variables,pot::EmbeddedAtomPotential)
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables,pot::EmbeddedAtomPotential)
     en_tot = calc_energies_from_components(potential_variables.component_vector,pot.ean,pot.eCam)
 
     return en_tot,potential_variables
 end
-function initialise_energy(config,dist2_mat,potential_variables,pot::RuNNerPotential)
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables,pot::RuNNerPotential)
     potential_variables.en_atom_vec = forward_pass(potential_variables.g_matrix,length(config),pot.nnp)
     en_tot = sum(potential_variables.en_atom_vec)
     return en_tot,potential_variables

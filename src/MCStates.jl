@@ -68,7 +68,8 @@ function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
 
     potential_variables = set_variables(config,dist2_mat,pot)
     ensemble_variables = set_ensemble_variables(config,ensemble)
-    en_tot, potential_variables=initialise_energy(config,dist2_mat,potential_variables,pot)
+
+    en_tot, potential_variables=initialise_energy(config,dist2_mat,potential_variables,ensemble_variables,pot)
 
     MCState(temp,beta,config,dist2_mat,zeros(n_atoms),0.,en_tot,potential_variables,ensemble_variables;kwargs...
     )
