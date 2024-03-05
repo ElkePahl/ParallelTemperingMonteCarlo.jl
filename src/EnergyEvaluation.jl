@@ -9,8 +9,6 @@ Structs and functions relating to the calculation of energy. Includes both low a
         -  Machine Learning Potentials 
     -EnergyUpdate function
         Calculates a new energy based on a trialpos for each PES type 
-    -GetEnergy function 
-            sorts energy calculations into different movetypes and ensembles.
     - InitialiseEnergy function 
             Calculates potentialvariables and total energy from a new config to be used when initialising MCStates 
     -SetVariables function 
@@ -506,19 +504,19 @@ function calc_components(new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
     return new_component_vec
 end
 
-# function calc_components(component_vec,new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
-#     for j_index in eachindex(new_r2_vec)
+function calc_components(component_vec,new_component_vec,atomindex,old_r2_vec,new_r2_vec,n,m)
+    for j_index in eachindex(new_r2_vec)
 
-#         j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
+        j_term = invrexp(new_r2_vec[j_index],n,m) .- invrexp(old_r2_vec[j_index],n,m)
 
-#         new_component_vec[j_index,1] = component_vec[j_index,1] + j_term[1]
-#         new_component_vec[atomindex,1]=component_vec[atomindex,1] + j_term[1] 
-#         new_component_vec[j_index,2] = component_vec[j_index,2] + j_term[2]
-#         new_component_vec[atomindex,2]=component_vec[atomindex,2] + j_term[2] 
-#     end
+        new_component_vec[j_index,1] = component_vec[j_index,1] + j_term[1]
+        new_component_vec[atomindex,1]=component_vec[atomindex,1] + j_term[1] 
+        new_component_vec[j_index,2] = component_vec[j_index,2] + j_term[2]
+        new_component_vec[atomindex,2]=component_vec[atomindex,2] + j_term[2] 
+    end
 
-#     return new_component_vec
-# end
+    return new_component_vec
+end
 """
     calc_energies_from_components(component_vector,ean,ecam)
 Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy. Commented version used more allocations due to broadcasting defaulting to copying arrays. New version uses minimal allocations. 
