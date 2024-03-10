@@ -580,7 +580,7 @@ function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variab
 
     potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
 
-    potential_variables.new_g_matrix = total_thr_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
+    potential_variables.new_g_matrix = total_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
 
     return new_dist2_vec,potential_variables
 end
@@ -588,7 +588,7 @@ end
     calc_new_runner_energy!(potential_variables::NNPVariables,new_en,pot)
 function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
 """
-function calc_new_runner_energy!(potential_variables::NNPVariables,pot)
+function calc_new_runner_energy!(potential_variables::NNPVariables,pot::RuNNerPotential)
     potential_variables.new_en_atom = forward_pass(potential_variables.new_g_matrix,length(potential_variables.en_atom_vec),pot.nnp)
     new_en = sum(potential_variables.new_en_atom)
     return potential_variables,new_en
