@@ -60,7 +60,7 @@ function metropolis_condition(delta_energy, beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-function metropolis_condition(ensemble::Etype, delta_energy,volume_changed,volume_unchanged,beta) where Etype <: NPT
+function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_changed::Float64,volume_unchanged::Float64,beta::Float64) where Etype <: NPT
     delta_h = delta_energy + ensemble.pressure*(volume_changed-volume_unchanged)
     prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)

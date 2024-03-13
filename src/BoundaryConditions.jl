@@ -34,8 +34,15 @@ struct SphericalBC{T} <: AbstractBC{T}
     SphericalBC(; radius::T) where T = new{T}(radius*radius)
 end
 
-struct CubicBC{T} <: AbstractBC{T}
+abstract type PeriodicBC{T} <: AbstractBC{T} end
+
+struct CubicBC{T} <: PeriodicBC{T}
     box_length::T
+end
+
+struct RhombicBC{T} <: PeriodicBC{T}
+    box_length::T
+    box_height::T
 end
 
 """
