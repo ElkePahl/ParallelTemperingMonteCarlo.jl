@@ -24,6 +24,7 @@ using StaticArrays,LinearAlgebra#,DFTK
 using ..MachineLearningPotential
 using ..Configurations
 using ..Ensembles 
+using ..BoundaryConditions
 
 # export AbstractEnsemble,NVT,NPT
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven
@@ -140,7 +141,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::DimerPotentia
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, pot::AbstractDimerPotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -156,6 +157,23 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotential
     end 
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
+end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::RhombicBC, pot::AbstractDimerPotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * 3/4 * bc.box_length/bc.box_height  
 end 
 """
     dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
@@ -384,7 +402,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -697,7 +715,7 @@ function initialise_energy(config,dist2_mat,potential_variables,ensemble_variabl
     return en_tot,potential_variables
 end
 function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NPTVariables,pot::AbstractDimerPotential)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut,pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut, config.bc, pot)
 
     return en_tot,potential_variables
 end
@@ -706,7 +724,7 @@ function initialise_energy(config,dist2_mat,potential_variables,ensemble_variabl
     return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NPTVariables,pot::AbstractDimerPotentialB)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut,pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut, config.bc, pot)
     return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables,pot::EmbeddedAtomPotential)

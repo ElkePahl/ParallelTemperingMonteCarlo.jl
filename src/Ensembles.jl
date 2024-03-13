@@ -98,7 +98,8 @@ function get_r_cut(bc::CubicBC)
 end
 
 function get_r_cut(bc::RhombicBC)
-    return min(bc.box_length^2*3/16,bc.box_height^2/4)
+    #return min(bc.box_length^2*3/16,bc.box_height^2/4)
+    return bc.box_length^2*3/16
 end
 
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
