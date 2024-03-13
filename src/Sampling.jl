@@ -108,7 +108,7 @@ end
 
 
 """
-    initialise_histograms!(mc_params,results,e_bounds,bc::PeriodicBC)
+    initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
 Function to create the 2D energy-volume histograms.
 """
 function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
@@ -119,6 +119,32 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
 
     results.v_min = bc.box_length^3*0.8
     results.v_max = bc.box_length^3*2.0
+
+    println(results.v_min)
+    println(results.v_max)
+
+    results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+
+    results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
+
+    for i_traj in 1:mc_params.n_traj       
+
+        push!(results.en_histogram,zeros(results.n_bin + 2))
+        push!(results.ev_histogram,zeros(results.n_bin + 2,results.n_bin + 2))
+        push!(results.rdf,zeros(results.n_bin*5))
+
+    end
+    return results
+end
+
+function initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
+
+    # incl 6% leeway
+    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
+
+    results.v_min = bc.box_length^2 * bc.box_height * 3^0.5/2 * 0.8
+    results.v_max = bc.box_length^2 * bc.box_height * 3^0.5/2 * 2.0
 
     println(results.v_min)
     println(results.v_max)

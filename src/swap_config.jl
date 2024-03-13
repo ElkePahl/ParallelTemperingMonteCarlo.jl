@@ -14,7 +14,7 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
     else
-        swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
+        swap_config_v!(mc_state, mc_state.config.bc, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
     end
 
 end
@@ -42,8 +42,18 @@ end
     swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
 secondary function where a volume move has been made, takes the new ensemble variables and puts them into the appropriate current state of the struct.
 """
-function swap_config_v!(mc_state::MCState,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
+function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
+    mc_state.dist2_mat = new_dist2_mat
+    mc_state.potential_variables.en_atom_vec = en_vec_new
+    mc_state.en_tot = new_en_tot
+    mc_state.count_vol[1] += 1
+    mc_state.count_vol[2] += 1
+
+    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
+end
+function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
+    mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
     mc_state.dist2_mat = new_dist2_mat
     mc_state.potential_variables.en_atom_vec = en_vec_new
     mc_state.en_tot = new_en_tot
