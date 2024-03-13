@@ -6,7 +6,7 @@
 """
 module BoundaryConditions
 
-export SphericalBC, AbstractBC, CubicBC
+export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC
 export check_boundary
 
 # include("SphericalBC.jl")

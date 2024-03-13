@@ -240,7 +240,8 @@ function get_tan(a,b,bc::RhombicBC)
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
     tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
-return tan
+    return tan
+end
 
 """
     get_theta_mat(conf::Config{N},conf.bc::SphericalBC)
@@ -280,7 +281,7 @@ end
 
 Builds the matrix of tan of angles between positions of configuration in a rhombic boundary.
 """
-function get_tantheta_mat(conf::Config,bc::CubicBC)
+function get_tantheta_mat(conf::Config,bc::RhombicBC)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N

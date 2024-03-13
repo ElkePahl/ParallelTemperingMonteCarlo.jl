@@ -1,6 +1,7 @@
 module Ensembles 
 
 using ..Configurations
+using ..BoundaryConditions
 using StaticArrays
 
 export AbstractEnsemble,NVT,NPT 
@@ -91,11 +92,19 @@ mutable struct NPTVariables{T} <: EnsembleVariables
     new_r_cut::T
 end
 
+function get_r_cut(bc::CubicBC)
+    return bc.box_length^2/4
+end
+
+function get_r_cut(bc::RhombicBC)
+    return min(bc.box_length^2*3/16,bc.box_height^2/4)
+end
+
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
 end
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
-    return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),config.bc.box_length^2/4,0.)
+    return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
 end
 
 """
