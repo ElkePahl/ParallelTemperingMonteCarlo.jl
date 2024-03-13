@@ -31,8 +31,8 @@ function update_energy_tot(mc_states,ensemble::NVT)
 end
 function update_energy_tot(mc_states,ensemble::NPT)
     for state in mc_states
-        state.ham[1] += state.en_tot + ensemble.pressure*state.config.bc.box_length^3
-        state.ham[2] += (state.en_tot + ensemble.pressure*state.config.bc.box_length^3)*(state.en_tot + ensemble.pressure*state.config.bc.box_length^3)
+        state.ham[1] += state.en_tot + ensemble.pressure* get_volume(state.config.bc)
+        state.ham[2] += (state.en_tot + ensemble.pressure* get_volume(state.config.bc))*(state.en_tot + ensemble.pressure* get_volume(state.config.bc))
     end
 
 end

@@ -18,7 +18,7 @@ using StaticArrays, LinearAlgebra
 using ..BoundaryConditions
 
 export Config
-export distance2, get_distance2_mat, get_tan, get_tantheta_mat, move_atom!
+export distance2, get_distance2_mat, get_tan, get_tantheta_mat, get_volume
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -292,5 +292,12 @@ function get_tantheta_mat(conf::Config,bc::RhombicBC)
     return mat
 end
 
+function get_volume(bc::CubicBC)
+    return bc.box_length^3
+end
+
+function get_volume(bc::RhombicBC)
+    return bc.box_length^2 * bc.box_height * 3^0.5/2
+end
 
 end

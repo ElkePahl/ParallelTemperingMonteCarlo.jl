@@ -73,7 +73,8 @@ function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
     elseif movetype == "volumemove"
-        return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
+        #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
+        return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),get_volume(mc_state.ensemble_variables.trial_config.bc),get_volume(mc_state.config.bc),mc_state.beta )
     end
 end
 # function metropolis_condition(::atommove,mc_state,ensemble)
@@ -144,7 +145,9 @@ function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
 
     
 
-    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
+    #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * get_volume(mc_states[n_exc].config.bc)),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
+    
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc+1].count_exc[2] += 1
 
