@@ -63,7 +63,7 @@ end
 scale the whole configuration, including positions and the box length.
 returns the trial configuration as a struct. 
 """
-function volume_change(conf::Config, bc::CubicBC, max_vchange, max_length)
+function volume_change(conf::Config{N,BC,T}, max_vchange, max_length) where {N,BC<:CubicBC,T}
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
     if conf.bc.box_length >= max_length && scale > 1.
         scale=1.
@@ -72,7 +72,7 @@ function volume_change(conf::Config, bc::CubicBC, max_vchange, max_length)
     trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
     return trial_config,scale
 end
-function volume_change(conf::Config, bc::RhombicBC, max_vchange, max_length)
+function volume_change(conf::Config{N,BC,T}, max_vchange, max_length) where {N,BC<:RhombicBC,T}
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
     if conf.bc.box_length >= max_length && scale > 1.
         scale=1.
@@ -83,7 +83,7 @@ function volume_change(conf::Config, bc::RhombicBC, max_vchange, max_length)
 end
 function volume_change(mc_state::MCState)
     #change volume
-    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.config.bc, mc_state.max_displ[2], mc_state.max_boxlength)
+    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength)
     #change r_cut
     #mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
     mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)

@@ -15,6 +15,7 @@ using Random
     temp = TempGrid{2}(10,15)
 
     state = MCState(temp.t_grid[1],temp.beta_grid[1],conf1,ensemble,pot1)
+    state2 = MCState(temp.t_grid[2],temp.beta_grid[2],conf1,ensemble,pot1)
     @test typeof(state.ensemble_variables) == NVTVariables{Float64}
     @test typeof(state.potential_variables) == DimerPotentialVariables{Float64}
 
@@ -37,5 +38,14 @@ using Random
     MCRun.swap_config!(state,"atommove")
     @test state.ensemble_variables.trial_move == state.config.pos[1]
     @test state.new_dist2_vec == state.dist2_mat[1,:]
-    
+
+    @test state2.en_tot - state.en_tot  ≈ 4.99895252855e-5
+
+    update_max_stepsize!(state,3,ensemble)
+    @test state.max_displ[1] < 0.1
+    exc_trajectories!(state,state2)
+    @test state2.en_tot - state.en_tot  ≈ -4.99895252855e-5
+    @test state.config.pos == conf1.pos
+
+
 end 
