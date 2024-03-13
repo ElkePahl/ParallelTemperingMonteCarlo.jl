@@ -44,6 +44,12 @@ function atom_displacement(pos, max_displacement, bc::CubicBC)
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
+function atom_displacement(pos, max_displacement, bc::RhombicBC)
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+    trial_pos -= [bc.box_length*round((trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length)+bc.box_length/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_length*3^0.5/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height)]
+    return trial_pos
+end
 function atom_displacement(mc_state::MCState)
 
     mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
@@ -70,7 +76,8 @@ function volume_change(mc_state::MCState)
     #change volume
     mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
     #change r_cut
-    mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
+    #mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
+    mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
     #get the new dist2 matrix
     mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat .* scale
     return mc_state

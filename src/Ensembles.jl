@@ -10,6 +10,7 @@ export EnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
 
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
+export get_r_cut
 """
     abstract type AbstractEnsemble
 abstract type for ensemble:
