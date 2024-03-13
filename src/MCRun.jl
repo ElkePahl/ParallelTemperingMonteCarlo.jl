@@ -53,7 +53,6 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
     end
     return mc_state
 end
-
 """
     acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 

@@ -141,10 +141,14 @@ end
     include("test_potentials.jl")
 end
 
+@testset "States" begin
+    include("test_states.jl")
+end
 
 @safetestset "RuNNer" begin
     include("test_runner_forward.jl")
 end
+
 
 # @safetestset "script testing" begin
 #     function read_save_data(filename)

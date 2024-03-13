@@ -137,12 +137,21 @@ end
     total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
 Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined symmetry_calculation function. 
 """
-function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-    for g_index in eachindex(total_symmetry_vector)
-        g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
-    end
+# function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
+#     for g_index in eachindex(total_symmetry_vector)
+#         g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
+#     end
 
-    return g_matrix
+#     return g_matrix
+# end
+function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
+    for g_index in 1:Nrad
+@views        g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
+    end
+    for g_index in 1+Nrad:Nang
+@views        symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index-Nrad])
+    end
+    return g_matrix 
 end
 function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
     Threads.@threads for g_index in eachindex(total_symmetry_vector)

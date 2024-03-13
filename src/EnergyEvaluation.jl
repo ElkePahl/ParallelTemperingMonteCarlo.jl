@@ -546,42 +546,38 @@ Contains the important structs required for a neural network potential defined i
     symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
     r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
 """
-struct  RuNNerPotential <: AbstractMachineLearningPotential
-    nnp::NeuralNetworkPotential
-    symmetryfunctions::Vector{AbstractSymmFunction}
+struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
+    nnp:: NeuralNetworkPotential
+    radsymfunctions::Vector{RadialType2}
+    angsymfunctions::Vector{AngularType3}
     r_cut::Float64
 end
-function RuNNerPotential(nnp,symmetryfunction)
-    r_cut = symmetryfunction[1].r_cut
-    return RuNNerPotential(nnp,symmetryfunction,r_cut)
+function RuNNerPotential(nnp,radsymvec,angsymvec)
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    return RuNNerPotential{nrad,nang}(nnp,radsymvec,angsymvec,r_cut)
 end
-
-
 mutable struct NNPVariables{T} <: PotentialVariables
+
     en_atom_vec::Vector{T}
 
     new_en_atom::Vector{T}
-    g_matrix::Array{T}
-    f_matrix::Array{T}
-    new_g_matrix::Array{T}
+    g_matrix::Matrix{T}
+    f_matrix::Matrix{T}
+    new_g_matrix::Matrix{T}
     new_f_vec::Vector{T}
 end
 """
     get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot)
 Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `potential_variables` according to the variables in `pot`.
 """
-function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,pot)
-
+function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,pot::RuNNerPotential{Nrad,Nang}) where {Nrad,Nang}
     new_dist2_vec = [ distance2(trial_pos,b,config.bc) for b in config.pos]
     new_dist2_vec[atomindex] = 0.
-    
     potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec),Ref(pot.r_cut))
-
-
     potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
-
-    potential_variables.new_g_matrix = total_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.symmetryfunctions)
-
+    potential_variables.new_g_matrix = total_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang)
     return new_dist2_vec,potential_variables
 end
 """
@@ -749,12 +745,12 @@ function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPote
     end
     return EmbeddedAtomVariables{T}(componentvec,zeros(N,2))
 end
-function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential) where {N,BC,T}
+function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential{nrad,nang}) where {N,BC,T} where {nrad,nang}
     
     f_matrix = cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut))
-    g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.symmetryfunctions)
+    g_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.radsymfunctions,pot.angsymfunctions,nrad,nang)
     
-    return NNPVariables{T}(zeros(N) ,zeros(N),g_matrix,f_matrix,zeros(length(pot.symmetryfunctions)), zeros(N))
+    return NNPVariables{T}(zeros(N) ,zeros(N),g_matrix,f_matrix,copy(g_matrix), zeros(N))
 end
 
 end

@@ -65,7 +65,7 @@ function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
     kwargs...) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
-
+    
     potential_variables = set_variables(config,dist2_mat,pot)
     ensemble_variables = set_ensemble_variables(config,ensemble)
 
