@@ -139,7 +139,7 @@ end
     @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <= 10^(-15)
     @test abs(trial_config.bc.box_length/bc.box_length - trial_config.bc.box_height/bc.box_height) <= 10^(-15)
 
-    v5=[7.5, 4.330127018922193, 5.0]
+    v5 = SVector(7.5, 4.330127018922193, 5.0)
     displ = 0.1
     trial_pos = atom_displacement(v5,displ,bc)
     @test norm(trial_pos-v1) < displ
