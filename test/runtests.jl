@@ -142,7 +142,7 @@ end
     v5 = SVector(7.5, 4.330127018922193, 5.0)
     displ = 0.1
     trial_pos = atom_displacement(v5,displ,bc)
-    @test norm(trial_pos-v1) < displ
+    @test norm(trial_pos-v5) < displ
 
 
 end

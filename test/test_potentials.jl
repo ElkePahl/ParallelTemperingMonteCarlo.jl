@@ -32,7 +32,7 @@
 
 
     evars1 = set_ensemble_variables(conf2,NPT(3,10))
-    en_vec_pbc,en_tot_pbc = dimer_energy_config(d2mat,3,vars,4.,pot1)
+    en_vec_pbc,en_tot_pbc = dimer_energy_config(d2mat,3,vars,4.,bc2,pot1)
     @test en_vec_pbc[2] == dimer_energy_atom(2,d2mat[2,:],4.,pot)
     en_pbc,vars_pbc = initialise_energy(conf2,d2mat,vars,evars1,pot1)
     @test en_pbc == en_tot_pbc
