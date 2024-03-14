@@ -52,9 +52,22 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     count_exc::Vector{Int}
 end    
 
+function max_length(bc::SphericalBC)
+    return 30.
+end
+
+function max_length(bc::CubicBC)
+    return bc.box_length*1.8
+end
+
+function max_length(bc::RhombicBC)
+    return bc.box_length*1.8
+end
+
+
 function MCState(
     temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; 
-    max_displ = [0.1,0.1,1.], max_boxlength = 30., count_atom = [0,0], count_vol = [0,0], count_exc = [0,0]
+    max_displ = [0.1,0.1,1.], max_boxlength = max_length(config.bc), count_atom = [0,0], count_vol = [0,0], count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
