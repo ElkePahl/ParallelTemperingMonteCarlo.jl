@@ -15,7 +15,7 @@ export InputParameters
 export MCParams, TempGrid
 export Output
 
-#const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
+const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 #const JtoEh=2.2937104486906E17
 #const A3tom3=10.0E-30
 #const Bohr3tom3=1.4818474345E-31
