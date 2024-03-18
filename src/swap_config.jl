@@ -1,12 +1,12 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
 
 """
-    swap_config!(mc_state,movetype::atommove)
-    swap_config!(mc_state,movetype::volumemove)
+    swap_config!(mc_state,movetype)
 
-Basic function for replacing the existing mc_state values with the updated values assuming the metropolis condition is met. 
-    - First method applies where the `movetype` is an atommove and distributes the new ensemblevariables such as `i_atom` and `trial_pos` into the second method, which actually swaps the variables. 
-    - Second method applies where `movetype` is a volumemove, this splits the ensemble variables into the swap_config_v! function to replace the `trial_config` the `new_dist2_mat` the `en_vec_new` and the `new_en_tot` into their appropriate place in the mc_state struct
+function for replacing the MC state and potential variables values with the updated values when metropolis condition is met. 
+Implemented for the following `move_type`:
+    - atommove 
+    - volumemove
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
 
@@ -40,7 +40,8 @@ function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where
 end
 """
     swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
-secondary function where a volume move has been made, takes the new ensemble variables and puts them into the appropriate current state of the struct.
+swaps mc states and ensemble variables in case of accepted volume move for NPT ensemble
+implemented for `CubicBC` and  `RhombicBC`
 """
 function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
@@ -52,6 +53,7 @@ function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_d
 
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
+
 function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
     mc_state.dist2_mat = new_dist2_mat
@@ -62,24 +64,31 @@ function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new
 
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
+
 """
     swap_vars!(i_atom,potential_variables::V)
-    potential variables = `DimerPotentialVariables`,`ELJPotentialBVariables`,`EmbeddedAtomVariables`,`NNPVariables`
-Secondary function to swap_config! takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration and replaces the current values with the new values such as:
+
+called by `swap_atom_config!` function; 
+takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration 
+and replaces the current values with the new values such as:
     - Under magnetic fields, the new tan matrix replaces the old
     - In the EAM, we replace the rho and phi vectors with the new updated versions
     - Using an NNP we require the new G matrix and F matrix to replace the old versions. 
+implemented for potential variables = `DimerPotentialVariables`,`ELJPotentialBVariables`,`EmbeddedAtomVariables`,`NNPVariables`
 """
 function swap_vars!(i_atom,potential_variables::V) where V <: DimerPotentialVariables
 end
+
 function swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
     potential_variables.tan_mat[i_atom,:] = potential_variables.new_tan_vec
     potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
 
 end
+
 function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
     potential_variables.component_vector = potential_variables.new_component_vector
 end
+
 function swap_vars!(i_atom,potential_variables::NNPVariables)
     potential_variables.en_atom_vec = potential_variables.new_en_atom 
     potential_variables.g_matrix = potential_variables.new_g_matrix 
