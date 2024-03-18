@@ -65,7 +65,7 @@ abstract type AbstractPotential end
     AbstractPotentialVariables
 An abstract type defining a class of mutable struct containing all the relevant vectors and arrays each potential will need throughout the course of a simulation to prevent over-definitions inside the MCState struct.
     implemented subtype:
-    -DimerPotenitalVariables
+    -DimerPotentialVariables
     -ELJPotentialBVariables
     -EmbeddedAtomVariables
     -NNPVariables
@@ -145,7 +145,7 @@ Needs vector of squared distances `d2vec` between atom `i` and all other atoms i
 see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 
-second method includes r_cut to exclude distances outside the cutoff radius of the potential.
+second method includes additional variable `r_cut` to exclude distances outside the cutoff radius of the potential.
 
 Final two methods relate to the use of magnetic field potentials such as the ELJB potential.
 """
