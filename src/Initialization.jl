@@ -21,23 +21,22 @@ using ..Ensembles
     initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::NVT)
 
 Basic function for establishing the structs and parameters required for the simulation. Inputs are:
-    -mc_params: the basic values and parameters concerning how long our simulation runs.
-    -temp: a grid of temp and beta values passed to the mc_states struct.
-    -start_config: the initial configuration used to populate each starting state with
-    -potential: the potential energy used for the simulation
-    -ensemble: the ensemble used for the simulation, contains the move strat inherently
+    - `mc_params`: parameters defining MC specifics [`mc_params`](@ref)  
+    - `temp`: temperature/inverse temperature grid [`temp`](@ref) 
+    - `start_config`: initial configuration (same for each trajectory) [`start_config`](@ref) 
+    - `potential`: defines potential energy of N atomic system [`potential`](@ref) 
+    - `ensemble`: ensemble used (defines move strategy presently) [`ensemble`](@ref) 
  
-returns the following structs:
-    -mc_states: a vector of MCState structs each at a different temperature
-    -move_strategy: struct containing a vector of movetypes
-    -results: struct countaining the output such as Cv and histograms
-    -start_counter: where to begin the sims
-    -n_steps: total moves per mc_cycle 
+Returns the following structs:
+    - `mc_states`: collects `MCState` structs for all trajectories [`MCState`](@ref) 
+    - `move_strategy`: defines move types used (displacemet, volume, swap, ...) [`move_strategy`](@ref) 
+    - `results`: collects MC output (eg. heat capacity and histogram information) [`Output`](@ref) 
+    - `start_counter`: defines starting point of simulation (new or restart) 
+    - `n_steps`: total number of moves per MC cycle 
 
 ***NOTES FOR FUTURE IMPLEMENTATION***
     - re-introduce a restart function once save exists
     - consider shuffling mc_params to include the tempgrid and cut down the number of inputs.
-
 """
 function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
 
