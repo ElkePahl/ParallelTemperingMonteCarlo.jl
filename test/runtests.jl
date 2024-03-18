@@ -166,6 +166,25 @@ end
     @test mat[1,2]==-1/2
     @test mat[1,3]==1.0
     @test mat[2,3]==-1/3
+
+    bc = RhombicBC(5.0,5.0)
+    conf = Config{3}([v1,v2,v3],bc)
+    mat = get_tantheta_mat(conf,bc)
+    
+    @test mat[1,2]==2.0
+    @test mat[1,3]==-1.0
+    @test mat[2,3]==0.5
+
+end
+
+@testset "Volume" begin
+    bc = CubicBC(10.0)
+    v = get_volume(bc)
+    @test v==1000.0
+
+    bc = RhombicBC(10.0,10.0)
+    v = get_volume(bc)
+    @test v==3^0.5/2*1000.0
 end
 
 @testset "BoundaryConditions" begin
