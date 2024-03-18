@@ -51,7 +51,7 @@ struct CubicBC{T} <: PeriodicBC{T}
 end
 """
     RhombicBC{T}
-Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. 
+Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, box_length applies to all four sides.
 """
 struct RhombicBC{T} <: PeriodicBC{T}
     box_length::T

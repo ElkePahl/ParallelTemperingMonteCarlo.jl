@@ -106,7 +106,7 @@ end
 
 """
 get_r_cut(bc<:PeriodicBC)
-finds the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting)
+finds the square of the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting).
 implemented for `CubicBC` and `RhombicBC`.
 """
 function get_r_cut(bc::CubicBC)

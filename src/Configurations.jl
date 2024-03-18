@@ -153,7 +153,7 @@ Finds the distance between two positions a and b.
 method 3 -
 Finds the distance between two positions a and the nearest image of b in a cubic box.
 method 4 - 
-Finds the distance between two positions a and the nearest image of b in a cubic box.
+Finds the distance between two positions a and the nearest image of b in a rhombic box.
 Minimum image convension in the z-direction is the same as the cubic box.
 In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
 
@@ -175,7 +175,7 @@ function distance2(a,b,bc::RhombicBC)
 end
 #distance matrix
 """
-    get_distance_mat(conf::Config{N})
+    get_distance2_mat(conf::Config{N})
 
 Builds the matrix of squared distances between positions of configuration.
 """
