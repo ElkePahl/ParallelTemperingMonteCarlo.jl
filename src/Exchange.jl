@@ -6,7 +6,6 @@ Here we include methods for calculating the metropolis condition and other excha
 
 module Exchange
 
-
 using ..MCStates
 using ..Configurations
 using ..EnergyEvaluation
