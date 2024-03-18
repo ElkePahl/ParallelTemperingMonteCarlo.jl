@@ -13,30 +13,28 @@ Structs and functions relating to the calculation of energy. Includes both low a
             Calculates potentialvariables and total energy from a new config to be used when initialising MCStates 
     -SetVariables function 
             Initialises the potential variables, aka creates a blank version of the struct for each type of PES
-            
-
 """
 
 module EnergyEvaluation 
 
-using StaticArrays,LinearAlgebra#,DFTK
+using StaticArrays,LinearAlgebra
 
 using ..MachineLearningPotential
 using ..Configurations
 using ..Ensembles 
 using ..BoundaryConditions
 
-# export AbstractEnsemble,NVT,NPT
+
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven
 export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
-export PotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
+export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
 export EmbeddedAtomVariables,NNPVariables
 
 
 export dimer_energy,dimer_energy_atom,dimer_energy_config
-#export 
 
-export energy_update!,set_variables,initialise_energy,dimer_energy_config#,get_energy!
+
+export energy_update!,set_variables,initialise_energy,dimer_energy_config
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
@@ -45,19 +43,35 @@ export energy_update!,set_variables,initialise_energy,dimer_energy_config#,get_e
 #-------------------------------------------------------------#
 """   
     AbstractPotential
-Abstract type for possible potentials
+Abstract type for possible potentials.
 implemented subtype: 
 - AbstractDimerPotential
+- AbstractDimerPotentialB
+- EmbeddedAtomPotential
+- AbstractMachineLearningPotential
 
-Needs method for dimer_energy [`dimer_energy`](@ref)
+
+When defining a new type, the functions relating a potential to the rest of the Monte Carlo code are explicated at the end of this file. Each potential also requires a PotentialVariable [`AbstractPotentialVariables`](@ref) struct to hold all non-static information relating a potential to the current configuration. 
+
+ Needs method for:
+    energy_update! [`energy_update!`](@ref)
+    initialise_energy [`initialise_energy`](@ref) 
+    set_variables [`set_variables`](@ref)
+
 """
 abstract type AbstractPotential end
 
 """
-    PotentialVariables
+    AbstractPotentialVariables
 An abstract type defining a class of mutable struct containing all the relevant vectors and arrays each potential will need throughout the course of a simulation to prevent over-definitions inside the MCState struct.
+    implemented subtype:
+    -DimerPotenitalVariables
+    -ELJPotentialBVariables
+    -EmbeddedAtomVariables
+    -NNPVariables
+
 """
-abstract type PotentialVariables end
+abstract type AbstractPotentialVariables end
 #-----------------------------------------------------------------------#
 #-----------------------Explicit Dimer Potentials-----------------------#
 #-----------------------------------------------------------------------#
@@ -74,25 +88,66 @@ Needs methods for
     - dimer_energy_config [`dimer_energy_config`](@ref)
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
+abstract type AbstractDimerPotentialB <: AbstractPotential end
 """
-    DimerPotenitalVariables
-The struct contains only the new_dist2_vec as this doesn't explicitly require any particular special features.
+    DimerPotentialVariables
+The struct contains only the en_atom_vec as this doesn't explicitly require any particular special features. This vector is the energy of each atom in the system
 """
-mutable struct DimerPotentialVariables{T} <: PotentialVariables
+mutable struct DimerPotentialVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Vector{T}
 end
+##
+#Need to include ELJB here to prevent recursive definitions erroring 
+##
+"""
+ELJPotentialB{N,T}
+   Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
+"""
+struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
+    coeff_a::SVector{N,T}
+    coeff_b::SVector{N,T}
+    coeff_c::SVector{N,T}
+end
+function ELJPotentialB{N}(a,b,c) where N
+    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
+    coeff_a = SVector{N}(a)
+    coeff_b = SVector{N}(b)
+    coeff_c = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+end
 
+function ELJPotentialB(a,b,c) 
+    N = length(c)
+    coeff_a = SVector{N}(a)
+    coeff_b = SVector{N}(b)
+    coeff_c = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+end
+
+mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
+    en_atom_vec::Array{T}
+    tan_mat::Matrix{T}
+    new_tan_vec::Vector{T}
+end
+#---------------------------------------------------------------------------#
+#--------------------------Universal functions------------------------------#
+#---------------------------------------------------------------------------#
 """
     dimer_energy_atom(i, d2vec, pot::AbstractDimerPotential)
     dimer_energy_atom(i, d2vec, r_cut, pot::AbstractDimerPotential)
-    
+    dimer_energy_atom(i, d2vec, tanvec,pot::AbstractDimerPotentialB)
+    dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
 
-Sums the dimer energies for atom `i` with all other atomsdimer_energy_update(pos,index,config,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
+Sums the dimer energies for atom `i` with all other atoms 
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
 see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 
-second method includes r_cut for use with the NPT ensemble
+second method includes r_cut to exclude distances outside the cutoff radius of the potential.
+
+Final two methods relate to the use of magnetic field potentials such as the ELJB potential.
 """
 function dimer_energy_atom(i, d2vec, pot::AbstractDimerPotential)
     sum1 = 0.
@@ -118,11 +173,40 @@ function dimer_energy_atom(i, d2vec, r_cut, pot::AbstractDimerPotential)
     end 
     return sum1
 end
+function dimer_energy_atom(i, d2vec, tanvec,pot::AbstractDimerPotentialB)
+    sum1 = 0.
+    for j in 1:i-1
+        sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+    end
+    for j in i+1:size(d2vec,1)
+        sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+    end 
+    return sum1
+end
+function dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
+    sum1 = 0.
+    for j in 1:i-1
+        if d2vec[j] <= r_cut
+            sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+        end
+    end
+    for j in i+1:size(d2vec,1)
+        if d2vec[j] <= r_cut
+            sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
+        end
+    end 
+    return sum1
+end
 """
     dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, pot::AbstractDimerPotential)
+    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, pot::AbstractDimerPotentialB)
 Stores the total of dimer energies of one atom with all other atoms in vector and
-calculates total energy of configuration
+calculates total energy of configuration.
+
+First two methods are for standard dimer potentials, one with a cutoff radius, one without a cutoff radius. The final two methods are for the same calculation using a magnetic potential such as the ELJB potential. 
+
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
@@ -175,10 +259,47 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotential
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * 3/4 * bc.box_length/bc.box_height  
 end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+            dimer_energy_vec[i] += e_ij
+            dimer_energy_vec[j] += e_ij
+            energy_tot += e_ij
+        end
+    end 
+    #energy_tot=sum(dimer_energy_vec)
+    return dimer_energy_vec, energy_tot
+end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
+end 
 """
     dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
     dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotential)
+    dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,pot::AbstractDimerPotentialB)
+    dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
+
 dimer_energy_update is the potential-level-call where for a single mc_state we take the new position `pos`, for atom at `index` , inside the current `config` , where the interatomic distances `dist2_mat` and the new vector based on the new position `new_dist2_vec`; these use the `potential` to calculate a delta_energy and modify the current `en_tot`. These quantities are modified in place and returned 
+
+Final two methods are for use with a dimer potential in a magnetic field, where there is anisotropy in the coefficients.
 """ 
 function dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
     @views  delta_en = dimer_energy_atom(index,new_dist2_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:], pot)
@@ -189,6 +310,19 @@ function dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::Ab
     @views delta_en = dimer_energy_atom(index,new_dist2_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],r_cut, pot)
 
     return delta_en + en_tot 
+end
+
+function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,pot::AbstractDimerPotentialB)
+
+    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
+
+    return  delta_en + en_tot
+end
+function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
+
+    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
+
+    return  delta_en + en_tot
 end
 #----------------------------------------------------------#
 #-----------------Specific Dimer Potentials----------------#
@@ -271,10 +405,14 @@ function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
     end
     return sum1
 end 
+
+
 """
     lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
+    lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
 The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
 lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
+Second method applies to the ELJ potential in extreme magnetic fields ELJB
 """
 function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
     
@@ -288,41 +426,53 @@ function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
     e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
     return e_lrc
 end
+function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
+    coeff=[-0.1279111890228638, -1.328138539967966, 12.260941135261255,41.12212408251662]
+    r_cut_sqrt=r_cut^0.5
+    rc3 = r_cut*r_cut_sqrt
+    e_lrc = 0.
+    for i = 1:4
+        e_lrc += coeff[i] / rc3 / (2i+1)
+        rc3 *= r_cut
+    end
+    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    return e_lrc
+end
 #----------------------------------------------------------#
 
 #-----------------Magnetic Dimer Potential-----------------#
-abstract type AbstractDimerPotentialB <: AbstractPotential end
-"""
-   potential in B
-"""
-struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
-    coeff_a::SVector{N,T}
-    coeff_b::SVector{N,T}
-    coeff_c::SVector{N,T}
-end
-function ELJPotentialB{N}(a,b,c) where N
-    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
-    coeff_a = SVector{N}(a)
-    coeff_b = SVector{N}(b)
-    coeff_c = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
-end
+# """
+# ELJPotentialB{N,T}
+#    Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
+# """
+# struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
+#     coeff_a::SVector{N,T}
+#     coeff_b::SVector{N,T}
+#     coeff_c::SVector{N,T}
+# end
+# function ELJPotentialB{N}(a,b,c) where N
+#     @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
+#     coeff_a = SVector{N}(a)
+#     coeff_b = SVector{N}(b)
+#     coeff_c = SVector{N}(c)
+#     T = eltype(c)
+#     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+# end
 
-function ELJPotentialB(a,b,c) 
-    N = length(c)
-    coeff_a = SVector{N}(a)
-    coeff_b = SVector{N}(b)
-    coeff_c = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
-end
+# function ELJPotentialB(a,b,c) 
+#     N = length(c)
+#     coeff_a = SVector{N}(a)
+#     coeff_b = SVector{N}(b)
+#     coeff_c = SVector{N}(c)
+#     T = eltype(c)
+#     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+# end
 
-mutable struct ELJPotentialBVariables{T} <: PotentialVariables
-    en_atom_vec::Array{T}
-    tan_mat::Matrix{T}
-    new_tan_vec::Vector{T}
-end
+# mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
+#     en_atom_vec::Array{T}
+#     tan_mat::Matrix{T}
+#     new_tan_vec::Vector{T}
+# end
 """
     dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
 Dimer energy when the distance square between two atom is r2 and the angle between the line connecting them and z-direction is tan.
@@ -346,106 +496,7 @@ function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
     return sum1
 end 
 
-"""
-    dimer_energy_atom(i, d2vec, tanvec,pot::AbstractDimerPotentialB)
-    dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
-Sums the dimer energies for atom `i` with all other atoms
-Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
-see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
-and potential information `pot` [`Abstract_Potential`](@ref) 
-"""
-function dimer_energy_atom(i, d2vec, tanvec,pot::AbstractDimerPotentialB)
-    sum1 = 0.
-    for j in 1:i-1
-        sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
-    end
-    for j in i+1:size(d2vec,1)
-        sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
-    end 
-    return sum1
-end
-function dimer_energy_atom(i, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
-    sum1 = 0.
-    for j in 1:i-1
-        if d2vec[j] <= r_cut
-            sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
-        end
-    end
-    for j in i+1:size(d2vec,1)
-        if d2vec[j] <= r_cut
-            sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
-        end
-    end 
-    return sum1
-end
-"""
-    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
-    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, pot::AbstractDimerPotentialB)
 
-Stores the total of dimer energies of one atom with all other atoms in vector and
-calculates total energy of a configuration
-Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
-and potential information `pot` [`Abstract_Potential`](@ref) 
-"""
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
-    dimer_energy_vec = zeros(NAtoms)
-    energy_tot = 0.
-
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
-            dimer_energy_vec[i] += e_ij
-            dimer_energy_vec[j] += e_ij
-            energy_tot += e_ij
-        end
-    end 
-    #energy_tot=sum(dimer_energy_vec)
-    return dimer_energy_vec, energy_tot
-end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
-    dimer_energy_vec = zeros(NAtoms)
-    energy_tot = 0.
-
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
-            end
-        end
-    end 
-
-    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
-end    
-function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,pot::AbstractDimerPotentialB)
-
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
-
-    return  delta_en + en_tot
-end
-function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
-
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
-
-    return  delta_en + en_tot
-end
-"""
-    lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) for B
-"""
-function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
-    coeff=[-0.1279111890228638, -1.328138539967966, 12.260941135261255,41.12212408251662]
-    r_cut_sqrt=r_cut^0.5
-    rc3 = r_cut*r_cut_sqrt
-    e_lrc = 0.
-    for i = 1:4
-        e_lrc += coeff[i] / rc3 / (2i+1)
-        rc3 *= r_cut
-    end
-    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
-    return e_lrc
-end
 #----------------------------------------------------------#
 #-------------------Embedded Atom Model--------------------#
 #----------------------------------------------------------#
@@ -475,7 +526,7 @@ function EmbeddedAtomPotential(n,m,ϵ,C,a)
     return EmbeddedAtomPotential(n,m,epsan,epsCam)
 end
 
-mutable struct EmbeddedAtomVariables{T} <: PotentialVariables
+mutable struct EmbeddedAtomVariables{T} <: AbstractPotentialVariables
     component_vector::Matrix{T}
     new_component_vector::Matrix{T}
 end
@@ -576,7 +627,7 @@ function RuNNerPotential(nnp,radsymvec,angsymvec)
     nang = length(angsymvec)
     return RuNNerPotential{nrad,nang}(nnp,radsymvec,angsymvec,r_cut)
 end
-mutable struct NNPVariables{T} <: PotentialVariables
+mutable struct NNPVariables{T} <: AbstractPotentialVariables
 
     en_atom_vec::Vector{T}
 

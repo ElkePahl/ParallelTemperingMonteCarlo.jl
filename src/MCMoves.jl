@@ -22,7 +22,8 @@ These variables are additionally contained in `mc_state` where the pos is determ
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `CubicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+    - `CubicBC`; `RhombicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+
 
 The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
@@ -38,23 +39,23 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     end
     return trial_pos
 end
+
 function atom_displacement(pos, max_displacement, bc::CubicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
+
 function atom_displacement(pos, max_displacement, bc::RhombicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= [bc.box_length*round((trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length)+bc.box_length/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_length*3^0.5/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height)]
     return trial_pos
 end
+
 function atom_displacement(mc_state::MCState)
-
     mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
-
-
     return mc_state
 end 
 
@@ -63,30 +64,21 @@ end
 scale the whole configuration, including positions and the box length.
 returns the trial configuration as a struct. 
 """
-function volume_change(conf::Config{N,BC,T}, max_vchange, max_length) where {N,BC<:CubicBC,T}
+function volume_change(conf::Config, max_vchange, max_length)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
     if conf.bc.box_length >= max_length && scale > 1.
         scale=1.
     end
 
     trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
-    return trial_config,scale
+    return trial_config, scale
 end
-function volume_change(conf::Config{N,BC,T}, max_vchange, max_length) where {N,BC<:RhombicBC,T}
-    scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    if conf.bc.box_length >= max_length && scale > 1.
-        scale=1.
-    end
 
-    trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
-    return trial_config,scale
-end
 function volume_change(mc_state::MCState)
     #change volume
-    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength)
+    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
     #change r_cut
-    #mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
+    mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
     #get the new dist2 matrix
     mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat .* scale
     return mc_state
@@ -95,7 +87,8 @@ end
 """
     generate_move!(mc_state,movetype::atommove)
     generate_move!(mc_state,movetype::volumemove)
-generate move is the currying function that takes mc_state and a movetype and generates the variables required inside of the ensemblevariables struct within mc_state. 
+generate move is the currying function that takes mc_state and a movetype 
+and generates the variables required inside of the ensemblevariables struct within mc_state. 
 """
 function generate_move!(mc_state::MCState,movetype::String)
     if movetype == "atommove"
