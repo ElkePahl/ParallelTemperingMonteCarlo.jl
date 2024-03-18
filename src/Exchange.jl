@@ -75,6 +75,8 @@ function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype
     elseif movetype == "volumemove"
         #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
         return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),get_volume(mc_state.ensemble_variables.trial_config.bc),get_volume(mc_state.config.bc),mc_state.beta )
+    else   
+        error("chosen move_type not implemented yet (see Exchange.jl)")
     end
 end
 # function metropolis_condition(::atommove,mc_state,ensemble)
