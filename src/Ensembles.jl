@@ -6,11 +6,12 @@ using StaticArrays
 
 export AbstractEnsemble,NVT,NPT 
 
-export EnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
+export AbstractEnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
 
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
 export get_r_cut
+
 """
     abstract type AbstractEnsemble
 abstract type for ensemble:
@@ -18,12 +19,14 @@ abstract type for ensemble:
     - NPT: isotherman,isobaric
 """
 abstract type AbstractEnsemble end
+
 """
-    abstract type EnsembleVariables
+    abstract type AbstractEnsembleVariables
 
 Basic type for the struct containing mutable variables, this will sit in MCStates and be changed in the displacement steps.
 """
-abstract type EnsembleVariables end
+abstract type AbstractEnsembleVariables end
+
 """
     NVT
 canonical ensemble
@@ -41,14 +44,15 @@ end
 function NVT(n_atoms)
     return NVT(n_atoms,n_atoms,0)
 end
+
 """
-    NVTVariables <: EnsembleVariables 
+    NVTVariables <: AbstractEnsembleVariables 
 Fields for the NVT ensemble include
         - Index 
         - trial_move 
     When trialing a new configuration we select an atom at `index` to move to `trial_move`
 """
-mutable struct  NVTVariables{T} <: EnsembleVariables
+mutable struct  NVTVariables{T} <: AbstractEnsembleVariables
     index::Int64
     trial_move:: SVector{3,T}
 end
@@ -70,11 +74,13 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
 end
+
 function NPT(n_atoms,pressure)
     return NPT(n_atoms,n_atoms,1,0,pressure)
 end
+
 """
-    NPTVariables <: EnsembleVariables 
+    NPTVariables <: AbstractEnsembleVariables 
 Fields for the NPT ensemble include
         - Index 
         - trial_move 
@@ -84,7 +90,7 @@ Fields for the NPT ensemble include
         - new_r_cut
     When trialing a new configuration we select an atom at `index` to move to `trial_move`, the index can be over n_atoms in which case we trial a scaled `new_config` with a `new_r_cut` having a `new_dist2_mat`
 """
-mutable struct NPTVariables{T} <: EnsembleVariables
+mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     index::Int64
     trial_move::SVector{3,T}
     trial_config::Config
@@ -105,6 +111,7 @@ end
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
 end
+
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
     return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
 end
@@ -114,14 +121,16 @@ end
 defines the type of move to establish the movestrat struct. Basic types are:
     - atommove: basic move of a single atom 
     - volumemove: NPT ensemble requires volume changes to maintain pressure as constant 
-    - atomswap: for diatomic species we need to exchange atoms of differing types
+    - atomswap: for diatomic species we need to exchange atoms of differing types (not yet implemented)
 """
 abstract type MoveType end
 
 struct atommove <: MoveType end
 
 struct volumemove <: MoveType end
+
 struct atomswap <: MoveType end
+
 """
     struct MoveStrategy
         - MoveStrategy(ensemble::NPT)
@@ -133,6 +142,7 @@ struct MoveStrategy{N,Etype}
     ensemble::Etype
     movestrat::Vector{String}
 end
+
 function MoveStrategy(ensemble::NPT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
@@ -147,6 +157,7 @@ function MoveStrategy(ensemble::NPT)
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)}(ensemble,movestrat)
 end
+
 function MoveStrategy(ensemble::NVT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
