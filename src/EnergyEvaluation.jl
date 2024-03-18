@@ -91,7 +91,8 @@ abstract type AbstractDimerPotential <: AbstractPotential end
 abstract type AbstractDimerPotentialB <: AbstractPotential end
 """
     DimerPotentialVariables
-The struct contains only the en_atom_vec as this doesn't explicitly require any particular special features. This vector is the energy of each atom in the system
+The struct contains only the `en_atom_vec``, particular special features for this potential type. 
+This vector is the energy per atom in the system.
 """
 mutable struct DimerPotentialVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Vector{T}
