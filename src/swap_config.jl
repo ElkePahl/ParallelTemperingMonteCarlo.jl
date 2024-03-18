@@ -18,10 +18,10 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
     end
 
 end
-# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:AbstractEnsembleVariables}
 #     swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
 # end
-# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:AbstractEnsembleVariables}
 #     swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
 # end
 """

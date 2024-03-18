@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Random, DelimitedFiles
 
-#demonstration of the new verison of the new code   
+#demonstration of the new version of the new code   
 script_folder = @__DIR__ # folder where this script is located
 data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
 #-------------------------------------------------------#

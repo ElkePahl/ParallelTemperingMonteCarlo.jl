@@ -11,6 +11,7 @@ export AbstractEnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variable
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
 export get_r_cut
+
 """
     abstract type AbstractEnsemble
 abstract type for ensemble:
@@ -20,6 +21,7 @@ abstract type for ensemble:
     Each subtype requires a corresponding AbstractEnsembleVariable struct
 """
 abstract type AbstractEnsemble end
+
 """
     abstract type AbstractEnsembleVariables
 
@@ -43,6 +45,7 @@ end
 function NVT(n_atoms)
     return NVT(n_atoms,n_atoms,0)
 end
+
 """
     NVTVariables <: AbstractEnsembleVariables 
 Fields for the NVT ensemble include
@@ -72,12 +75,14 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
 end
+
 function NPT(n_atoms,pressure)
     return NPT(n_atoms,n_atoms,1,0,pressure)
 end
+
 """
-    NPTVariables <: AbstractEnsembleVariables 
-Fields for the NPT ensemble variables include
+    NPTVariables <: EnsembleVariables 
+Fields for the NPT ensemble include
         - Index 
         - trial_move 
         - trial_config
@@ -115,6 +120,7 @@ function to initialise the AbstractEnsembleVariables according to the `ensemble`
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
 end
+
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
     return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
 end
@@ -125,15 +131,15 @@ defines the type of move to establish the movestrat struct. Basic types are:
     - atommove: basic move of a single atom 
     - volumemove: NPT ensemble requires volume changes to maintain pressure as constant 
     - atomswap: for diatomic species we need to exchange atoms of differing types
-
-    Warning! Currently not in use
 """
 abstract type MoveType end
 
 struct atommove <: MoveType end
 
 struct volumemove <: MoveType end
+
 struct atomswap <: MoveType end
+
 """
     struct MoveStrategy
         - MoveStrategy(ensemble::NPT)
@@ -147,6 +153,7 @@ struct MoveStrategy{N,Etype}
     ensemble::Etype
     movestrat::Vector{String}
 end
+
 function MoveStrategy(ensemble::NPT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
@@ -161,6 +168,7 @@ function MoveStrategy(ensemble::NPT)
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)}(ensemble,movestrat)
 end
+
 function MoveStrategy(ensemble::NVT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
