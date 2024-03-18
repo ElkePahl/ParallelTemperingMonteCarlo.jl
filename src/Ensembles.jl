@@ -13,7 +13,7 @@ export MoveStrategy
 export get_r_cut
 
 """
-    abstract type AbstractEnsemble
+    AbstractEnsemble
 abstract type for ensemble:
     - NVT: canonical ensemble [`NVT`](@ref)
     - NPT: isothermal,isobaric [`NPT`](@ref)
