@@ -96,7 +96,44 @@ The struct contains only the en_atom_vec as this doesn't explicitly require any 
 mutable struct DimerPotentialVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Vector{T}
 end
+##
+#Need to include ELJB here to prevent recursive definitions erroring 
+##
+"""
+ELJPotentialB{N,T}
+   Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
+"""
+struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
+    coeff_a::SVector{N,T}
+    coeff_b::SVector{N,T}
+    coeff_c::SVector{N,T}
+end
+function ELJPotentialB{N}(a,b,c) where N
+    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
+    coeff_a = SVector{N}(a)
+    coeff_b = SVector{N}(b)
+    coeff_c = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+end
 
+function ELJPotentialB(a,b,c) 
+    N = length(c)
+    coeff_a = SVector{N}(a)
+    coeff_b = SVector{N}(b)
+    coeff_c = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+end
+
+mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
+    en_atom_vec::Array{T}
+    tan_mat::Matrix{T}
+    new_tan_vec::Vector{T}
+end
+#---------------------------------------------------------------------------#
+#--------------------------Universal functions------------------------------#
+#---------------------------------------------------------------------------#
 """
     dimer_energy_atom(i, d2vec, pot::AbstractDimerPotential)
     dimer_energy_atom(i, d2vec, r_cut, pot::AbstractDimerPotential)
@@ -404,38 +441,38 @@ end
 #----------------------------------------------------------#
 
 #-----------------Magnetic Dimer Potential-----------------#
-"""
-ELJPotentialB{N,T}
-   Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
-"""
-struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
-    coeff_a::SVector{N,T}
-    coeff_b::SVector{N,T}
-    coeff_c::SVector{N,T}
-end
-function ELJPotentialB{N}(a,b,c) where N
-    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
-    coeff_a = SVector{N}(a)
-    coeff_b = SVector{N}(b)
-    coeff_c = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
-end
+# """
+# ELJPotentialB{N,T}
+#    Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
+# """
+# struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
+#     coeff_a::SVector{N,T}
+#     coeff_b::SVector{N,T}
+#     coeff_c::SVector{N,T}
+# end
+# function ELJPotentialB{N}(a,b,c) where N
+#     @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
+#     coeff_a = SVector{N}(a)
+#     coeff_b = SVector{N}(b)
+#     coeff_c = SVector{N}(c)
+#     T = eltype(c)
+#     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+# end
 
-function ELJPotentialB(a,b,c) 
-    N = length(c)
-    coeff_a = SVector{N}(a)
-    coeff_b = SVector{N}(b)
-    coeff_c = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
-end
+# function ELJPotentialB(a,b,c) 
+#     N = length(c)
+#     coeff_a = SVector{N}(a)
+#     coeff_b = SVector{N}(b)
+#     coeff_c = SVector{N}(c)
+#     T = eltype(c)
+#     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
+# end
 
-mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
-    en_atom_vec::Array{T}
-    tan_mat::Matrix{T}
-    new_tan_vec::Vector{T}
-end
+# mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
+#     en_atom_vec::Array{T}
+#     tan_mat::Matrix{T}
+#     new_tan_vec::Vector{T}
+# end
 """
     dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
 Dimer energy when the distance square between two atom is r2 and the angle between the line connecting them and z-direction is tan.
