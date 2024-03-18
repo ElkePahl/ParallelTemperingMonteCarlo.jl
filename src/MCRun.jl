@@ -32,7 +32,7 @@ Curry function designed to separate energy calculations into their respective en
         - NVT ensemble without r_cut
         - NPT ensemble with r_cut
 """
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NVTVariables}
     if movetype == "atommove"
         mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
     end
@@ -45,7 +45,7 @@ end
 #     return mc_state
 
 # end
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NPTVariables}
     if movetype == "atommove"
         mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
     else

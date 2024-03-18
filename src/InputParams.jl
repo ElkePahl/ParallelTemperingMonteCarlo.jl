@@ -33,6 +33,7 @@ Type that collects MC specific data:
 - frequency of sampling energy (adding to Markov chain): 
 `mc_sample` gives number of MC cycles after which energy is saved (default: 1)
 - step size of moves is automatically adjusted after `n_adjust` MC cycles (default: 100)
+-`n_bin` defines the number of histogram bins used
 """
 struct MCParams
     mc_cycles::Int

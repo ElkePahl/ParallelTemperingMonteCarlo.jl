@@ -23,7 +23,7 @@ Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
     - `CubicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
-
+    -`RhombicBC`: Periodic BC enforced with anisotropic box, length and height are not the same.
 The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
 function atom_displacement(pos, max_displacement, bc::SphericalBC)

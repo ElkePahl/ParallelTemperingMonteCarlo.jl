@@ -88,7 +88,7 @@ AtoBohr = 1.8897259886 * 0.98
 pos_ne27 = pos_ne27 * AtoBohr
 
 
-#binding sphere
+#Box length
 box_length = 9.3974 * AtoBohr
 box_height = 7.673 * AtoBohr
 bc_ne27 = RhombicBC(box_length, box_height)   

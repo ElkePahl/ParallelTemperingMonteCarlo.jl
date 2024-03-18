@@ -145,34 +145,28 @@ implemented for:
 
 """
     distance2(a,b) 
-    
+    distance2(a,b,bc::SphericalBC)
+    distance2(a,b,bc::CubicBC) 
+    distance2(a,b,bc::RhombicBC)
+method 1&2 -
 Finds the distance between two positions a and b.
+method 3 -
+Finds the distance between two positions a and the nearest image of b in a cubic box.
+method 4 - 
+Finds the distance between two positions a and the nearest image of b in a cubic box.
+Minimum image convension in the z-direction is the same as the cubic box.
+In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
+
 """
 distance2(a,b) = (a-b)⋅(a-b)
 
-distance2(a,b,bc::SphericalBC) = (a-b)⋅(a-b)
-
-"""
-    distance2(a,b,bc::CubicBC) 
-    
-Finds the distance between two positions a and the nearest image of b in a cubic box.
-"""
-#distance2(a,b,bc::PeriodicBC) = distance2(a,b+[round((a[1]-b[1])/bc.box_length), round((a[2]-b[2])/bc.box_length), round((a[3]-b[3])/bc.box_length)]*bc.box_length)
-
+distance2(a,b,bc::SphericalBC) = distance2(a,b)
 function distance2(a,b,bc::CubicBC)
     b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z=b[3]+bc.box_length*round((a[3]-b[3])/bc.box_length)
     return distance2(a,[b_x,b_y,b_z])
 end
-
-"""
-    distance2(a,b,bc::RhombicBC)
-
-Finds the distance between two positions a and the nearest image of b in a cubic box.
-Minimum image convension in the z-direction is the same as the cubic box.
-In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
-"""
 function distance2(a,b,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
@@ -200,29 +194,25 @@ end
 
 """
     get_tan(a,b)
-
+    get_tan(a,b,bc::SphericalBC)
+    get_tan(a,b,bc::CubicBC)
+    get_tan(a,b,bc::RhombicBC)
+method 1&2 :
 tan of the angle between the line connecting two points a and b, and the z-direction
+method 3:
+tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
+method 4: 
+tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a rhombic boundary
+
 """
 function get_tan(a,b)
     tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
     return tan
 end
-
-"""
-    get_tan(a,b,bc::SphericalBC)
-
-tan of the angle between the line connecting two points a and b, and the z-direction in a spherical boundary
-Same as get_tan(a,b)
-"""
 function get_tan(a,b,bc::SphericalBC)
     tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
     return tan
 end
-"""
-    get_tan(a,b,bc::CubicBC)
-
-tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
-"""
 function get_tan(a,b,bc::CubicBC)
     b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
@@ -230,11 +220,6 @@ function get_tan(a,b,bc::CubicBC)
     tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
     return tan
 end
-"""
-    get_tan(a,b,bc::CubicBC)
-
-tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a rhombic boundary
-"""
 function get_tan(a,b,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
@@ -291,7 +276,11 @@ function get_tantheta_mat(conf::Config,bc::RhombicBC)
     end
     return mat
 end
-
+"""
+    get_volume(bc::CubicBC)
+    get_volume(bc::RhombicBC)
+returns the volume of a box according to its geometry for use where the ensemble does not imply a fixed V. 
+"""
 function get_volume(bc::CubicBC)
     return bc.box_length^3
 end

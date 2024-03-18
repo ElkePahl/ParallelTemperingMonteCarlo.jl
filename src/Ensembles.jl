@@ -6,7 +6,7 @@ using StaticArrays
 
 export AbstractEnsemble,NVT,NPT 
 
-export EnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
+export AbstractEnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
 
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
@@ -15,15 +15,17 @@ export get_r_cut
     abstract type AbstractEnsemble
 abstract type for ensemble:
     - NVT: canonical ensemble
-    - NPT: isotherman,isobaric
+    - NPT: isothermal,isobaric
+
+    Each subtype requires a corresponding AbstractEnsembleVariable struct
 """
 abstract type AbstractEnsemble end
 """
-    abstract type EnsembleVariables
+    abstract type AbstractEnsembleVariables
 
 Basic type for the struct containing mutable variables, this will sit in MCStates and be changed in the displacement steps.
 """
-abstract type EnsembleVariables end
+abstract type AbstractEnsembleVariables end
 """
     NVT
 canonical ensemble
@@ -42,13 +44,13 @@ function NVT(n_atoms)
     return NVT(n_atoms,n_atoms,0)
 end
 """
-    NVTVariables <: EnsembleVariables 
+    NVTVariables <: AbstractEnsembleVariables 
 Fields for the NVT ensemble include
         - Index 
         - trial_move 
     When trialing a new configuration we select an atom at `index` to move to `trial_move`
 """
-mutable struct  NVTVariables{T} <: EnsembleVariables
+mutable struct  NVTVariables{T} <: AbstractEnsembleVariables
     index::Int64
     trial_move:: SVector{3,T}
 end
@@ -74,17 +76,17 @@ function NPT(n_atoms,pressure)
     return NPT(n_atoms,n_atoms,1,0,pressure)
 end
 """
-    NPTVariables <: EnsembleVariables 
-Fields for the NPT ensemble include
+    NPTVariables <: AbstractEnsembleVariables 
+Fields for the NPT ensemble variables include
         - Index 
         - trial_move 
         - trial_config
         - new_dist2_mat
         - r_cut 
         - new_r_cut
-    When trialing a new configuration we select an atom at `index` to move to `trial_move`, the index can be over n_atoms in which case we trial a scaled `new_config` with a `new_r_cut` having a `new_dist2_mat`
+    When trialing a new configuration we select an atom at `index` to move to `trial_move`, the index can be greater than n_atoms in which case we trial a scaled `trial_config` with a `new_r_cut` having a `new_dist2_mat` this being a volume move
 """
-mutable struct NPTVariables{T} <: EnsembleVariables
+mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     index::Int64
     trial_move::SVector{3,T}
     trial_config::Config
@@ -92,7 +94,11 @@ mutable struct NPTVariables{T} <: EnsembleVariables
     r_cut::T
     new_r_cut::T
 end
-
+"""
+    get_r_cut(bc::CubicBC)
+    get_r_cut(bc::RhombicBC)
+Function to return the cutoff radius of a certain boundary condition. We do not calculate the energetic contribution of atoms outside this cutoff radius
+"""
 function get_r_cut(bc::CubicBC)
     return bc.box_length^2/4
 end
@@ -101,7 +107,11 @@ function get_r_cut(bc::RhombicBC)
     return min(bc.box_length^2*3/16,bc.box_height^2/4)
     #return bc.box_length^2*3/16
 end
-
+"""
+    set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
+    set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
+function to initialise the AbstractEnsembleVariables according to the `ensemble` provided. Required to allow for neutral initialisation in defining the MCState [`MCStates.MCState`](@ref) struct. 
+"""
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
 end
@@ -115,6 +125,8 @@ defines the type of move to establish the movestrat struct. Basic types are:
     - atommove: basic move of a single atom 
     - volumemove: NPT ensemble requires volume changes to maintain pressure as constant 
     - atomswap: for diatomic species we need to exchange atoms of differing types
+
+    Warning! Currently not in use
 """
 abstract type MoveType end
 
@@ -127,6 +139,8 @@ struct atomswap <: MoveType end
         - MoveStrategy(ensemble::NPT)
         - MoveStrategy(ensemble::NVT)
 A struct containing an ensemble and a movestrategy vector. This vector has movetypes in the appropriate ratio so that when we generate a trial index, we select the appropriate move type. 
+
+    Defined by introducing an ensemble, which have the ratios of atommove, volume move and atom swap as fields. 
 """
 # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps. 
 struct MoveStrategy{N,Etype}

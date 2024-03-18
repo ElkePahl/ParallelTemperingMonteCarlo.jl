@@ -10,7 +10,7 @@ Basic function for replacing the existing mc_state values with the updated value
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
 
-function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
     else
@@ -27,7 +27,7 @@ end
 """
     swap_atom_config(mc_state::MCState,i_atom,trial_pos)
 """
-function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where {T,N,BC,P<:PotentialVariables,E<:EnsembleVariables}
+function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     mc_state.config.pos[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom,:] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:,i_atom] = mc_state.new_dist2_vec
@@ -64,9 +64,7 @@ function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new
 end
 """
     swap_vars!(i_atom,potential_variables::V)
-    swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
-    swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
-    swap_vars!(i_atom,potential_variables::NNPVariables)
+    potential variables = `DimerPotentialVariables`,`ELJPotentialBVariables`,`EmbeddedAtomVariables`,`NNPVariables`
 Secondary function to swap_config! takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration and replaces the current values with the new values such as:
     - Under magnetic fields, the new tan matrix replaces the old
     - In the EAM, we replace the rho and phi vectors with the new updated versions
