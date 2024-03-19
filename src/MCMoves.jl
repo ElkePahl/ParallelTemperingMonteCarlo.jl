@@ -87,7 +87,7 @@ function volume_change(mc_state::MCState)
     #change volume
     mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.config.bc, mc_state.max_displ[2], mc_state.max_boxlength)
     #change r_cut
-    mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
+    mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
     #get the new dist2 matrix
     mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat .* scale
     return mc_state
