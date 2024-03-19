@@ -96,7 +96,7 @@ end
     @test d2mat[2,1] == d2mat[1,2]
 
     max_v = 0.1
-    trial_config, scale = volume_change(conf2,max_v,50)
+    trial_config, scale = volume_change(conf2,bc,max_v,50)
     @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_v)^(1/3)
     @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_v)^(1/3)
     @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <= 10^(-15)
@@ -133,11 +133,11 @@ end
     @test d2mat[2,1] == d2mat[1,2]
 
     max_v = 0.1
-    trial_config, scale = volume_change(conf2,max_v,50)
+    trial_config, scale = volume_change(conf2,bc,max_v,50)
     @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_v)^(1/3)
     @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_v)^(1/3)
     @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <= 10^(-15)
- #   @test abs(trial_config.bc.box_length/bc.box_length - trial_config.bc.box_height/bc.box_height) <= 10^(-15)
+    @test abs(trial_config.bc.box_length/bc.box_length - trial_config.bc.box_height/bc.box_height) <= 10^(-15)
 
     v5 = SVector(7.5, 4.330127018922193, 5.0)
     displ = 0.1
