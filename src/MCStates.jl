@@ -52,14 +52,16 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     count_exc::Vector{Int}
 end    
 
+"""
+    max_length(bc)
+    Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
+"""
 function max_length(bc::SphericalBC)
     return 30.
 end
-
 function max_length(bc::CubicBC)
     return bc.box_length*1.8
 end
-
 function max_length(bc::RhombicBC)
     return bc.box_length*1.8
 end
