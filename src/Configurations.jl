@@ -83,8 +83,8 @@ export distance2, get_distance2_mat, get_tan, get_tantheta_mat, get_volume
     Config(pos, bc::BC) where {BC<:AbstractBC}
 Generates a configuration of `N` atomic positions, each position saved as SVector of length 3.
 Fieldnames: 
-- `pos`: vector of x,y, and z coordinates of every atom 
-- `bc`: boundary condition
+    - `pos`: vector of x,y, and z coordinates of every atom 
+    - `bc`: boundary condition
 """
 struct Config{N, BC, T} 
     pos::Vector{SVector{3,T}}
@@ -156,7 +156,6 @@ method 4 -
 Finds the distance between two positions a and the nearest image of b in a rhombic box.
 Minimum image convension in the z-direction is the same as the cubic box.
 In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
-
 """
 distance2(a,b) = (a-b)⋅(a-b)
 
@@ -173,6 +172,7 @@ function distance2(a,b,bc::RhombicBC)
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
     return distance2(a,[b_x,b_y,b_z])
 end
+
 #distance matrix
 """
     get_distance2_mat(conf::Config{N})
@@ -203,7 +203,6 @@ method 3:
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
 method 4: 
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a rhombic boundary
-
 """
 function get_tan(a,b)
     tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
