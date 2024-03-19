@@ -12,13 +12,13 @@ n_atoms = 13
 # temperature grid
 ti = 9.
 tf = 16.
-n_traj = 32
+n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 200000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -31,19 +31,20 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
-#moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(atom_moves = n_atoms)  
 
 #ensemble
 ensemble = NVT(n_atoms)
+
+#moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
+move_strat = MoveStrategy(ensemble)  
 
 #c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 #pot = ELJPotentialEven{6}(c)
 
 a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
 b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
-c=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
-pot = ELJPotentialB{6}(a,b,c)
+c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
+potB = ELJPotentialB{6}(a,b,c1)
 
 #starting configurations
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
@@ -75,20 +76,16 @@ bc_ne13 = SphericalBC(radius=5.32)   #5.32 Angstrom
 start_config = Config(pos_ne13, bc_ne13)
 
 #histogram information
-n_bin = 100
+#n_bin = 100
 #en_min = -0.006    #might want to update after equilibration run if generated on the fly
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
 
-println("initial total energy= ",mc_states[1].en_tot)
-
-#results = Output(n_bin, max_displ_vec)
-results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
-
-@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
-
+#to check code in REPL
+@profview ptmc_run!(mc_params,temp,start_config,potB,ensemble)
+#@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 
 

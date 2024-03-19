@@ -4,7 +4,7 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
 using ..EnergyEvaluation
-
+using ..Ensembles
 export multihistogram_NVT
 
 function temp_trajectories(temp)

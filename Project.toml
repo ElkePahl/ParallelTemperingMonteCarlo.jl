@@ -4,14 +4,11 @@ authors = ["Elke Pahl <Elke.Pahl@auckland.ac.nz>"]
 version = "0.1.0"
 
 [deps]
-DFTK = "acf6eb54-70d9-11e9-0013-234b7a5f5337"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
-SplitApplyCombine = "03a91e81-4c3e-53e1-a0a4-9c0c8f19dd66"
+SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
-Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-UnitfulAtomic = "a7773ee8-282e-5fa2-be4e-bd808c38a91a"

@@ -1,85 +1,20 @@
 module MCMoves
 
-export MoveStrategy, atom_move_frequency, vol_move_frequency, rot_move_frequency
-export AbstractMove, StatMove
-export AtomMove
-export atom_displacement,generate_displacements #, update_max_stepsize!
-export volume_change,generate_vchange
+
+export atom_displacement,volume_change
+export generate_move!
 
 using StaticArrays
 
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
-
-"""
-    MoveStrategy(atom_moves, vol_moves, rot_moves)
-    MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
-Type that implements move strategy containing information of frequencies of moves:
- - atom_moves:  frequency of atom moves
- - vol_moves:  frequency of volume moves
- - rot_moves:  frequency of rotation moves
-"""
-struct MoveStrategy{A,V,R}
-end 
-
-function MoveStrategy(a,v,r)
-    return MoveStrategy{a,v,r}()
-end
-
-function MoveStrategy(;atom_moves=1, vol_moves=0, rot_moves=0)
-    return MoveStrategy(atom_moves,vol_moves,rot_moves)
-end 
-
-"""
-    atom_move_frequency(ms::MoveStrategy{A,V,R})
-gives frequency of atom moves    
-"""
-atom_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = A 
-"""
-    vol_move_frequency(ms::MoveStrategy{A,V,R})
-gives frequency of volume moves    
-"""
-vol_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = V
-"""
-    rot_move_frequency(ms::MoveStrategy{A,V,R})
-gives frequency of rotation moves    
-"""
-rot_move_frequency(ms::MoveStrategy{A,V,R}) where {A,V,R} = R
-
-"""
-    AbstractMove
-abstract type for possible Monte Carlo moves
-implemented: 
-    - AtomMove
-"""
-abstract type AbstractMove end
-
-"""
-    AtomMove
-implements type for atom move (random displacement of randomly selected atom)
-field name: frequency: number of moves per Monte Carlo cycle
-            max_displacement: max. displacement for move per temperature (updated during MC run)
-            n_update_stepsize: number of MC cycles between update of max. displacement
-            count_acc: total number of accepted atom moves
-            count_acc_adj: number of accepted moves between stepsize adjustments 
-"""
-mutable struct AtomMove{T} <: AbstractMove
-    frequency::Int
-    max_displacement::T
-    n_update_stepsize::Int
-    count_acc::Int       
-    count_acc_adj::Int 
-end
-
-function AtomMove(frequency, displ; update_stepsize=100, count_acc=0, count_acc_adj=0)
-    T = eltype(displ)
-    return AtomMove{T}(frequency, displ, update_stepsize, count_acc, count_acc_adj)
-end
+using ..Ensembles
 
 """
     atom_displacement(pos, max_displacement, bc)
     atom_displacement(mc_states,index)
+    atom_displacement(mc_state)
 
 Generates trial position for atom, moving it from `pos` by some random displacement 
 Random displacement determined by `max_displacement`
@@ -87,7 +22,8 @@ These variables are additionally contained in `mc_state` where the pos is determ
 Implemented for:
     
     - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `PeriodicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+    - `CubicBC`; `RhombicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+
 
 The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
 """
@@ -103,41 +39,28 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     end
     return trial_pos
 end
-function atom_displacement(pos, max_displacement, bc::PeriodicBC)
+
+function atom_displacement(pos, max_displacement, bc::CubicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
-function atom_displacement(mc_state,index)
-    #if index <= length(mc_state.config.pos)
-        trial_pos = atom_displacement(mc_state.config.pos[index],mc_state.max_displ[1],mc_state.config.bc)
-    #end
 
+function atom_displacement(pos, max_displacement, bc::RhombicBC)
+    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    trial_pos = pos + delta_move
+    trial_pos -= [bc.box_length*round((trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length)+bc.box_length/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_length*3^0.5/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height)]
     return trial_pos
-end 
-"""
-    function generate_displacements(mc_states,mc_params)
-generates a perturbed atom per trajectory. Accepts `mc_states` as a vector of mc_state structs and `mc_params` to define the vector lengths. Output is a vector of `indices` indicating which atom per trajectory has been used to generate `trial positions` 
-"""
-function generate_displacements(mc_states,mc_params)
-    indices=rand(1:mc_params.n_atoms,mc_params.n_traj)
-    trial_positions = atom_displacement.(mc_states,indices)
-    return indices,trial_positions
 end
 
-
-# #This method will supercede the above when multiple moves are implemented. Perhaps a more dynamic move strategy system will improve this?
-
-# function generate_displacements(mc_states,mc_params,a,v,r)
-#     indices=rand(1:(a+v+r),mc_params.n_traj)
-#     trial_positions = atom_displacement.(mc_states,indices)
-#     return indices,trial_positions
-# end
-
+function atom_displacement(mc_state::MCState)
+    mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+    return mc_state
+end 
 
 """
-    function volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
+    volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
 scale the whole configuration, including positions and the box length.
 returns the trial configuration as a struct. 
 """
@@ -147,40 +70,39 @@ function volume_change(conf::Config, max_vchange, max_length)
         scale=1.
     end
 
-    trial_config = Config(conf.pos * scale,PeriodicBC(conf.bc.box_length * scale))
-    return trial_config
+    trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
+    return trial_config, scale
 end
 
-function volume_change(mc_state)
-    trial_config = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
-    return trial_config
+function volume_change(mc_state::MCState)
+    #change volume
+    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config,mc_state.max_displ[2],mc_state.max_boxlength)
+    #change r_cut
+    mc_state.ensemble_variables.new_r_cut = mc_state.ensemble_variables.trial_config.bc.box_length^2/4
+    #get the new dist2 matrix
+    mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat .* scale
+    return mc_state
 end
 
-function generate_vchange(mc_states)
-    trial_configs_all = volume_change.(mc_states)
-    return trial_configs_all
+"""
+    generate_move!(mc_state,movetype::atommove)
+    generate_move!(mc_state,movetype::volumemove)
+generate move is the currying function that takes mc_state and a movetype 
+and generates the variables required inside of the ensemblevariables struct within mc_state. 
+"""
+function generate_move!(mc_state::MCState,movetype::String)
+    if movetype == "atommove"
+        return atom_displacement(mc_state)
+    else
+        return volume_change(mc_state)
+    end
 end
-
-
-# """ ----- OLD VERSION NOT USED---------#
-#     update_max_stepsize!(displ, n_update, count_accept, n_atom)
-# update of maximum step size of atom moves after n_update MC cyles (n_atom moves per cycle)
-# depends on ratio of accepted moves - as given in count_accept - 
-# for acceptance ratio < 40% max_displacement is reduced to 90% of its value,
-# for acceptance ratio > 60% max_displacement is increased to 110% of its value.
-# count_accept is set back to zero at end.      
-# """
-# function update_max_stepsize!(displ, n_update, count_accept, n_atom)
-#     for i in 1:length(count_accept)
-#         acc_rate =  count_accept[i] / (n_update * n_atom)
-#         if acc_rate < 0.4
-#             displ[i] *= 0.9
-#         elseif acc_rate > 0.6
-#             displ[i] *= 1.1
-#         end
-#         count_accept[i] = 0
-#     end
-#     return displ, count_accept
+# function generate_move!(mc_state,movetype::atommove)
+#     return atom_displacement(mc_state)
+# end
+# function generate_move!(mc_state,movetype::volumemove)
+#     return volume_change(mc_state)
 # end
 
-end #module
+
+end 

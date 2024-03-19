@@ -4,8 +4,10 @@ using Reexport
 
 include("BoundaryConditions.jl")
 include("Configurations.jl")
+include("Ensembles.jl")
 include("../MachineLearningPotential/MachineLearningPotential.jl")
 include("EnergyEvaluation.jl")
+
 include("MCStates.jl")
 include("InputParams.jl")
 
@@ -22,6 +24,7 @@ include("multihist_NVT.jl")
 
  @reexport using .BoundaryConditions
  @reexport using .Configurations
+ @reexport using .Ensembles
  @reexport using .MachineLearningPotential
  @reexport using .EnergyEvaluation
  @reexport using .MCStates
@@ -43,4 +46,5 @@ include("multihist_NVT.jl")
 
 
 
-end # module
+
+end 

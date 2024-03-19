@@ -1,5 +1,8 @@
 
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo#potential_variable_struct
+
+
+using ParallelTemperingMonteCarlo#potential_variable_struct
 
 using Random,DelimitedFiles
 
@@ -26,7 +29,7 @@ temp = TempGrid{n_traj}(ti,tf)
 # MC simulation details
 
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 
@@ -193,7 +196,6 @@ X = [ 1    1              0.001   0.000  11.338
  1    0              0.100   0.000  11.338
  1    1              0.400   0.000  11.338
  1    0              0.400   0.000  11.338]
-
 radsymmvec = []
 
 
@@ -261,7 +263,6 @@ runnerpotential = RuNNerPotential(nnp,totalsymmvec)
 #============================================================#
 #------------------------------------------------------------#
 
-#nnp_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
 
 mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj]
 

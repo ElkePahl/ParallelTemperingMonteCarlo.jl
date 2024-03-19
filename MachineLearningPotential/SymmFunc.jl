@@ -24,7 +24,7 @@ abstract type AngularSymmFunction{T} <: AbstractSymmFunction{T} end
 struct RadialType2{T} <: RadialSymmFunction{T}
     eta::T
     r_cut::T
-    type_vec::Vector
+    type_vec::Vector{T}
     G_offset::T
     G_norm::T
 end
@@ -48,7 +48,7 @@ struct AngularType3{T} <:AngularSymmFunction{T}
     lambda::T
     zeta::T
     r_cut::T
-    type_vec::Vector
+    type_vec::Vector{T}
     tpz::T
     G_offset::T
     #G_norm::T
@@ -199,14 +199,17 @@ end
     total_symm_calc(positions,dist2_mat,f_mat,total_symm_vec)
 Function to run over a vector of symmetry functions `total_symm_vec` and determining the value for each symmetry function for each atom at position `positions` with distances `dist2_mat` and a matrix of cutoff functions `f_mat` between each atom pair.
 """
-function total_symm_calc(positions,dist2_mat,f_mat,total_symm_vec)
-    g_mat = init_symm_vecs(dist2_mat,total_symm_vec)
+function total_symm_calc(positions,dist2_mat,f_mat,radsymmfunctions,angsymmfunctions,Nrad,Nang) 
 
-     for g_index in eachindex(total_symm_vec)
-        g_mat[g_index,:] = calc_symm_vals!(positions,dist2_mat,f_mat,g_mat[g_index,:],total_symm_vec[g_index])
+    g_mat = zeros(Nrad+Nang,length(positions))
+
+    for g_index in 1:Nrad
+        g_mat[g_index,:] = calc_symm_vals!(positions,dist2_mat,f_mat,g_mat[g_index,:],radsymmfunctions[g_index])
     end
-    
-    return g_mat
+    for g_index in Nrad+1:Nang
+        g_mat[g_index,:] = calc_symm_vals!(positions,dist2_mat,f_mat,g_mat[g_index,:],angsymmfunctions[g_index-Nrad])
+    end
+    return g_mat 
 end
 """
     total_thr_symm_calc(positions,dist2_mat,f_mat,total_symm_vec)

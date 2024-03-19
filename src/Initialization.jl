@@ -1,13 +1,11 @@
-"""
-    module Initialization
-In light of the increasing complexity of the ReadSave module, I aim to move the functions relating to actually initialising simulations in one place, as well as some dependencies relating to equilibration cycles.
-"""
-
 module Initialization
 
-export init_sim,restart_ptmc, initialisation
 
 using StaticArrays,DelimitedFiles,Random
+
+export initialisation
+
+
 using ..MachineLearningPotential
 using ..MCStates
 using ..BoundaryConditions
@@ -17,136 +15,42 @@ using ..MCMoves
 using ..EnergyEvaluation
 using ..Exchange
 using ..ReadSave
-
+using ..Ensembles
 
 """
-    init_sim(pot ;dir=pwd())
-Function designed to take an input file named by kwarg `file` and open and initalise the states and parameters required for the simulation. 
+    initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::NVT)
+
+Basic function for establishing the structs and parameters required for the simulation. Inputs are:
+    -mc_params: the basic values and parameters concerning how long our simulation runs.
+    -temp: a grid of temp and beta values passed to the mc_states struct.
+    -start_config: the initial configuration used to populate each starting state with
+    -potential: the potential energy used for the simulation
+    -ensemble: the ensemble used for the simulation, contains the move strat inherently
+ 
+returns the following structs:
+    -mc_states: a vector of MCState structs each at a different temperature
+    -move_strategy: struct containing a vector of movetypes
+    -results: struct countaining the output such as Cv and histograms
+    -start_counter: where to begin the sims
+    -n_steps: total moves per mc_cycle 
+
+***NOTES FOR FUTURE IMPLEMENTATION***
+    - re-introduce a restart function once save exists
+    - consider shuffling mc_params to include the tempgrid and cut down the number of inputs.
+
+"""
+function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
+
+
+
+    move_strategy = MoveStrategy(ensemble)
+    n_steps = length(move_strategy)
     
-    ---This is not exactly the same as the restart as the params etc are distributed in separate files by the checkpoint function to prevent duplication and slowdown throughout the simulation. 
-"""
-function init_sim(pot ,file,eq_percentage)
-    file=open(file,"r+")
-    init = readdlm(file)
-    close(file)
-    paramsdata,simdata,config_data = init[1:8,:],init[9:11,:],init[12:end-1,:]
+    mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
 
-    ensemble,move_strat,mc_params = initialise_params(paramsdata,eq_percentage)
+    results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
 
-    temps=TempGrid{mc_params.n_traj}(simdata[1,2],simdata[1,3])
-
-    #max_displ_atom=[0.1*sqrt(simdata[2,2]*t) for t in temps.t_grid]
-
-    start_config = read_config(config_data)
-
-    length(start_config.pos) == mc_params.n_atoms || error("number of atoms and positions not the same - check starting config")
-
-    
-    mc_states = [MCState(temps.t_grid[i], temps.beta_grid[i], start_config, pot) for i in 1:mc_params.n_traj]
-
-    results = Output{Float64}(simdata[3,2]; en_min = mc_states[1].en_tot)
-
-    return mc_states,move_strat,mc_params,pot,ensemble,results
-
-end
-
-
-"""
-    function restart_ptmc(potential, directory)
-function takes a potential struct and optionally the directory of the savefile, this returns the params, states and the step at which data was saved.
-"""
-function restart_ptmc(potential,directory)
-
-    readfile = open("$(directory)/save.data","r+")
-
-    filecontents=readdlm(readfile)
-
-    step,configdata = read_input(filecontents)
-
-
-    close(readfile)
-    paramfile =  open("$(directory)/params.data")
-    paramdata = readdlm(paramfile)
-
-    close(paramfile)
-
-    ensemble,move_strat,mc_params = initialise_params(paramdata,0.0)
-    mc_states = read_states(configdata,mc_params.n_atoms,mc_params.n_traj,potential)
-    results  = read_results(directory = directory)
-
-    return mc_states,move_strat,mc_params,potential,ensemble,results,step
-
-end
-"""
-    initialisation( pot, save_dir )
-Function to restart parallel simulations through the restart_ptmc function. 
-"""
-function initialisation(restart::Bool, pot, save_dir;eq_percentage = 0.2,startfile="input.data")
-
-    if restart == true
-        mc_states,move_strat,mc_params,pot,ensemble,results,start_counter = restart_ptmc(pot,save_dir)
-    else
-        mc_states,move_strat,mc_params,pot,ensemble,results = init_sim(pot,"$(save_dir)/$(startfile)",eq_percentage)
-        start_counter = 1
-    end
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
-    n_steps = a + v + r
-
-    println("Total number of moves per MC cycle: ", n_steps)
-    println()
-
-
-    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
-
-end
-function initialisation(restart,mc_states, move_strat, mc_params, pot, ensemble, results;save=true,save_dir=pwd(),startfile="input.data")
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
-    n_steps = a + v + r
-
-    start_counter = 1
-
-    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
-end
-"""
-    initial_energy_calculation(nnp_state,runner_pot)
-takes a new `nnp_state` struct, calculates the total symmetry function and the energy according to the `runner_pot` potential energy surface. Returns the state with the updated g_matrix and en_tot fields 
-
-"""
-function initial_energy_calculation(nnp_state,runner_pot)
-    n_atoms = length(nnp_state.config.pos)
-
-    nnp_state.g_matrix = total_symm_calc(nnp_state.config.pos,nnp_state.dist2_mat,nnp_state.f_matrix,runner_pot.symmetryfunctions)
-
-    nnp_state.en_atom_vec = forward_pass(nnp_state.g_matrix,n_atoms,runner_pot.nnp)
-
-    nnp_state.en_tot = sum(nnp_state.en_atom_vec)
-
-    return nnp_state
-end
-"""
-    initial_energy_vec(nnp_states,potential)
-Accepts a vector of `nnp_states` trajectories and a `potential` we calculate the g_matrix and energy values for each state. 
-"""
-function initial_energy_vec(nnp_states,potential)
-    
-    for state in nnp_states 
-        state = initial_energy_calculation(state,potential)
-    end
-    return nnp_states
-end
-
-function initialisation(restart,mc_states::Vector{NNPState{T,N,BC}}, move_strat, mc_params, pot, ensemble, results;save=true,save_dir=pwd(),startfile="input.data") where T where N where BC
-
-    a,v,r = atom_move_frequency(move_strat),vol_move_frequency(move_strat),rot_move_frequency(move_strat)
-    n_steps = a + v + r
-
-    mc_states = initial_energy_vec(mc_states,pot)
-
-    start_counter = 1
-
-    return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
+    return mc_states,move_strategy,results,n_steps
 end
 
 
