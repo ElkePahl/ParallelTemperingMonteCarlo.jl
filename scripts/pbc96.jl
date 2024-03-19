@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -155,7 +155,7 @@ pos_ne96 = [[ 1.56624152,  0.90426996,  0.        ],
 
 #convert to Bohr
 AtoBohr = 1.8897259886 * 0.98
-pos_ne27 = pos_ne27 * AtoBohr
+pos_ne96 = pos_ne96 * AtoBohr
 
 
 #binding sphere
