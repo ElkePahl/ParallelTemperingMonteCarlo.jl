@@ -43,6 +43,9 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
 
+
+link="/Users/tiantianyu/Downloads/look-up_table-2.txt"
+potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
@@ -88,7 +91,9 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886
+#AtoBohr = 1.8897259886
+#When the unit of distance is still Angstrom:
+AtoBohr = 1.0
 pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
@@ -105,7 +110,7 @@ start_config = Config(pos_ne32, bc_ne32)
 #mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
-@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+@profview ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 

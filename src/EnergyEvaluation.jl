@@ -25,9 +25,9 @@ using ..Ensembles
 using ..BoundaryConditions
 
 
-export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven
+export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,LookuptablePotential
 export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
-export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
+export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables,LookupTableVariables
 export EmbeddedAtomVariables,NNPVariables
 
 
@@ -132,6 +132,73 @@ mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
     tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
 end
+
+
+"""
+    Look-up table potential
+    Energies are taken from a table.
+    Long range part is approximated with c6*r^(-6)
+"""
+struct LookuptablePotential <: AbstractDimerPotentialB
+    table::Matrix{Float64}
+    start_dist::Float64
+    start_angle::Float64
+    l_dist::Int32
+    l_angle::Int32
+    d_dist::Float64
+    d_angle::Float64
+    c6coeff::Float64
+end
+
+function read_lookuptable(link::String)
+    open(link) do f
+        line = readline(f) 
+        l_dist,start_dist,d_dist=parse(Int32,split(line, ", ")[1]),parse(Float64,split(line, ", ")[2]),parse(Float64,split(line, ", ")[3])
+        line=readline(f)
+        l_angle,start_angle,d_angle=parse(Int32,split(line, ", ")[1]),parse(Float64,split(line, ", ")[2]),parse(Float64,split(line, ", ")[3])
+        table = Matrix{Float64}(undef,l_angle,l_dist)
+        for i=1:l_angle
+            for j=1:l_dist
+                line = readline(f) 
+                table[i,j]=parse(Float64,line)
+            end
+        end
+
+        avg_last=0
+        for i=1:l_angle
+            avg_last+=table[i,l_dist]
+        end
+        avg_last = avg_last/l_angle
+        c6coeff = avg_last*(start_dist + l_dist*d_dist)^6
+
+        return table,start_dist,start_angle,l_dist,l_angle,d_dist,d_angle,c6coeff
+    end
+end
+
+function LookuptablePotential(link::String)
+    table,start_dist,start_angle,l_dist,l_angle,d_dist,d_angle,c6coeff=read_lookuptable(link)
+    pot=LookuptablePotential(table,start_dist,start_angle,l_dist,l_angle,d_dist,d_angle,c6coeff)
+    return(pot)
+end
+
+mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
+    en_atom_vec::Array{T}
+    tan_mat::Array{T}
+    new_tan_vec::Vector{T}
+end
+
+function dimer_energy(pot::LookuptablePotential, r2, tan)
+    angle_index=round(Int32,atan(abs(tan))/pot.d_angle*180.0/pi+1)
+    if r2 <= pot.start_dist
+        e = pot.table[angle_index,1]
+    elseif r2 <= (pot.start_dist+pot.l_dist*pot.d_dist)^2
+        dist_index=round(Int32,(r2^0.5-pot.start_dist)/pot.d_dist)
+        e = pot.table[angle_index,dist_index]
+    else
+        e = pot.c6coeff/r2^3
+    end
+    return e
+end 
 #---------------------------------------------------------------------------#
 #--------------------------Universal functions------------------------------#
 #---------------------------------------------------------------------------#
@@ -292,6 +359,73 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, bc::RhombicBC, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
+end 
+
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, pot::LookuptablePotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+            dimer_energy_vec[i] += e_ij
+            dimer_energy_vec[j] += e_ij
+            energy_tot += e_ij
+        end
+    end 
+    #energy_tot=sum(dimer_energy_vec)
+    return dimer_energy_vec, energy_tot
+end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::CubicBC, pot::LookuptablePotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
+end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RhombicBC, pot::LookuptablePotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
+end 
 """
     dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
     dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotential)
@@ -320,6 +454,19 @@ function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,e
     return  delta_en + en_tot
 end
 function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
+
+    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
+
+    return  delta_en + en_tot
+end
+
+function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,pot::LookuptablePotential)
+
+    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
+
+    return  delta_en + en_tot
+end
+function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,r_cut,pot::LookuptablePotential)
 
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
 
@@ -411,9 +558,10 @@ end
 """
     lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
     lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
+    lrc(NAtoms,r_cut,pot::LookuptablePotential)
 The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
 lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
-Second method applies to the ELJ potential in extreme magnetic fields ELJB
+Second method applies to the ELJ potential in extreme magnetic fields ELJB and look-up table.
 """
 function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
     
@@ -436,6 +584,14 @@ function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
         e_lrc += coeff[i] / rc3 / (2i+1)
         rc3 *= r_cut
     end
+    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    return e_lrc
+end
+function lrc(NAtoms,r_cut,pot::LookuptablePotential)
+    
+    r_cut_sqrt=r_cut^0.5
+    rc3 = r_cut*r_cut_sqrt
+    e_lrc = pot.c6coeff / rc3 / 3
     e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
     return e_lrc
 end

@@ -21,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -47,6 +47,9 @@ a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
 b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
 c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
 potB = ELJPotentialB{6}(a,b,c1)
+
+link="/Users/tiantianyu/Downloads/look-up_table-2.txt"
+potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
@@ -73,7 +76,9 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886
+#AtoBohr = 1.8897259886
+#When the unit of distance is still Angstrom:
+AtoBohr = 1.0
 pos_ne13 = pos_ne13 * AtoBohr
 
 #binding sphere
@@ -86,10 +91,10 @@ start_config = Config(pos_ne13, bc_ne13)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 
 #to check code in REPL
-ptmc_run!(mc_params,temp,start_config,potB,ensemble)
+#ptmc_run!(mc_params,temp,start_config,potB,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 
