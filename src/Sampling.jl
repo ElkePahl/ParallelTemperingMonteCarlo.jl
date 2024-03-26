@@ -21,8 +21,6 @@ function to update the current energy and energy squared values for coarse analy
     
     Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
-
-
 function update_energy_tot(mc_states,ensemble::NVT)
         for state in mc_states
             state.ham[1] += state.en_tot 
@@ -83,6 +81,8 @@ end
 
 """
     initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
+    initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
+    initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
 Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from e_bounds and (with 2% either side additionally) used to determine the energy grating for the histogram (delta_en_hist). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is 2*r2 and distance**2 is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as en_histogram
 
 Returns delta_en_hist,delta_r2
@@ -105,12 +105,6 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     end
     return results
 end
-
-
-"""
-    initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
-Function to create the 2D energy-volume histograms.
-"""
 function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
 
     # incl 6% leeway
@@ -136,7 +130,6 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
     end
     return results
 end
-
 function initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
 
     # incl 6% leeway

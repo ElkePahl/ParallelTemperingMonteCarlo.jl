@@ -14,7 +14,7 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 using ..Exchange
-using ..ReadSave
+
 using ..Ensembles
 
 """
@@ -49,8 +49,8 @@ function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,
     mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
 
     results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
-
-    return mc_states,move_strategy,results,n_steps
+    start_counter=1
+    return mc_states,move_strategy,results,n_steps,start_counter
 end
 
 
