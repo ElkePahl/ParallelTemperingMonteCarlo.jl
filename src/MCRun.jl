@@ -14,7 +14,7 @@ using ..InputParams
 using ..MCMoves
 using ..EnergyEvaluation
 using ..Exchange
-
+using ..Checkpoint
 
 using ..MCSampling
 
@@ -181,7 +181,7 @@ while initialisation sets mc_states,params etc we require something to thermalis
 """
 function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
     if restart == true
-        println("Restart not implemented yet")
+
     else
         return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
 
@@ -194,18 +194,33 @@ Main call for the ptmc program. Given `mc_params` dictating the number of cycles
 
     the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
-
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false, min_acc=0.4,max_acc=0.6,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+    println("included saves")
     #initialise the states and results etc
+    if save == true 
+        save_init(potential,ensemble,mc_params,temp)
+    end
+
     mc_states,move_strategy,results,n_steps,start_counter = initialisation(mc_params,temp,start_config,potential,ensemble)
+
     println("params set")
     #Equilibration 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
+
+    if save==true
+        save_histparams(results)
+    end
+
     println("equilibration complete")
 
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i)
+        if save == true
+            if rem(i,1000) == 0
+                checkpoint(i,mc_states,results,ensemble)
+            end
+        end
     end
     println("MC loop done.")
 
