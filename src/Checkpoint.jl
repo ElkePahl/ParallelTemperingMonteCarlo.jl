@@ -6,6 +6,8 @@ Module designed to save relevant parameters and configurations throughout the si
 module Checkpoint 
 
 using StaticArrays,DelimitedFiles
+
+using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
 using ..Ensembles
@@ -52,7 +54,7 @@ Function to write potential surface information into `savefile`. implemented met
 function writepotential(savefile,potential::Ptype) where Ptype <: AbstractDimerPotential
     coeff_vec = transpose([potential.coeff[i] for i in eachindex(potential.coeff)])
 
-    write(savefile,"$(typeof(pot))" )
+    write(savefile,"$(typeof(potential))" )
     writedlm(savefile, coeff_vec, ' ')
 end
 function writepotential(savefile,potential::Ptype) where Ptype <: AbstractDimerPotentialB
@@ -94,11 +96,14 @@ end
 Initialises and populates a data file containing the information necessary to interpret histogram data
 """
 function save_histparams(results)
-    resfile = open("./checkpoint/hist_info.data","w+")
-    headersvec = ["e_min" "e_max" "v_min" "v_max" "Δ_E" "Δ_V" "Δ_r2"]
-    infovec = [results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2]
-    writedlm(resfile,[headersvec , infovec], ' ')
-    close(resfile)
+    if ispath("./checkpoint/hist_info.data")==true
+    else
+        resfile = open("./checkpoint/hist_info.data","w+")
+        headersvec = ["e_min" "e_max" "v_min" "v_max" "Δ_E" "Δ_V" "Δ_r2"]
+        infovec = [results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2]
+        writedlm(resfile,[headersvec , infovec], ' ')
+        close(resfile)
+    end
 end
 #-----------------------------------------------------------------#
 #-----------------------Save Configurations-----------------------#
@@ -135,7 +140,7 @@ Function to save the configuration of each state in a vector of `mc_states`. wri
 """
 function save_configs(mc_states::Vector{stype}) where stype <: MCState
     for saveindex in eachindex(mc_states)
-        checkpoint_file = open("./checkpoint.config.$saveindex","w")
+        checkpoint_file = open("./checkpoint/config.$saveindex","w")
         checkpoint_config(checkpoint_file,mc_states[saveindex].config, mc_states[saveindex].max_displ)
         close(checkpoint_file)
     end
@@ -145,6 +150,7 @@ end
 Function to save relevant information about the current state of the system at step `index`. saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired. 
 """
 function checkpoint(index,mc_states,results,ensemble::NVT;rdfsave=false)
+    
     indexfile = open("./checkpoint/index.txt","w+")
     writedlm(indexfile,index)
     close(indexfile)
@@ -213,10 +219,21 @@ function readpotential(potinfovec)
 end
 """
     read_params(paramsvec)
-Function to turn a delimited `paramsvec` into an MCParams and TempGrid struct 
+    read_params(paramsvec,restart)
+Function to turn a delimited `paramsvec` into an MCParams and TempGrid struct. Second method includes a bool `restart` to determine whether or not to set eq_cycles=0 or 0.2*cycles if not restarting
 """
 function read_params(paramsvec)
     parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100)
+    temps = TempGrid{Int(paramsvec[3])}(paramsvec[5],paramsvec[6])
+    return parameters,temps
+end
+
+function read_params(paramsvec,restart)
+    if restart == true
+        parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100)
+    else
+        parameters = MCParams(paramsvec[1],Int(floor(0.2*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],100,100)
+    end
     temps = TempGrid{Int(paramsvec[3])}(paramsvec[5],paramsvec[6])
     return parameters,temps
 end
