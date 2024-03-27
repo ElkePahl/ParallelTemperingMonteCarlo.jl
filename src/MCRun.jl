@@ -199,11 +199,10 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
         - save::Bool or Int : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false, acc= [0.4, 0.6] ,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
-    println("included saves")
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false, acc= [0.4, 0.6] ,save=false) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+
     #initialise the states and results etc
-    if save ==false
-    else
+    if save != false
         save_init(potential,ensemble,mc_params,temp)
     end
 
@@ -213,8 +212,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     #Equilibration 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart,acc)
 
-    if save==false
-    else
+    if save != false
         save_histparams(results)
     end
 
@@ -237,6 +235,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
 end
 
 function ptmc_run!(restart::Bool;rdfsave=true,acc= [0.4, 0.6],save=1000)
+    
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart)
     println("params set")
     
@@ -245,7 +244,7 @@ function ptmc_run!(restart::Bool;rdfsave=true,acc= [0.4, 0.6],save=1000)
 
     for i = start_counter:mc_params.mc_cycles
         @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,acc)
-        
+
         if save == false
         elseif rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
