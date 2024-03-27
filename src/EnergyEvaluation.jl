@@ -136,7 +136,7 @@ end
 
 """
     Look-up table potential
-    Energies are taken from a table.
+    Dimer energies are taken from an external table from an address "link".
     Long range part is approximated with c6*r^(-6)
 """
 struct LookuptablePotential <: AbstractDimerPotentialB
@@ -376,6 +376,21 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end 
+
+"""
+    dimer_energy_config(distmat, NAtoms, pot::LookupTablePotential)
+    dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::CubicBC, pot::LookupTablePotential)
+    dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::RhombicBC, pot::LookupTablePotential)
+Stores the total of dimer energies of one atom with all other atoms in vector and
+calculates total energy of configuration.
+
+First method is for standard dimer potentials. The other two methods are periodic boundary with a cutoff distance.
+Difference between cubic boundary and rhombic boundary is the calculation of long range correction.
+The function lrc(NAtoms,r_cut,pot) assumes the box shape is cubic when the atom density is calculated. Here for the rhombic box case, it is adjusted.
+
+Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
+and potential information `pot` [`Abstract_Potential`](@ref) 
+"""
 
 function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
