@@ -16,7 +16,7 @@ using ..MCStates
 
 
 export save_init,save_histparams,checkpoint
-export read_init,setresults,rebuild_states,read_config
+export read_init,setresults,rebuild_states,read_config,build_states
 #---------------------------------------------------------------#
 #-----------------------Static Parameters-----------------------#
 #---------------------------------------------------------------#
@@ -385,7 +385,7 @@ function build_states(mc_params,ensemble,temp,potential)
         push!(confvec,conf)
     end
 
-    [MCState(temp.t_grid[i],temp.beta_grid[i],confvec[i],ensemble,potential) for i in 1:mc_params.n_traj]
+    mc_states = [MCState(temp.t_grid[i],temp.beta_grid[i],confvec[i],ensemble,potential) for i in 1:mc_params.n_traj]
     results = Output{Float64}(mc_params.n_bin;en_min=mc_states[1].en_tot)
 
     elseif ispath("./checkpoint/config.data")

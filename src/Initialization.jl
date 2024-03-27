@@ -58,14 +58,16 @@ function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,
     return mc_states,move_strategy,results,n_steps,start_counter
 end
 function initialisation(restart::Bool)
-    start_counter = Int(readdlm("./checkpoint/index.txt")[1])
+
     mc_params,temp,ensemble,potential = read_init(restart)
     if restart == true
+        start_counter = Int(readdlm("./checkpoint/index.txt")[1])
         mc_states,results = rebuild_states(mc_params.n_traj,ensemble,temp,potential)
     else
         mc_states,results = build_states(mc_params,ensemble,temp,potential)
+        start_counter=1
     end
-    
+
     move_strategy = MoveStrategy(ensemble)
     n_steps = length(move_strategy)
 
