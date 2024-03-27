@@ -241,7 +241,7 @@ end
     read_init()
 Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function. returns 
 """
-function read_init()
+function read_init(restart::Bool)
     readfile=open("./checkpoint/params.data","r+")
     data=readdlm(readfile)
     close(readfile)
@@ -250,7 +250,7 @@ function read_init()
     ensemblevec=data[4,:]
     potinfovec=data[5:end,:]
 
-    mc_params,temp = read_params(paramsvec)
+    mc_params,temp = read_params(paramsvec,restart)
     ensemble = readensemble(ensemblevec)
     potential=readpotential(potinfovec)
 
