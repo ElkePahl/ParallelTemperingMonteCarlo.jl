@@ -16,7 +16,7 @@ using ..MCStates
 
 
 export save_init,save_histparams,checkpoint
-export read_init,setresults,rebuild_states
+export read_init,setresults,rebuild_states,read_config
 #---------------------------------------------------------------#
 #-----------------------Static Parameters-----------------------#
 #---------------------------------------------------------------#
@@ -284,6 +284,27 @@ function read_checkpoint_config(xyzdata)
     return config , max_displ
 end
 """
+    read_config(xyzdata)
+designed to read in one xyz-style file with one configuration and return this for starting a simulaiton from files without restarting.
+"""
+function read_config(xyzdata)
+    N=xyzdata[1,1]
+    if xyzdata[2,1] == "SphericalBC{Float64}"
+        bc = SphericalBC(;radius=sqrt(xyzdata[2,3]))
+
+    elseif xyzdata[2,1] == "CubicBC{Float64}"
+        bc = CubicBC(xyzdata[2,3])
+
+    elseif xyzdata[2,1] == "RhombicBC"
+        bc = RhombicBC(xyzdata[2,3],xyzdata[2,4])
+    end
+    configvectors = [xyzdata[2+i,2:4] for i in 1:N]
+
+    config=Config(configvectors,bc)
+
+    return config
+end
+"""
     setresults(histparams,histdata,histv_data,r2data)
 Function to re-initialise the results struct on restarting a simulation.
 """
@@ -346,6 +367,36 @@ function rebuild_states(n_traj,ensemble,temps,potential)
     end
 
     return [state for state in mcstates] , results
+end
+"""
+    build_states(mc_params,ensemble,temp,potential)
+For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty Output struct named `results` and a vector of `mc_states` using either: one configuration stored in config.data OR a series of configurations stored in config.i. NB if config.i doesn't exist the default will be config.1 . In this way states can be initialised with different starting configurations.  
+"""
+function build_states(mc_params,ensemble,temp,potential)
+    if ispath("./checkpoint/config.1")
+    confvec=[]
+    for i in 1:mc_params.n_traj 
+        if ispath("./checkpoint/config.$i")
+            confinfo=readdlm("./checkpoint/config.$i")
+        else
+            confinfo=readdlm("./checkpoint/config.1")
+        end
+        conf=read_config(confinfo)
+        push!(confvec,conf)
+    end
+
+    [MCState(temp.t_grid[i],temp.beta_grid[i],confvec[i],ensemble,potential) for i in 1:mc_params.n_traj]
+    results = Output{Float64}(mc_params.n_bin;en_min=mc_states[1].en_tot)
+
+    elseif ispath("./checkpoint/config.data")
+
+        confinfo = readdlm("./checkpoint/config.data")
+        start_config = read_config(confinfo)
+        mc_states = [MCState(temp.t_grid[i],temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
+        results = Output{Float64}(mc_params.n_bin;en_min=mc_states[1].en_tot)
+    end
+    return mc_states,results
+
 end
 
 end

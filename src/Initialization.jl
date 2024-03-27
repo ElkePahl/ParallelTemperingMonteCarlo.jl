@@ -60,8 +60,12 @@ end
 function initialisation(restart::Bool)
     start_counter = Int(readdlm("./checkpoint/index.txt")[1])
     mc_params,temp,ensemble,potential = read_init(restart)
-    mc_states,results = rebuild_states(mc_params.n_traj,ensemble,temp,potential)
-
+    if restart == true
+        mc_states,results = rebuild_states(mc_params.n_traj,ensemble,temp,potential)
+    else
+        mc_states,results = build_states(mc_params,ensemble,temp,potential)
+    end
+    
     move_strategy = MoveStrategy(ensemble)
     n_steps = length(move_strategy)
 
