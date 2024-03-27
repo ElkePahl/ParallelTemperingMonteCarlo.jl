@@ -164,12 +164,12 @@ function read_lookuptable(link::String)
             end
         end
 
-        avg_last=0
+        avg_lr=0
         for i=1:l_angle
-            avg_last+=table[i,l_dist]
+            avg_lr+=table[i,1000]
         end
-        avg_last = avg_last/l_angle
-        c6coeff = avg_last*(start_dist + l_dist*d_dist)^6
+        avg_lr /= l_angle
+        c6coeff = avg_lr*(start_dist + 1000 * d_dist)^6
 
         return table,start_dist,start_angle,l_dist,l_angle,d_dist,d_angle,c6coeff
     end
