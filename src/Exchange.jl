@@ -168,12 +168,12 @@ Information on actual max. displacement and accepted moves between updates is co
 
 Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble
 """
-function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT; min_acc = 0.4, max_acc = 0.6)
+function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT,acc)
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
-    if acc_rate < min_acc
+    if acc_rate < acc[1]
         mc_state.max_displ[1] *= 0.9
-    elseif acc_rate > max_acc
+    elseif acc_rate > acc[2]
         mc_state.max_displ[1] *= 1.1
     end
     mc_state.count_atom[2] = 0
@@ -181,9 +181,9 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT; min_ac
     #if v > 0
     acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
     #println("acc rate volume = ",acc_rate)
-    if acc_rate < min_acc
+    if acc_rate < acc[1]
         mc_state.max_displ[2] *= 0.9
-    elseif acc_rate > max_acc
+    elseif acc_rate > acc[2]
         mc_state.max_displ[2] *= 1.1
     end
     mc_state.count_vol[2] = 0
@@ -192,12 +192,12 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT; min_ac
 
     return mc_state
 end
-function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NVT; min_acc = 0.4, max_acc = 0.6)
+function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NVT,acc)
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
-    if acc_rate < min_acc
+    if acc_rate < acc[1]
         mc_state.max_displ[1] *= 0.9
-    elseif acc_rate > max_acc
+    elseif acc_rate > acc[2]
         mc_state.max_displ[1] *= 1.1
     end
     mc_state.count_atom[2] = 0

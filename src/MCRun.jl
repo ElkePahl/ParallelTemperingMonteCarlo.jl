@@ -95,9 +95,9 @@ end
     mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx)
 Basic function utilised by the simulation. For each of the `n_steps` run a single mc_step on the `mc_states` according to `pot`, `move_strat` and `ensemble`. then complete the parallel_tempering_exchange and update_step_size.
 
-    Second method includes the sampling_step! which updates the `results` struct. The first method is used by the equilibration_cycle and therefore does __not__ update the results funciton. 
+    Second method includes the sampling_step! which updates the `results` struct. The first method is used by the equilibration_cycle and therefore does __not__ update the results struct. 
 """
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index,acc)
     for i_step in 1:n_steps 
         mc_states=  mc_step!(mc_states,move_strat,pot,ensemble)
     end
@@ -106,16 +106,14 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
     end
     if rem(index,mc_params.n_adjust) == 0
         for state in mc_states 
-            update_max_stepsize!(state,mc_params.n_adjust,ensemble)
+            update_max_stepsize!(state,mc_params.n_adjust,ensemble,acc)
         end
     end
-
-
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave,acc)
 
-    mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
+    mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx,acc)
     sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave)
 
     return mc_states 
@@ -146,13 +144,13 @@ end
     equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
 Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles defined in `mc_params` are completed without updating the results before initialising the `results` struct according to the maximum and minimum energy determined throughout the equilibration cycle. 
 """
-function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
+function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,acc)
     #set initial hamiltonian values and ebounds
 
     ebounds = [100. , -100.]
     #begin equilibration
     for i = 1:mc_params.eq_cycles
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,i)
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,i,acc)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot,ebounds)
         end
@@ -171,7 +169,7 @@ while initialisation sets mc_states,params etc we require something to thermalis
 
     N.B. Restart is currently non-functional, do not try use it
 """
-function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
+function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart,acc) where stype <: MCState
 
     for state in mc_states
         push!(state.ham, 0)
@@ -181,21 +179,31 @@ function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensembl
     if restart == true
         return mc_states,results
     else
-        return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
+        return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,acc)
 
     end
 end
 """
-    ptmc_run!(mc_params::MCParams,temps::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+    ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false, acc= [0.4, 0.6] ,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+    ptmc_run!(restart::Bool;rdfsave=true,acc= [0.4, 0.6],save=true,save_freq=1000)
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs. 
+    Second method:
+The second method relies on a series of checkpoint files -see Checkpoint module ['Checkpoint'](@ref)- to autoinitialise the ptmc_cycle. Still accepts restart as an argument to indicate whether this is a clean start with configs or a restart from a checkpoint at a given index. 
 
-    the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
+
+    kwargs currently implemented are:
+        - rdfsave::Bool : tells the simulation whether or not to generate and save radial distribution functions (a resource intensive step) -- set to true
+        - restart::Bool : tells the simulation whether or not we are beginning from a partially complete simulation - set false for method one. 
+        - acc::Vector : sets the min and max acceptance rates used to adjust stepsize for the simulation - set [0.4 0.6] for a target of 40-60% acceptance 
+        - save::Bool or Int : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
+
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false, min_acc=0.4,max_acc=0.6,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false, acc= [0.4, 0.6] ,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     println("included saves")
     #initialise the states and results etc
-    if save == true 
+    if save ==false
+    else
         save_init(potential,ensemble,mc_params,temp)
     end
 
@@ -203,9 +211,10 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
 
     println("params set")
     #Equilibration 
-    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
+    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart,acc)
 
-    if save==true
+    if save==false
+    else
         save_histparams(results)
     end
 
@@ -213,11 +222,10 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
 
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
-        if save == true
-            if rem(i,save_freq) == 0
-                checkpoint(i,mc_states,results,ensemble,rdfsave)
-            end
+        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,acc)
+        if save == false
+        elseif rem(i,save) == 0
+            checkpoint(i,mc_states,results,ensemble,rdfsave)
         end
     end
     println("MC loop done.")
@@ -227,18 +235,20 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     println("done")
     return mc_states,results
 end
-function ptmc_run!(restart::Bool;rdfsave=true,min_acc=0.4,max_acc=0.6,save=true,save_freq=1000)
+
+function ptmc_run!(restart::Bool;rdfsave=true,acc= [0.4, 0.6],save=1000)
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart)
     println("params set")
-    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
+    
+    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart,acc)
     println("equilibration complete")
 
     for i = start_counter:mc_params.mc_cycles
-        @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
-        if save == true
-            if rem(i,save_freq) == 0
-                checkpoint(i,mc_states,results,ensemble,rdfsave)
-            end
+        @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,acc)
+        
+        if save == false
+        elseif rem(i,save) == 0
+            checkpoint(i,mc_states,results,ensemble,rdfsave)
         end
     end
     println("MC loop done.")
