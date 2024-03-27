@@ -48,8 +48,6 @@ method two also returns:
 """
 function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
 
-
-
     move_strategy = MoveStrategy(ensemble)
     n_steps = length(move_strategy)
     

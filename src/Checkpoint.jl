@@ -37,13 +37,13 @@ Function to write the `ensemble` data into a savefile including the move types. 
 function writeensemble(savefile,ensemble::NVT)
 
     headersvec = ["ensemble" "n_atom_moves" "n_atom_swaps" ]
-    valuesvec = ["NVT{$(ensemble.n_atoms)}" ensemble.n_atom_moves ensemble.n_atom_swaps]
+    valuesvec = ["NVT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_atom_swaps]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 function writeensemble(savefile,ensemble::NPT)
 
     headersvec = ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure"]
-    valuesvec = ["NPT{$(ensemble.n_atoms)}" ensemble.n_atom_moves ensembles.n_volume_moves emsemble.n_atom_swaps ensemble.pressure]
+    valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensembles.n_volume_moves emsemble.n_atom_swaps ensemble.pressure]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 """
@@ -54,7 +54,7 @@ Function to write potential surface information into `savefile`. implemented met
 function writepotential(savefile,potential::Ptype) where Ptype <: AbstractDimerPotential
     coeff_vec = transpose([potential.coeff[i] for i in eachindex(potential.coeff)])
 
-    write(savefile,"$(typeof(potential))" )
+    write(savefile,"$(typeof(potential)) " )
     writedlm(savefile, coeff_vec, ' ')
 end
 function writepotential(savefile,potential::Ptype) where Ptype <: AbstractDimerPotentialB
@@ -149,7 +149,7 @@ end
     checkpoint(index,mc_states,results,ensemble;rdfsave=false)
 Function to save relevant information about the current state of the system at step `index`. saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired. 
 """
-function checkpoint(index,mc_states,results,ensemble::NVT;rdfsave=false)
+function checkpoint(index,mc_states,results,ensemble::NVT,rdfsave)
     
     indexfile = open("./checkpoint/index.txt","w+")
     writedlm(indexfile,index)
@@ -161,11 +161,12 @@ function checkpoint(index,mc_states,results,ensemble::NVT;rdfsave=false)
     if rdfsave == true 
         rdffile = open("./checkpoint/rdf.data","w+")
         writedlm(rdffile,results.rdf)
+        close(rdffile)
     else
     end
     
 end
-function checkpoint(index,mc_states,results,ensemble::NPT; rdfsave=false)
+function checkpoint(index,mc_states,results,ensemble::NPT, rdfsave)
     indexfile = open("./checkpoint/index.txt","w+")
     writedlm(indexfile,index)
     close(indexfile)
@@ -179,6 +180,7 @@ function checkpoint(index,mc_states,results,ensemble::NPT; rdfsave=false)
     if rdfsave == true 
         rdffile = open("./checkpoint/rdf.data","w+")
         writedlm(rdffile,results.rdf)
+        close(rdffile)
     else
     end    
 end
@@ -204,11 +206,11 @@ Function to convert delimited file contents `potinfovec` into a potential. Imple
 """
 function readpotential(potinfovec)
 
-    if potinfovec[1,1] == "ELJPotentialEven{nlength,Float64}"
-        coeffs= Vector(potinfovec[1,2:end])
+    if contains(potinfovec[1,1],"ELJPotentialEven")
+        coeffs= Vector(potinfovec[1,3:end])
         return ELJPotentialEven(coeffs)
-    elseif potinfovec[1,1] == "ELJPotential{nlength,Float64}"
-        coeffs = Vector(potinfovec[1,2:end])
+    elseif contains(potinfovec[1,1],"ELJPotential{")
+        coeffs = Vector(potinfovec[1,3:end])
         return ELJPotential(coeffs)
     elseif potinfovec[1,1] == "EAM:"
         return EmbeddedAtomPotential(potinfovec[1,2],potinfovec[1,3],potinfovec[1,4],potinfovec[1,5])
@@ -263,17 +265,17 @@ Function designed to take a single xyz-style checkpoint file and return the conf
 """
 function read_checkpoint_config(xyzdata)
     N=xyzdata[1,1]
-    if confinfo[2,1] == "SphericalBC{Float64}"
-        bc = SphericalBC(;radius=sqrt(confinfo[2,3]))
+    if xyzdata[2,1] == "SphericalBC{Float64}"
+        bc = SphericalBC(;radius=sqrt(xyzdata[2,3]))
         
-        max_displ = [confinfo[2,4:6]]
-    elseif confinfo[2,1] == "CubicBC{Float64}"
-        bc = CubicBC(confinfo[2,3])
+        max_displ = [xyzdata[2,4:6]]
+    elseif xyzdata[2,1] == "CubicBC{Float64}"
+        bc = CubicBC(xyzdata[2,3])
 
-        max_displ = [confinfo[2,4:6]]
-    elseif confinfo[2,1] == "RhombicBC"
-        bc = RhombicBC(confinfo[2,3],confinfo[2,4])
-        max_displ = [confinfo[2,5:7]]
+        max_displ = [xyzdata[2,4:6]]
+    elseif xyzdata[2,1] == "RhombicBC"
+        bc = RhombicBC(xyzdata[2,3],xyzdata[2,4])
+        max_displ = [xyzdata[2,5:7]]
     end
     configvectors = [xyzdata[2+i,2:4] for i in 1:N]
 
@@ -342,7 +344,8 @@ function rebuild_states(n_traj,ensemble,temps,potential)
         state = MCState(temps.t_grid[index],temps.beta_grid[index],conf,ensemble,potential;max_displ=maxdisp[1])
         push!(mcstates,state)
     end
-    return mcstates,results
+
+    return [state for state in mcstates] , results
 end
 
 end

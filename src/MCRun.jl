@@ -113,16 +113,11 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave)
 
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
-    sampling_step!(mc_params,mc_states,ensemble,idx,results)
-    #     if save == true
-#         if rem(i,1000) == 0
-#             save_states(mc_params,mc_states,i,save_dir)
-#             save_results(results,save_dir)
-#         end
-#     end
+    sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave)
+
     return mc_states 
 end
 """
@@ -153,10 +148,7 @@ Function to thermalise a set of `mc_states` ensuring that the number of equilibr
 """
 function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
     #set initial hamiltonian values and ebounds
-    for state in mc_states
-        push!(state.ham, 0)
-        push!(state.ham, 0)
-    end
+
     ebounds = [100. , -100.]
     #begin equilibration
     for i = 1:mc_params.eq_cycles
@@ -180,8 +172,14 @@ while initialisation sets mc_states,params etc we require something to thermalis
     N.B. Restart is currently non-functional, do not try use it
 """
 function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
-    if restart == true
 
+    for state in mc_states
+        push!(state.ham, 0)
+        push!(state.ham, 0)
+    end
+
+    if restart == true
+        return mc_states,results
     else
         return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
 
@@ -194,7 +192,7 @@ Main call for the ptmc program. Given `mc_params` dictating the number of cycles
 
     the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false, min_acc=0.4,max_acc=0.6,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false, min_acc=0.4,max_acc=0.6,save=false,save_freq=1000) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     println("included saves")
     #initialise the states and results etc
     if save == true 
@@ -215,10 +213,10 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
 
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i)
+        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
         if save == true
-            if rem(i,1000) == 0
-                checkpoint(i,mc_states,results,ensemble)
+            if rem(i,save_freq) == 0
+                checkpoint(i,mc_states,results,ensemble,rdfsave)
             end
         end
     end
@@ -229,7 +227,27 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     println("done")
     return mc_states,results
 end
+function ptmc_run!(restart::Bool;rdfsave=true,min_acc=0.4,max_acc=0.6,save=true,save_freq=1000)
+    mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart)
+    println("params set")
+    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
+    println("equilibration complete")
 
+    for i = start_counter:mc_params.mc_cycles
+        @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
+        if save == true
+            if rem(i,save_freq) == 0
+                checkpoint(i,mc_states,results,ensemble,rdfsave)
+            end
+        end
+    end
+    println("MC loop done.")
+
+    results = finalise_results(mc_states,mc_params,results)
+    println("done")
+
+    return mc_states,results
+end
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
