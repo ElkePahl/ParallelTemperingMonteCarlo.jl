@@ -5,7 +5,6 @@ using StaticArrays, LinearAlgebra
 
 
 
-
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))    
     @test length(x.movestrat) == length(x)
