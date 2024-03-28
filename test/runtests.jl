@@ -207,6 +207,15 @@ end
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
 end
 
+@testset "LookupTable" begin
+    link="./scripts/look-up_table-2.txt"
+    potlut=LookuptablePotential(link)
+    @test potlut.table[1][1]==282.19449125205114
+    @test potlut.start_dist==0.1
+    @test potlut.start_angle==0
+    @test length(potlut.table)==potlut.l_angle*potlut.l_dist
+end
+
 @testset "Potentials" begin 
     include("test_potentials.jl")
 end
