@@ -4,7 +4,6 @@ using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
 
-println(pwd())
 
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))    
@@ -205,15 +204,6 @@ end
     @test 1. /(temp.t_grid[1]*temp.beta_grid[1]) ≈ kB
     temp1 = TempGrid{n_traj}(2, 16; tdistr = :equally_spaced)
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
-end
-
-@testset "LookupTable" begin
-    link="/home/runner/work/ParallelTemperingMonteCarlo.jl/ParallelTemperingMonteCarlo.jl/scripts/look-up_table-2.txt"
-    potlut=LookuptablePotential(link)
-    @test potlut.table[1][1]==282.19449125205114
-    @test potlut.start_dist==0.1
-    @test potlut.start_angle==0
-    @test length(potlut.table)==potlut.l_angle*potlut.l_dist
 end
 
 @testset "Potentials" begin 

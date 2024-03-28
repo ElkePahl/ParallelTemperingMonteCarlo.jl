@@ -54,3 +54,11 @@ end
     @test E ≈ -1.3495549581716526
 end
 
+@testset "LookupTable" begin
+    link="/home/runner/work/ParallelTemperingMonteCarlo.jl/ParallelTemperingMonteCarlo.jl/scripts/look-up_table-2.txt"
+    potlut=LookuptablePotential(link)
+    @test potlut.table[1][1]==282.19449125205114
+    @test potlut.start_dist==0.1
+    @test potlut.start_angle==0
+    @test length(potlut.table)==potlut.l_angle*potlut.l_dist
+end
