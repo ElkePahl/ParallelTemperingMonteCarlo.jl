@@ -83,6 +83,42 @@ function volume_change(conf::Config, bc::RhombicBC, max_vchange, max_length)
     return trial_config,scale
 end
 
+function scale_xy(pos::Vector{Vector},scale)
+    for i=1:length(pos)
+        pos[i][1]*=scale
+        pos[i][2]*=scale
+    end
+    return pos
+end
+function scale_z(pos::Vector{Vector},scale)
+    for i=1:length(pos)
+        pos[i][3]*=scale
+    end
+    return pos
+end
+
+function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange, max_length)
+    scale = exp((rand()-0.5)*max_vchange)^(1/2)
+    if conf.bc.box_length >= conf.bc.box_height*1.0 && scale > 1.
+        scale=1.
+    elseif conf.bc.box_length <= conf.bc.box_height*0.5 && scale < 1.
+        scale=1.
+    end
+    
+    trial_config = Config(scale_xy(config.pos,scale),RhombicBC(conf.bc.box_length * scale, conf.bc.box_height))
+    return trial_config,scale
+end
+function volume_change_z(conf::Config, bc::RhombicBC, max_vchange, max_length)
+    scale = exp((rand()-0.5)*max_vchange)
+    #if conf.bc.box_length >= max_length && scale > 1.
+        #scale=1.
+    #end
+    
+    trial_config = Config(scale_z(config.pos,scale),RhombicBC(conf.bc.box_length, conf.bc.box_height * scale))
+    return trial_config,scale
+end
+
+
 function volume_change(mc_state::MCState)
     #change volume
     mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.config.bc, mc_state.max_displ[2], mc_state.max_boxlength)

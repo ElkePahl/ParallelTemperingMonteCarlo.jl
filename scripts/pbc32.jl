@@ -107,10 +107,10 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-#mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
-@profview ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
+#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 
