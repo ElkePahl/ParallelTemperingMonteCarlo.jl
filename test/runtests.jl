@@ -208,7 +208,7 @@ end
 end
 
 @testset "LookupTable" begin
-    link="./scripts/look-up_table-2.txt"
+    link="/home/runner/work/ParallelTemperingMonteCarlo.jl/ParallelTemperingMonteCarlo.jl/scripts/look-up_table-2.txt"
     potlut=LookuptablePotential(link)
     @test potlut.table[1][1]==282.19449125205114
     @test potlut.start_dist==0.1
