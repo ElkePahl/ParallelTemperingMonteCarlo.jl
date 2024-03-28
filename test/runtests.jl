@@ -4,7 +4,7 @@ using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
 
-
+println(pwd())
 
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))    
