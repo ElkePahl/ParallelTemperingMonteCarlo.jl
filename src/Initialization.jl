@@ -60,6 +60,7 @@ end
 function initialisation(restart::Bool)
 
     mc_params,temp,ensemble,potential = read_init(restart)
+    
     if restart == true
         start_counter = Int(readdlm("./checkpoint/index.txt")[1])
         mc_states,results = rebuild_states(mc_params.n_traj,ensemble,temp,potential)

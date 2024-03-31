@@ -25,8 +25,8 @@ export read_init,setresults,rebuild_states,read_config,build_states
 Function to write the `mc_params` and `temp` data into a `savefile`. These are static parameters that define how the simulation is to proceed such as the number of cycles, trajectories and the temperatures to be covered.
 """
 function writeparams(savefile,params,temp)
-    headersvec = ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "t_i:" "t_f"]
-    paramsvec = [params.mc_cycles params.mc_sample params.n_traj params.n_atoms first(temp.t_grid) last(temp.t_grid)]
+    headersvec = ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "min_acc:" "max_acc" "t_i:" "t_f"]
+    paramsvec = [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.min_acc params.max_acc first(temp.t_grid) last(temp.t_grid)]
     writedlm(savefile, [headersvec, paramsvec], ' ' )
 end
 """
@@ -113,24 +113,24 @@ end
         BC=SphericalBC,CubicBC,RhombicBC
 Function writes a single config in the standard xyz format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and bothtypes of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions x,y,z in order.
 """
-function checkpoint_config(savefile , config::Config{N,BC,T} , max_displ ) where {N,BC<:SphericalBC,T}
-    writedlm(savefile,[N,"$BC r2: $(config.bc.radius2) $(max_displ[1]) $(max_displ[2]) $(max_displ[3])"])
+function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:SphericalBC,Ptype,Etype}
+    writedlm(savefile,[N,"$BC r2: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
     
-    for row in config.pos
+    for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
-function checkpoint_config(savefile , config::Config{N,BC,T} , max_displ ) where {N,BC<:CubicBC,T}
-    writedlm(savefile,[N,"$BC box_length: $(config.bc.radius2) $(max_displ[1]) $(max_displ[2]) $(max_displ[3])"])
+function checkpoint_config(savefile ,state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:CubicBC,Ptype,Etype}
+    writedlm(savefile,[N,"$BC box_length: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
     
-    for row in config.pos
+    for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
-function checkpoint_config(savefile , config::Config{N,BC,T} , max_displ ) where {N,BC<:RhombicBC,T}
-    writedlm(savefile,[N,"$BC box_dims: $(config.bc.box_length) $(config.bc.box_height) $(max_displ[1]) $(max_displ[2]) $(max_displ[3])"])
+function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:RhombicBC,Ptype,Etype}
+    writedlm(savefile,[N,"$BC box_dims: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
     
-    for row in config.pos
+    for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
@@ -141,7 +141,8 @@ Function to save the configuration of each state in a vector of `mc_states`. wri
 function save_configs(mc_states::Vector{stype}) where stype <: MCState
     for saveindex in eachindex(mc_states)
         checkpoint_file = open("./checkpoint/config.$saveindex","w")
-        checkpoint_config(checkpoint_file,mc_states[saveindex].config, mc_states[saveindex].max_displ)
+        checkpoint_config(checkpoint_file,mc_states[saveindex])
+        # checkpoint_config(checkpoint_file,mc_states[saveindex].config, mc_states[saveindex].max_displ, mc_states[saveindex].count_atom[1],mc_states[saveindex].count_volume[1])
         close(checkpoint_file)
     end
 end
@@ -225,18 +226,18 @@ end
 Function to turn a delimited `paramsvec` into an MCParams and TempGrid struct. Second method includes a bool `restart` to determine whether or not to set eq_cycles=0 or 0.2*cycles if not restarting
 """
 function read_params(paramsvec)
-    parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100)
-    temps = TempGrid{Int(paramsvec[3])}(paramsvec[5],paramsvec[6])
+    parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100,paramsvec[5],paramsvec[6])
+    temps = TempGrid{Int(paramsvec[3])}(paramsvec[7],paramsvec[8])
     return parameters,temps
 end
 
 function read_params(paramsvec,restart)
     if restart == true
-        parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100)
+        parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100,paramsvec[5],paramsvec[6])
     else
-        parameters = MCParams(paramsvec[1],Int(floor(0.2*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],100,100)
+        parameters = MCParams(paramsvec[1],Int(floor(0.2*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],100,100,paramsvec[5],paramsvec[6])
     end
-    temps = TempGrid{Int(paramsvec[3])}(paramsvec[5],paramsvec[6])
+    temps = TempGrid{Int(paramsvec[3])}(paramsvec[7],paramsvec[8])
     return parameters,temps
 end
 """
@@ -269,19 +270,25 @@ function read_checkpoint_config(xyzdata)
         bc = SphericalBC(;radius=sqrt(xyzdata[2,3]))
         
         max_displ = [xyzdata[2,4:6]]
+        count_atom = xyzdata[2,7]
+        count_vol=xyzdata[2,8]
     elseif xyzdata[2,1] == "CubicBC{Float64}"
         bc = CubicBC(xyzdata[2,3])
 
         max_displ = [xyzdata[2,4:6]]
+        count_atom = xyzdata[2,7]
+        count_vol=xyzdata[2,8]
     elseif xyzdata[2,1] == "RhombicBC"
         bc = RhombicBC(xyzdata[2,3],xyzdata[2,4])
         max_displ = [xyzdata[2,5:7]]
+        count_atom = xyzdata[2,8]
+        count_vol=xyzdata[2,9]
     end
     configvectors = [xyzdata[2+i,2:4] for i in 1:N]
 
     config=Config(configvectors,bc)
 
-    return config , max_displ
+    return config , max_displ, count_atom, count_vol
 end
 """
     read_config(xyzdata)
@@ -360,9 +367,9 @@ function rebuild_states(n_traj,ensemble,temps,potential)
         configfile = open("./checkpoint/config.$index","r+")
         configinfo=readdlm(configfile)
         close(configfile)
-        conf,maxdisp = read_checkpoint_config(configinfo)
+        conf,maxdisp,countatom,countvol = read_checkpoint_config(configinfo)
 
-        state = MCState(temps.t_grid[index],temps.beta_grid[index],conf,ensemble,potential;max_displ=maxdisp[1])
+        state = MCState(temps.t_grid[index],temps.beta_grid[index],conf,ensemble,potential;max_displ=maxdisp[1],count_atom = [countatom,0],count_vol=[countvol,0])
         push!(mcstates,state)
     end
 
