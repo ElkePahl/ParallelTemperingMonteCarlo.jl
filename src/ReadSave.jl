@@ -43,7 +43,7 @@ end
 function writeensemble(savefile,ensemble::NPT)
 
     headersvec = ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure"]
-    valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensembles.n_volume_moves emsemble.n_atom_swaps ensemble.pressure]
+    valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 """
@@ -62,7 +62,7 @@ function writepotential(savefile,potential::Ptype) where Ptype <: AbstractDimerP
     coeff_vec_a = transpose([potential.coeff_a[i] for i in eachindex(potential.coeff_a)])
     coeff_vec_b = transpose([potential.coeff_b[i] for i in eachindex(potential.coeff_b)])
     coeff_vec_c = transpose([potential.coeff_c[i] for i in eachindex(potential.coeff_c)])
-    write(savefile,"ELJB \n")
+    write(savefile,"ELJB $(length(coeff_vec_a)) \n")
     writedlm(savefile, [coeff_vec_a, coeff_vec_b, coeff_vec_c])
 end
 function writepotential(savefile,potential::Ptype) where Ptype <: EmbeddedAtomPotential
@@ -121,14 +121,14 @@ function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where 
     end
 end
 function checkpoint_config(savefile ,state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:CubicBC,Ptype,Etype}
-    writedlm(savefile,[N,"$BC box_length: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
+    writedlm(savefile,[N,"$BC box_length: $(state.config.bc.box_length) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
     
     for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
 function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:RhombicBC,Ptype,Etype}
-    writedlm(savefile,[N,"$BC box_dims: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
+    writedlm(savefile,[N,"$BC box_dims: $(state.config.bc.box_length) $(state.config.bc.box_height) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
     
     for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
@@ -175,8 +175,8 @@ function checkpoint(index,mc_states,results,ensemble::NPT, rdfsave)
     histfile = open("./checkpoint/histograms.data","w+")
     writedlm(histfile,results.en_histogram)
     close(histfile)
-    v_file = open("./checkpoint/volume_hist","w+")
-    writedlm(v_file,ev_histogram)
+    v_file = open("./checkpoint/volume_hist.data","w+")
+    writedlm(v_file,results.ev_histogram)
     close(v_file)
     if rdfsave == true 
         rdffile = open("./checkpoint/rdf.data","w+")
@@ -208,15 +208,18 @@ Function to convert delimited file contents `potinfovec` into a potential. Imple
 function readpotential(potinfovec)
 
     if contains(potinfovec[1,1],"ELJPotentialEven")
-        coeffs= Vector{typeof(potinfovec[1,3])}(potinfovec[1,3:end])
+        len=parse(Int,potinfovec[1,1][18])
+        coeffs= Vector{typeof(potinfovec[1,3])}(potinfovec[1,3:2+len])
         return ELJPotentialEven(coeffs)
     elseif contains(potinfovec[1,1],"ELJPotential{")
-        coeffs = Vector{typeof(potinfovec[1,3])}(potinfovec[1,3:end])
+        len=parse(Int,potinfovec[1,1][14])
+        coeffs = Vector{typeof(potinfovec[1,3])}(potinfovec[1,3:2+len])
         return ELJPotential(coeffs)
     elseif potinfovec[1,1] == "EAM:"
         return EmbeddedAtomPotential(potinfovec[1,2],potinfovec[1,3],potinfovec[1,4],potinfovec[1,5])
     elseif potinfovec[1,1] == "ELJB"
-        a,b,c = potinfovec[2,:],potinfovec[3,:],potinfovec[4,:]
+        len = potinfovec[1,2]
+        a,b,c = Vector{typeof(potinfovec[2,1])}(potinfovec[2,1:len]),Vector{typeof(potinfovec[3,1])}(potinfovec[3,1:len]),Vector{typeof(potinfovec[4,1])}(potinfovec[4,1:len])
         return ELJPotentialB(a,b,c)
     end
 end
@@ -323,13 +326,13 @@ function setresults(histparams,histdata,histv_data,r2data)
     results.delta_en_hist,results.delta_v_hist,results.delta_r2=histparams[5],histparams[6],histparams[7]
 
     for row in eachrow(histdata)
-        push!(results.en_histogram,Vector(row))
+        push!(results.en_histogram,Vector{typeof(row[1])}(row))
     end
-    if typeof(histv_data) == Matrix{Float64}
-        for row in eachrow(histv_data)
-            push!(results.ev_histogram,Vector(row))
-        end
-    end
+    # if typeof(histv_data) == Matrix{Float64}
+    #     for row in eachrow(histv_data)
+    #         push!(results.ev_histogram,row)
+    #     end
+    # end
     if typeof(r2data) == Matrix{Float64}
         for row in eachrow(r2data)
             push!(results.rdf,Vector(row))
