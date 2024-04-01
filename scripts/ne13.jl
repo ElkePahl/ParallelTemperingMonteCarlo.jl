@@ -91,5 +91,5 @@ start_config = Config(pos_ne13, bc_ne13)
 #to check code in REPL
 ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
 
-#rm("checkpoint",recursive=true)
+rm("checkpoint",recursive=true)
 ## 
