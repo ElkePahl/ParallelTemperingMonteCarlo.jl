@@ -208,10 +208,10 @@ Function to convert delimited file contents `potinfovec` into a potential. Imple
 function readpotential(potinfovec)
 
     if contains(potinfovec[1,1],"ELJPotentialEven")
-        coeffs= Vector(potinfovec[1,3:end])
+        coeffs= Vector{typeof(potinfovec[1,3])}(potinfovec[1,3:end])
         return ELJPotentialEven(coeffs)
     elseif contains(potinfovec[1,1],"ELJPotential{")
-        coeffs = Vector(potinfovec[1,3:end])
+        coeffs = Vector{typeof(potinfovec[1,3])}(potinfovec[1,3:end])
         return ELJPotential(coeffs)
     elseif potinfovec[1,1] == "EAM:"
         return EmbeddedAtomPotential(potinfovec[1,2],potinfovec[1,3],potinfovec[1,4],potinfovec[1,5])
@@ -266,19 +266,20 @@ Function designed to take a single xyz-style checkpoint file and return the conf
 """
 function read_checkpoint_config(xyzdata)
     N=xyzdata[1,1]
-    if xyzdata[2,1] == "SphericalBC{Float64}"
+    if contains(xyzdata[2,1],"SphericalBC")#xyzdata[2,1] == "SphericalBC{Float64}"
         bc = SphericalBC(;radius=sqrt(xyzdata[2,3]))
         
         max_displ = [xyzdata[2,4:6]]
         count_atom = xyzdata[2,7]
         count_vol=xyzdata[2,8]
-    elseif xyzdata[2,1] == "CubicBC{Float64}"
+    elseif contains(xyzdata[2,1],"CubicBC") # == "CubicBC{Float64}"
+
         bc = CubicBC(xyzdata[2,3])
 
         max_displ = [xyzdata[2,4:6]]
         count_atom = xyzdata[2,7]
         count_vol=xyzdata[2,8]
-    elseif xyzdata[2,1] == "RhombicBC"
+    elseif contains(xyzdata[2,1],"RhombicBC")# == "RhombicBC"
         bc = RhombicBC(xyzdata[2,3],xyzdata[2,4])
         max_displ = [xyzdata[2,5:7]]
         count_atom = xyzdata[2,8]
