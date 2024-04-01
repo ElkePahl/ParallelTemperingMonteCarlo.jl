@@ -43,7 +43,7 @@
     save_histparams(testresults)
 
     @test isa(teststates[1],MCState)
-    @test isa(results,Output)
+    @test isa(testresults,Output)
 
     Random.seed!(0)
     teststates=mc_cycle!(teststates,teststrat,test_params,test_pot,testensemble,nstep,testresults,1,false)
@@ -54,12 +54,12 @@
     checkpoint(1,teststates,testresults,testensemble,false)
     @test ispath("checkpoint/config.1")
 
-    testingparams,testingensemble,testingpotential,testingstates,movstrat,testingresults,nsteps,startcounter=initialise(true)
+    testingparams,testingensemble,testingpotential,testingstates,movstrat,testingresults,nsteps,startcounter=initialisation(true)
 
     @test testingensemble == testensemble
     @test testingstates[1].config.pos == teststates[1].config.pos
     @test test_pot == testingpotential
 
     rm("./checkpoint" , recursive = true)
-    
+
 end
