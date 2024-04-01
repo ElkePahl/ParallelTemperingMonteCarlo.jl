@@ -300,13 +300,13 @@ designed to read in one xyz-style file with one configuration and return this fo
 """
 function read_config(xyzdata)
     N=xyzdata[1,1]
-    if xyzdata[2,1] == "SphericalBC{Float64}"
+    if contains(xyzdata[2,1],"SphericalBC")# xyzdata[2,1] == "SphericalBC{Float64}"
         bc = SphericalBC(;radius=sqrt(xyzdata[2,3]))
 
-    elseif xyzdata[2,1] == "CubicBC{Float64}"
+    elseif contains(xyzdata[2,1],"CubicBC") # == "CubicBC{Float64}"
         bc = CubicBC(xyzdata[2,3])
 
-    elseif xyzdata[2,1] == "RhombicBC"
+    elseif contains(xyzdata[2,1], "RhombicBC")
         bc = RhombicBC(xyzdata[2,3],xyzdata[2,4])
     end
     configvectors = [xyzdata[2+i,2:4] for i in 1:N]
@@ -326,13 +326,22 @@ function setresults(histparams,histdata,histv_data,r2data)
     results.delta_en_hist,results.delta_v_hist,results.delta_r2=histparams[5],histparams[6],histparams[7]
 
     for row in eachrow(histdata)
+        hist_info = Vector{typeof(row[1])}(row)
+        hist_info = Int.(hist_info)
         push!(results.en_histogram,Vector{typeof(row[1])}(row))
     end
-    # if typeof(histv_data) == Matrix{Float64}
-    #     for row in eachrow(histv_data)
-    #         push!(results.ev_histogram,row)
-    #     end
-    # end
+    if typeof(histv_data) == Matrix{Float64}
+
+        for row in eachrow(histv_data)
+            evmat = zeros(102,102)
+            for index in 1:102
+                evmat[:,index] = row[(index-1)*102+1 : (index - 1)*102+102]
+            end
+            evmat = Int.(evmat)
+            push!(results.ev_histogram,evmat)
+        end
+
+    end
     if typeof(r2data) == Matrix{Float64}
         for row in eachrow(r2data)
             push!(results.rdf,Vector(row))
