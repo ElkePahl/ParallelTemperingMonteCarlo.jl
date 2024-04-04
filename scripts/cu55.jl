@@ -19,7 +19,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100  #default 20% equilibration cycles on top
+mc_cycles = 10000  #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -214,4 +214,5 @@ start_config = Config(pos_cu55, bc_cu55)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-@profview ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble)
+ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
+rm("checkpoint",recursive=true)
