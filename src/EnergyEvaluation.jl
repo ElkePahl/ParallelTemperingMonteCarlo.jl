@@ -292,7 +292,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::DimerPotentia
     end 
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
-end 
+end
 function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.

@@ -41,7 +41,7 @@ using Random
 
     @test state2.en_tot - state.en_tot  ≈ 4.99895252855e-5
 
-    update_max_stepsize!(state,3,ensemble)
+    update_max_stepsize!(state,3,ensemble,0.4,0.6)
     @test state.max_displ[1] < 0.1
     exc_trajectories!(state,state2)
     @test state2.en_tot - state.en_tot  ≈ -4.99895252855e-5

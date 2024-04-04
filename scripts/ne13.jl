@@ -97,4 +97,5 @@ mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 #ptmc_run!(mc_params,temp,start_config,potB,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
+rm("checkpoint",recursive=true)
 ## 
