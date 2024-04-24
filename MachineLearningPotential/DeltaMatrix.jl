@@ -35,7 +35,6 @@ function adjust_radial_symm_val!(g_value1,g_value2,rnew_ij,r2_ij,fnew_ij,f2_ij,�
     return g_value1,g_value2
 end
 """
-
     adjust_angular_symm_val!(g_value,θ_new,θ_old,exp_new,exp_old,tpz)
     adjust_angular_symm_val!(g_value,exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
 

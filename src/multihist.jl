@@ -4,13 +4,14 @@ module Multihistogram
 using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
+using ..Initialization
 
-export multihistogram
+export multihistogram,postprocess
 
 """
     readfile(xdir::String)
 method 1: xdir::String -reads output files for the FORTRAN PTMC code written by Edison Florez.
-method 2: Output::Output,Tvals::TempGrid - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
+method 2: output::output,Tvals::TempGrid - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
 
 xdir is the directory containing the histogram information usually /path/to/output/histograms
 
@@ -45,28 +46,28 @@ function readfile(xdir::String)
     return HistArray,energyvector,beta,NTraj,NBins,kB
 end
 
-function readfile(Output::Output, Tvals::TempGrid )
+function readfile(output::Output, Tvals::TempGrid )
 
     kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 
     NTraj = length(Tvals.beta_grid)
 
-    de = ( Output.en_max - Output.en_min )/(Output.n_bin - 1)
+    de = ( output.en_max - output.en_min )/(output.n_bin - 1)
 
-    energyvector = [(j-1)*de + Output.en_min for j=1:Output.n_bin ]
+    energyvector = [(j-1)*de + output.en_min for j=1:output.n_bin ]
 
-    HistArray = Array{Float64}(undef,NTraj,Output.n_bin)
-    nbin_actual = length(Output.en_histogram[1])
+    HistArray = Array{Float64}(undef,NTraj,output.n_bin)
+    nbin_actual = length(output.en_histogram[1])
     for i in 1:NTraj
 
-        if nbin_actual == Output.n_bin
-            HistArray[i,:] = Output.en_histogram[i]
+        if nbin_actual == output.n_bin
+            HistArray[i,:] = output.en_histogram[i]
         else
-            HistArray[i,:] = Output.en_histogram[i][2:end-1]
+            HistArray[i,:] = output.en_histogram[i][2:end-1]
         end
     end
 
-    return HistArray, energyvector, Tvals.beta_grid, NTraj, Output.n_bin , kB
+    return HistArray, energyvector, Tvals.beta_grid, NTraj, output.n_bin , kB
 end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
@@ -117,9 +118,9 @@ function initialise(xdir::String)
     return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
     
 end
-function initialise(Output::Output,Tvec::TempGrid)
+function initialise(output::Output,Tvec::TempGrid)
 
-    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(Output,Tvec)
+    HistArray,energyvector,beta,NTraj,NBins,kB = readfile(output,Tvec)
 
     HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins,NTraj)
 
@@ -388,7 +389,7 @@ end
 
 """
     multihistogram(xdir::String)
-    multihistogram(Output::Output,Tvec::TempGrid)
+    multihistogram(output::Output,Tvec::TempGrid)
 Function has two methods which vary only in how the initialise function is called: one takes a directory and writes the output of the multihistogram analysis to that directory, the other takes the output and temperature grid and writes to the current directory unless specified otherwise.
     
     The output of this function are the four files defined in run_multihistogram.
@@ -399,11 +400,30 @@ function multihistogram(xdir::String; NPoints=600)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir,NPoints)
 end
 
-function multihistogram(Output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=600)
-    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(Output,Tvec)
+function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=600)
+    HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir,NPoints)
 
+end
 
+function postprocess(;xdir=pwd())
+    if xdir != pwd()
+        cd(xdir)
+    end
+
+    params,ens,potential,states,movestrat,results,nstep,startcounter = initialisation(true)
+    temps = TempGrid{params.n_traj}(states[1].temp,states[params.n_traj].temp)
+
+    multihistogram(results,temps)
+
+    hists = readdlm("histograms.data")
+    analysis=readdlm("analysis.NVT")
+    energies=hists[1,:]
+    histogramdata= [hists[i+1,:] for i in 1:params.n_traj ]
+    
+    T,Z,Cv,dCv,S=analysis[2:end,1],analysis[2:end,2],analysis[2:end,3],analysis[2:end,4],analysis[2:end,5]
+
+    return energies,histogramdata,T,Z,Cv,dCv,S
 
 end
 
