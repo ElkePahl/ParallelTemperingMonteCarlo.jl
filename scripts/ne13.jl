@@ -96,6 +96,7 @@ mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 #to check code in REPL
 #ptmc_run!(mc_params,temp,start_config,potB,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
 
 rm("checkpoint",recursive=true)
 ## 

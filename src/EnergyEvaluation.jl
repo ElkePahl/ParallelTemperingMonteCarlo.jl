@@ -26,6 +26,7 @@ using ..BoundaryConditions
 
 
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,LookuptablePotential
+export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,AbstractMachineLearningPotential
 export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
 export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables,LookupTableVariables
 export EmbeddedAtomVariables,NNPVariables
