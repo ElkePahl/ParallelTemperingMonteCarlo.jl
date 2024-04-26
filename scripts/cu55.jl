@@ -212,7 +212,8 @@ n_bin = 100
 bc_cu55 = SphericalBC(radius=14*AtoBohr)   #5.32 Angstrom
 start_config = Config(pos_cu55, bc_cu55)
 
+
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble;save=false)
+states,results = ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble;save=false)
 #rm("checkpoint",recursive=true)

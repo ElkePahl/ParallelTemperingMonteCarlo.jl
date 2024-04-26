@@ -245,6 +245,10 @@ function ptmc_run!(restart::Bool;rdfsave=false,save=1000)
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
     println("equilibration complete")
 
+    if save != false
+        save_histparams(results)
+    end
+    
     for i = start_counter:mc_params.mc_cycles
         @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
 
