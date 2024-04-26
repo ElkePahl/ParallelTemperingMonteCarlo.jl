@@ -8,7 +8,7 @@ using Random
 
 # number of atoms
 n_atoms = 108
-pressure=101325
+pressure = 101325
 
 # temperature grid
 ti = 15.
@@ -19,11 +19,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-
-
-mc_cycles = 100000 #default 20% equilibration cycles on top
-
-
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -41,8 +37,8 @@ move_strat = MoveStrategy(atom_moves = n_atoms, vol_moves = 1)
 #move_strat = MoveStrategy(atom_moves = n_atoms) 
 
 #ensemble
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
-#ensemble = NVT(n_atoms)
+PatoAU = 3.398928944382626e-14
+ensemble = NPT(n_atoms,pressure*PatoAU)xs
 
 #ELJpotential for neon
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]

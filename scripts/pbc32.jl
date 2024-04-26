@@ -24,7 +24,6 @@ temp = TempGrid{n_traj}(ti,tf)
 
 mc_cycles = 1000 #default 20% equilibration cycles on top
 
-
 mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
@@ -46,14 +45,15 @@ pot = ELJPotentialEven{6}(c)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+PatoAU = 3.398928944382626e-14
+ensemble = NPT(n_atoms,pressure*PatoAU)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
 #-------------------------------------------------------------#
 #starting configurations
-#icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
+#cubic
 pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
   [-2.1918,       -2.1918,       -4.3837],
   [-2.1918,       -4.3837,       -2.1918],

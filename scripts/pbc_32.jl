@@ -8,7 +8,7 @@ using Random
 
 # number of atoms
 n_atoms = 32
-pressure=101325
+pressure = 101325
 
 # temperature grid
 
@@ -41,8 +41,8 @@ move_strat = MoveStrategy(atom_moves = n_atoms, vol_moves = 1)
 #move_strat = MoveStrategy(atom_moves = n_atoms) 
 
 #ensemble
-
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+PatoAU = 3.398928944382626e-14
+ensemble = NPT(n_atoms,pressure*PatoAU)
 
 #ensemble = NVT(n_atoms)
 

@@ -8,7 +8,7 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure=101325
+pressure = 101325
 
 # temperature grid
 ti = 20.
@@ -19,11 +19,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-
-
 mc_cycles = 1000 #default 20% equilibration cycles on top
-
-
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -40,7 +36,8 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #move_strat = MoveStrategy(atom_moves = n_atoms) 
 
 #ensemble
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+PatoAU = 3.398928944382626e-14
+ensemble = NPT(n_atoms,pressure*PatoAU)
 
 move_strat = MoveStrategy(ensemble)  
 

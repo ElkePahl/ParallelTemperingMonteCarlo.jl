@@ -18,8 +18,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 200000 #default 20% equilibration cycles on top
-
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -41,9 +40,9 @@ move_strat = MoveStrategy(ensemble)
 #c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 #pot = ELJPotentialEven{6}(c)
 
-a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
-b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
-c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
+a = [0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
+b = [-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
+c1 = [-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
 potB = ELJPotentialB{6}(a,b,c1)
 
 #starting configurations
