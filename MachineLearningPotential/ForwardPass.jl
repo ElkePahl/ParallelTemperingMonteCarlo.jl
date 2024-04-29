@@ -26,9 +26,9 @@ unpacks the `num_nodes` vector and `parameters` and assigns their lengths to the
 struct NeuralNetworkPotential
     n_layers::Int32
     n_params::Int32
-    num_nodes::Vector
-    activation_functions::Vector
-    parameters::Vector
+    num_nodes::Vector{Int32}
+    activation_functions::Vector{Int32}
+    parameters::Vector{Float64}
 end
 function NeuralNetworkPotential(num_nodes::Vector,activation_functions::Vector, parameters)
     return NeuralNetworkPotential(length(num_nodes),length(parameters),num_nodes,activation_functions,parameters)
