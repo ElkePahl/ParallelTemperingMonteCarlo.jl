@@ -48,7 +48,7 @@ b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
 c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
 potB = ELJPotentialB{6}(a,b,c1)
 
-link="/Users/tiantianyu/Downloads/look-up_table-2.txt"
+link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#

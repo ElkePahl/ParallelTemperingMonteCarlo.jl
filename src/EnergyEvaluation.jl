@@ -127,10 +127,10 @@ function ELJPotentialB(a,b,c)
     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
 end
 
-mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
+mutable struct ELJPotentialBVariables{T,N} <: AbstractPotentialVariables
     en_atom_vec::Array{T}
     tan_mat::Matrix{T}
-    new_tan_vec::Vector{T}
+    new_tan_vec::SVector{N,T} #Vector{T}
 end
 
 
@@ -181,10 +181,10 @@ function LookuptablePotential(link::String)
     return(pot)
 end
 
-mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
+mutable struct LookupTableVariables{T,N} <: AbstractPotentialVariables
     en_atom_vec::Array{T}
     tan_mat::Array{T}
-    new_tan_vec::Vector{T}
+    new_tan_vec::SVector{N,T}#Vector{T}
 end
 
 function dimer_energy(pot::LookuptablePotential, r2, tan)
@@ -879,8 +879,9 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
     new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
     new_dist2_vec[index] = 0.
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
+    potential_variables.new_tan_vec = SVector{length(config.pos)}([get_tan(trial_pos,b,config.bc) for b in config.pos])
+    #potential_variables.new_tan_vec[index] = 0
+    potential_variables.new_tan_vec = setindex(potential_variables.new_tan_vec,0.,index)
 
     new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
 
@@ -891,8 +892,9 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
     new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
     new_dist2_vec[index] = 0.
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
+    potential_variables.new_tan_vec = SVector{length(config.pos)}([get_tan(trial_pos,b,config.bc) for b in config.pos])
+    #potential_variables.new_tan_vec[index] = 0
+    potential_variables.new_tan_vec = setindex(potential_variables.new_tan_vec,0.,index)
 
     new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
 
@@ -976,7 +978,7 @@ end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::AbstractDimerPotentialB) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
-    return ELJPotentialBVariables{T}(zeros(N),tan_matrix,zeros(N))
+    return ELJPotentialBVariables{T,N}(zeros(N),tan_matrix,SVector{N}(zeros(N)))
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPotential) where {N,BC,T}
     

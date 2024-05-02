@@ -5,5 +5,5 @@
 
 include("main.jl")
 using .main
-compare("DianaConfigs")
-classify("DianaConfigs")
+compare("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl/CNA/DianaConfigs")
+classify("/Users/tiantianyu/Downloads/ParallelTemperingMonteCarlo.jl/CNA/DianaConfigs")
