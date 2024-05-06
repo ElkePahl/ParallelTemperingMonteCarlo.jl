@@ -97,8 +97,8 @@ Method one is designed for radial symmetry functions. Given an atom at `atominde
 
 Method two is designed to do the same for the angular symmetry function using the same inputs. Double loop over all j all k and use calc_new_symmetry_value! over `g_vector`
 """
-function symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,symmetry_function::RadialType2)
-    if symmetry_function.type_vec == [1.,1.]
+function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,symmetry_function::RadialType2)
+    if symmetry_function.type_vec == Int(11)
 
         η,g_norm = symmetry_function.eta,symmetry_function.G_norm
         for index2 in eachindex(g_vector)
@@ -110,11 +110,11 @@ function symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat
 
     return g_vector
 end
-function symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dis_vector,f_matrix,new_f_vector,symmetry_function::AngularType3)
+function angular_symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dis_vector,f_matrix,new_f_vector,symmetry_function::AngularType3)
 
     N = length(g_vector)
 
-    if symmetry_function.type_vec == [1.,1.,1.]
+    if symmetry_function.type_vec == Int(111)
 
         η,λ,ζ,tpz = symmetry_function.eta,symmetry_function.lambda,symmetry_function.zeta,symmetry_function.tpz
 
@@ -143,15 +143,25 @@ Top level function to calculate the total change to the matrix of symmetry funct
 
 #     return g_matrix
 # end
-function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
+
+
+function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions::Vector{RadialType2},angsymmfunctions::Vector{AngularType3},Nrad,Nang)
     for g_index in 1:Nrad
-@views        g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
+#@views 
+        g_matrix[g_index,:] = radial_symmetry_calculation!(g_matrix[g_index,:],atomindex,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
     end
     for g_index in 1+Nrad:Nang
-@views        symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index-Nrad])
+#@views 
+        g_matrix[g_index,:] = angular_symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index-Nrad])
     end
     return g_matrix 
 end
+
+
+
+
+
+
 function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
     Threads.@threads for g_index in eachindex(total_symmetry_vector)
         g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
