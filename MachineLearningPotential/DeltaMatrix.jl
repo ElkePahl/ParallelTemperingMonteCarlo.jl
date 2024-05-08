@@ -70,20 +70,23 @@ end
 
 Currying functions from higher-level data structures such as the radial distances in `dist2_mat,new_dist2_vector` and cutoff functions `f_matrix,new_f_vector` as well as positions in `newposition,position` and passes these to lower level functions along with hyperparameters `η,λ,ζ,tpz` to adjust the values in `g_vector` at positions `indexi,indexj,indexk` calculates the required exponential component and angles to pass down to adjust_angular_symm_val!
 """
-function calc_new_symmetry_value!(g_vector,indices,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
+function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
 
-    θ_new_vec,θ_old_vec = all_angular_measure(newposition,position2,position3,rnew_ij,rnew_ik,r2_jk),all_angular_measure(position1,position2,position3,r2_ij,r2_ik,r2_jk)
+    θ_new,θ_old = all_angular_measure(newposition,position2,position3,rnew_ij,rnew_ik,r2_jk),all_angular_measure(position1,position2,position3,r2_ij,r2_ik,r2_jk)
 
     exp_new,exp_old = exponential_part(η,rnew_ij,rnew_ik,r2_jk,fnew_ij,fnew_ik,f_jk),exponential_part(η,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk)
-
-    for (θ_old,θ_new,index) in zip(θ_old_vec,θ_new_vec,indices)
-        g_vector[index] = adjust_angular_symm_val!(g_vector[index],exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
-    end
+    
+    g_vector[indexi] = adjust_angular_symm_val!(g_vector[indexi],exp_old,exp_new,θ_old[1],θ_new[1],λ,ζ,tpz)
+    g_vector[indexj] = adjust_angular_symm_val!(g_vector[indexj],exp_old,exp_new,θ_old[2],θ_new[2],λ,ζ,tpz)
+    g_vector[indexk] = adjust_angular_symm_val!(g_vector[indexk],exp_old,exp_new,θ_old[3],θ_new[3],λ,ζ,tpz)
+    # for (θ_old,θ_new,index) in zip(θ_old_vec,θ_new_vec,indices)
+    #     g_vector[index] = adjust_angular_symm_val!(g_vector[index],exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
+    # end
 
     return g_vector
 end
 function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,λ,ζ,tpz)
-    return calc_new_symmetry_value!(g_vector,[indexi,indexj,indexk],newposition,position[indexi],position[indexj],position[indexk],new_dist2_vector[indexj],new_dist2_vector[indexk],dist2_mat[indexi,indexj],dist2_mat[indexi,indexk],dist2_mat[indexj,indexk],new_f_vector[indexj],new_f_vector[indexk],f_matrix[indexi,indexj],f_matrix[indexi,indexk],f_matrix[indexj,indexk],η,λ,ζ,tpz)
+    return calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position[indexi],position[indexj],position[indexk],new_dist2_vector[indexj],new_dist2_vector[indexk],dist2_mat[indexi,indexj],dist2_mat[indexi,indexk],dist2_mat[indexj,indexk],new_f_vector[indexj],new_f_vector[indexk],f_matrix[indexi,indexj],f_matrix[indexi,indexk],f_matrix[indexj,indexk],η,λ,ζ,tpz)
 
 end
 #-----------------------------------------------------------------------#
