@@ -62,7 +62,7 @@ Call for the radial symmetry value designed to curry the input from `g_vector` a
 """
 function calc_new_symmetry_value!(g_vector,indexi,indexj,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
     g_vector[indexi],g_vector[indexj] = adjust_radial_symm_val!(g_vector[indexi],g_vector[indexj],new_dist2_vector[indexj],dist2_mat[indexi,indexj],new_f_vector[indexj],f_matrix[indexi,indexj],η,g_norm)
-    return g_vector
+    
 end
 """
     calc_new_symmetry_value!(g_vector,indices,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
@@ -103,7 +103,7 @@ function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vec
         η,g_norm = symmetry_function.eta,symmetry_function.G_norm
         for index2 in eachindex(g_vector)
             if index2 != atomindex
-                g_vector = calc_new_symmetry_value!(g_vector,atomindex,index2,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
+                 calc_new_symmetry_value!(g_vector,atomindex,index2,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
             end
         end
     end
@@ -145,15 +145,17 @@ Top level function to calculate the total change to the matrix of symmetry funct
 # end
 
 
-function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions::Vector{RadialType2},angsymmfunctions::Vector{AngularType3},Nrad,Nang)
+function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
     for g_index in 1:Nrad
-#@views 
-        g_matrix[g_index,:] = radial_symmetry_calculation!(g_matrix[g_index,:],atomindex,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
+#@views
+      g_matrix[g_index,:] = radial_symmetry_calculation!(g_matrix[g_index,:],atomindex,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
     end
-    for g_index in 1+Nrad:Nang
-#@views 
-        g_matrix[g_index,:] = angular_symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index-Nrad])
+    for g_index in 1:Nang
+#@views
+    truindex = g_index+Nrad
+        g_matrix[truindex ,:] = angular_symmetry_calculation!(g_matrix[truindex,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index])
     end
+
     return g_matrix 
 end
 

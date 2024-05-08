@@ -618,15 +618,15 @@ Contains the important structs required for a neural network potential defined i
 """
 struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
     nnp:: NeuralNetworkPotential
-    radsymfunctions::Vector{RadialType2}
-    angsymfunctions::Vector{AngularType3}
+    radsymfunctions::SVector{Nrad,RadialType2}
+    angsymfunctions::SVector{Nang,AngularType3}
     r_cut::Float64
 end
 function RuNNerPotential(nnp,radsymvec,angsymvec)
     r_cut = radsymvec[1].r_cut
     nrad = length(radsymvec)
     nang = length(angsymvec)
-    return RuNNerPotential{nrad,nang}(nnp,radsymvec,angsymvec,r_cut)
+    return RuNNerPotential{nrad,nang}(nnp,SVector{nrad}(radsymvec),SVector{nang}(angsymvec),r_cut)
 end
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
 
