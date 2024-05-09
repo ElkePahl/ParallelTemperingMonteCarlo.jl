@@ -161,19 +161,25 @@ function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector
 
     return g_matrix 
 end
-
-
-
-
-
-
-function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-    Threads.@threads for g_index in eachindex(total_symmetry_vector)
-        g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
+function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
+    Threads.@threads for g_index in 1:Nrad
+        #@views
+        g_matrix[g_index,:] = radial_symmetry_calculation!(g_matrix[g_index,:],atomindex,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
     end
-
+    Threads.@threads for g_index in 1:Nang
+#@views
+        truindex = g_index+Nrad
+        g_matrix[truindex ,:] = angular_symmetry_calculation!(g_matrix[truindex,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index])
+    end
     return g_matrix
 end
+# function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
+#     Threads.@threads for g_index in eachindex(total_symmetry_vector)
+#         g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
+#     end
+
+#     return g_matrix
+# end
 
 
 # #------------------------------------------------------------------------#

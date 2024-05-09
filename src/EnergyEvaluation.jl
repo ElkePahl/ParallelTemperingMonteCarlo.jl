@@ -17,7 +17,7 @@ Structs and functions relating to the calculation of energy. Includes both low a
 
 module EnergyEvaluation 
 
-using StaticArrays,LinearAlgebra
+using StaticArrays,LinearAlgebra,StructArrays
 
 using ..MachineLearningPotential
 using ..Configurations
@@ -618,15 +618,17 @@ Contains the important structs required for a neural network potential defined i
 """
 struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
     nnp:: NeuralNetworkPotential
-    radsymfunctions::SVector{Nrad,RadialType2}
-    angsymfunctions::SVector{Nang,AngularType3}
+    radsymfunctions::StructVector{RadialType2{Float64}} #SVector{Nrad,RadialType2}
+    angsymfunctions::StructVector{AngularType3{Float64}}
     r_cut::Float64
 end
 function RuNNerPotential(nnp,radsymvec,angsymvec)
     r_cut = radsymvec[1].r_cut
     nrad = length(radsymvec)
     nang = length(angsymvec)
-    return RuNNerPotential{nrad,nang}(nnp,SVector{nrad}(radsymvec),SVector{nang}(angsymvec),r_cut)
+    radvec=StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+    return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut)
 end
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
 
