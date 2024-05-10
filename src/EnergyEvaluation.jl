@@ -649,7 +649,7 @@ function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variab
     new_dist2_vec[atomindex] = 0.
     potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec),Ref(pot.r_cut))
     potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
-    potential_variables.new_g_matrix = total_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang)
+    potential_variables.new_g_matrix = total_thr_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang)
     return new_dist2_vec,potential_variables
 end
 """
