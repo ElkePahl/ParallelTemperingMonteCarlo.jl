@@ -855,23 +855,27 @@ Energy update function for use within a cycle. at the top level this is called w
             - EmbeddedAtomPotential
             - RuNNerPotential
 """
-function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,pot::AbstractDimerPotential)
+function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,pot::AbstractDimerPotential)
 
-    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
+    end
+    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
     new_dist2_vec[index] = 0.
 
     new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot)
 
-    return potential_variables,new_dist2_vec,new_en
+    return potential_variables,new_en
 end
-function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotential)
-
-    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotential)
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
+    end
     new_dist2_vec[index] = 0.
 
     new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot)
 
-    return potential_variables,new_dist2_vec,new_en
+    return potential_variables,new_en
 end
 
 function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
