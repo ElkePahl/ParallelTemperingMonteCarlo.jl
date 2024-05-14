@@ -69,7 +69,7 @@ function writepotential(savefile,potential::Ptype) where Ptype <: EmbeddedAtomPo
     write(savefile,"EAM: $(potential.n) $(potential.m) $(potential.ean) $(potential.eCam) \n")
 end 
 function writepotential(savefile,potential::Ptype) where Ptype <: AbstractMachineLearningPotential
-    write(savefile,"Define the potential elsewhere, it's too complicated for simple I/O \n")
+    write(savefile,"runnerpotential \n")
 end
 """
     save_init(potential,ensemble,params,temp)
@@ -221,6 +221,9 @@ function readpotential(potinfovec)
         len = potinfovec[1,2]
         a,b,c = Vector{typeof(potinfovec[2,1])}(potinfovec[2,1:len]),Vector{typeof(potinfovec[3,1])}(potinfovec[3,1:len]),Vector{typeof(potinfovec[4,1])}(potinfovec[4,1:len])
         return ELJPotentialB(a,b,c)
+    elseif potinfovec[1,1] == "runnerpotential"
+        include("./potentialfile.jl")
+        return runnerpotential
     end
 end
 """
