@@ -580,14 +580,18 @@ Second method applies to the ELJ potential in extreme magnetic fields ELJB and l
 """
 function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
     
-    r_cut_sqrt=r_cut^0.5
-    rc3 = r_cut*r_cut_sqrt
-    e_lrc = 0.
-    for i = 1:N
-        e_lrc += pot.coeff[i] / rc3 / (2i+1)
-        rc3 *= r_cut
+    if r_cut <= 50
+        e_lrc=1.0
+    else
+        r_cut_sqrt=r_cut^0.5
+        rc3 = r_cut*r_cut_sqrt
+        e_lrc = 0.
+        for i = 1:N
+            e_lrc += pot.coeff[i] / rc3 / (2i+1)
+            rc3 *= r_cut
+        end
+        e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
     end
-    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
     return e_lrc
 end
 function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
@@ -878,9 +882,12 @@ function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_v
     return potential_variables,new_en
 end
 
-function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
+function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
 
-    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
+    end
     new_dist2_vec[index] = 0.
 
     potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
@@ -888,11 +895,14 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
 
     new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
 
-    return potential_variables,new_dist2_vec,new_en
+    return potential_variables,new_en
 end
-function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotentialB)
+function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotentialB)
 
-    new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
+    end
     new_dist2_vec[index] = 0.
 
     potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
@@ -900,11 +910,14 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
 
     new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
 
-    return potential_variables,new_dist2_vec,new_en
+    return potential_variables,new_en
 end
-function energy_update!(trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
-    new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
+function energy_update!(new_dist2_vec,trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
+    #new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
 
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b)
+    end
     new_dist2_vec[atomindex] = 0.
 
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
@@ -913,7 +926,7 @@ function energy_update!(trial_pos,atomindex,config::Config,potential_variables::
 
     new_en = calc_energies_from_components(potential_variables.new_component_vector,pot.ean,pot.eCam)
 
-    return potential_variables,new_dist2_vec,new_en
+    return potential_variables,new_en
 end
 function energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,en_tot,pot::RuNNerPotential)
 

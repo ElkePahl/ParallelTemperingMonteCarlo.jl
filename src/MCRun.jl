@@ -101,7 +101,7 @@ Basic function utilised by the simulation. For each of the `n_steps` run a singl
 """
 function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
     
-        mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps)
+    mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps)
     
     if rand() < 0.1
         parallel_tempering_exchange!(mc_states,mc_params,ensemble)

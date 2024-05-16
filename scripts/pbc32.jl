@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 500000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -44,7 +44,7 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table-2.txt"
+link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
@@ -91,9 +91,9 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-#AtoBohr = 1.8897259886
+AtoBohr = 1.8897259886
 #When the unit of distance is still Angstrom:
-AtoBohr = 1.0
+#AtoBohr = 1.0
 pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
