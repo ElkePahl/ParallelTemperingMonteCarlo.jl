@@ -4,7 +4,7 @@ module MCRun
 export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results,get_energy!
 export atom_move!
 export exc_acceptance, exc_trajectories!
-
+using ProgressBars
 using StaticArrays,DelimitedFiles
 using ..MCStates
 using ..BoundaryConditions
@@ -222,7 +222,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     println("equilibration complete")
 
     #main loop 
-    for i = start_counter:mc_params.mc_cycles 
+    for i = ProgressBar(start_counter:mc_params.mc_cycles) 
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
         if save == false
         elseif rem(i,save) == 0
