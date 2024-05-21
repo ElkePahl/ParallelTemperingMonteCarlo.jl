@@ -34,7 +34,9 @@ Curry function designed to separate energy calculations into their respective en
 """
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NVTVariables}
     if movetype == "atommove"
-        mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
+
+
+        mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
     end
     return mc_state
 
@@ -47,7 +49,9 @@ end
 # end
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NPTVariables}
     if movetype == "atommove"
-        mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
+  
+
+        mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
     else
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat,N,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,mc_state.config.bc,pot)
     end
@@ -84,9 +88,11 @@ end
     mc_step!((mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
 Distributes each state in `mc_state` to the mc_move function in accordance with a `move_strat`, `ensemble` and `pot`
 """
-function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
+function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) where stype <: MCState
     for state in mc_states
-        state = mc_move!(state,move_strat,pot,ensemble)
+        for i_step in 1:n_steps
+            state = mc_move!(state,move_strat,pot,ensemble)
+        end
     end
     return mc_states
 end
@@ -98,9 +104,9 @@ Basic function utilised by the simulation. For each of the `n_steps` run a singl
     Second method includes the sampling_step! which updates the `results` struct. The first method is used by the equilibration_cycle and therefore does __not__ update the results struct. 
 """
 function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
-    for i_step in 1:n_steps 
-        mc_states=  mc_step!(mc_states,move_strat,pot,ensemble)
-    end
+
+        mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps)
+
     if rand() < 0.1
         parallel_tempering_exchange!(mc_states,mc_params,ensemble)
     end

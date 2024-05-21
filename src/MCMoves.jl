@@ -56,6 +56,10 @@ end
 
 function atom_displacement(mc_state::MCState)
     mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+    for (i, b) in enumerate(mc_state.config.pos)
+        mc_state.new_dist2_vec[i] = distance2(mc_state.ensemble_variables.trial_move,b,mc_state.config.bc)
+    end
+    mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.
     return mc_state
 end 
 
