@@ -82,7 +82,6 @@ function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,posi
     # for (θ_old,θ_new,index) in zip(θ_old_vec,θ_new_vec,indices)
     #     g_vector[index] = adjust_angular_symm_val!(g_vector[index],exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
     # end
-
     return g_vector
 end
 function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,λ,ζ,tpz)

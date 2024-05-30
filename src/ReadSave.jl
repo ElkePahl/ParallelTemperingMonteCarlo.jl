@@ -6,7 +6,6 @@ Module designed to save relevant parameters and configurations throughout the si
 module ReadSave
 
 using StaticArrays,DelimitedFiles
-
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams

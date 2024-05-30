@@ -86,7 +86,6 @@ function volume_change(conf::Config, bc::RhombicBC, max_vchange, max_length)
     trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
     return trial_config,scale
 end
-
 function volume_change(mc_state::MCState)
     #change volume
     mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.config.bc, mc_state.max_displ[2], mc_state.max_boxlength)
