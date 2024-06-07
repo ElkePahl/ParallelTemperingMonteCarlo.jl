@@ -73,7 +73,7 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
 function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
     mc_state.ensemble_variables.index = rand(1:N)
 
-    mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index])
+    mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
 
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 

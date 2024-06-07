@@ -56,6 +56,10 @@ Function returning the probability value associated with a trial move. Four meth
 """
 function metropolis_condition(delta_energy, beta)
     prob_val = exp(-delta_energy*beta)
+
+    #println("de = ",delta_energy)
+    #println("p = ",prob_val)
+
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -171,6 +175,7 @@ Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when
 function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT; min_acc = 0.4, max_acc = 0.6)
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
+    #println("acc rate atom = ",acc_rate)
     if acc_rate < min_acc
         mc_state.max_displ[1] *= 0.9
     elseif acc_rate > max_acc
@@ -179,14 +184,34 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT; min_ac
     mc_state.count_atom[2] = 0
     #volume moves
     #if v > 0
-    acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
-    #println("acc rate volume = ",acc_rate)
-    if acc_rate < min_acc
-        mc_state.max_displ[2] *= 0.9
-    elseif acc_rate > max_acc
-        mc_state.max_displ[2] *= 1.1
+    if ensemble.separated_volume==false
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
+        #println("acc rate volume = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[2] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[2] *= 1.1
+        end
+        mc_state.count_vol[2] = 0
+    else
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves *2/3)
+        #println("acc rate volume = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[2] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[2] *= 1.1
+        end
+        mc_state.count_vol[2] = 0
+
+        acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves /3)
+        #println("acc rate volume z = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[3] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[3] *= 1.1
+        end
+        mc_state.count_vol_z[2] = 0
     end
-    mc_state.count_vol[2] = 0
     #end
 
 

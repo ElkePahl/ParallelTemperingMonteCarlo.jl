@@ -47,9 +47,13 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     ham::Vector{T}
     max_displ::Vector{T}
     max_boxlength::T
+    max_boxheight::T
+    lh_ratio::T
     count_atom::Vector{Int}
     count_vol::Vector{Int}
+    count_vol_z::Vector{Int}
     count_exc::Vector{Int}
+
 end    
 
 """
@@ -66,14 +70,24 @@ function max_length(bc::RhombicBC)
     return bc.box_length*1.8
 end
 
+function max_height(bc::SphericalBC)
+    return 30.
+end
+function max_height(bc::CubicBC)
+    return 30.
+end
+function max_height(bc::RhombicBC)
+    return bc.box_height*1.8
+end
+
 
 function MCState(
     temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; 
-    max_displ = [0.1,0.1,1.], max_boxlength = max_length(config.bc), count_atom = [0,0], count_vol = [0,0], count_exc = [0,0]
+    max_displ = [0.1,0.1,0.1], max_boxlength = max_length(config.bc), max_boxheight = max_height(config.bc), lh_ratio=max_boxlength/max_boxheight, count_atom = [0,0], count_vol = [0,0], count_vol_z = [0,0],count_exc = [0,0]
 ) where {T,N,BC}
     ham = T[]
     MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
-        temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_exc)
+        temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(max_boxheight), copy(lh_ratio), copy(count_atom), copy(count_vol), copy(count_vol_z), copy(count_exc)
         )
 end
 function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;

@@ -15,14 +15,14 @@ pressure = 101325
 
 # temperature grid
 ti = 20.
-tf = 40.
-n_traj = 25
+tf = 35.
+n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 200000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -43,10 +43,20 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
 
+a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
+b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
+c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
+potB = ELJPotentialB{6}(a,b,c1)
+
+
+link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+potlut=LookuptablePotential(link)
+
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+separated_volume=false
+ensemble = NPT(n_atoms,pressure*3.398928944382626e-14,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
@@ -154,7 +164,8 @@ pos_ne96 = [[ 1.56624152,  0.90426996,  0.        ],
 [14.09617368,  8.13842967, 12.78830846]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 0.98
+#AtoBohr = 1.8897259886 * 0.98
+AtoBohr = 1.0
 pos_ne96 = pos_ne96 * AtoBohr
 
 
@@ -170,7 +181,7 @@ start_config = Config(pos_ne96, bc_ne96)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
