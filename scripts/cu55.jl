@@ -215,5 +215,5 @@ start_config = Config(pos_cu55, bc_cu55)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-states,results = ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble;save=false)
+states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=false)
 #rm("checkpoint",recursive=true)
