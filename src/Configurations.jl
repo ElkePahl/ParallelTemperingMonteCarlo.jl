@@ -132,7 +132,7 @@ function to change the centre of mass of a configuration `conf' to [0,0,0] in ca
 function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
     cofm = get_centre(conf.pos,N)
     for position in conf.pos
-        position .-= cofm 
+        position = position .- cofm
     end
 
 end
