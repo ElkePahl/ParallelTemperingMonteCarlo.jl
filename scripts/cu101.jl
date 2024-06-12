@@ -184,5 +184,6 @@ start_config = Config(pos_cu101, bc_cu101)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-@time ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
+@time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
+rm("checkpoint",recursive=true)
 
