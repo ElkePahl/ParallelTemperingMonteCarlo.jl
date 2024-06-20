@@ -131,10 +131,10 @@ function to change the centre of mass of a configuration `conf' to [0,0,0] in ca
 """
 function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
     cofm = get_centre(conf.pos,N)
-    for position in conf.pos
-        position = position .- cofm
+    for index in 1:N
+        conf.pos[index] = SVector{3}(conf.pos[index] .- cofm)
     end
-
+    println("Testing 2 ")
 end
 """
     distance2(a,b) 
