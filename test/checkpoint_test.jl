@@ -54,8 +54,9 @@
     checkpoint(1,teststates,testresults,testensemble,false)
     @test ispath("checkpoint/config.1")
 
-    testingparams,testingensemble,testingpotential,testingstates,movstrat,testingresults,nsteps,startcounter=initialisation(true)
 
+    testingparams,testingensemble,testingpotential,testingstates,movstrat,testingresults,nsteps,startcounter=initialisation(true)
+    recentre!(teststates[1].config)
     @test testingensemble == testensemble
     @test testingstates[1].config.pos == teststates[1].config.pos
     @test test_pot == testingpotential

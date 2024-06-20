@@ -134,7 +134,7 @@ function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
     for index in 1:N
         conf.pos[index] = SVector{3}(conf.pos[index] .- cofm)
     end
-    println("Testing 2 ")
+
 end
 """
     distance2(a,b) 
