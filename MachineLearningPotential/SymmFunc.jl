@@ -24,7 +24,7 @@ abstract type AngularSymmFunction{T} <: AbstractSymmFunction{T} end
 struct RadialType2{T} <: RadialSymmFunction{T}
     eta::T
     r_cut::T
-    type_vec::Vector{T}
+    type_vec::Int
     G_offset::T
     G_norm::T
 end
@@ -37,7 +37,7 @@ Various definitions of the RadialType2 struct to account for new normalisation f
 function RadialType2{T}(eta,r_cut,type_vector) where {T}
     return RadialType2(eta,r_cut,type_vector,0.,1.)
 end
-function RadialType2{T}(eta,r_cut,type_vector::Vector,G_vals::Vector) where {T}
+function RadialType2{T}(eta,r_cut,type_vector,G_vals::Vector) where {T}
     G_norm = 1/(G_vals[1] - G_vals[2])
     G_offset = -G_vals[2]*G_norm
     return RadialType2(eta,r_cut,type_vector,G_offset,G_norm)
@@ -48,7 +48,7 @@ struct AngularType3{T} <:AngularSymmFunction{T}
     lambda::T
     zeta::T
     r_cut::T
-    type_vec::Vector{T}
+    type_vec::Int
     tpz::T
     G_offset::T
     #G_norm::T
@@ -60,11 +60,11 @@ end
 Functions to initialise the AngularType3 structs based on various different definitions. If we don't include the offset and normalisation factors the two power of (one minus) zeta factor inlcudes no normalisation, and the offset is zero. 
 Second definition includes a vector containing G_max and G_min in a vector, it sets the offset and renormalises tpz to include G_norm. 
 """
-function AngularType3{T}(eta,lambda,zeta,r_cut,type_vec::Vector) where {T}
+function AngularType3{T}(eta,lambda,zeta,r_cut,type_vec) where {T}
     tpz = 2.0^(1-zeta)
     return AngularType3(eta,lambda,zeta,r_cut,type_vec,tpz,0.)
 end
-function AngularType3{T}(eta,lambda,zeta,r_cut,type_vector::Vector,G_vals::Vector) where {T}
+function AngularType3{T}(eta,lambda,zeta,r_cut,type_vector,G_vals::Vector) where {T}
     G_norm = 1/(G_vals[1] - G_vals[2])
     G_offset = -G_vals[2]*G_norm
     tpz = 2.0^(1-zeta)*G_norm

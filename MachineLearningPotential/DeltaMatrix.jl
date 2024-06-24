@@ -35,7 +35,6 @@ function adjust_radial_symm_val!(g_value1,g_value2,rnew_ij,r2_ij,fnew_ij,f2_ij,�
     return g_value1,g_value2
 end
 """
-
     adjust_angular_symm_val!(g_value,θ_new,θ_old,exp_new,exp_old,tpz)
     adjust_angular_symm_val!(g_value,exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
 
@@ -63,7 +62,7 @@ Call for the radial symmetry value designed to curry the input from `g_vector` a
 """
 function calc_new_symmetry_value!(g_vector,indexi,indexj,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
     g_vector[indexi],g_vector[indexj] = adjust_radial_symm_val!(g_vector[indexi],g_vector[indexj],new_dist2_vector[indexj],dist2_mat[indexi,indexj],new_f_vector[indexj],f_matrix[indexi,indexj],η,g_norm)
-    return g_vector
+    
 end
 """
     calc_new_symmetry_value!(g_vector,indices,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
@@ -71,20 +70,22 @@ end
 
 Currying functions from higher-level data structures such as the radial distances in `dist2_mat,new_dist2_vector` and cutoff functions `f_matrix,new_f_vector` as well as positions in `newposition,position` and passes these to lower level functions along with hyperparameters `η,λ,ζ,tpz` to adjust the values in `g_vector` at positions `indexi,indexj,indexk` calculates the required exponential component and angles to pass down to adjust_angular_symm_val!
 """
-function calc_new_symmetry_value!(g_vector,indices,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
+function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
 
-    θ_new_vec,θ_old_vec = all_angular_measure(newposition,position2,position3,rnew_ij,rnew_ik,r2_jk),all_angular_measure(position1,position2,position3,r2_ij,r2_ik,r2_jk)
+    θ_new,θ_old = all_angular_measure(newposition,position2,position3,rnew_ij,rnew_ik,r2_jk),all_angular_measure(position1,position2,position3,r2_ij,r2_ik,r2_jk)
 
     exp_new,exp_old = exponential_part(η,rnew_ij,rnew_ik,r2_jk,fnew_ij,fnew_ik,f_jk),exponential_part(η,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk)
-
-    for (θ_old,θ_new,index) in zip(θ_old_vec,θ_new_vec,indices)
-        g_vector[index] = adjust_angular_symm_val!(g_vector[index],exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
-    end
-
+    
+    g_vector[indexi] = adjust_angular_symm_val!(g_vector[indexi],exp_old,exp_new,θ_old[1],θ_new[1],λ,ζ,tpz)
+    g_vector[indexj] = adjust_angular_symm_val!(g_vector[indexj],exp_old,exp_new,θ_old[2],θ_new[2],λ,ζ,tpz)
+    g_vector[indexk] = adjust_angular_symm_val!(g_vector[indexk],exp_old,exp_new,θ_old[3],θ_new[3],λ,ζ,tpz)
+    # for (θ_old,θ_new,index) in zip(θ_old_vec,θ_new_vec,indices)
+    #     g_vector[index] = adjust_angular_symm_val!(g_vector[index],exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
+    # end
     return g_vector
 end
 function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,λ,ζ,tpz)
-    return calc_new_symmetry_value!(g_vector,[indexi,indexj,indexk],newposition,position[indexi],position[indexj],position[indexk],new_dist2_vector[indexj],new_dist2_vector[indexk],dist2_mat[indexi,indexj],dist2_mat[indexi,indexk],dist2_mat[indexj,indexk],new_f_vector[indexj],new_f_vector[indexk],f_matrix[indexi,indexj],f_matrix[indexi,indexk],f_matrix[indexj,indexk],η,λ,ζ,tpz)
+    return calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position[indexi],position[indexj],position[indexk],new_dist2_vector[indexj],new_dist2_vector[indexk],dist2_mat[indexi,indexj],dist2_mat[indexi,indexk],dist2_mat[indexj,indexk],new_f_vector[indexj],new_f_vector[indexk],f_matrix[indexi,indexj],f_matrix[indexi,indexk],f_matrix[indexj,indexk],η,λ,ζ,tpz)
 
 end
 #-----------------------------------------------------------------------#
@@ -98,24 +99,24 @@ Method one is designed for radial symmetry functions. Given an atom at `atominde
 
 Method two is designed to do the same for the angular symmetry function using the same inputs. Double loop over all j all k and use calc_new_symmetry_value! over `g_vector`
 """
-function symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,symmetry_function::RadialType2)
-    if symmetry_function.type_vec == [1.,1.]
+function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,symmetry_function::RadialType2)
+    if symmetry_function.type_vec == Int(11)
 
         η,g_norm = symmetry_function.eta,symmetry_function.G_norm
         for index2 in eachindex(g_vector)
             if index2 != atomindex
-                g_vector = calc_new_symmetry_value!(g_vector,atomindex,index2,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
+                 calc_new_symmetry_value!(g_vector,atomindex,index2,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
             end
         end
     end
 
     return g_vector
 end
-function symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dis_vector,f_matrix,new_f_vector,symmetry_function::AngularType3)
+function angular_symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dis_vector,f_matrix,new_f_vector,symmetry_function::AngularType3)
 
     N = length(g_vector)
 
-    if symmetry_function.type_vec == [1.,1.,1.]
+    if symmetry_function.type_vec == Int(111)
 
         η,λ,ζ,tpz = symmetry_function.eta,symmetry_function.lambda,symmetry_function.zeta,symmetry_function.tpz
 
@@ -144,22 +145,40 @@ Top level function to calculate the total change to the matrix of symmetry funct
 
 #     return g_matrix
 # end
+
+
 function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
     for g_index in 1:Nrad
-@views        g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
+#@views
+      g_matrix[g_index,:] = radial_symmetry_calculation!(g_matrix[g_index,:],atomindex,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
     end
-    for g_index in 1+Nrad:Nang
-@views        symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index-Nrad])
-    end
-    return g_matrix 
-end
-function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-    Threads.@threads for g_index in eachindex(total_symmetry_vector)
-        g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
+    for g_index in 1:Nang
+#@views
+    truindex = g_index+Nrad
+        g_matrix[truindex ,:] = angular_symmetry_calculation!(g_matrix[truindex,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index])
     end
 
+    return g_matrix 
+end
+function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
+    Threads.@threads for g_index in 1:Nrad
+        #@views
+        g_matrix[g_index,:] = radial_symmetry_calculation!(g_matrix[g_index,:],atomindex,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,radsymmfunctions[g_index])
+    end
+    Threads.@threads for g_index in 1:Nang
+#@views
+        truindex = g_index+Nrad
+        g_matrix[truindex ,:] = angular_symmetry_calculation!(g_matrix[truindex,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,angsymmfunctions[g_index])
+    end
     return g_matrix
 end
+# function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
+#     Threads.@threads for g_index in eachindex(total_symmetry_vector)
+#         g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
+#     end
+
+#     return g_matrix
+# end
 
 
 # #------------------------------------------------------------------------#

@@ -1,27 +1,25 @@
 using ParallelTemperingMonteCarlo
-using Random,DelimitedFiles
+using Random, DelimitedFiles
 
-#cd("$(pwd())/scripts")
-#set random seed - for reproducibility
+#demonstration of the new version of the new code   
+script_folder = @__DIR__ # folder where this script is located
+data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
+#-------------------------------------------------------#
+#-----------------------MC Params-----------------------#
+#-------------------------------------------------------#
+
+
 Random.seed!(1234)
-
-# number of atoms
-
 n_atoms = 101
-
-
-# temperature grid
-ti = 550
-tf = 900
-
+ti = 750.
+tf = 1200
 n_traj = 20
-
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100 #default 20% equilibration cycles on top
+mc_cycles = 2000  #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -34,17 +32,30 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
-#moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(atom_moves = n_atoms)  
 
-#ensemble
+#-------------------------------------------------------------#
+#----------------------Potential------------------------------#
+#-------------------------------------------------------------#
+
+evtohartree = 0.0367493
+nmtobohr = 18.8973
+#parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
+n = 8.482
+m = 4.692
+ϵ = evtohartree*0.0370
+a = 0.25*nmtobohr
+C = 27.561
+
+pot = EmbeddedAtomPotential(n,m,ϵ,C,a)
+
+#-------------------------------------------------------------#
+#------------------------Move Strategy------------------------#
+#-------------------------------------------------------------#
 ensemble = NVT(n_atoms)
-
-
-
-
-#starting configurations
-#icosahedral ground state of Cu55 (from Cambridge cluster database) converted to angstrom
+move_strat = MoveStrategy(ensemble)
+#-------------------------------------------------------------#
+#-----------------------Starting Config-----------------------#
+#-------------------------------------------------------------#
 
 pos_cu101 = [[10.37837124, 10.34436535, 14.44486097],
 [7.94202653, 10.16670763, 13.80890268],
@@ -147,112 +158,32 @@ pos_cu101 = [[10.37837124, 10.34436535, 14.44486097],
 [10.86471684, 7.04438815, 4.81287309],
 [8.38265424, 13.62044367, 6.88514476],
 [2.83880427, 6.70606892, 8.28598331]]
-
-
 #convert to Bohr
-# nmtobohr = 18.8973
-# copperconstant = 0.36258*nmtobohr
-# pos_cu55 = copperconstant*ico_55
+
+
 AtoBohr = 1.8897259886
+pos_cu101 .*= AtoBohr 
+ 
+ # we do not have a centred config, correcting this now
+ 
+cofm = [sum([pos[1] for pos in pos_cu101]),sum([pos[2] for pos in pos_cu101]),sum([pos[3] for pos in pos_cu101])]./101
+
+for element in pos_cu101
+    element .-=cofm 
+end
 
 length(pos_cu101) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 
-#boundary conditions 
-bc_cu55 = SphericalBC(radius=16*AtoBohr)   #5.32 Angstrom
-
-#starting configuration
-
-start_config = Config(pos_cu101, bc_cu55)
-
 #histogram information
 n_bin = 100
-#-------------------------------------------#
-#--------Vector of radial symm values-------#
-#-------------------------------------------#
-X = [ 1    1              0.001   0.000  11.338
- 1    0              0.001   0.000  11.338
- 1    1              0.020   0.000  11.338
- 1    0              0.020   0.000  11.338
- 1    1              0.035   0.000  11.338
- 1    0              0.035   0.000  11.338
- 1    1              0.100   0.000  11.338
- 1    0              0.100   0.000  11.338
- 1    1              0.400   0.000  11.338
- 1    0              0.400   0.000  11.338]
 
-radsymmvec = []
+#boundary conditions
+bc_cu101 = SphericalBC(radius=16*AtoBohr)   #5.32 Angstrom
+start_config = Config(pos_cu101, bc_cu101)
 
+#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-#--------------------------------------------#
-#--------Vector of angular symm values-------#
-#--------------------------------------------#
-V = [[0.0001,1,1,11.338],[0.0001,-1,2,11.338],[0.003,-1,1,11.338],[0.003,-1,2,11.338],[0.008,-1,1,11.338],[0.008,-1,2,11.338],[0.008,1,2,11.338],[0.015,1,1,11.338],[0.015,-1,2,11.338],[0.015,-1,4,11.338],[0.015,-1,16,11.338],[0.025,-1,1,11.338],[0.025,1,1,11.338],[0.025,1,2,11.338],[0.025,-1,4,11.338],[0.025,-1,16,11.338],[0.025,1,16,11.338],[0.045,1,1,11.338],[0.045,-1,2,11.338],[0.045,-1,4,11.338],[0.045,1,4,11.338],[0.045,1,16,11.338],[0.08,1,1,11.338],[0.08,-1,2,11.338],[0.08,-1,4,11.338],[0.08,1,4,11.338]]
+@time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
+rm("checkpoint",recursive=true)
 
-T = [[1.,1.,1.],[1.,1.,0.],[1.,0.,0.]]
-
-angularsymmvec = []
-#-------------------------------------------#
-#-----------Including scaling data----------#
-#-------------------------------------------#
-file = open("$(pwd())/scaling.data")
-scalingvalues = readdlm(file)
-close(file)
-G_value_vec = []
-for row in eachrow(scalingvalues[1:88,:])
-    max_min = [row[4],row[3]]
-    push!(G_value_vec,max_min)
-end
-
-
-for symmindex in eachindex(eachrow(X))
-    row = X[symmindex,:]
-    radsymm = RadialType2{Float64}(row[3],row[5],[row[1],row[2]],G_value_vec[symmindex])
-    push!(radsymmvec,radsymm)
-end
-
-
-let n_index = 10
-
-for element in V
-    for types in T 
-
-        n_index += 1
-
-        symmfunc = AngularType3{Float64}(element[1],element[2],element[3],11.338,types,G_value_vec[n_index])
-
-        push!(angularsymmvec,symmfunc)
-    end
-end
-end
-#---------------------------------------------------#
-#------concatenating radial and angular values------#
-#---------------------------------------------------#
-
-totalsymmvec = vcat(radsymmvec,angularsymmvec)
-
-
-#--------------------------------------------------#
-#-----------Initialising the nnp weights-----------#
-#--------------------------------------------------#
-num_nodes::Vector{Int32} = [88, 20, 20, 1]
-activation_functions::Vector{Int32} = [1, 2, 2, 1]
-file = open("weights.029.data","r+")
-weights=readdlm(file)
-close(file)
-weights = vec(weights)
-nnp = NeuralNetworkPotential(num_nodes,activation_functions,weights)
-
-runnerpotential = RuNNerPotential(nnp,totalsymmvec)
-#------------------------------------------------------------#
-#============================================================#
-#------------------------------------------------------------#
-
-mc_states = [NNPState(temp.t_grid[i], temp.beta_grid[i], start_config, runnerpotential; max_displ=[max_displ_atom[i],0.01,1.]) for i in 1:n_traj]
-
-
-
-#results = Output(n_bin, max_displ_vec)
-results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
-
-@time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));

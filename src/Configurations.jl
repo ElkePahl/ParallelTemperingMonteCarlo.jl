@@ -19,6 +19,7 @@ using ..BoundaryConditions
 
 export Config
 export distance2, get_distance2_mat, get_tan, get_tantheta_mat, get_volume
+export get_centre,recentre!
 
 # """
 #     Point(x::T,y::T,z::T)
@@ -117,32 +118,24 @@ end
 #overloads Base function length
 Base.length(::Config{N}) where N = N
 
+"""
+    get_centre(position,N)
+function to find the centre of mass of a configuration. Accepts the positions and number of positions and calculates the xyz coordinates of their centre.
+"""
+function get_centre(position,N)
+    return [sum([pos[1] for pos in position]),sum([pos[2] for pos in position]),sum([pos[3] for pos in position])]./N
+end
+"""
+    recentre!(conf::Config{N,BC,T}) where {N,BC,T}
+function to change the centre of mass of a configuration `conf' to [0,0,0] in cartesian space
+"""
+function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
+    cofm = get_centre(conf.pos,N)
+    for index in 1:N
+        conf.pos[index] = SVector{3}(conf.pos[index] .- cofm)
+    end
 
-#= """
-    move_atom!(pos, delta_move, bc)
-
-Moves an atom at position `pos` by `delta_move`.
-has to be defined for given boundary conditions
-implemented for:
-    - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `CubicBC`: (to be added) periodic boundary condition implemented
-
-""" =#
-#function move_atom!(config::Config, n_atom, delta_move)
-#    config.pos[n_atom] += delta_move
-#    return config
-#end
-
-#function move_atom!(pos,delta_move)
-#    pos += delta_move
-#    return pos
-#end
-
-#function move_atom!(config::Config, n_atom, delta_move,bc::SphericalBC)
-#    config.pos[n_atom] += delta_move
-#    return config
-#end
-
+end
 """
     distance2(a,b) 
     distance2(a,b,bc::SphericalBC)

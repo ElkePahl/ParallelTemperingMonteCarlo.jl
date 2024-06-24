@@ -6,7 +6,6 @@ Module designed to save relevant parameters and configurations throughout the si
 module ReadSave
 
 using StaticArrays,DelimitedFiles
-
 using ..BoundaryConditions
 using ..Configurations
 using ..InputParams
@@ -25,8 +24,8 @@ export read_init,setresults,rebuild_states,read_config,build_states
 Function to write the `mc_params` and `temp` data into a `savefile`. These are static parameters that define how the simulation is to proceed such as the number of cycles, trajectories and the temperatures to be covered.
 """
 function writeparams(savefile,params,temp)
-    headersvec = ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "min_acc:" "max_acc" "t_i:" "t_f"]
-    paramsvec = [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.min_acc params.max_acc first(temp.t_grid) last(temp.t_grid)]
+    headersvec = ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "n_adjust" "n_bins" "min_acc:" "max_acc" "t_i:" "t_f"]
+    paramsvec = [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(temp.t_grid) last(temp.t_grid)]
     writedlm(savefile, [headersvec, paramsvec], ' ' )
 end
 """
@@ -69,7 +68,7 @@ function writepotential(savefile,potential::Ptype) where Ptype <: EmbeddedAtomPo
     write(savefile,"EAM: $(potential.n) $(potential.m) $(potential.ean) $(potential.eCam) \n")
 end 
 function writepotential(savefile,potential::Ptype) where Ptype <: AbstractMachineLearningPotential
-    write(savefile,"Define the potential elsewhere, it's too complicated for simple I/O \n")
+    write(savefile,"runnerpotential \n")
 end
 """
     save_init(potential,ensemble,params,temp)
@@ -221,6 +220,9 @@ function readpotential(potinfovec)
         len = potinfovec[1,2]
         a,b,c = Vector{typeof(potinfovec[2,1])}(potinfovec[2,1:len]),Vector{typeof(potinfovec[3,1])}(potinfovec[3,1:len]),Vector{typeof(potinfovec[4,1])}(potinfovec[4,1:len])
         return ELJPotentialB(a,b,c)
+    elseif potinfovec[1,1] == "runnerpotential"
+        include("./potentialfile.jl")
+        return runnerpotential
     end
 end
 """
@@ -229,18 +231,18 @@ end
 Function to turn a delimited `paramsvec` into an MCParams and TempGrid struct. Second method includes a bool `restart` to determine whether or not to set eq_cycles=0 or 0.2*cycles if not restarting
 """
 function read_params(paramsvec)
-    parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100,paramsvec[5],paramsvec[6])
-    temps = TempGrid{Int(paramsvec[3])}(paramsvec[7],paramsvec[8])
+    parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
+    temps = TempGrid{Int(paramsvec[3])}(paramsvec[9],paramsvec[10])
     return parameters,temps
 end
 
 function read_params(paramsvec,restart)
     if restart == true
-        parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],100,100,paramsvec[5],paramsvec[6])
+        parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
     else
-        parameters = MCParams(paramsvec[1],Int(floor(0.2*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],100,100,paramsvec[5],paramsvec[6])
+        parameters = MCParams(paramsvec[1],Int(floor(0.2*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
     end
-    temps = TempGrid{Int(paramsvec[3])}(paramsvec[7],paramsvec[8])
+    temps = TempGrid{Int(paramsvec[3])}(paramsvec[9],paramsvec[10])
     return parameters,temps
 end
 """

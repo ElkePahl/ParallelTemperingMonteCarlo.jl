@@ -69,6 +69,10 @@ function initialisation(restart::Bool)
         start_counter=1
     end
 
+    for state in mc_states
+        recentre!(state.config)
+    end
+
     move_strategy = MoveStrategy(ensemble)
     n_steps = length(move_strategy)
 
