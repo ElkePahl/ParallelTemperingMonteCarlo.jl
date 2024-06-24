@@ -21,7 +21,7 @@ n_traj = 28
 
 temp = TempGrid{n_traj}(ti,tf) 
 
-mc_cycles = 1000000
+mc_cycles = 10000
 mc_sample = 1
 
 displ_atom = 0.1 # Angstrom
