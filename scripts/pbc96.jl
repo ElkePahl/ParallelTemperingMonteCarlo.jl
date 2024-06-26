@@ -14,15 +14,15 @@ n_atoms = 96
 pressure = 101325
 
 # temperature grid
-ti = 20.
-tf = 35.
+ti = 35.
+tf = 45.
 n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 200000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -49,13 +49,13 @@ c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
 potB = ELJPotentialB{6}(a,b,c1)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
 potlut=LookuptablePotential(link)
 
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
+separated_volume=true
 ensemble = NPT(n_atoms,pressure*3.398928944382626e-14,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
@@ -181,7 +181,11 @@ start_config = Config(pos_ne96, bc_ne96)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
+
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
+
+
+multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)

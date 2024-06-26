@@ -125,6 +125,20 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #             save_results(results,save_dir)
 #         end
 #     end
+    if rem(idx,1000) == 0
+        for i=1:length(mc_states)
+            open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
+                println(io, length(mc_states[1].config.pos))
+                println(io,mc_states[i].config.bc.box_length)
+                println(io,mc_states[i].config.bc.box_height)
+                for j=1:length(mc_states[1].config.pos)
+                    println(io, "Ne ", mc_states[i].config.pos[j][1]," ",mc_states[i].config.pos[j][2]," ",mc_states[i].config.pos[j][3])
+                end
+                println(io," ")
+            end
+        end
+    end
+
     return mc_states 
 end
 """
@@ -204,7 +218,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     #Equilibration 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
     println("equilibration complete")
-
+    
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i)

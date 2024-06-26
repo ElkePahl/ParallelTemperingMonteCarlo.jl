@@ -128,6 +128,13 @@ function swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
 
 end
 
+
+function swap_vars!(i_atom,potential_variables::LookupTableVariables)
+    potential_variables.tan_mat[i_atom,:] = potential_variables.new_tan_vec
+    potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
+
+end
+
 function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
     potential_variables.component_vector = potential_variables.new_component_vector
 end

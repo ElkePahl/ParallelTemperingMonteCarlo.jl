@@ -444,16 +444,30 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
             end
-        end
-    end 
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
+
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end 
@@ -932,6 +946,40 @@ function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_v
 
     return potential_variables,new_en
 end
+
+
+function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::LookupTableVariables,dist2_mat,en_tot,pot::LookuptablePotential)
+
+    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
+    end
+    new_dist2_vec[index] = 0.
+
+    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[index] = 0
+
+    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
+
+    return potential_variables,new_en
+end
+function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::LookupTableVariables,dist2_mat,en_tot,r_cut,pot::LookuptablePotential)
+
+    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    for (i, b) in enumerate(config.pos)
+        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
+    end
+    new_dist2_vec[index] = 0.
+
+    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[index] = 0
+
+    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
+
+    return potential_variables,new_en
+end
+
+
 function energy_update!(new_dist2_vec,trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
     #new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
 
