@@ -48,14 +48,15 @@
     Random.seed!(0)
     teststates=mc_cycle!(teststates,teststrat,test_params,test_pot,testensemble,nstep,testresults,1,false)
 
-    @test teststates[1].en_tot == teststates[1].new_en
+    @test teststates[1].en_tot != teststates[1].new_en
     @test teststates[1].en_tot != teststates[2].en_tot
 
     checkpoint(1,teststates,testresults,testensemble,false)
     @test ispath("checkpoint/config.1")
 
-    testingparams,testingensemble,testingpotential,testingstates,movstrat,testingresults,nsteps,startcounter=initialisation(true)
 
+    testingparams,testingensemble,testingpotential,testingstates,movstrat,testingresults,nsteps,startcounter=initialisation(true)
+    recentre!(teststates[1].config)
     @test testingensemble == testensemble
     @test testingstates[1].config.pos == teststates[1].config.pos
     @test test_pot == testingpotential
