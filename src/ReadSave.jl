@@ -322,7 +322,9 @@ end
 Function to re-initialise the results struct on restarting a simulation.
 """
 function setresults(histparams,histdata,histv_data,r2data)
-    results=Output{Float64}(100)
+    nbins = size(histdata)[2]
+    trunbins = nbins - 2
+    results=Output{Float64}(trunbins)
     results.en_min,results.en_max=histparams[1],histparams[2]
     results.v_min,results.v_max = histparams[3],histparams[4]
     results.delta_en_hist,results.delta_v_hist,results.delta_r2=histparams[5],histparams[6],histparams[7]
@@ -335,9 +337,9 @@ function setresults(histparams,histdata,histv_data,r2data)
     if typeof(histv_data) == Matrix{Float64}
 
         for row in eachrow(histv_data)
-            evmat = zeros(102,102)
-            for index in 1:102
-                evmat[:,index] = row[(index-1)*102+1 : (index - 1)*102+102]
+            evmat = zeros(nbins,nbins)
+            for index in 1:nbins
+                evmat[:,index] = row[(index-1)*nbins+1 : (index - 1)*nbins+nbins]
             end
             evmat = Int.(evmat)
             push!(results.ev_histogram,evmat)
