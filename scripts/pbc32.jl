@@ -44,8 +44,8 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
-potlut=LookuptablePotential(link)
+# link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+# potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
@@ -107,7 +107,7 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble, false)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
