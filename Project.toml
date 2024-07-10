@@ -1,7 +1,7 @@
 name = "ParallelTemperingMonteCarlo"
 uuid = "3b4a078d-6172-48b3-819b-6f35da58c07f"
 authors = ["Elke Pahl <Elke.Pahl@auckland.ac.nz>"]
-version = "0.1.0"
+version = "0.3.5"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
