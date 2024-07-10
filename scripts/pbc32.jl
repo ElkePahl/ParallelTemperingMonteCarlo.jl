@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 500000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -46,10 +46,12 @@ pot = ELJPotentialEven{6}(c)
 
 # link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
 # potlut=LookuptablePotential(link)
+
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+separated_volume=false
+ensemble = NPT(n_atoms,pressure*3.398928944382626e-14, separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
@@ -107,7 +109,7 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble, false)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
