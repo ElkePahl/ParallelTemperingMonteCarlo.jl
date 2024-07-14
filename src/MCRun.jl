@@ -111,6 +111,12 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
             update_max_stepsize!(state,mc_params.n_adjust,ensemble)
         end
     end
+    if rem(index, 900) == 0 
+        for (i, state) in enumerate(mc_states)
+            filename = "configurations_cycle_state_$(i).dat"
+            save_config(filename, state, index) # Addition of index to track cycle number
+        end
+    end
 
 
     return mc_states
