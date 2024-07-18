@@ -243,9 +243,9 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     return mc_states,results
 end
 
-function ptmc_run!(restart::Bool;rdfsave=false,save=1000)
+function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
 
-    mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart)
+    mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
     println("params set")
     
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
