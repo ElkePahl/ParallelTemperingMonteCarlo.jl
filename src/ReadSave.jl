@@ -241,6 +241,7 @@ function read_params(paramsvec,restart,eq_cycles)
         parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
     else
         parameters = MCParams(paramsvec[1],Int(floor(eq_cycles*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
+
     end
     temps = TempGrid{Int(paramsvec[3])}(paramsvec[9],paramsvec[10])
     return parameters,temps
