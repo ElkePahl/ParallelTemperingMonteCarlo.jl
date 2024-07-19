@@ -1,5 +1,6 @@
 using ParallelTemperingMonteCarlo
 using Random
+using Plots
 
 #demonstration of the new verison of the new code   
 
@@ -110,6 +111,13 @@ start_config = Config(pos_ne32, bc_ne32)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+
+temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+plot(temp_result,cp)
+
+max_value, index = findmax(cp)
+t_max = temp_result(index)
+println(t_max)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
