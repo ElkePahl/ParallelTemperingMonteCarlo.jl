@@ -406,12 +406,12 @@ function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=6
 
 end
 
-function postprocess(;xdir=pwd(),0.2)
+function postprocess(;xdir=pwd())
     if xdir != pwd()
         cd(xdir)
     end
 
-    params,ens,potential,states,movestrat,results,nstep,startcounter = initialisation(true)
+    params,ens,potential,states,movestrat,results,nstep,startcounter = initialisation(true,0.2)
     temps = TempGrid{params.n_traj}(states[1].temp,states[params.n_traj].temp)
 
     multihistogram(results,temps)
