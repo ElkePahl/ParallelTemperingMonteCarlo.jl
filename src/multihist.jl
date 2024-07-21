@@ -406,7 +406,7 @@ function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=6
 
 end
 
-function postprocess(;xdir=pwd())
+function postprocess(;xdir=pwd(),0.2)
     if xdir != pwd()
         cd(xdir)
     end
