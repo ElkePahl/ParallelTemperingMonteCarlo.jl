@@ -1,7 +1,7 @@
 module ReadSave
 
 
-export save_params,save_state,save_results,save_states,save_config
+export save_params,save_state,save_results,save_states,save_config, save_config_xyz
 export read_results,read_config,read_input,read_states,initialise_params
 export read_multihist
 using StaticArrays
@@ -88,9 +88,10 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
 
 end
-function save_config(filename::String, mc_state::MCState, cycle_index::Int)
+function save_config(filename::String, mc_state::MCState, cycle_index::Int, save_directory::String)
     # Define the directory where we want to save the files
-    save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
+    save_directory = save_directory 
+    # "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ne"
    
     # Ensure the directory exists; create it if it doesn't
     # isdir(save_directory) || mkdir(save_directory, recursive=true)
@@ -107,11 +108,34 @@ function save_config(filename::String, mc_state::MCState, cycle_index::Int)
         write(file, "\n# Cycle: $(cycle_index), Box Length: $(box_length), Temperature: $(temp)\n")
 
         for row in mc_state.config.pos
-            write(file, "Ne $(row[1]) $(row[2]) $(row[3])\n")
+            write(file, "Ar $(row[1]) $(row[2]) $(row[3])\n")
         end
     end
-   
+
 end
+
+function save_config_xyz(filename::String, mc_state::MCState, cycle_index::Int, save_directory::String)
+    # Define the directory where we want to save the files
+    save_directory = save_directory 
+    # "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ne"
+   
+    # Ensure the directory exists; create it if it doesn't
+    # isdir(save_directory) || mkdir(save_directory, recursive=true)
+    
+    # Ensure the filename includes the full path
+    full_filename = joinpath(save_directory, filename)
+
+    # Append mode is used to add to the file if it already exists
+    open(full_filename, "a") do file
+        println(file, length(mc_state.config.pos))  # Write the number of atoms
+        println(file, "")  # Write a comment line
+        for row in mc_state.config.pos
+            write(file, "Ar $(row[1]) $(row[2]) $(row[3])\n")
+        end
+    end
+
+end
+
 """
     save_results(results::Output, directory)
 Saves the on the fly results and histogram information for re-reading.

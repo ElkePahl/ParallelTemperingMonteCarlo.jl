@@ -99,7 +99,7 @@ Basic function utilised by the simulation. For each of the `n_steps` run a singl
 
     Second method includes the sampling_step! which updates the `results` struct. The first method is used by the equilibration_cycle and therefore does __not__ update the results funciton. 
 """
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index, save_directory::String)
     
     mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps)
     
@@ -111,19 +111,21 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
             update_max_stepsize!(state,mc_params.n_adjust,ensemble)
         end
     end
-    if rem(index, 900) == 0 
+    if rem(index, 10000) == 0 
         for (i, state) in enumerate(mc_states)
             filename = "configurations_cycle_state_$(i).dat"
-            save_config(filename, state, index) # Addition of index to track cycle number
+            save_config(filename, state, index, save_directory)
+            filename_xyz = "configurations_cycle_state_$(i).xyz"
+            save_config_xyz(filename_xyz, state, index, save_directory) # Addition of index to track cycle number
         end
     end
 
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx, save_directory::String)
 
-    mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
+    mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx, save_directory)
     sampling_step!(mc_params,mc_states,ensemble,idx,results)
     #     if save == true
 #         if rem(i,1000) == 0
@@ -159,7 +161,7 @@ end
     equilibration_cycle(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
 Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles defined in `mc_params` are completed without updating the results before initialising the `results` struct according to the maximum and minimum energy determined throughout the equilibration cycle. 
 """
-function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
+function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results, save_directory::String)
     #set initial hamiltonian values and ebounds
     for state in mc_states
         push!(state.ham, 0)
@@ -168,7 +170,7 @@ function equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_step
     ebounds = [100. , -100.]
     #begin equilibration
     for i = 1:mc_params.eq_cycles
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,i)
+        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,i, save_directory::String)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot,ebounds)
         end
@@ -187,11 +189,11 @@ while initialisation sets mc_states,params etc we require something to thermalis
 
     N.B. Restart is currently non-functional, do not try use it
 """
-function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
+function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart, save_directory::String) where stype <: MCState
     if restart == true
         println("Restart not implemented yet")
     else
-        return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
+        return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results, save_directory::String)
 
     end
 end
@@ -202,18 +204,18 @@ Main call for the ptmc program. Given `mc_params` dictating the number of cycles
 
     the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
 
     #initialise the states and results etc
     mc_states,move_strategy,results,n_steps = initialisation(mc_params,temp,start_config,potential,ensemble)
     println("params set")
     #Equilibration 
-    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
+    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart, save_directory)
     println("equilibration complete")
 
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i)
+        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i, save_directory)
     end
     println("MC loop done.")
     println("testing revise pt2")
