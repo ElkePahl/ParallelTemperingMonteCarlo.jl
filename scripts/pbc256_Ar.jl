@@ -164,7 +164,7 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
-# temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 plot(temp_result,cp)
 
 max_value, index = findmax(cp)

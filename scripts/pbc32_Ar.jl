@@ -12,18 +12,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 101325
+pressure = 100000
 
 # temperature grid
-ti = 10.
-tf = 40.
+ti = 90
+tf = 130
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1e9 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -36,6 +36,8 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
+
+save_directory = "/nesi/nobackup/uoa02731/sam/Ar/Cubic/32/1/Configs"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -160,7 +162,7 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 plot(temp_result,cp)
