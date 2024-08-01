@@ -12,18 +12,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 101325
+pressure = 1000000000
 
 # temperature grid
-ti = 10.
-tf = 40.
+ti = 350
+tf = 500
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -37,11 +37,14 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
+save_directory = "/Users/samuelcase/Downloads"
+
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+# c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+c=[-123.635101619510, 21262.8963716972, -3239750.64086661, 189367623.844691, -4304257347.72069, 35315085074.3605]
 pot = ELJPotentialEven{6}(c)
 
 
@@ -97,10 +100,10 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
 AtoBohr = 1.8897259886
 #When the unit of distance is still Angstrom:
 #AtoBohr = 1.0
-pos_ne32 = pos_ne32 * AtoBohr
+pos_ne32 = pos_ne32 * AtoBohr * 1.21936421
 
 #binding sphere
-box_length = 8.7674 * AtoBohr
+box_length = 8.7674 * AtoBohr * 1.21936421
 bc_ne32 = CubicBC(box_length)   
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
@@ -110,7 +113,10 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+#----------------------------------------------------------------#
+#-------------------------Run Simulation-------------------------#
+#----------------------------------------------------------------#
+mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 plot(temp_result,cp)
@@ -122,5 +128,7 @@ println(t_max)
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+
+
 
 ## 

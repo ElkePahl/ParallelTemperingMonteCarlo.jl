@@ -15,6 +15,15 @@ function periodic_distance(point1::Vector{Float64}, point2::Vector{Float64}, box
     return sqrt(sum(delta .^ 2))
 end
 
+# Use this distance instead
+# function distance2(a,b,bc::RhombicBC)
+#     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
+#     b_x=b[1]-b[2]/3^0.5 +
+#     bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) +
+#     1/3^0.5*b_y
+#     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
+#     return distance2(a,SVector(b_x,b_y,b_z))
+# end
 """
 This function identifies symmetries in a configuration with periodic boundary conditions. Only core atoms are considered as there is no surface.
 

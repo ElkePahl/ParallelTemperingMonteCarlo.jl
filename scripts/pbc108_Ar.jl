@@ -11,7 +11,7 @@ using Plots
 Random.seed!(1234)
 
 # number of atoms
-n_atoms = 108
+n_atoms = 32
 pressure = 101325
 
 # temperature grid
@@ -130,7 +130,7 @@ for l in 1:n_atoms
   pos[l] = pos[l] - center
 end
 
-pos_ne32 = pos
+pos_ne32 = 
 
 #convert to Bohr
 AtoBohr = 1.8897259886

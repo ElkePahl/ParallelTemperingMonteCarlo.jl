@@ -8,22 +8,22 @@ using Plots
 #-----------------------MC Params-----------------------#
 #-------------------------------------------------------#
 
-Random.seed!(1234)
+# Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 100000
+pressure = 1000000000
 
 # temperature grid
-ti = 90
-tf = 130
+ti = 100
+tf = 150
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1e9 #default 20% equilibration cycles on top
+mc_cycles = 1 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/nesi/nobackup/uoa02731/sam/Ar/Cubic/32/1/Configs"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
