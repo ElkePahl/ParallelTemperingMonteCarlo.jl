@@ -95,14 +95,14 @@ end
 Initialises and populates a data file containing the information necessary to interpret histogram data
 """
 function save_histparams(results)
-    if ispath("./checkpoint/hist_info.data")==true
-    else
+    # if ispath("./checkpoint/hist_info.data")==true
+    # else
         resfile = open("./checkpoint/hist_info.data","w+")
         headersvec = ["e_min" "e_max" "v_min" "v_max" "Δ_E" "Δ_V" "Δ_r2"]
         infovec = [results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2]
         writedlm(resfile,[headersvec , infovec], ' ')
         close(resfile)
-    end
+    # end
 end
 #-----------------------------------------------------------------#
 #-----------------------Save Configurations-----------------------#

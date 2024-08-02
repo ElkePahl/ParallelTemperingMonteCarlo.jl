@@ -69,9 +69,10 @@ function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC
         count += 1 
         if count == 50
             recentre!(mc_state.config)
+        else
+            trial_pos = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+            count == 100 && error("Error: too many moves out of binding sphere")
         end
-        trial_pos = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
-        count == 100 && error("Error: too many moves out of binding sphere")
     end
     mc_state.ensemble_variables.trial_move = trial_pos
 
