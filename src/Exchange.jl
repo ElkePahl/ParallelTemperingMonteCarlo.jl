@@ -68,7 +68,6 @@ function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_chan
     prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
 end
 
 
@@ -151,7 +150,7 @@ function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
     
 
     #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
-    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * get_volume(mc_states[n_exc].config.bc)),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * get_volume(mc_states[n_exc].config.bc)),  (mc_states[n_exc+1].en_tot + ensemble.pressure * get_volume(mc_states[n_exc+1].config.bc))) > rand()
     
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc+1].count_exc[2] += 1
