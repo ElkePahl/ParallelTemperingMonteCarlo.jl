@@ -30,7 +30,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 
 #move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
 displ_atom = 1.0 # Angstrom
-max_vchange = 0.02
+max_vchange = 0.2
 n_adjust = 100
 
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
