@@ -262,7 +262,7 @@ analysis takes in the energy bin values, entropy per energy and inverse temperat
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
 function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
-    
+
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
     dT = (last(Tvec) - first(Tvec))/NPoints
@@ -300,7 +300,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
         println("vector $i at temperature $(T[i]) is a problem")
        end
 
-       #count=0  this variable was included for bug testing and should be excluded from the main program
+       count=0  #this variable was included for bug testing and should be excluded from the main program
 
        #below we calculate the partition function
        
@@ -312,18 +312,18 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
        #the numbers are utterly arbitrary, they have been chosen so that they don't create a loop
         
         if Z[i] < 1.
-            #count += 1
+            count += 1
 
             nexp -= 1.  
             @goto start
         elseif Z[i] > 100.
 
-            #count += 1
+            count += 1
             nexp += 0.7
 
             @goto start
         end
-        
+        println(count)
        U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
        U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]       
        r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
@@ -411,7 +411,7 @@ function postprocess(;xdir=pwd())
         cd(xdir)
     end
 
-    params,ens,potential,states,movestrat,results,nstep,startcounter = initialisation(true)
+    params,ens,potential,states,movestrat,results,nstep,startcounter = initialisation(true,0.2)
     temps = TempGrid{params.n_traj}(states[1].temp,states[params.n_traj].temp)
 
     multihistogram(results,temps)

@@ -95,14 +95,14 @@ end
 Initialises and populates a data file containing the information necessary to interpret histogram data
 """
 function save_histparams(results)
-    if ispath("./checkpoint/hist_info.data")==true
-    else
+    # if ispath("./checkpoint/hist_info.data")==true
+    # else
         resfile = open("./checkpoint/hist_info.data","w+")
         headersvec = ["e_min" "e_max" "v_min" "v_max" "Δ_E" "Δ_V" "Δ_r2"]
         infovec = [results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2]
         writedlm(resfile,[headersvec , infovec], ' ')
         close(resfile)
-    end
+    # end
 end
 #-----------------------------------------------------------------#
 #-----------------------Save Configurations-----------------------#
@@ -236,11 +236,12 @@ function read_params(paramsvec)
     return parameters,temps
 end
 
-function read_params(paramsvec,restart)
+function read_params(paramsvec,restart,eq_cycles)
     if restart == true
         parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
     else
-        parameters = MCParams(paramsvec[1],Int(floor(0.2*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
+        parameters = MCParams(paramsvec[1],Int(floor(eq_cycles*paramsvec[1])),paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
+
     end
     temps = TempGrid{Int(paramsvec[3])}(paramsvec[9],paramsvec[10])
     return parameters,temps
@@ -249,7 +250,7 @@ end
     read_init()
 Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function. returns 
 """
-function read_init(restart::Bool)
+function read_init(restart::Bool, eq_cycles)
     readfile=open("./checkpoint/params.data","r+")
     data=readdlm(readfile)
     close(readfile)
@@ -258,7 +259,7 @@ function read_init(restart::Bool)
     ensemblevec=data[4,:]
     potinfovec=data[5:end,:]
 
-    mc_params,temp = read_params(paramsvec,restart)
+    mc_params,temp = read_params(paramsvec,restart,eq_cycles)
     ensemble = readensemble(ensemblevec)
     potential=readpotential(potinfovec)
 
@@ -322,7 +323,9 @@ end
 Function to re-initialise the results struct on restarting a simulation.
 """
 function setresults(histparams,histdata,histv_data,r2data)
-    results=Output{Float64}(100)
+    nbins = size(histdata)[2]
+    trunbins = nbins - 2
+    results=Output{Float64}(trunbins)
     results.en_min,results.en_max=histparams[1],histparams[2]
     results.v_min,results.v_max = histparams[3],histparams[4]
     results.delta_en_hist,results.delta_v_hist,results.delta_r2=histparams[5],histparams[6],histparams[7]
@@ -335,9 +338,9 @@ function setresults(histparams,histdata,histv_data,r2data)
     if typeof(histv_data) == Matrix{Float64}
 
         for row in eachrow(histv_data)
-            evmat = zeros(102,102)
-            for index in 1:102
-                evmat[:,index] = row[(index-1)*102+1 : (index - 1)*102+102]
+            evmat = zeros(nbins,nbins)
+            for index in 1:nbins
+                evmat[:,index] = row[(index-1)*nbins+1 : (index - 1)*nbins+nbins]
             end
             evmat = Int.(evmat)
             push!(results.ev_histogram,evmat)
