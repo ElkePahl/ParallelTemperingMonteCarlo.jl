@@ -48,6 +48,8 @@ function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,
     
     mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
 
+    println(mc_states[1].en_tot)
+
     results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
 
     return mc_states,move_strategy,results,n_steps
