@@ -16,9 +16,23 @@ pressure = 101325 * 10000
 # temperature grid
 ti = 300.
 tf = 500.
-n_traj = 25
+n_traj = 100
 
 temp = TempGrid{n_traj}(ti,tf) 
+
+mc_cycles = 1 #default 20% equilibration cycles on top
+
+
+mc_sample = 1  #sample every mc_sample MC cycles
+
+#move_atom=AtomMove(n_atoms) #move strategy (here only atom moves, n_atoms per MC cycle)
+displ_atom = 0.1 # Angstrom
+n_adjust = 100
+
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
+
 
 # MC simulation details
 
@@ -92,8 +106,8 @@ mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,pot
 mc_states_scaled = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
 
 
-for i=1:25
-    scale = 1.1-0.02*i
+for i=1:100
+    scale = 1.0-0.002*(50-i)
     pos_scaled = pos_ne32 * scale
     box_length_scaled = box_length * scale
     config_scaled = Config(pos_scaled, CubicBC(box_length_scaled))
@@ -111,14 +125,22 @@ function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_chan
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 
+s=[]
+e=[]
+h=[]
+p=[]
 
-for i=1:25
-    println("scale = ",1.1-0.02*i)
+for i=1:100
+    println("scale = ",1.0-0.002*(50-i))
+    push!(s,1.0-0.002*(50-i))
     println("box_length = ",mc_states_scaled[i].config.bc.box_length)
     de=mc_states_scaled[i].en_tot-mc_states[i].en_tot
+    push!(e,mc_states_scaled[i].en_tot)
     v_unc= mc_states[i].config.bc.box_length^3
     v_c=mc_states_scaled[i].config.bc.box_length^3
+    push!(h,mc_states_scaled[i].en_tot+ensemble.pressure*mc_states_scaled[i].config.bc.box_length^3)
     println(metropolis_condition(ensemble, de, v_c, v_unc, temp.beta_grid[i]))
+    push!(p,metropolis_condition(ensemble, de, v_c, v_unc, temp.beta_grid[i]))
     println()
 end
 
