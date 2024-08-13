@@ -12,10 +12,10 @@ using Plots
 
 # number of atoms
 n_atoms = 32
-pressure = 1000000000
+pressure = 101325
 
 # temperature grid
-ti = 100
+ti = 80
 tf = 150
 n_traj = 25
 
@@ -23,7 +23,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
