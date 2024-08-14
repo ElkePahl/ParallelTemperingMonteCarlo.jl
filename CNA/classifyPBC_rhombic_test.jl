@@ -2,12 +2,11 @@ module ClassifyPBC
 
 using Graphs, LinearAlgebra, StaticArrays, Printf
 
-export findSymmetries, distance2_rhombic, distance2_cubic, classify_structure, generate_fcc_structure, vestaFile, RhombicBC, CubicBC
+export findSymmetries, distance2_rhombic, distance2_cubic, classify_structure, generate_fcc_structure, generate_rhombic_structure, vestaFile, RhombicBC, CubicBC
 
 # Define structures to hold boundary conditions
 struct RhombicBC
-    box_length::Float64
-    box_height::Float64
+    box_vectors::SMatrix{3, 3, Float64}
 end
 
 struct CubicBC
@@ -16,10 +15,11 @@ end
 
 # Distance calculation considering rhombic boundary conditions
 function distance2_rhombic(a::SVector{3,Float64}, b::SVector{3,Float64}, bc::RhombicBC)
-    b_y = b[2] + (sqrt(3)/2 * bc.box_length) * round((a[2] - b[2]) / (sqrt(3)/2 * bc.box_length))
-    b_x = b[1] - b[2]/sqrt(3) + bc.box_length * round(((a[1] - b[1]) - 1/sqrt(3) * (a[2] - b[2])) / bc.box_length) + 1/sqrt(3) * b_y
-    b_z = b[3] + bc.box_height * round((a[3] - b[3]) / bc.box_height)
-    return norm(a - SVector(b_x, b_y, b_z))
+    delta = a - b
+    fractional = inv(bc.box_vectors) * delta
+    fractional = fractional .- round.(fractional)  # Apply periodic boundary conditions
+    cartesian = bc.box_vectors * fractional
+    return norm(cartesian)
 end
 
 # Distance calculation considering cubic boundary conditions
@@ -105,6 +105,64 @@ function generate_fcc_structure(n_atoms::Int)
     # Define boundary conditions
     box_length = Cell_Repeats * L_start * AtoBohr
     bc = CubicBC(box_length)
+
+    return pos, bc
+end
+
+function generate_rhombic_structure(n_atoms::Int)
+    r_start = 3.7782  # Desired minimum radius between atoms
+    L_start = 2 * (r_start^2 / 2)^0.5  # Distance between adjacent atoms along the axes
+
+    # Calculate the number of unit cells needed in each dimension
+    Cell_Repeats = ceil(Int, cbrt(n_atoms))  # Always round up to ensure enough atoms
+
+    # Define lattice vectors for the rhombic unit cell
+    a1 = SVector(L_start, 0.0, 0.0)
+    a2 = SVector(L_start / 2, L_start * sqrt(3) / 2, 0.0)
+    a3 = SVector(L_start / 2, L_start * sqrt(3) / 6, L_start * sqrt(2 / 3))
+
+    pos = Vector{SVector{3, Float64}}()
+
+    # Generate atoms in the rhombic unit cell
+    for i in 0:(Cell_Repeats - 1)
+        for j in 0:(Cell_Repeats - 1)
+            for k in 0:(Cell_Repeats - 1)
+                # Position of the atom in the lattice
+                position = i * a1 + j * a2 + k * a3
+                push!(pos, position)
+                if length(pos) == n_atoms  # Stop if we've reached the desired number of atoms
+                    break
+                end
+            end
+            if length(pos) == n_atoms
+                break
+            end
+        end
+        if length(pos) == n_atoms
+            break
+        end
+    end
+
+    if length(pos) != n_atoms
+        error("Generated structure does not match the desired number of atoms: $n_atoms")
+    end
+
+    # Center the configuration at the origin
+    center = sum(pos) / length(pos)
+    pos = [p - center for p in pos]
+
+    # Convert to Bohr units (optional)
+    AtoBohr = 1.8897259886
+    pos = [p * AtoBohr for p in pos]
+
+    # Define the boundary conditions (box vectors for rhombic cell)
+    box_vectors = SMatrix{3, 3, Float64}(
+        a1[1] * AtoBohr, a2[1] * AtoBohr, a3[1] * AtoBohr,
+        a1[2] * AtoBohr, a2[2] * AtoBohr, a3[2] * AtoBohr,
+        a1[3] * AtoBohr, a2[3] * AtoBohr, a3[3] * AtoBohr
+    )
+    
+    bc = RhombicBC(box_vectors)
 
     return pos, bc
 end
@@ -220,6 +278,55 @@ function vestaFile(output_dir::String, fileName::String, configurations, classif
     end
 end
 
+# Overloaded vestaFile function to handle RhombicBC
+function vestaFile(output_dir::String, fileName::String, configurations, classifications, rCut, EBL, bc::RhombicBC)
+    blueprint_path = "/Users/samuelcase/GIT/PTMC/ParallelTemperingMonteCarlo.jl/CNA/blueprint.vesta"
+    if !isfile(blueprint_path)
+        error("Blueprint VESTA file not found")
+    end
+
+    lines = readlines(blueprint_path)
+
+    L = length(configurations)
+    N = length(configurations[1])
+
+    for i in 1:L
+        output_file = joinpath(output_dir, "$(fileName)_$i.vesta")
+        open(output_file, "w") do newFP
+            c = 1
+            while c <= length(lines)
+                if lines[c] == "STRUC"
+                    println(newFP, "STRUC")
+                    for j in 1:N
+                        # Add the atom's coordinate to the file
+                        @printf(newFP, "  %d  1  %d  1.0000  %.6f  %.6f  %.6f    1\n", j, j, configurations[i][j]...)
+                        println(newFP, "                    0.000000   0.000000   0.000000  0.00")
+                    end
+                    println(newFP, "  0 0 0 0 0 0 0")
+                    println(newFP, "THERI 1")
+                    for j in 1:N
+                        println(newFP, "  $j  $j  0.000000")
+                    end
+                    c += 42
+                elseif lines[c] == "SBOND"
+                    println(newFP, "SBOND")
+                    @printf(newFP, "  1     1     1    0.0000    %.5f  0  1  1  0  1  0.250  2.000 127 127 127\n", rCut * EBL)
+                    println(newFP, "  0 0 0 0")
+                    println(newFP, "SITET")
+                    for j in 1:N
+                        atomColour = colourAtom(j, classifications[i])
+                        println(newFP, "  $j  $j  0.8000  $atomColour  76  76  76 204 0")
+                    end
+                    c += 17
+                else
+                    println(newFP, lines[c])
+                    c += 1
+                end
+            end
+        end
+    end
+end
+
 function colourAtom(atomNum, classification)
     for key in keys(classification)
         if atomNum in key
@@ -240,10 +347,17 @@ function colourAtom(atomNum, classification)
     return "76  76  76"  # Grey for unclassified atoms
 end
 
-# Main function to generate FCC structure, classify, and generate VESTA file
-function main_fcc_vesta(n_atoms::Int, output_dir::String, rCut::Float64, EBL::Float64)
-    # Generate FCC structure
-    pos, bc = generate_fcc_structure(n_atoms)
+# Main function to generate FCC or Rhombic structure, classify, and generate VESTA file
+function main_structure_vesta(n_atoms::Int, output_dir::String, rCut::Float64, EBL::Float64, structure_type::String)
+    if structure_type == "FCC"
+        pos, bc = generate_fcc_structure(n_atoms)
+        fileName = "fcc_structure"
+    elseif structure_type == "Rhombic"
+        pos, bc = generate_rhombic_structure(n_atoms)
+        fileName = "rhombic_structure"
+    else
+        error("Invalid structure type. Choose 'FCC' or 'Rhombic'.")
+    end
 
     # Create dummy classifications (all FCC for now)
     classifications = Dict{Vector{Int64}, String}([i] => "FCC" for i in 1:n_atoms)
@@ -252,7 +366,6 @@ function main_fcc_vesta(n_atoms::Int, output_dir::String, rCut::Float64, EBL::Fl
     configurations = [pos]
 
     # Generate VESTA file
-    fileName = "fcc_structure"
     vestaFile(output_dir, fileName, configurations, [classifications], rCut, EBL, bc)
     println("VESTA file generated in directory: $output_dir")
 end
@@ -260,10 +373,13 @@ end
 end  # End of module ClassifyPBC
 
 # Example usage
-n_atoms = 108  # Must be a multiple of 4 for FCC structure
+n_atoms = 99  # Must be a multiple of 4 for FCC structure and a multiple of 2 for Rhombic
 output_dir = "/Users/samuelcase/Downloads"  # Change this to your desired output directory
-rCut = 1+sqrt(2)/2 * 3.7782  # Example value, adjust as needed
-EBL = 3.7782  # Equilibrium bond length in Angstroms for Neon2, adjust as needed
+rCut = 1 + sqrt(2)/2 * 3.7782  # Example value, adjust as needed
+EBL = 3.7782  # Equilibrium bond length in Angstroms for Argon2, adjust as needed
+
+# Choose structure type: "FCC" or "Rhombic"
+structure_type = "Rhombic"
 
 # Run the main function
-ClassifyPBC.main_fcc_vesta(n_atoms, output_dir, rCut, EBL)
+ClassifyPBC.main_structure_vesta(n_atoms, output_dir, rCut, EBL, structure_type)
