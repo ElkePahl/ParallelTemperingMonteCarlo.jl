@@ -40,6 +40,13 @@ using StaticArrays, LinearAlgebra
     @test envars_npt.r_cut == conf4.bc.box_height^2/4
 
 
+    nnvtens = NNVT( [1,2] , [2,1] )
+    @test isa(nnvtens,NNVT)
+    @test sum(nnvtens.natoms) == 3
+    envars_nnvt = set_ensemble_variables(conf,nnvtens)
+
+    @test [length(envars_nnvt.atom_list1),length(envars_nnvt.atom_list2)] == nnvtens.natoms
+    
 end
 
 @testset "Config" begin

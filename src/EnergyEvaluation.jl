@@ -631,9 +631,7 @@ function RuNNerPotential(nnp,radsymvec,angsymvec)
     return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut)
 end
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
-
     en_atom_vec::Vector{T}
-
     new_en_atom::Vector{T}
     g_matrix::Matrix{T}
     f_matrix::Matrix{T}
@@ -661,8 +659,33 @@ function calc_new_runner_energy!(potential_variables::NNPVariables,pot::RuNNerPo
     new_en = sum(potential_variables.new_en_atom)
     return potential_variables,new_en
 end
+#----------------------------------------------------------#
+#--------------------NNP with two atoms--------------------#
+#----------------------------------------------------------#
+"""
+    RuNNerPotential2Atom
+Contains the important structs and informations required for a neural network potential of 2 atoms. 
+    nnp1 -- struct with weights, biases etc for the first atom type
+    nnp1 -- As above for the second atom type
+    symmetryfunctions -- angular and radial symmetry functions are the same for both atom types
+    r_cut -- all symmetry functions have an r_cut. 
+"""
+struct RuNNerPotential2Atom{Nrad,Nang} <: AbstractMachineLearningPotential
+    nnp1::NeuralNetworkPotential
+    nnp2::NeuralNetworkPotential
+    radsymfunctions::StructVector{RadialType2{Float64}}
+    angsymfunctions::StructVector{AngularType3{Float64}}
+    r_cut::Float64 
+end
+function RuNNerPotential2Atom(nnp1,nnp2,radsymmvec,angsymmvec)
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    radvec=StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
 
-
+    return RuNNerPotential{nrad,nang}(nnp1,nnp2,radvec,angvec,r_cut)
+end
 #----------------------------------------------------------#
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
@@ -688,8 +711,6 @@ Energy update function for use within a cycle. at the top level this is called w
 """
 function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
 
     new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot)
 
@@ -697,18 +718,12 @@ function energy_update!(trial_pos,index,config::Config,potential_variables,dist2
 end
 function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotential)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
-
     new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot)
 
     return potential_variables,new_en
 end
 
 function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB)
-
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
 
     potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[index] = 0
@@ -719,9 +734,6 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
 end
 function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
-
     potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[index] = 0
 
@@ -730,10 +742,6 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::ELJP
     return potential_variables,new_en
 end
 function energy_update!(trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential)
-    # new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
-
-    # new_dist2_vec[atomindex] = 0.
-
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
     
     potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,atomindex,dist2_mat[atomindex,:],new_dist2_vec,pot.n,pot.m)
@@ -750,6 +758,35 @@ function energy_update!(trial_pos,index,config::Config,potential_variables::NNPV
 
     return potential_variables,new_en
 end
+
+
+
+function testenergy_update!(ensemblevariables,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
+
+
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,pot)
+
+    return potential_variables,new_en
+end
+function testenergy_update!(ensemblevariables,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential)
+    potential_variables.new_component_vector = copy(potential_variables.component_vector)
+    
+    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,ensemblevariables.atomindex,dist2_mat[ensemblevariables.atomindex,:],new_dist2_vec,pot.n,pot.m)
+
+    new_en = calc_energies_from_components(potential_variables.new_component_vector,pot.ean,pot.eCam)
+
+    return potential_variables,new_en
+end
+function testenergy_update!(ensemblevariables,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential)
+
+    potential_variables = get_new_state_vars!(ensemblevariables.trial_pos,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
+
+    potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
+
+    return potential_variables,new_en
+end
+
+
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
 #------------------------------------------------------------#
