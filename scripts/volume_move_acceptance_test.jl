@@ -107,7 +107,7 @@ mc_states_scaled = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensem
 
 
 for i=1:100
-    scale = 1.0-0.002*(50-i)
+    scale = 1.0-0.004*(50-i)
     pos_scaled = pos_ne32 * scale
     box_length_scaled = box_length * scale
     config_scaled = Config(pos_scaled, CubicBC(box_length_scaled))
@@ -131,8 +131,8 @@ h=[]
 p=[]
 
 for i=1:100
-    println("scale = ",1.0-0.002*(50-i))
-    push!(s,1.0-0.002*(50-i))
+    println("scale = ",1.0-0.004*(50-i))
+    push!(s,1.0-0.004*(50-i))
     println("box_length = ",mc_states_scaled[i].config.bc.box_length)
     de=mc_states_scaled[i].en_tot-mc_states[i].en_tot
     push!(e,mc_states_scaled[i].en_tot)
