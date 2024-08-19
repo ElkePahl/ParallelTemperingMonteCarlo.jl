@@ -140,7 +140,7 @@ Accepts `positions` for consistency with angular calculation, `dist2_mat` and `f
 """
 function calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::RadialType2)
     N=length(g_vec)
-    if symm_func.type_vec == [1.,1.]
+    if symm_func.type_vec == Int(11)
         g_norm,η =  symm_func.G_norm,symm_func.eta
         for atomindex in eachindex(g_vec)
             for index2 in (atomindex+1):N
@@ -160,7 +160,7 @@ end
 
 function calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::AngularType3)
     N = length(g_vec)  
-    if symm_func.type_vec == [1.,1.,1.]
+    if symm_func.type_vec == Int(111)
         η,λ,ζ = symm_func.eta,symm_func.lambda,symm_func.zeta
         for atomindex in eachindex(g_vec)
             for index2 in (atomindex+1):N

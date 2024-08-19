@@ -28,7 +28,9 @@
 
     test_bc = SphericalBC(radius=6)
     testconfig = Config(test_pos,test_bc)
-
+    if ispath("./checkpoint")
+        rm("./checkpoint" , recursive = true) #required to remove old checkpoint before test
+    end
     save_init(test_pot,testensemble,test_params,test_temps)
     @test ispath("./checkpoint/params.data")
 

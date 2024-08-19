@@ -45,7 +45,7 @@ using StaticArrays, LinearAlgebra
     @test sum(nnvtens.natoms) == 3
     envars_nnvt = set_ensemble_variables(conf,nnvtens)
 
-    @test [length(envars_nnvt.atom_list1),length(envars_nnvt.atom_list2)] == nnvtens.natoms
+    @test length(envars_nnvt.atom_lists[1])+length(envars_nnvt.atom_lists[2]) == sum(nnvtens.natoms)
     
 end
 

@@ -709,83 +709,55 @@ Energy update function for use within a cycle. at the top level this is called w
             - EmbeddedAtomPotential
             - RuNNerPotential
 """
-function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
-
-
-    new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot)
-
-    return potential_variables,new_en
-end
-function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotential)
-
-    new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot)
-
-    return potential_variables,new_en
-end
-
-function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB)
-
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
-
-    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
-
-    return potential_variables,new_en
-end
-function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
-
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
-
-    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
-
-    return potential_variables,new_en
-end
-function energy_update!(trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential)
-    potential_variables.new_component_vector = copy(potential_variables.component_vector)
-    
-    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,atomindex,dist2_mat[atomindex,:],new_dist2_vec,pot.n,pot.m)
-
-    new_en = calc_energies_from_components(potential_variables.new_component_vector,pot.ean,pot.eCam)
-
-    return potential_variables,new_en
-end
-function energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential)
-
-    potential_variables = get_new_state_vars!(trial_pos,index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
-
-    potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
-
-    return potential_variables,new_en
-end
-
-
-
-function testenergy_update!(ensemblevariables,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential) where Etype <: NVTVariables
 
 
     new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,pot)
 
     return potential_variables,new_en
 end
-function testenergy_update!(ensemblevariables,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential)
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential) where Etype <: NPTVariables
+
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,ensemblevariables.r_cut,pot)
+
+    return potential_variables,new_en
+end
+
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB) where Etype <: NVTVariables
+
+    potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[ensemblevariables.index] = 0
+
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
+
+    return potential_variables,new_en
+end
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB) where Etype <: NPTVariables
+
+    potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[ensemblevariables.index] = 0
+
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,ensemblevariables.r_cut,pot)
+
+    return potential_variables,new_en
+end
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential) where Etype <: AbstractEnsembleVariables
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
     
-    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,ensemblevariables.atomindex,dist2_mat[ensemblevariables.atomindex,:],new_dist2_vec,pot.n,pot.m)
+    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,ensemblevariables.index,dist2_mat[ensemblevariables.index,:],new_dist2_vec,pot.n,pot.m)
 
     new_en = calc_energies_from_components(potential_variables.new_component_vector,pot.ean,pot.eCam)
 
     return potential_variables,new_en
 end
-function testenergy_update!(ensemblevariables,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential)
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential) where Etype <: AbstractEnsembleVariables
 
-    potential_variables = get_new_state_vars!(ensemblevariables.trial_pos,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
+    potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
     potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
 
     return potential_variables,new_en
 end
-
 
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#

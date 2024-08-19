@@ -162,11 +162,11 @@ Fields include:
     - atom_list1: index of atoms of type one
     - atom_list2: index of atoms of type two 
 """
-mutable struct NNVTVariables{T,N1,N2} <: AbstractEnsembleVariables
+mutable struct NNVTVariables{T,NAtoms} <: AbstractEnsembleVariables
     index::Int64
     trial_move::SVector{3,T}
-    atom_list1::MVector{N1,Int}
-    atom_list2::MVector{N2,Int}
+    atom_lists::MVector{2,MVector}
+    index_lists::MMatrix{2,NAtoms}
 end
 
 #---------------------------------------------------------------------#
@@ -188,7 +188,16 @@ end
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NNVT) where {N,BC,T}
     shuffled_integers = shuffle(1:N)
     vec1,vec2 = [shuffled_integers[i] for i in 1:ensemble.natoms[1]],[shuffled_integers[j] for j in 1+ensemble.natoms[1]:sum(ensemble.natoms)]
-    return NNVTVariables{T,ensemble.natoms[1],ensemble.natoms[2]}(1,SVector{3}(zeros(3)),MVector{ensemble.natoms[1]}(vec1),MVector{ensemble.natoms[2]}(vec2))
+    v = MVector{2,MVector}(MVector{ensemble.natoms[1]}(vec1) , MVector{ensemble.natoms[2]}(vec2))
+    indexmat=MMatrix{sum(ensemble.natoms),2,Int}(zeros(sum(ensemble.natoms) , 2))
+    for idx in 1:ensemble.natoms[1]
+        indexmat[vec1[idx],:] = [idx,1]
+    end
+    for idx in 1:ensemble.natoms[2]
+        indexmat[vec2[idx],:] = [idx,2]
+    end
+    return NNVTVariables{T,sum(N)}(1,SVector{3}(zeros(3)), v , indexmat)
+    #return NNVTVariables{T,ensemble.natoms[1],ensemble.natoms[2]}(1,SVector{3}(zeros(3)),MVector{ensemble.natoms[1]}(vec1),MVector{ensemble.natoms[2]}(vec2))
 end
 """
     MoveType
