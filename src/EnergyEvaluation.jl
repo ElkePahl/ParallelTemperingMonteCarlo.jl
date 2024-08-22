@@ -17,7 +17,7 @@ Structs and functions relating to the calculation of energy. Includes both low a
 
 module EnergyEvaluation 
 
-using StaticArrays,LinearAlgebra
+using StaticArrays,LinearAlgebra,StructArrays
 
 using ..MachineLearningPotential
 using ..Configurations
@@ -25,7 +25,9 @@ using ..Ensembles
 using ..BoundaryConditions
 
 
-export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,LookuptablePotential
+
+export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,LookuptablePotential,AbstractMachineLearningPotential
+
 export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
 export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables,LookupTableVariables
 export EmbeddedAtomVariables,NNPVariables
@@ -294,7 +296,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::DimerPotentia
     end 
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
-end 
+end
 function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
@@ -827,15 +829,17 @@ Contains the important structs required for a neural network potential defined i
 """
 struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
     nnp:: NeuralNetworkPotential
-    radsymfunctions::Vector{RadialType2}
-    angsymfunctions::Vector{AngularType3}
+    radsymfunctions::StructVector{RadialType2{Float64}} #SVector{Nrad,RadialType2}
+    angsymfunctions::StructVector{AngularType3{Float64}}
     r_cut::Float64
 end
 function RuNNerPotential(nnp,radsymvec,angsymvec)
     r_cut = radsymvec[1].r_cut
     nrad = length(radsymvec)
     nang = length(angsymvec)
-    return RuNNerPotential{nrad,nang}(nnp,radsymvec,angsymvec,r_cut)
+    radvec=StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+    return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut)
 end
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
 
@@ -851,13 +855,13 @@ end
     get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot)
 Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `potential_variables` according to the variables in `pot`.
 """
-function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,pot::RuNNerPotential{Nrad,Nang}) where {Nrad,Nang}
-    new_dist2_vec = [ distance2(trial_pos,b,config.bc) for b in config.pos]
-    new_dist2_vec[atomindex] = 0.
+function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot::RuNNerPotential{Nrad,Nang}) where {Nrad,Nang}
+    # new_dist2_vec = [ distance2(trial_pos,b,config.bc) for b in config.pos]
+    # new_dist2_vec[atomindex] = 0.
     potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec),Ref(pot.r_cut))
     potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
-    potential_variables.new_g_matrix = total_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang)
-    return new_dist2_vec,potential_variables
+    potential_variables.new_g_matrix = total_thr_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang)
+    return potential_variables
 end
 """
     calc_new_runner_energy!(potential_variables::NNPVariables,new_en,pot)
@@ -874,14 +878,15 @@ end
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
 """
-    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,pot::AbstractDimerPotential)
-    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotential)
-    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
-    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotentialB)
-    energy_update!(trial_pos,index,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
-    energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,en_tot,pot::RuNNerPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB)
+    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
+    energy_update!(trial_pos,index,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential)
+    energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential)
 
-Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` it operates on the `potential_variables` along with the `dist2_mat`. Using `pot` the potential to find the `new_en`. 
+Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` it operates on the `potential_variables` along with the `dist2_mat`. 
+Using `pot` the potential to find the `new_en`. 
 
     Has additional methods including `r_cut` where appropriate for use with periodic boundary conditions
     
@@ -893,36 +898,32 @@ Energy update function for use within a cycle. at the top level this is called w
             - EmbeddedAtomPotential
             - RuNNerPotential
 """
-function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,pot::AbstractDimerPotential)
 
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
-    end
-    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    new_dist2_vec[index] = 0.
+function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
+
+    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    # new_dist2_vec[index] = 0.
 
     new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot)
 
     return potential_variables,new_en
 end
-function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotential)
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
-    end
-    new_dist2_vec[index] = 0.
+
+function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotential)
+
+    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    # new_dist2_vec[index] = 0.
 
     new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot)
 
     return potential_variables,new_en
 end
 
-function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
 
-    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
-    end
-    new_dist2_vec[index] = 0.
+function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB)
+
+    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    # new_dist2_vec[index] = 0.
 
     potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[index] = 0
@@ -931,13 +932,33 @@ function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_v
 
     return potential_variables,new_en
 end
-function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotentialB)
 
-    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
-    end
-    new_dist2_vec[index] = 0.
+function energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::AbstractDimerPotentialB)
+
+    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
+    # new_dist2_vec[index] = 0.
+
+    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[index] = 0
+
+    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
+
+    return potential_variables,new_en
+
+end
+
+
+function energy_update!(trial_pos,index,config::Config,potential_variables::LookupTableVariables,dist2_mat,new_dist2_vec,en_tot,pot::LookuptablePotential)
+
+    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[index] = 0
+
+    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
+
+    return potential_variables,new_en
+end
+
+function energy_update!(trial_pos,index,config::Config,potential_variables::LookupTableVariables,dist2_mat,new_dist2_vec,en_tot,r_cut,pot::LookuptablePotential)
 
     potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[index] = 0
@@ -948,46 +969,11 @@ function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_v
 end
 
 
-function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::LookupTableVariables,dist2_mat,en_tot,pot::LookuptablePotential)
 
-    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
-    end
-    new_dist2_vec[index] = 0.
+function energy_update!(trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential)
+    # new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
-
-    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
-
-    return potential_variables,new_en
-end
-function energy_update!(new_dist2_vec,trial_pos,index,config::Config,potential_variables::LookupTableVariables,dist2_mat,en_tot,r_cut,pot::LookuptablePotential)
-
-    #new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b,config.bc)
-    end
-    new_dist2_vec[index] = 0.
-
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
-
-    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
-
-    return potential_variables,new_en
-end
-
-
-function energy_update!(new_dist2_vec,trial_pos,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
-    #new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
-
-    for (i, b) in enumerate(config.pos)
-        new_dist2_vec[i] = distance2(trial_pos,b)
-    end
-    new_dist2_vec[atomindex] = 0.
-
+    # new_dist2_vec[atomindex] = 0.
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
     
     potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,atomindex,dist2_mat[atomindex,:],new_dist2_vec,pot.n,pot.m)
@@ -996,14 +982,16 @@ function energy_update!(new_dist2_vec,trial_pos,atomindex,config::Config,potenti
 
     return potential_variables,new_en
 end
-function energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,en_tot,pot::RuNNerPotential)
 
-    new_dist2_vec,potential_variables = get_new_state_vars!(trial_pos,index,config,potential_variables,dist2_mat,pot)
+function energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential)
+
+    potential_variables = get_new_state_vars!(trial_pos,index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
     potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
 
-    return potential_variables,new_dist2_vec,new_en
+    return potential_variables,new_en
 end
+
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
 #------------------------------------------------------------#

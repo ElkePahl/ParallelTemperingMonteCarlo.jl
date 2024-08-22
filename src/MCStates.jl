@@ -37,13 +37,10 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     config::Config{N,BC,T}
     dist2_mat::Matrix{T}
     new_dist2_vec::Vector{T}
-
     new_en::T
     en_tot::T
-
     potential_variables::PVType
     ensemble_variables::EVType
-
     ham::Vector{T}
     max_displ::Vector{T}
     max_boxlength::T

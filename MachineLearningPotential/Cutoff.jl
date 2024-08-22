@@ -49,7 +49,7 @@ end
 function all_angular_measure(a,b,c,r2ab,r2ac,r2bc)
     ab,ac,bc = (a-b),(a-c),(b-c)
     dis2ab,dis2ac,dis2bc = sqrt(r2ab),sqrt(r2ac),sqrt(r2bc)
-    thetavec = [thetacalc(ab,ac,dis2ab,dis2ac),thetacalc(-ab,bc,dis2ab,dis2bc),thetacalc(-ac,-bc,dis2ac,dis2bc) ] 
+    thetavec = SVector{3}(thetacalc(ab,ac,dis2ab,dis2ac),thetacalc(-ab,bc,dis2ab,dis2bc),thetacalc(-ac,-bc,dis2ac,dis2bc) )
 
     return thetavec
 end
