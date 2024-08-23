@@ -92,7 +92,7 @@ Calculates the three g_values corresponding to the three atoms iterated over, bu
 function symmfunc_calc(θ_vec,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
 
     exp_part = exponential_part(η,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk)
-    g_values = [exp_part* theta_part(θ,λ,ζ) for θ in θ_vec]
+    g_values = MVector{3}([exp_part* theta_part(θ,λ,ζ) for θ in θ_vec])
     
     return g_values
 end
@@ -179,9 +179,6 @@ function calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::AngularType3
     else
        return zeros(N)
     end
-
-
-    
 
 end
 #-----------------------------------------------------------------#
