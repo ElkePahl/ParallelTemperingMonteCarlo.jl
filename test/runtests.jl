@@ -18,24 +18,24 @@ using StaticArrays, LinearAlgebra
     @test typeof(envars_nvt.index) == Int64 
     @test length(envars_nvt.trial_move) == 3
 
-    y = MoveStrategy(NPT(5,101325))
+    y = MoveStrategy(NPT(5,101325,false))
     @test length(y.movestrat) == length(y)
     conf2 = Config{3}([v1,v1,v1] , CubicBC(8.7674))
-    envars_npt = set_ensemble_variables(conf2,NPT(3,101325))
+    envars_npt = set_ensemble_variables(conf2,NPT(3,101325,false))
 
     @test envars_npt.r_cut == conf2.bc.box_length^2/4
     @test size(envars_npt.new_dist2_mat) ==  (3,3)
 
-    z = MoveStrategy(NPT(5,101325))
+    z = MoveStrategy(NPT(5,101325,false))
     @test length(z.movestrat) == length(y)
     conf3 = Config{3}([v1,v1,v1] , RhombicBC(10.0,10.0))
-    envars_npt = set_ensemble_variables(conf3,NPT(3,101325))
+    envars_npt = set_ensemble_variables(conf3,NPT(3,101325,false))
 
     @test envars_npt.r_cut == conf3.bc.box_length^2*3/16
     @test size(envars_npt.new_dist2_mat) ==  (3,3)
 
     conf4 = Config{3}([v1,v1,v1] , RhombicBC(10.0,5.0))
-    envars_npt = set_ensemble_variables(conf4,NPT(3,101325))
+    envars_npt = set_ensemble_variables(conf4,NPT(3,101325,false))
     @test envars_npt.r_cut == conf4.bc.box_height^2/4
 
 
