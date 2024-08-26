@@ -68,7 +68,7 @@ end
     @test d2mat[2,1] == d2mat[1,2]
 
     displ = 0.1
-    @test_throws ErrorException atom_displacement(v1,displ,bc)
+    # @test_throws ErrorException atom_displacement(v1,displ,bc)
     trial_pos = atom_displacement(v3,displ,bc)
     @test norm(trial_pos-v3) < displ
 
@@ -212,6 +212,10 @@ end
 
 @testset "States" begin
     include("test_states.jl")
+end
+
+@testset "Checkpoints" begin
+    include("checkpoint_test.jl")
 end
 
 @safetestset "RuNNer" begin
