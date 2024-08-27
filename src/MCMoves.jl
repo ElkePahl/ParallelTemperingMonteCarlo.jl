@@ -2,6 +2,7 @@ module MCMoves
 
 
 export atom_displacement,volume_change
+export scale_xy,scale_z,volume_change_xy,volume_change_z,volume_change_xyz
 export generate_move!
 
 using StaticArrays

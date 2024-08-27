@@ -206,6 +206,10 @@ end
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
 end
 
+@testset "Separated_volume_change" begin
+    include("separated_v_test.jl")
+end
+
 @testset "Potentials" begin 
     include("test_potentials.jl")
 end
