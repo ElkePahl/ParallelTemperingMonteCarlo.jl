@@ -47,8 +47,8 @@ end
 
     state_new = volume_change(state)
 
-    @test state_new.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] == state_new.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length
-    @test state_new.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] == state_new.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height
+    @test abs(state_new.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] - state_new.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length) < 10^(-12)
+    @test abs(state_new.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] - state_new.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height) < 10^(-12)
     
 end
 
