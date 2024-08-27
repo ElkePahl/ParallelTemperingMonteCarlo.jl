@@ -28,7 +28,7 @@ using Random
     trialpos = atom_displacement(state.config.pos[1] , state.max_displ[1] , state.config.bc)
 
     Random.seed!(1234)
-    generate_move!(state,"atommove")
+    generate_move!(state,"atommove",ensemble)
 
     @test trialpos == state.ensemble_variables.trial_move
     state = get_energy!(state,pot1,"atommove")
@@ -60,7 +60,7 @@ end
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.,1.]
     pot1 = ELJPotentialEven{2}(c1)
-    ensemble = NPT(3,101325*3.398928944382626e-14)
+    ensemble = NPT(3,101325*3.398928944382626e-14,false)
 
     temp = TempGrid{2}(10,15)
 
@@ -79,7 +79,7 @@ end
     trialpos = atom_displacement(state.config.pos[1] , state.max_displ[1] , state.config.bc)
 
     Random.seed!(1234)
-    generate_move!(state,"atommove")
+    generate_move!(state,"atommove",ensemble)
 
     @test trialpos == state.ensemble_variables.trial_move
     state = get_energy!(state,pot1,"atommove")

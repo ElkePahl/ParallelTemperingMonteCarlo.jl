@@ -75,10 +75,11 @@ struct NPT <: AbstractEnsemble
     n_volume_moves::Int64
     n_atom_swaps::Int64
     pressure::Float64
+    separated_volume::Bool
 end
 
-function NPT(n_atoms,pressure)
-    return NPT(n_atoms,n_atoms,1,0,pressure)
+function NPT(n_atoms,pressure,separated_volume)
+    return NPT(n_atoms,n_atoms,1,0,pressure,separated_volume)
 end
 
 """
@@ -102,6 +103,7 @@ mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     new_dist2_mat::Matrix{T}
     r_cut::T
     new_r_cut::T
+    xy_or_z::Int
 end
 
 """
@@ -128,7 +130,7 @@ function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,
 end
 
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
-    return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
+    return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.,0)
 end
 
 """

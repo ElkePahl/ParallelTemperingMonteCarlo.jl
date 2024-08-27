@@ -31,7 +31,7 @@
     conf2 = Config{3}([v1,v2,v3],bc2)
 
 
-    evars1 = set_ensemble_variables(conf2,NPT(3,10))
+    evars1 = set_ensemble_variables(conf2,NPT(3,10,false))
     en_vec_pbc,en_tot_pbc = dimer_energy_config(d2mat,3,vars,4.,bc2,pot1)
     @test en_vec_pbc[2] == dimer_energy_atom(2,d2mat[2,:],4.,pot)
     en_pbc,vars_pbc = initialise_energy(conf2,d2mat,vars,evars1,pot1)
@@ -52,4 +52,13 @@ end
     @test vars.component_vector[:,1] == vars.component_vector[:,2]
     E,vars = initialise_energy(conf,d2mat,vars,evars,pot1)
     @test E ≈ -1.3495549581716526
+end
+
+@testset "LookupTable" begin
+    link="/home/runner/work/ParallelTemperingMonteCarlo.jl/ParallelTemperingMonteCarlo.jl/scripts/look-up_table-2.txt"
+    potlut=LookuptablePotential(link)
+    @test potlut.table[1][1]==282.19449125205114
+    @test potlut.start_dist==0.1
+    @test potlut.start_angle==0
+    @test length(potlut.table)==potlut.l_angle*potlut.l_dist
 end
