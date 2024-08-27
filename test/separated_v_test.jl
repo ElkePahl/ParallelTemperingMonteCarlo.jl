@@ -89,6 +89,10 @@ end
 
     @test state.en_tot == -0.00016263185592172208
 
+    state_new = volume_change(state,ensemble.separated_volume)
+    
+    @test metropolis_condition("volumemove",state_new,ensemble) ≈ metropolis_condition(ensemble,state_new.new_en-state.en_tot,get_volume(state_new.ensemble_variables.trial_config.bc),get_volume(state.config.bc),state.beta)
+
 end
 
 
