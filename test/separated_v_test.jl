@@ -29,7 +29,7 @@ end
     @test trial_config_z.pos[1][3] == conf.pos[1][3]/scale2
 end
 
-@testset "rhombic_b_moves" begin
+@testset "rhombic_v_changes_elj" begin
     v1 = SVector(1., 2., 3.)
     v2 = SVector(2.,4.,6.)
     v3 = SVector(0., 1., 0.)
@@ -50,6 +50,30 @@ end
     @test abs(state_new.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] - state_new.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length) < 10^(-12)
     @test abs(state_new.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] - state_new.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height) < 10^(-12)
     
+end
+
+
+@testset "rhombic_v_changes_potB" begin
+    v1 = SVector(1., 2., 3.)
+    v2 = SVector(2.,4.,6.)
+    v3 = SVector(0., 1., 0.)
+    bc = RhombicBC(10.0,10.0)
+    conf = Config{3}([v1,v2,v3],bc)
+    d2mat = get_distance2_mat(conf)
+
+    a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
+    b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
+    c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
+    potB = ELJPotentialB{6}(a,b,c1)
+
+    ensemble = NPT(3,101325*3.398928944382626e-14,true)
+
+    temp = TempGrid{2}(10,15)
+
+    state = MCState(temp.t_grid[1],temp.beta_grid[1],conf,ensemble,potB)
+
+    @test state.en_tot == -0.00016263185592172208
+
 end
 
 
