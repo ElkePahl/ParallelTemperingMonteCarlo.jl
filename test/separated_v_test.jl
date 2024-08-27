@@ -49,7 +49,19 @@ end
 
     @test abs(state_new.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] - state_new.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length) < 10^(-12)
     @test abs(state_new.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] - state_new.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height) < 10^(-12)
+
+    state_new_xyz = volume_change_xyz(state)
+
+    @test abs(state_new_xyz.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] - state_new_xyz.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length) < 10^(-12)
+    @test abs(state_new_xyz.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] - state_new_xyz.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height) < 10^(-12)
+    @test state_new_xyz.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] ==1.0 || state_new_xyz.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] == 1.0
     
+    for i=1:5
+        state_new_decide = volume_change(state,ensemble.separated_volume)
+        @test state_new_decide.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] ==1.0 || state_new_decide.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] == 1.0
+    end
+
+
 end
 
 
