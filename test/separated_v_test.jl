@@ -26,7 +26,7 @@ end
 
     trial_config_z,scale2 = volume_change_z(conf,bc,0.1,12.0,bc.box_length/bc.box_height)
     @test trial_config_z.pos[1][1] == conf.pos[1][1]
-    @test trial_config_z.pos[1][3] == conf.pos[1][3]/scale2
+    @test abs(trial_config_z.pos[1][3] - conf.pos[1][3]/scale2) < 10^(-12)
 end
 
 @testset "rhombic_v_changes_elj" begin
