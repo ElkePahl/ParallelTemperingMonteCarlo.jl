@@ -72,6 +72,9 @@ end
 
     state = MCState(temp.t_grid[1],temp.beta_grid[1],conf,ensemble,potB)
 
+    @test abs(state.potential_variables.tan_mat[1,2]+0.7453559924999299) <= 10^(-12)
+    @test abs(state.potential_variables.tan_mat[1,3]-0.47140452079103173) <= 10^(-12)
+
     @test state.en_tot == -0.00016263185592172208
 
 end
