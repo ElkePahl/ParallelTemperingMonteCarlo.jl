@@ -152,7 +152,7 @@ function calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::RadialType2)
 
         return g_vec .+ symm_func.G_offset
     else
-        return zeros(N)
+        return zeros(N) 
     end
 
     
@@ -177,7 +177,7 @@ function calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::AngularType3
         return g_vec .+ symm_func.G_offset
         
     else
-       return zeros(N)
+       return zeros(N) 
     end
 
 end

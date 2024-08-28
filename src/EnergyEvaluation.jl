@@ -662,30 +662,30 @@ end
 #----------------------------------------------------------#
 #--------------------NNP with two atoms--------------------#
 #----------------------------------------------------------#
-"""
-    RuNNerPotential2Atom
-Contains the important structs and informations required for a neural network potential of 2 atoms. 
-    nnp1 -- struct with weights, biases etc for the first atom type
-    nnp1 -- As above for the second atom type
-    symmetryfunctions -- angular and radial symmetry functions are the same for both atom types
-    r_cut -- all symmetry functions have an r_cut. 
-"""
-struct RuNNerPotential2Atom{Nrad,Nang} <: AbstractMachineLearningPotential
-    nnp1::NeuralNetworkPotential
-    nnp2::NeuralNetworkPotential
-    radsymfunctions::StructVector{RadialType2{Float64}}
-    angsymfunctions::StructVector{AngularType3{Float64}}
-    r_cut::Float64 
-end
-function RuNNerPotential2Atom(nnp1,nnp2,radsymmvec,angsymmvec)
-    r_cut = radsymvec[1].r_cut
-    nrad = length(radsymvec)
-    nang = length(angsymvec)
-    radvec=StructVector([rsymm for rsymm in radsymvec])
-    angvec = StructVector([asymm for asymm in angsymvec])
+# """
+#     RuNNerPotential2Atom
+# Contains the important structs and informations required for a neural network potential of 2 atoms. 
+#     nnp1 -- struct with weights, biases etc for the first atom type
+#     nnp1 -- As above for the second atom type
+#     symmetryfunctions -- angular and radial symmetry functions are the same for both atom types
+#     r_cut -- all symmetry functions have an r_cut. 
+# """
+# struct RuNNerPotential2Atom{Nrad,Nang} <: AbstractMachineLearningPotential
+#     nnp1::NeuralNetworkPotential
+#     nnp2::NeuralNetworkPotential
+#     radsymfunctions::StructVector{RadialType2{Float64}}
+#     angsymfunctions::StructVector{AngularType3{Float64}}
+#     r_cut::Float64 
+# end
+# function RuNNerPotential2Atom(nnp1,nnp2,radsymmvec,angsymmvec)
+#     r_cut = radsymvec[1].r_cut
+#     nrad = length(radsymvec)
+#     nang = length(angsymvec)
+#     radvec=StructVector([rsymm for rsymm in radsymvec])
+#     angvec = StructVector([asymm for asymm in angsymvec])
 
-    return RuNNerPotential{nrad,nang}(nnp1,nnp2,radvec,angvec,r_cut)
-end
+#     return RuNNerPotential{nrad,nang}(nnp1,nnp2,radvec,angvec,r_cut)
+# end
 #----------------------------------------------------------#
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
