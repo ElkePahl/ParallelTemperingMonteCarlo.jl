@@ -5,11 +5,7 @@ using ParallelTemperingMonteCarlo
 # Specify the directories for reading and writing files
 input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
 output_dir_initial = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/xyz"
-output_dir_minimized = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/Minimized"
-
-# input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
-# output_dir_initial = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/xyz"
-# output_dir_minimized = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized"
+output_dir_minimized = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized"
 
 # Function to read structure from a file and extract atom positions and box length
 # This function parses the .dat file to extract atom positions and the box length
@@ -18,7 +14,7 @@ function read_structure(file_path)
     box_length = 0.0
     open(file_path, "r") do f
         readline(f)  # Skip the first empty line
-        info_line = readline(f)  # Read the se"cond line which contains the box length
+        info_line = readline(f)  # Read the second line which contains the box length
         # Extract the box length from the info line using a regular expression.
         box_length = parse(Float64, match(r"Box Length: (\d+\.\d+)", info_line).captures[1])
         # Read the remaining lines, each representing an atom, and store the information
@@ -38,9 +34,7 @@ function wrap_positions!(pos, bc::EMCubicBC)
 end
 
 # Function to flatten atom coordinates for optimization and rebuild atoms list from flat array
-# These helper functions convert between the structured atom data and a flat array format required by the Optim package
 flatten_atoms(atoms) = [coord for atom in atoms for coord in atom[2:end]]
-#rebuild_atoms(flat_coords, atoms) = [(atoms[i][1], flat_coords[3*i-2], flat_coords[3*i-1], flat_coords[3*i]) for i in 1:length(atoms)]
 
 function rebuild_atoms(flat_coords, atoms, bc::EMCubicBC)
     new_atoms = []
@@ -53,13 +47,11 @@ function rebuild_atoms(flat_coords, atoms, bc::EMCubicBC)
     return new_atoms
 end
 
-
 struct EMCubicBC
     box_length::Float64
 end
 
 function distance2(a, b, bc::EMCubicBC)
-    
     dx = a[1] - b[1]
     dy = a[2] - b[2]
     dz = a[3] - b[3]
@@ -96,7 +88,6 @@ function lj_elj(x, N, pot, bc::EMCubicBC)
             E += dimer_energy(pot, d2)
         end
     end
-    #E += lrc(N, rcut, pot)  # Add long range correction
     return E
 end
 
@@ -117,24 +108,6 @@ end
 #c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 c=[-123.635101619510, 21262.8963716972, -3239750.64086661, 189367623.844691, -4304257347.72069, 35315085074.3605]
 
-# for file_path in glob("*.dat", input_dir)
-#     atoms, box_length = read_structure(file_path)
-#     minimized_atoms = optimize_structure(atoms, coeff, box_length)
-
-#     # Write the initial structure to an .xyz file 
-#     initial_xyz_path = joinpath(output_dir_initial, basename(file_path) * ".xyz")
-#     write_xyz(atoms, initial_xyz_path, "Initial structure")
-
-#     # Perform energy minimization on the structure.
-#     minimized_atoms = optimize_structure(atoms, coeff, box_length)
-
-#     # Write the minimized structure to a new .xyz file
-#     minimized_xyz_path = joinpath(output_dir_minimized, "minimized_" * basename(file_path) * ".xyz")
-#     write_xyz(minimized_atoms, minimized_xyz_path, "Minimized structure")
-    
-#     println("Processed file: ", basename(file_path), " with Box Length: ", box_length)
-# end
-
 for file_path in glob("*.dat", input_dir)
     # Declare box_length as local
     local atoms, box_length
@@ -154,3 +127,4 @@ for file_path in glob("*.dat", input_dir)
     
     println("Processed file: ", basename(file_path), " with Box Length: ", box_length)
 end
+

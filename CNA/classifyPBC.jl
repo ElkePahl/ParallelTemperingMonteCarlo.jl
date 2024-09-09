@@ -199,7 +199,7 @@ function main(input_dir::String, cutoff_distance::Float64)
 end
 
 # Define input directory and cutoff distance
-input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ne/configurations_cycle_state_1.dat"
+input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized/minimized_configurations_cycle_state_1.xyz"
 cutoff_distance = 2.7700 * 1.8897259886 # 1+sqrt(2)/2 * equilibrium distance <- bottom of curve
 
 # Run the main function

@@ -35,7 +35,7 @@ end
 
 # Function to generate an FCC structure
 function generate_fcc_structure(n_atoms::Int)
-    r_start = 3.7782  # Desired minimum radius between atoms
+    r_start = 3.7782  # minimum radius between atoms
     L_start = 2 * (r_start^2 / 2)^0.5  # Distance between adjacent atoms along the axes
 
     Cell_Repeats = round(cbrt(n_atoms / 4))  # Number of times the unit cell is repeated
@@ -248,7 +248,7 @@ function main_fcc_vesta(n_atoms::Int, output_dir::String, rCut::Float64, EBL::Fl
     # Create dummy classifications (all FCC for now)
     classifications = Dict{Vector{Int64}, String}([i] => "FCC" for i in 1:n_atoms)
 
-    # Prepare configurations (in this case, just one configuration)
+    # Prepare configurations
     configurations = [pos]
 
     # Generate VESTA file
