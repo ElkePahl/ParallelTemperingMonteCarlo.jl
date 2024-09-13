@@ -130,27 +130,20 @@ Ensemble designed for systems with two types of atoms.
         n_atom_swaps: defaults to 1 per cycle
 """
 struct NNVT <: AbstractEnsemble
-    atomtypes::SVector{2,Int}
+    # atomtypes::SVector{2,Int}
     natoms::SVector{2,Int}
     n_atom_moves::Int
     n_atom_swaps::Int
 end
-function NNVT(typesvec,natomsvec;natomswaps = 1)
-    if isa(typesvec,Vector)
-        atomtypes=SVector{2}(typesvec)
-    elseif isa(typesvec,SVector)
-        atomtypes = typesvec
-    end
-
+function NNVT(natomsvec;natomswaps = 1,natommoves=sum(natomsvec))
     if isa(natomsvec,Vector)
         natoms = SVector{2}(natomsvec)
     elseif isa(natomsvec,SVector)
         natoms = natomsvec
     end
 
-    natommoves = sum(natomsvec)
 
-    return NNVT(atomtypes,natoms,natommoves,natomswaps)
+    return NNVT(natoms,natommoves,natomswaps)
 end
 
 """
@@ -162,11 +155,10 @@ Fields include:
     - atom_list1: index of atoms of type one
     - atom_list2: index of atoms of type two 
 """
-mutable struct NNVTVariables{T,NAtoms} <: AbstractEnsembleVariables
+mutable struct NNVTVariables{T,N,N1,N2} <: AbstractEnsembleVariables
     index::Int64
     trial_move::SVector{3,T}
-    atom_lists::MVector{2,MVector}
-    index_lists::MMatrix{2,NAtoms}
+    swap_indices::SVector{2,Int}
 end
 
 #---------------------------------------------------------------------#
@@ -184,21 +176,11 @@ end
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
     return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
 end
-
-function set_ensemble_variables(config::Config{N,BC,T},ensemble::NNVT) where {N,BC,T}
-    shuffled_integers = shuffle(1:N)
-    vec1,vec2 = [shuffled_integers[i] for i in 1:ensemble.natoms[1]],[shuffled_integers[j] for j in 1+ensemble.natoms[1]:sum(ensemble.natoms)]
-    v = MVector{2,MVector}(MVector{ensemble.natoms[1]}(vec1) , MVector{ensemble.natoms[2]}(vec2))
-    indexmat=MMatrix{sum(ensemble.natoms),2,Int}(zeros(sum(ensemble.natoms) , 2))
-    for idx in 1:ensemble.natoms[1]
-        indexmat[vec1[idx],:] = [idx,1]
-    end
-    for idx in 1:ensemble.natoms[2]
-        indexmat[vec2[idx],:] = [idx,2]
-    end
-    return NNVTVariables{T,sum(N)}(1,SVector{3}(zeros(3)), v , indexmat)
-    #return NNVTVariables{T,ensemble.natoms[1],ensemble.natoms[2]}(1,SVector{3}(zeros(3)),MVector{ensemble.natoms[1]}(vec1),MVector{ensemble.natoms[2]}(vec2))
+function set_ensemble_variables(config::Config{N,BC,T},ensemble::NNVT) where{N,BC,T}
+    N1,N2 = ensemble.natoms[1],ensemble.natoms[2]
+    return NNVTVariables{T,N,N1,N2}(1,SVector{3}(zeros(3)),SVector{2}(1,N1+1))
 end
+
 """
     MoveType
 defines the abstract type for moves to establish the movestrat struct. Basic types are:
@@ -260,7 +242,7 @@ function MoveStrategy(ensemble::NNVT)
         push!(movestrat,"atommove")
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,"swapmoves")
+        push!(movestrat,"atomswap")
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)

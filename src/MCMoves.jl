@@ -117,6 +117,13 @@ function volume_change(mc_state::MCState)
     return mc_state
 end
 
+
+function swap_atoms(mc_state::MCState{T,N,BC,PV,EV}) where {T,N,BC,PV,EV<:NNVTVariables{tee,n,N1,N2}} where {tee,n,N1,N2}
+    i1,i2 = rand(1:N1),rand(N1+1:N)
+    mc_state.ensemble_variables.swap_indices = SVector{2}(i1,i2)
+   return mc_state
+end
+
 """
     generate_move!(mc_state,movetype::atommove)
     generate_move!(mc_state,movetype::volumemove)
@@ -126,6 +133,8 @@ and generates the variables required inside of the ensemblevariables struct with
 function generate_move!(mc_state::MCState,movetype::String)
     if movetype == "atommove"
         return atom_displacement(mc_state)
+    elseif movetype == "atomswap"
+        return swap_atoms(mc_state)
     else
         return volume_change(mc_state)
     end

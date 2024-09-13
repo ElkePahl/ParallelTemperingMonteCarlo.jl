@@ -35,7 +35,8 @@ Curry function designed to separate energy calculations into their respective en
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NVTVariables}
     if movetype == "atommove"
         
-        mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
+        mc_state.potential_variables , mc_state.new_en = energy_update!(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
+
     end
     return mc_state
 
@@ -47,7 +48,6 @@ end
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NPTVariables}
     if movetype == "atommove"
   
-
         mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
     else
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat,N,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut,mc_state.config.bc,pot)
@@ -55,13 +55,29 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
     return mc_state
 end
 
+function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NNVTVariables}
+    if movetype == "atommove"
+        
+        mc_state.potential_variables , mc_state.new_en = energy_update!(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
+
+    else
+
+        mc_state.potential_variables , mc_state.new_en = swap_energy_update(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
+
+    end
+
+    return mc_state
+
+end
 """
     acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
+
         swap_config!(mc_state,movetype)
+
     end
 end
 """
@@ -79,39 +95,25 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
 
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
-    acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+    acc_test!(mc_state,ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+
     return mc_state
 end
-function testmc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
-    mc_state.ensemble_variables.index = rand(1:N)
 
-    mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index])
-
-    mc_state = testget_energy(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
-
-    acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
-    return mc_state
-end
 """
     mc_step!((mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
 Distributes each state in `mc_state` to the mc_move function in accordance with a `move_strat`, `ensemble` and `pot`
 """
 function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) where stype <: MCState
-    for state in mc_states
+    Threads.@threads    for state in mc_states
+
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
         end
     end
     return mc_states
 end
-function testmc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) where stype <: MCState
-    for state in mc_states
-        for i_step in 1:n_steps
-            state = testmc_move!(state,move_strat,pot,ensemble)
-        end
-    end
-    return mc_states
-end
+
 """
     mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
     mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx)
