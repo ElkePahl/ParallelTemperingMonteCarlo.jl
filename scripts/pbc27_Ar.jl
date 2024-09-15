@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -66,7 +66,7 @@ r_start = 3.7782 #r_start is the desired min. radius between atoms in the starti
 L_start = 2*(r_start^2/2)^.5  #L_start refers to the distance between adjacent atoms which are parallel to the x or y axis
 scaling_factor_start = L_start/(4.3837 - 0)
 #icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
-pos_ne32 = [[ 1.56624152,  0.90426996,  0.        ],
+pos_ne27 = [[ 1.56624152,  0.90426996,  0.        ],
        [ 4.69872456,  0.90426996,  0.        ],
        [ 7.8312076 ,  0.90426996,  0.        ],
        [ 3.13248304,  3.61707985,  0.        ],

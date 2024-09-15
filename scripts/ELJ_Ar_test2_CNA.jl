@@ -14,16 +14,14 @@ struct CubicBC
     box_length::Float64
 end
 
-# Distance calculation considering cubic boundary conditions (with minimum image convention)
+# Minimum image distance calculation considering cubic boundary conditions
 function distance2_cubic(a::SVector{3, Float64}, b::SVector{3, Float64}, bc::CubicBC)
-    delta = a .- b
-    for i in 1:3
-        if abs(delta[i]) > bc.box_length / 2
-            delta[i] -= sign(delta[i]) * bc.box_length
-        end
-    end
-    return norm(delta)
+    b_x = b[1] + bc.box_length * round((a[1] - b[1]) / bc.box_length)
+    b_y = b[2] + bc.box_length * round((a[2] - b[2]) / bc.box_length)
+    b_z = b[3] + bc.box_length * round((a[3] - b[3]) / bc.box_length)
+    return norm(a - SVector(b_x, b_y, b_z))
 end
+
 
 # Function to read .xyz files and extract atom coordinates and box length
 function read_xyz(file_path::String)
@@ -103,23 +101,62 @@ function classifySymmetry(profile::Dict{String, Int})
     end
 end
 
-# Function to calculate the CNA profile for each atom
+# Function to calculate the CNA profile for each atom and print it
 function calculate_cna_profile(coordinates::Vector{SVector{3, Float64}}, box_length::Float64, rCut::Float64)
     num_atoms = length(coordinates)
     profiles = Dict{Int, Dict{String, Int}}()
 
+    # Create the cubic boundary conditions object
+    bc = CubicBC(box_length)
+
     for atom in 1:num_atoms
+        # Find neighbors of the current atom within the cutoff distance
         neighbors = []
         for other_atom in 1:num_atoms
-            if atom != other_atom && distance2_cubic(coordinates[atom], coordinates[other_atom], CubicBC(box_length)) < rCut
+            if atom != other_atom && distance2_cubic(coordinates[atom], coordinates[other_atom], bc) < rCut
                 push!(neighbors, other_atom)
             end
         end
-        # For now, randomly generate bond profiles as placeholders (this should be replaced with real CNA logic)
-        profiles[atom] = Dict("FCC" => rand(0:5), "HCP" => rand(0:5), "BCC" => rand(0:5), "ICO" => rand(0:5))
+
+        # Prepare to count CNA signatures
+        cna_profile = Dict{String, Int}("(4,2,1)" => 0, "(4,2,2)" => 0, "(5,5,5)" => 0, "(6,6,6)" => 0, "(4,4,4)" => 0)
+
+        # For each pair of neighbors, count the common neighbors
+        for i in 1:length(neighbors)
+            for j in i+1:length(neighbors)
+                common_neighbors = 0
+                ni = neighbors[i]
+                nj = neighbors[j]
+                for k in neighbors
+                    if distance2_cubic(coordinates[ni], coordinates[k], bc) < rCut && distance2_cubic(coordinates[nj], coordinates[k], bc) < rCut
+                        common_neighbors += 1
+                    end
+                end
+
+                # Classify the local bond environment by the number of common neighbors
+                if common_neighbors == 4
+                    cna_profile["(4,2,1)"] += 1  # FCC-like
+                elseif common_neighbors == 6
+                    cna_profile["(4,2,2)"] += 1  # HCP-like
+                elseif common_neighbors == 5
+                    cna_profile["(5,5,5)"] += 1  # ICO-like
+                elseif common_neighbors == 8
+                    cna_profile["(6,6,6)"] += 1  # BCC-like
+                elseif common_neighbors == 12
+                    cna_profile["(4,4,4)"] += 1  # High coordination, possible distorted FCC
+                end
+            end
+        end
+
+        # Store the profile for the current atom
+        profiles[atom] = cna_profile
+
+        # Print the CNA profile for the current atom
+        println("Atom $atom CNA profile: $(cna_profile)")
     end
     return profiles
 end
+
 
 # Function to generate VESTA files for visualization
 function vestaFile(output_dir::String, fileName::String, configurations, classifications, rCut, EBL, bc::CubicBC)
@@ -246,7 +283,7 @@ end  # End of module ClassifyPBC
 input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized"
 output_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized/minimized_results"
 rCut = (1+sqrt(2))/2 * 3.7782
-EBL = 3.7782  # Equilibrium bond length
+EBL = 3.7782  # Equilibrim bond length
 
 # Run the directory processing function
 ClassifyPBC.process_directory(input_dir, output_dir, rCut, EBL)

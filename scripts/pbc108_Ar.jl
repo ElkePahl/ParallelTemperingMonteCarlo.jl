@@ -11,7 +11,7 @@ using Plots
 Random.seed!(1234)
 
 # number of atoms
-n_atoms = 32
+n_atoms = 108
 pressure = 101325
 
 # temperature grid

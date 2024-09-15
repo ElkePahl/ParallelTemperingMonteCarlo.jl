@@ -116,7 +116,7 @@ function calculate_cna_profile(coordinates::Vector{Vector{Float64}}, box_length:
     for atom in 1:num_atoms
         neighbors = []
         for other_atom in 1:num_atoms
-            if atom != other_atom && distance2_cubic(s_coordinates[atom], s_coordinates[other_atom], CubicBC(box_length)) < 1.5 * 3.7782
+            if atom != other_atom && distance2_cubic(s_coordinates[atom], s_coordinates[other_atom], CubicBC(box_length)) < (1+sqrt(2))/2 * 3.7782
                 push!(neighbors, other_atom)
             end
         end
