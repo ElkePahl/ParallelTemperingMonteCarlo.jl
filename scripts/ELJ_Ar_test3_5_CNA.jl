@@ -9,11 +9,15 @@ struct CubicBC
     box_length::Float64
 end
 
-# Apply periodic boundary conditions and compute minimum image distance using MVector
+# Corrected minimum_image_distance function using the standard minimum image convention
 function minimum_image_distance(a::SVector{3, Float64}, b::SVector{3, Float64}, bc::CubicBC)
     d = MVector(a .- b)  # Use MVector to allow modification
     for i in 1:3
-        d[i] -= bc.box_length * round(d[i] / bc.box_length)  # Apply PBC via minimum image convention
+        if d[i] > bc.box_length / 2
+            d[i] -= bc.box_length
+        elseif d[i] < -bc.box_length / 2
+            d[i] += bc.box_length
+        end
     end
     return sqrt(sum(d .* d))  # Return the real distance using the minimum image convention
 end
@@ -25,12 +29,18 @@ function read_dat(file_path::String)
         
         # Extract the box length from the second line
         box_length_line = lines[2]
-        box_length = 0.0
-        m = match(r"Box Length: (\d+\.\d+)", box_length_line)
+        println("Second line (box length line): $box_length_line")  # Debugging
+
+        # Updated regex to match integer and floating-point numbers
+        m = match(r"Box Length: (\d+\.?\d*)", box_length_line)
         if m !== nothing
             box_length = parse(Float64, m.captures[1])
         else
             error("Box length not found or invalid in file: $file_path")
+        end
+
+        if box_length == 0.0
+            error("Box length is zero. Check the data file and the regex pattern.")
         end
 
         # Print the extracted box length
@@ -43,86 +53,49 @@ function read_dat(file_path::String)
             coord = SVector{3, Float64}(parse.(Float64, split_line[2:4])...)
             push!(coordinates, coord)
         end
+
+        # Debugging: Print the number of atoms and a sample of coordinates
+        println("Number of atoms read: $(length(coordinates))")
+        println("Sample coordinates: ", coordinates[1:min(5, length(coordinates))])
+
         return coordinates, box_length
     end
 end
 
 # Function to construct an undirected graph representation of a configuration using the minimum image convention for PBC
-function adjacencyGraph_PBC(configuration::Vector{SVector{3, Float64}}, N::Int, rCut::Float64, EBL::Float64, box_length::Float64)
+function adjacencyGraph_PBC(configuration::Vector{SVector{3, Float64}}, N::Int, rCut::Float64, box_length::Float64)
     bondGraph = SimpleGraph(N)  # Initialize a graph with N atoms as vertices
     bc = CubicBC(box_length)
+
+    edge_count = 0  # Counter for the number of edges added
 
     # Iterate over all atom pairs to determine bonds using PBC
     for j in 1:N-1
         for i in j+1:N
             dist = minimum_image_distance(configuration[j], configuration[i], bc)
-            rCutScaled = EBL * rCut  # Scale rCut by the equilibrium bond length
-
-            if dist < rCutScaled  # Add an edge if distance is less than cutoff
+            # Debugging: Print the distance between atoms (uncomment if needed)
+            # println("Distance between atom $j and atom $i: $dist")
+            if dist < rCut  # Use rCut directly
                 add_edge!(bondGraph, i, j)
+                edge_count += 1
+                # Debugging: Print when an edge is added (uncomment if needed)
+                # println("Edge added between atom $j and atom $i")
             end
         end
     end
 
+    # Print the number of bonds (edges) in the graph
+    println("Number of bonds (edges) in the graph: $(ne(bondGraph)) (Counted edges: $edge_count)")
+
     return bondGraph
 end
 
-# # Function to implement the full CNA algorithm
-# function CNA(configuration::Vector{SVector{3, Float64}}, N::Int, rCut::Float64, EBL::Float64, box_length::Float64)
-#     bondGraph = adjacencyGraph_PBC(configuration, N, rCut, EBL, box_length)  # Build the adjacency graph using PBC
+# Function to implement the full CNA algorithm
+function CNA(configuration::Vector{SVector{3, Float64}}, N::Int, rCut::Float64, box_length::Float64)
+    bondGraph = adjacencyGraph_PBC(configuration, N, rCut, box_length)  # Build the adjacency graph using PBC
 
-#     # Initialize dictionaries for total and atomic profiles
-#     totalProfile = Dict{String, Int}()
-#     atomicProfile = [Dict{String, Int}() for _ in 1:N]
-
-#     for atom1 in 1:N
-#         neighborhood1, map1 = induced_subgraph(bondGraph, neighbors(bondGraph, atom1))
-
-#         for atom2 in map1
-#             if atom2 > atom1
-#                 neighborhood2, map2 = induced_subgraph(bondGraph, neighbors(bondGraph, atom2))
-#                 commonNeighborhood = bondGraph[intersect(map1, map2)]
-
-#                 i = size(commonNeighborhood, 1)  # Number of common neighbors
-#                 bondsToProcess = Set(edges(commonNeighborhood))
-#                 j = length(bondsToProcess)  # Number of bonds between common neighbors
-
-#                 # Compute the maximum bond path length (kMax)
-#                 kMax = 0
-#                 while !isempty(bondsToProcess)
-#                     atomsToProcess = Set{Int64}()
-#                     k = 1
-#                     nextBond = pop!(bondsToProcess)
-#                     push!(atomsToProcess, nextBond.src)
-#                     push!(atomsToProcess, nextBond.dst)
-
-#                     while !isempty(atomsToProcess)
-#                         atom = pop!(atomsToProcess)
-#                         for bond in bondsToProcess
-#                             if bond.src == atom || bond.dst == atom
-#                                 push!(atomsToProcess, bond.src == atom ? bond.dst : bond.src)
-#                                 pop!(bondsToProcess)
-#                                 k += 1
-#                             end
-#                         end
-#                     end
-#                     kMax = max(k, kMax)
-#                 end
-                
-#                 # Create triplet identifier key for dictionary
-#                 key = "($i,$j,$(Int(kMax)))"
-#                 totalProfile[key] = get(totalProfile, key, 0) + 1
-#                 atomicProfile[atom1][key] = get(atomicProfile[atom1], key, 0) + 1
-#                 atomicProfile[atom2][key] = get(atomicProfile[atom2], key, 0) + 1
-#             end
-#         end
-#     end
-
-#     return totalProfile, atomicProfile  # Return the total and atomic CNA profiles
-# end
-
-function CNA(configuration::Vector{SVector{3, Float64}}, N::Int, rCut::Float64, EBL::Float64, box_length::Float64)
-    bondGraph = adjacencyGraph_PBC(configuration, N, rCut, EBL, box_length)  # Build the adjacency graph using PBC
+    # Print information about the graph
+    println("Processing CNA for configuration with $N atoms and $(ne(bondGraph)) bonds.")
 
     # Initialize dictionaries for total and atomic profiles
     totalProfile = Dict{String, Int}()
@@ -130,28 +103,51 @@ function CNA(configuration::Vector{SVector{3, Float64}}, N::Int, rCut::Float64, 
 
     for atom1 in 1:N
         neighbors1 = neighbors(bondGraph, atom1)
+        # Debugging: Print the neighbors of atom1
+        println("Atom $atom1 has neighbors: $neighbors1")
+
         for atom2 in neighbors1
             if atom2 > atom1
                 neighbors2 = neighbors(bondGraph, atom2)
                 common_neighbors = intersect(neighbors1, neighbors2)
                 i = length(common_neighbors)
-                
-                # Get the induced subgraph and mapping
-                commonNeighborhood, mapping = induced_subgraph(bondGraph, common_neighbors)
-                j = ne(commonNeighborhood)  # Number of bonds between common neighbors
 
-                # Compute kMax (maximum bond path length among common neighbors)
-                components = connected_components(commonNeighborhood)
-                kMax = maximum(map(length, components))
+                # Debugging: Print the neighbors of atom2 and common neighbors
+                println("Atom $atom2 has neighbors: $neighbors2")
+                println("Common neighbors between atom $atom1 and atom $atom2: $common_neighbors (i = $i)")
+
+                # Get the induced subgraph and mapping
+                if !isempty(common_neighbors)
+                    commonNeighborhood, mapping = induced_subgraph(bondGraph, common_neighbors)
+                    j = ne(commonNeighborhood)  # Number of bonds between common neighbors
+
+                    # Compute kMax (maximum bond path length among common neighbors)
+                    components = connected_components(commonNeighborhood)
+                    kMax = maximum(map(length, components))
+
+                    # Debugging: Print details about bonds and kMax
+                    println("Number of bonds between common neighbors (j): $j")
+                    println("Maximum bond path length among common neighbors (kMax): $kMax")
+                else
+                    j = 0
+                    kMax = 0
+                    println("No common neighbors between atom $atom1 and atom $atom2.")
+                end
 
                 # Create triplet identifier key for dictionary
                 key = "($i,$j,$(Int(kMax)))"
                 totalProfile[key] = get(totalProfile, key, 0) + 1
                 atomicProfile[atom1][key] = get(atomicProfile[atom1], key, 0) + 1
                 atomicProfile[atom2][key] = get(atomicProfile[atom2], key, 0) + 1
+
+                # Debugging: Print when counts are incremented
+                println("Incremented counts for key $key")
             end
         end
     end
+
+    # Debugging: Print the total profile
+    println("Total CNA profile: $totalProfile")
 
     return totalProfile, atomicProfile  # Return the total and atomic CNA profiles
 end
@@ -161,16 +157,20 @@ function classifySymmetry(profile::Dict{String, Int})
     n421, n422, n444, n666, n555 = 0, 0, 0, 0, 0
 
     for bond in keys(profile)
+        count = profile[bond]
+        # Debugging: Print bond types and counts
+        # println("Bond type $bond has count $count")
+
         if bond == "(4,2,1)"
-            n421 += profile[bond]
+            n421 += count
         elseif bond == "(4,2,2)"
-            n422 += profile[bond]
+            n422 += count
         elseif bond == "(4,4,4)"
-            n444 += profile[bond]
+            n444 += count
         elseif bond == "(6,6,6)"
-            n666 += profile[bond]
+            n666 += count
         elseif bond == "(5,5,5)"
-            n555 += profile[bond]
+            n555 += count
         end
     end
 
@@ -193,11 +193,12 @@ function classifySymmetry(profile::Dict{String, Int})
 end
 
 # Function to calculate the CNA profile for each atom and classify it
-function calculate_cna_profile(coordinates::Vector{SVector{3, Float64}}, box_length::Float64, rCut::Float64, EBL::Float64)
+function calculate_cna_profile(coordinates::Vector{SVector{3, Float64}}, box_length::Float64, rCut::Float64)
     N = length(coordinates)
+    println("Using cutoff distance rCut = $rCut Angstroms")  # Debugging
 
-    # Perform CNA with PBC and Argon EBL
-    totalProfile, atomicProfile = CNA(coordinates, N, rCut, EBL, box_length)
+    # Perform CNA with PBC
+    totalProfile, atomicProfile = CNA(coordinates, N, rCut, box_length)
 
     # Classify symmetries
     for atom in 1:N
@@ -217,7 +218,7 @@ function calculate_cna_profile(coordinates::Vector{SVector{3, Float64}}, box_len
 end
 
 # Function to process all files in a directory, perform CNA, and generate the report
-function process_directory(input_dir::String, output_dir::String, rCut::Float64, EBL::Float64)
+function process_directory(input_dir::String, output_dir::String, rCut::Float64)
     files = glob("*.dat", input_dir)
     report_file = joinpath(output_dir, "cna_report.txt")
     summary = DataFrame(FileName = String[], Structure = String[])
@@ -225,15 +226,20 @@ function process_directory(input_dir::String, output_dir::String, rCut::Float64,
     open(report_file, "w") do f
         println(f, "CNA Report for structures in: $input_dir\n")
 
-        # Process each file
-        for file in files
+        # Process only the first file for testing
+        if isempty(files)
+            println("No .dat files found in the directory: $input_dir")
+            return
+        end
+
+        for file in files[1:1]
             println("\nProcessing file: $file")
             
             # Read coordinates from the dat file
             coordinates, box_length = read_dat(file)
             
             # Perform CNA classification
-            calculate_cna_profile(coordinates, box_length, rCut, EBL)
+            calculate_cna_profile(coordinates, box_length, rCut)
         end
     end
 end
@@ -243,8 +249,19 @@ end  # End of module ClassifyPBC
 # Example usage with provided directories
 input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized"
 output_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar/minimized/minimized_results"
-rCut = (1 + sqrt(2)) / 2 * 3.7782 # Cutoff radius in units of EBL
-EBL = 3.7782  # Equilibrium bond length for Argon
+EBL = 3.7782  # Equilibrium bond length for Argon (Angstroms)
+
+# Adjusted cutoff distance for testing
+# You can try different values for rCut to see which one works best for your system
+#rCut = 6.0  # Increased cutoff distance for testing
+rCut = 10.0 #2.5 * (1 + sqrt(2)) / 2 * EBL
+
+# Create output directory if it doesn't exist
+if !isdir(output_dir)
+    mkpath(output_dir)
+end
+
+println("Using cutoff distance rCut = $rCut Angstroms")  # Debugging
 
 # Run the directory processing function
-ClassifyPBC.process_directory(input_dir, output_dir, rCut, EBL)
+ClassifyPBC.process_directory(input_dir, output_dir, rCut)
