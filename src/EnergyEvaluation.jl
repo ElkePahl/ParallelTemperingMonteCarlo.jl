@@ -614,7 +614,7 @@ abstract type AbstractMachineLearningPotential <: AbstractPotential end
 Contains the important structs required for a neural network potential defined in the MachineLearningPotential package:
     Fields are:
     nnp -- a struct containing the weights, biases and neural network parameters.
-    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
+    #symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
     r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
 """
 struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
@@ -662,6 +662,14 @@ end
 #----------------------------------------------------------#
 #--------------------NNP with two atoms--------------------#
 #----------------------------------------------------------#
+"""
+    RuNNerPotential2Atom <: AbstractMachineLearningPotential
+Contains the important structs required for a neural network potential defined in the MachineLearningPotential package for a 2 atom system:
+    Fields are:
+    nnp# -- structs containing the weights, biases and neural network parameters.
+    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
+    r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
+"""
 struct RuNNerPotential2Atom{Nrad,Nang,N1,N2} <: AbstractMachineLearningPotential
 
     nnp1::NeuralNetworkPotential
@@ -680,6 +688,20 @@ function RuNNerPotential2Atom(nnp1,nnp2,radsymvec,angsymvec,n1,n2)#,g_offsets_ve
 
     return RuNNerPotential2Atom{nrad,nang,n1,n2}(nnp1,nnp2,radvec,angvec,r_cut)#,SVector{nrad*2+nang*3}(g_offsets),SVector{nrad*2+nang*3}(tpz) )
 end
+"""
+    NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
+    T  variable type, usually Float64 
+    Na number of atoms
+    Ng number of symmetry functions
+Mutable parameters relevant to a 2 atom NNP using the RuNNer Package. 
+fields include:
+    -en_atom_vec: atomic energy corresponding to config
+    -new_en_atom: after an atom move, the new atomic energy
+    -g_matrix: matrix of symmetry values, length NgxNa
+    -f_matrix: matrix of cutoff function values aor atom pairs i,j
+    -new_g_matrix: after atom move, new symmetry values
+    -new_f_vec: after atom move, new cutoff values
+"""
 mutable struct NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
     en_atom_vec::Vector
     new_en_atom::Vector
@@ -688,7 +710,19 @@ mutable struct NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
     new_g_matrix::MMatrix{Ng,Na,T}
     new_f_vec::MVector{Na,T}
 end
+"""
+    get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
+        (indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
 
+Function to calculate the altered state variables after an atom move:
+
+    takes the new trial_position, its index, the total config, the current state variables, the distance matrix and updated vector and potential values.
+    Calculates the new cutoff function values, the updated symmetry function matrix and passes these back to potential_variables.
+
+Method 2 calculates the new state variables based on an atom_swap. Accepts many of the same variables, but the main difference is the `indices` vector, indicating which two atoms we are swapping. 
+Also returns, most imporantly potential_variables.new_g_matrix.
+
+"""
 function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
 
     potential_variables.new_f_vec = MVector{N1+N2}(cutoff_function.(sqrt.(new_dist2_vec),Ref(pot.r_cut)))
@@ -701,6 +735,19 @@ function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variab
 
     return potential_variables
 end
+function get_new_state_vars!(indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
+    potential_variables.new_g_matrix = fill!(potential_variables.new_g_matrix,0.)
+
+    potential_variables.new_g_matrix = calc_swap_matrix(potential_variables.new_g_matrix,config.pos,indices[1],indices[2],dist2_mat,potential_variables.f_matrix,potential.radsymfunctions,potential.angsymfunctions,Nrad,Nang,N1,N2)
+    potential_variables.new_g_matrix = potential_variables.g_matrix .+ potential_variables.new_g_matrix
+
+    return potential_variables
+end
+"""
+    calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
+Function to calculate the energy of a new configuration after an atom move. Accepts the potential_variables struct and runs a forward pass on the new_g_matrix. Returns the new energy.
+
+"""
 function calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
 
     potential_variables.new_en_atom[1:N1] = forward_pass(potential_variables.new_g_matrix[:,1:N1],N1,pot.nnp1)
@@ -712,20 +759,15 @@ function calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},po
 
     return potential_variables,new_en
 end
-
-function get_new_state_vars!(indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
-    potential_variables.new_g_matrix = fill!(potential_variables.new_g_matrix,0.)
-
-    potential_variables.new_g_matrix = calc_swap_matrix(potential_variables.new_g_matrix,config.pos,indices[1],indices[2],dist2_mat,potential_variables.f_matrix,potential.radsymfunctions,potential.angsymfunctions,Nrad,Nang,N1,N2)
-    potential_variables.new_g_matrix = potential_variables.g_matrix .+ potential_variables.new_g_matrix
-
-    return potential_variables
-end
+"""
+    swap_energy_update(ensemble_variables,config,potential_variables,dist2_matrix,en_tot,pot)
+This is used as a replacement for the energy_update! function when swapping atoms. It does not function in quite the same way, but stands as a replacement. First calculates `get_new_state_vars!` and then `calc_new_runner_energy!` returning the new_energy.
+"""
 function swap_energy_update(ensemble_variables,config,potential_variables,dist2_matrix,en_tot,pot)
     
     potential_variables = get_new_state_vars!(ensemble_variables.swap_indices,config,potential_variables,dist2_matrix,pot)
     
-    potential_variables, new_en = EnergyEvaluation.calc_new_runner_energy!(potential_variables,pot)
+    potential_variables, new_en = calc_new_runner_energy!(potential_variables,pot)
 
     return potential_variables,new_en 
 end
@@ -733,12 +775,8 @@ end
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
 """
-    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,pot::AbstractDimerPotential)
-    energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotential)
-    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,pot::AbstractDimerPotentialB)
-    energy_update!(trial_pos,index,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,en_tot,r_cut,pot::AbstractDimerPotentialB)
-    energy_update!(trial_pos,index,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,en_tot,pot::EmbeddedAtomPotential)
-    energy_update!(trial_pos,index,config::Config,potential_variables::NNPVariables,dist2_mat,en_tot,pot::RuNNerPotential)
+   energy_update!(ensemblevariables::Etype,config::Config,potential_variables::PVtypes,dist2_mat,new_dist2_vec,en_tot,pot::Ptype) where Etype <: NVTVariables 
+   Ptype,PVType = DimerPotential,DimerPotentialB,EmbeddedAtomModel,RuNNerPotential,RuNNerPotential2Atom 
 
 Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` it operates on the `potential_variables` along with the `dist2_mat`. Using `pot` the potential to find the `new_en`. 
 
@@ -751,6 +789,7 @@ Energy update function for use within a cycle. at the top level this is called w
             - AbstractDimerPotentialB
             - EmbeddedAtomPotential
             - RuNNerPotential
+            - RuNNerPotential2Atom
 """
 function energy_update!(ensemblevariables::Etype,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential) where Etype <: NVTVariables
 

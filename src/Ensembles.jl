@@ -141,8 +141,6 @@ function NNVT(natomsvec;natomswaps = 1,natommoves=sum(natomsvec))
     elseif isa(natomsvec,SVector)
         natoms = natomsvec
     end
-
-
     return NNVT(natoms,natommoves,natomswaps)
 end
 

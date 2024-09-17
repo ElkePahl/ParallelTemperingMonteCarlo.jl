@@ -53,3 +53,23 @@ end
     E,vars = initialise_energy(conf,d2mat,vars,evars,pot1)
     @test E ≈ -1.3495549581716526
 end
+@testset "RuNNerPotentialTest" begin
+    include("potentialfile.jl")
+    @test isa(runnerpotential,AbstractMachineLearningPotential)
+    v1 = SVector(2.36, 2.36, 0.0)
+    v2 = SVector(6.99, 2.33, 0.0)
+    v3 = SVector(2.33, 6.99, 0.0)
+    v4 = SVector(-2.36, 2.36, 0.0)
+    v5 = SVector(-6.99, 2.33, 0.0)
+    v6 = SVector(-2.33, 6.99, 0.0)
+    bc = SphericalBC(radius=7.0)
+    conf = Config{6}([v1,v2,v3,v4,v5,v6],bc)
+    d2mat = get_distance2_mat(conf)
+    vars = set_variables(conf,d2mat,runnerpotential)
+    evars = set_ensemble_variables(conf,NNVT([4,2]))
+    @test f_matrix[1,2] == cutoff_function(sqrt(d2mat[1,2]),runnerpotential.r_cut)
+    @test f_matrix[2,2] == 1.
+    @test isa(vars.g_matrix,MMatrix)
+    E,vars = initialise_energy(conf,d2mat,vars,evars,runnerpotential)
+    @test E ≈-0.261652899
+end

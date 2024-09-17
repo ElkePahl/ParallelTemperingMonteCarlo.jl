@@ -1,8 +1,8 @@
-using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo,DelimitedFiles
 
 
 script_folder = @__DIR__
-data_path = joinpath(script_folder, "data") 
+data_path = joinpath(script_folder, "testing_data") 
 
 X = [ 2              0.001   0.000  11.338
  2              0.020   0.000  11.338
@@ -101,4 +101,4 @@ weights2 = vec(weights2)
 nnpzn= NeuralNetworkPotential(num_nodes,activation_functions,weights2)
 ensemble = NNVT([32,6];natomswaps=2)
 
-runnerpotential = RuNNerPotential2Atom(nnpcu,nnpzn,radsymmvec,angularsymmvec,32,6)
+runnerpotential = RuNNerPotential2Atom(nnpcu,nnpzn,radsymmvec,angularsymmvec,4,2)

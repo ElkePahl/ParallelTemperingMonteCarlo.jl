@@ -39,13 +39,11 @@ using StaticArrays, LinearAlgebra
     envars_npt = set_ensemble_variables(conf4,NPT(3,101325))
     @test envars_npt.r_cut == conf4.bc.box_height^2/4
 
-
-    nnvtens = NNVT( [1,2] , [2,1] )
-    @test isa(nnvtens,NNVT)
-    @test sum(nnvtens.natoms) == 3
+    nnvtens = NNVT([8,2])
+    @test sum(nnvtens.natoms) == 10
     envars_nnvt = set_ensemble_variables(conf,nnvtens)
-
-    @test length(envars_nnvt.atom_lists[1])+length(envars_nnvt.atom_lists[2]) == sum(nnvtens.natoms)
+    
+    @test envars_nnvt.swap_indices[2] > nnvtens.natoms[1]
     
 end
 

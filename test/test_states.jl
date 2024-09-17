@@ -97,3 +97,4 @@ end
     @test state2.en_tot - state.en_tot  ≈ -4.99895252855e-5
     @test state.config.pos == conf1.pos
 end
+
