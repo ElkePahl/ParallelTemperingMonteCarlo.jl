@@ -125,8 +125,8 @@ function swap_atoms(mc_state::MCState{T,N,BC,PV,EV}) where {T,N,BC,PV,EV<:NNVTVa
 end
 
 """
-    generate_move!(mc_state,movetype::atommove)
-    generate_move!(mc_state,movetype::volumemove)
+    generate_move!(mc_state::MCState,movetype::String)
+    
 generate move is the currying function that takes mc_state and a movetype 
 and generates the variables required inside of the ensemblevariables struct within mc_state. 
 """
@@ -139,12 +139,7 @@ function generate_move!(mc_state::MCState,movetype::String)
         return volume_change(mc_state)
     end
 end
-# function generate_move!(mc_state,movetype::atommove)
-#     return atom_displacement(mc_state)
-# end
-# function generate_move!(mc_state,movetype::volumemove)
-#     return volume_change(mc_state)
-# end
+
 
 
 end 

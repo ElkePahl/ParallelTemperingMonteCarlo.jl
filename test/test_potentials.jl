@@ -67,8 +67,9 @@ end
     d2mat = get_distance2_mat(conf)
     vars = set_variables(conf,d2mat,runnerpotential)
     evars = set_ensemble_variables(conf,NNVT([4,2]))
-    @test f_matrix[1,2] == cutoff_function(sqrt(d2mat[1,2]),runnerpotential.r_cut)
-    @test f_matrix[2,2] == 1.
+
+    @test vars.f_matrix[1,2] == cutoff_function(sqrt(d2mat[1,2]),runnerpotential.r_cut)
+    @test vars.f_matrix[2,2] == 1.
     @test isa(vars.g_matrix,MMatrix)
     E,vars = initialise_energy(conf,d2mat,vars,evars,runnerpotential)
     @test E ≈-0.261652899

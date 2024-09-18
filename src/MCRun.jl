@@ -27,10 +27,12 @@ include("swap_config.jl")
 """
     get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
     get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
+    function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NNVTVariables}
 Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
 
         - NVT ensemble without r_cut
         - NPT ensemble with r_cut
+        - NNVT ensemble for multiple-species atoms
 """
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NVTVariables}
     if movetype == "atommove"
@@ -41,10 +43,6 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
     return mc_state
 
 end
-# function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::Int64) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
-#     mc_state.potential_variables,mc_state.new_dist2_vec,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
-#     return mc_state
-# end
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NPTVariables}
     if movetype == "atommove"
   
