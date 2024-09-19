@@ -39,7 +39,12 @@ using StaticArrays, LinearAlgebra
     envars_npt = set_ensemble_variables(conf4,NPT(3,101325))
     @test envars_npt.r_cut == conf4.bc.box_height^2/4
 
-
+    nnvtens = NNVT([8,2])
+    @test sum(nnvtens.natoms) == 10
+    envars_nnvt = set_ensemble_variables(conf,nnvtens)
+    
+    @test envars_nnvt.swap_indices[2] > nnvtens.natoms[1]
+    
 end
 
 @testset "Config" begin
