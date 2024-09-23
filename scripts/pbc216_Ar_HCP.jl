@@ -12,11 +12,11 @@ using Plots
 
 # number of atoms
 n_atoms = 216
-pressure = 1e9
+pressure = 100e9
 
 # temperature grid
-ti = 200
-tf = 1200
+ti = 1000
+tf = 2000
 n_traj = 16
 
 temp = TempGrid{n_traj}(ti, tf)
@@ -33,7 +33,7 @@ max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar_HCP"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#

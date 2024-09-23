@@ -11,15 +11,15 @@ n_atoms = 32
 pressure = 101325
 
 # temperature grid
-ti = 90
-tf = 500
+ti = 100.
+tf = 150.
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti, tf)
 
 # MC simulation details
-total_mc_cycles = 10000  # Total MC cycles
-cycle_interval =  5000     # Interval for performing multi-histogram analysis
+total_mc_cycles = 200000  # Total MC cycles
+cycle_interval =  100000     # Interval for performing multi-histogram analysis
 mc_sample = 1              # Sample every mc_sample MC cycles
 
 displ_atom = 0.1 # Angstrom

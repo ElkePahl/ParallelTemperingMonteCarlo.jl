@@ -15,15 +15,15 @@ n_atoms = 32
 pressure = 101325
 
 # temperature grid
-ti = 80
-tf = 150
+ti = 100.
+tf = 150.
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 20000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -169,7 +169,12 @@ plot(temp_result,cp)
 
 max_value, index = findmax(cp)
 t_max = temp_result[index]
-println(t_max)
+println(t_max) 
+
+# plot(temp.t_grid,results.heat_cap)
+
+data = [results.en_histogram[i] for i in 1:n_traj]
+plot(data)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)

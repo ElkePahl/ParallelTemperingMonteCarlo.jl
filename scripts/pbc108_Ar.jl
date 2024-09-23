@@ -23,7 +23,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/Users/samuelcase/Downloads"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -130,7 +130,7 @@ for l in 1:n_atoms
   pos[l] = pos[l] - center
 end
 
-pos_ne32 = 
+pos_ne32 = pos
 
 #convert to Bohr
 AtoBohr = 1.8897259886

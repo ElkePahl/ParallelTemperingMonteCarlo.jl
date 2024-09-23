@@ -88,30 +88,64 @@ function save_state(savefile::IOStream,mc_state::MCState)
     end
 
 end
+# function save_config(filename::String, mc_state::MCState, cycle_index::Int, save_directory::String)
+#     # Define the directory where we want to save the files
+#     save_directory = save_directory 
+#     # "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ne"
+   
+#     # Ensure the directory exists; create it if it doesn't
+#     # isdir(save_directory) || mkdir(save_directory, recursive=true)
+    
+#     # Ensure the filename includes the full path
+#     full_filename = joinpath(save_directory, filename)
+
+#     # Append mode is used to add to the file if it already exists
+#     open(full_filename, "a") do file
+#         box_length = mc_state.config.bc.box_length
+#         temp = mc_state.temp # Assuming this now represents the specific temperature trajectory
+
+#         # Header includes cycle index to distinguish structures
+#         write(file, "\n# Cycle: $(cycle_index), Box Length: $(box_length), Temperature: $(temp)\n")
+
+#         for row in mc_state.config.pos
+#             write(file, "Ar $(row[1]) $(row[2]) $(row[3])\n")
+#         end
+#     end
+
+# end
+
 function save_config(filename::String, mc_state::MCState, cycle_index::Int, save_directory::String)
     # Define the directory where we want to save the files
-    save_directory = save_directory 
-    # "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ne"
-   
-    # Ensure the directory exists; create it if it doesn't
-    # isdir(save_directory) || mkdir(save_directory, recursive=true)
-    
+    save_directory = save_directory
+
     # Ensure the filename includes the full path
     full_filename = joinpath(save_directory, filename)
 
     # Append mode is used to add to the file if it already exists
     open(full_filename, "a") do file
-        box_length = mc_state.config.bc.box_length
-        temp = mc_state.temp # Assuming this now represents the specific temperature trajectory
+        temp = mc_state.temp  # Assuming this represents the specific temperature trajectory
 
-        # Header includes cycle index to distinguish structures
-        write(file, "\n# Cycle: $(cycle_index), Box Length: $(box_length), Temperature: $(temp)\n")
+        # Check if the boundary condition is CubicBC or RhombicBC
+        if mc_state.config.bc isa CubicBC
+            # Cubic box: Only one box length
+            box_length = mc_state.config.bc.box_length
+            # Write header for cubic box
+            write(file, "\n# Cycle: $(cycle_index), Box Length: $(box_length), Temperature: $(temp)\n")
+        elseif mc_state.config.bc isa RhombicBC
+            # Rhombic box: Need to get both width and height
+            box_width = mc_state.config.bc.box_length   # Assuming these fields exist
+            box_height = mc_state.config.bc.box_height
+            # Write header for rhombic box
+            write(file, "\n# Cycle: $(cycle_index), Box Width: $(box_width), Box Height: $(box_height), Temperature: $(temp)\n")
+        else
+            error("Unknown boundary condition type. Expected CubicBC or RhombicBC.")
+        end
 
+        # Write the atomic positions
         for row in mc_state.config.pos
             write(file, "Ar $(row[1]) $(row[2]) $(row[3])\n")
         end
     end
-
 end
 
 function save_config_xyz(filename::String, mc_state::MCState, cycle_index::Int, save_directory::String)

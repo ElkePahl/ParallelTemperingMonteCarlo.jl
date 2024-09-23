@@ -1,5 +1,6 @@
 using Glob
 using Optim
+using ParallelTemperingMonteCarlo
 
 # Specify the directories for reading and writing files
 input_dir = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
@@ -116,7 +117,7 @@ function optimize_structure(atoms, coeff, box_length)
     lj_wrapper(x) = lj_elj(x, N, pot, bc)
     
     # Set options to show trace and set the gradient tolerance
-    options = Optim.Options(g_tol=1e-11, show_trace=true)
+    options = Optim.Options(g_tol=1e-8, show_trace=true)
     opt_result = optimize(lj_wrapper, x, ConjugateGradient(), options)
     
     # Print final energy and return minimized atoms
