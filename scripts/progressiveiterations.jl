@@ -11,8 +11,8 @@ if ispath("saves")
     rm("saves",recursive=true)
 end
 mkdir("saves")
-mkdir("saves/10000")
-global numtrials = 10000
+mkdir("saves/100000")
+global numtrials = 100000
 
 Xdata = readdlm("checkpoint/params.data")
 Xdata[2,1] = numtrials
@@ -20,11 +20,11 @@ writedlm("checkpoint/params.data",Xdata)
 
 ptmc_run!(false;save=1000)
 
-cp("checkpoint","saves/10000/checkpoint")
+cp("checkpoint","saves/100000/checkpoint")
 
-while numtrials < 200000
+while numtrials < 1500000
     global numtrials
-    numtrials += 10000
+    numtrials += 100000
     Xdata = readdlm("checkpoint/params.data")
     Xdata[2,1] = numtrials
     writedlm("checkpoint/params.data",Xdata)
@@ -36,8 +36,8 @@ while numtrials < 200000
 end
 ##
 
-for i in 19:20
-    cd("$currentdir/saves_b/$(i*10000)")
+for i in 1:15
+    cd("$currentdir/saves/$(i*100000)")
     X = postprocess()
     png(plot(X[1],X[2],legend=false),"hists")
     png(plot(X[3],X[5],legend=false),"cv")

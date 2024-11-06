@@ -15,13 +15,13 @@ Random.seed!(1234)
 
 n_atoms = 38
 
-ti = 300.
+ti = 200.
 tf = 1300.
 n_traj = 28
 
 temp = TempGrid{n_traj}(ti,tf) 
 
-mc_cycles = 100
+mc_cycles = 10000
 mc_sample = 1
 
 displ_atom = 0.1 # Angstrom
@@ -182,4 +182,4 @@ bc_cu38 = SphericalBC(radius=14*AtoBohr)
 start_config = Config(pos_cu38, bc_cu38)
 
 
-states,results = ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble;save=1000)
+states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)

@@ -14,14 +14,14 @@ n_atoms = 55
 
 # temperature grid
 ti = 6.
-tf = 20.
+tf = 19
 n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -119,7 +119,7 @@ AtoBohr = 1.8897259886
 #pos_ne55 = pos_ne55 * AtoBohr
 
 #binding sphere
-bc_ne55 = SphericalBC(radius=14*AtoBohr) 
+bc_ne55 = SphericalBC(radius=24*AtoBohr) 
 
 length(pos_ne55) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
