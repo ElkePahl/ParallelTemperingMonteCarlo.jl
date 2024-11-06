@@ -22,7 +22,7 @@ ptmc_run!(false;save=1000)
 
 cp("checkpoint","saves/100000/checkpoint")
 
-while numtrials < 1500000
+while numtrials < 1000000
     global numtrials
     numtrials += 100000
     Xdata = readdlm("checkpoint/params.data")
@@ -36,8 +36,8 @@ while numtrials < 1500000
 end
 ##
 
-for i in 1:15
-    cd("$currentdir/saves/$(i*100000)")
+for i in 1:10
+    cd("$currentdir/saves_b/$(i*100000)")
     X = postprocess()
     png(plot(X[1],X[2],legend=false),"hists")
     png(plot(X[3],X[5],legend=false),"cv")
