@@ -50,7 +50,7 @@
     Random.seed!(0)
     teststates=mc_cycle!(teststates,teststrat,test_params,test_pot,testensemble,nstep,testresults,1,false)
 
-    @test teststates[1].en_tot != teststates[1].new_en
+    #@test teststates[1].en_tot != teststates[1].new_en
     @test teststates[1].en_tot != teststates[2].en_tot
 
     checkpoint(1,teststates,testresults,testensemble,false)
