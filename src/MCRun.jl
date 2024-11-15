@@ -91,7 +91,8 @@ Distributes each state in `mc_state` to the mc_move function in accordance with 
 """
 function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) where stype <: MCState
 
-    Threads.@threads for state in mc_states
+    #Threads.@threads for state in mc_states
+    for state in mc_states
 
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
@@ -231,7 +232,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
         - save::Bool or Int : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = false,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     cd(workingdirectory)
     #initialise the states and results etc
     if save != false
@@ -266,7 +267,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     return mc_states,results
 end
 
-function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
+function ptmc_run!(restart::Bool;rdfsave=true,save=1000,eq_cycles=0.2)
 
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
     println("params set")

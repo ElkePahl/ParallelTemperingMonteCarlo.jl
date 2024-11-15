@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 96
-pressure = 101325
+pressure = 101325 * 150000
 
 # temperature grid
-ti = 35.
-tf = 45.
+ti = 1500.
+tf = 2000.
 n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -40,7 +40,8 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069] #ar
 pot = ELJPotentialEven{6}(c)
 
 a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
@@ -164,13 +165,14 @@ pos_ne96 = [[ 1.56624152,  0.90426996,  0.        ],
 [14.09617368,  8.13842967, 12.78830846]]
 
 #convert to Bohr
-#AtoBohr = 1.8897259886 * 0.98
-AtoBohr = 1.0
+AtoBohr = 1.8897259886 * 0.98 * 1.25
+#AtoBohr = 1.0
 pos_ne96 = pos_ne96 * AtoBohr
 
 
 #binding sphere
 box_length = 12.52993216 * AtoBohr
+#box_length = 12.53 * AtoBohr
 box_height = 15.34597014 * AtoBohr
 bc_ne96 = RhombicBC(box_length, box_height)   
 
@@ -182,10 +184,12 @@ start_config = Config(pos_ne96, bc_ne96)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
+ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+
+#mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 
-multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+#multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)

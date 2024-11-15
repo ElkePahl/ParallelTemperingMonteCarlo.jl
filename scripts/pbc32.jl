@@ -15,7 +15,7 @@ pressure = 101325 * 10000
 
 # temperature grid
 ti = 300.
-tf = 500.
+tf = 600.
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -93,7 +93,7 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 1.3
+AtoBohr = 1.8897259886 * 0.98 * 1.25
 #When the unit of distance is still Angstrom:
 #AtoBohr = 1.0
 pos_ne32 = pos_ne32 * AtoBohr

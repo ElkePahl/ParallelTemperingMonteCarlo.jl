@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 216
-pressure = 101325
+pressure = 101325 * 150000
 
 # temperature grid
-ti = 20.
-tf = 35.
+ti = 1500.
+tf = 2000.
 n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -40,7 +40,8 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069] #ar
 pot = ELJPotentialEven{6}(c)
 
 a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
@@ -284,8 +285,8 @@ pos_ne216 = [[ 1.56624152,  0.90426996,  0.        ],
 [23.4936228 , 13.56404945, 12.78830846]]
 
 #convert to Bohr
-#AtoBohr = 1.8897259886 * 0.98
-AtoBohr = 1.0
+AtoBohr = 1.8897259886 * 0.98 * 1.25
+#AtoBohr = 1.0
 pos_ne216 = pos_ne216 * AtoBohr
 
 
@@ -301,11 +302,12 @@ start_config = Config(pos_ne216, bc_ne216)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+#multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 ## 
+
