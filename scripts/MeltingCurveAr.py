@@ -69,11 +69,11 @@ plt.plot(P_32, T_M_32, '.', color = 'blue' )
 plt.plot(P_96, T_M_96, '.', color = 'red')
 plt.plot(P_108, T_M_108, '.', color = 'blue')
 
-# plt.plot(P_150, T_M_150, 'o', color = 'red', label = '150 Result')
-# plt.plot(P_256, T_M_256, 'o', color = 'blue', label = '256 Result')
+plt.plot(P_150, T_M_150, 'o', color = 'red', label = '150 Result')
+plt.plot(P_256, T_M_256, 'o', color = 'blue', label = '256 Result')
 
 plt.plot(P_216, T_M_216, 'o', color = 'purple', label = '216 FCC Result')
-# plt.plot(P_HCP, T_M_HCP, 'x', color = 'purple', label = '216 HCP Result')
+plt.plot(P_HCP, T_M_HCP, 'x', color = 'purple', label = '216 HCP Result')
 
 plt.plot(P_fit, T_M_27_fit, ':', color = 'red', label = '27 Kechin Fit')
 plt.plot(P_fit, T_M_32_fit, ':', color = 'blue', label = '32 Kechin Fit')

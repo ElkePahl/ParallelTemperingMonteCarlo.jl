@@ -11,19 +11,19 @@ using Plots
 Random.seed!(1234)
 
 # number of atoms
-n_atoms = 108
-pressure = 101325
+n_atoms = 32
+pressure = 1e9
 
 # temperature grid
-ti = 90
-tf = 120
-n_traj = 25
+ti = 200
+tf = 400
+n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -164,8 +164,18 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
+# test = histogram_initialise(ensemble, temp, results)
+# println(test)
+
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 plot(temp_result,cp)
+
+println(temp.t_grid)
+println(results.heat_cap)
+
+# data = [results.ev_histogram[i] for i in 1:n_traj]
+
+# println(data)
 
 max_value, index = findmax(cp)
 t_max = temp_result[index]
