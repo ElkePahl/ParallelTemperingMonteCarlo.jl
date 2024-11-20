@@ -121,8 +121,6 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
 
     results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
 
-    results.delta_r2 = 3/4*bc.box_length^2/results.n_bin/5
-
     for i_traj in 1:mc_params.n_traj       
 
         push!(results.en_histogram,zeros(results.n_bin + 2))
@@ -147,8 +145,6 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
 
     results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
-
-    results.delta_r2 = (3/8*bc.box_length^2 + 1/4*bc.box_height^2)/results.n_bin/5
 
     for i_traj in 1:mc_params.n_traj       
 
@@ -193,34 +189,15 @@ rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
 Self explanatory name, iterates over mc_states and adds to the appropriate results.rdf histogram. Type stable by the initialise function specifying a vector of integers.  
 
 """
-#function update_rdf!(mc_states,results,delta_r2)
-    #for j_traj in eachindex(mc_states)
-        #for element in mc_states[j_traj].dist2_mat 
-        #for k_traj in 1:j_traj
-#            println(delta_r2)
-#            println(mc_states[j_traj].dist2_mat[k_traj])
-            #idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
-            #if idx != 0 && idx <= results.n_bin*5
-                #println(idx)
-                #results.rdf[j_traj][idx] +=1
-            #end
-        #end
-    #end
-    
-#end
-
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         #for element in mc_states[j_traj].dist2_mat 
-        for i in 1:length(mc_states[1].config.pos)
-            for k in 1:i
+        for k_traj in 1:j_traj
 #            println(delta_r2)
 #            println(mc_states[j_traj].dist2_mat[k_traj])
-                idx=rdf_index(mc_states[j_traj].dist2_mat[i,k],delta_r2)
-                if idx != 0 && idx <= results.n_bin*5
-                    #println(idx)
-                    results.rdf[j_traj][idx] +=1
-                end
+            idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
+            if idx != 0 && idx <= results.n_bin*5
+                results.rdf[j_traj][idx] +=1
             end
         end
     end
@@ -257,9 +234,7 @@ function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results,rdf
         update_energy_tot(mc_states,ensemble)
         
         update_histograms!(mc_states,results,results.delta_en_hist,results.delta_v_hist)
-        if rdfsave == true
-            update_rdf!(mc_states,results,results.delta_r2)
-        end
+        #update_rdf!(mc_states,results,results.delta_r2)
     end 
 end
 
