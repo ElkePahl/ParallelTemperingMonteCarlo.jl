@@ -12,12 +12,12 @@ using Plots
 
 # number of atoms
 n_atoms = 216
-pressure = 100e9
+pressure = 10e9
 
 # temperature grid
-ti = 1000
-tf = 2000
-n_traj = 16
+ti = 600
+tf = 1500
+n_traj = 25
 
 temp = TempGrid{n_traj}(ti, tf)
 
@@ -26,7 +26,7 @@ temp = TempGrid{n_traj}(ti, tf)
 mc_cycles = 10000 # default 20% equilibration cycles on top
 mc_sample = 1  # sample every mc_sample MC cycles
 
-displ_atom = 0.1 # Angstrom
+displ_atom = 0.1 # Angstrom 
 n_adjust = 100
 
 max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
@@ -302,8 +302,8 @@ start_config = Config(pos_ar216, bc_ar216)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params, temp, start_config, pot, ensemble)
 
-temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
-plot(temp_result, cp)
+# temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+# plot(temp_result, cp)
 
 max_value, index = findmax(cp)
 t_max = temp_result[index]

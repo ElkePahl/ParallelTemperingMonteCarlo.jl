@@ -8,22 +8,22 @@ using Plots
 #-----------------------MC Params-----------------------#
 #-------------------------------------------------------#
 
-Random.seed!(1234)
+#Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 1e9
+pressure = 10e9
 
 # temperature grid
-ti = 200
-tf = 400
-n_traj = 16
+ti = 900
+tf = 2000
+n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -176,15 +176,21 @@ println(results.heat_cap)
 # data = [results.ev_histogram[i] for i in 1:n_traj]
 
 # println(data)
+filename = "all_rdfs.csv"
+save_rdfs_concatenated(results.rdf, save_directory, filename)
+
+# for i in 1:n_traj
+#   println(results.rdf[i])
+# end
 
 max_value, index = findmax(cp)
 t_max = temp_result[index]
 println(t_max)
 
+#print(mc_states[1].config.bc.box_length)
+
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
-
-
 
 ## 

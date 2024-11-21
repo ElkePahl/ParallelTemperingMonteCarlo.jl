@@ -3,7 +3,7 @@ module ReadSave
 
 export save_params,save_state,save_results,save_states,save_config, save_config_xyz
 export read_results,read_config,read_input,read_states,initialise_params
-export read_multihist
+export read_multihist,save_rdfs_concatenated
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
@@ -374,6 +374,25 @@ function read_multihist(;directory=pwd())
     T,Cv,dCv,S = M[:,1],M[:,3],M[:,4],M[:,5]
 
     return T,Cv,dCv,S
+end
+
+function save_rdfs_concatenated(rdf_list::Vector{Vector{Float64}}, save_directory::String, filename::String)
+    # Construct the full file path
+    filepath = joinpath(save_directory, filename)
+    
+    # Open the file for writing
+    open(filepath, "w") do io
+        for i in 1:length(rdf_list)
+            rdf_data = rdf_list[i]
+            # Write a header indicating which RDF this is
+            println(io, "RDF")
+            # Write the RDF data as a single line
+            writedlm(io, rdf_data', ',')  # Transpose to write as a row
+            # Add a separator between RDFs
+            println(io)  # Blank line for separation
+        end
+    end
+    println("All RDFs saved to $(filepath)")
 end
 
 end

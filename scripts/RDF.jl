@@ -8,9 +8,9 @@ struct RhombicBC
     box_height::Float64
 end
 
-struct CubicBC
-    box_length::Float64
-end
+# struct CubicBC
+#     box_length::Float64
+# end
 
 # Function to compute the squared distance between two points with rhombic PBCs
 function distance2_rhombic(a::Vector{Float64}, b::Vector{Float64}, bc::RhombicBC)

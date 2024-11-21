@@ -123,10 +123,10 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index, sa
 
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx, save_directory::String)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx, save_directory::String,rdfsave)
 
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx, save_directory)
-    sampling_step!(mc_params,mc_states,ensemble,idx,results)
+    sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave)
     #     if save == true
 #         if rem(i,1000) == 0
 #             save_states(mc_params,mc_states,i,save_dir)
@@ -204,7 +204,7 @@ Main call for the ptmc program. Given `mc_params` dictating the number of cycles
 
     the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
 """
-function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;rdfsave=true,restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
 
     #initialise the states and results etc
     mc_states,move_strategy,results,n_steps = initialisation(mc_params,temp,start_config,potential,ensemble)
@@ -215,7 +215,7 @@ function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,st
 
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i, save_directory)
+        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i, save_directory, rdfsave)
     end
     println("MC loop done.")
     println("testing revise pt2")
