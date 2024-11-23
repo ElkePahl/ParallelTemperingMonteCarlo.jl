@@ -11,12 +11,12 @@ using Plots
 #Random.seed!(1234)
 
 # number of atoms
-n_atoms = 32
-pressure = 100e9
+n_atoms = 256
+pressure = 1e9
 
 # temperature grid
-ti = 7000
-tf = 8000
+ti =
+tf = 
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
+save_directory = "/nesi/nobackup/uoa02731/sam/NewSim/256/1/Configs"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -145,17 +145,22 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
-
 println(temp.t_grid)
 println(results.heat_cap)
 
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
 
+
+temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 data = [results.ev_histogram[i] for i in 1:n_traj]
 filename = "all_histograms.csv"
 save_multihistograms(data, save_directory, filename)
+
+
+max_value, index = findmax(cp)
+t_max = temp_result[index]
+println(t_max)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
