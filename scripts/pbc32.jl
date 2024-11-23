@@ -11,19 +11,19 @@ using Plots
 #Random.seed!(1234)
 
 # number of atoms
-n_atoms = 256
-pressure = 1e9
+n_atoms = 32
+pressure = 10e9
 
 # temperature grid
-ti =
-tf = 
+ti = 600
+tf = 1200
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/nesi/nobackup/uoa02731/sam/NewSim/256/1/Configs"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
