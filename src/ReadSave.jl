@@ -3,7 +3,7 @@ module ReadSave
 
 export save_params,save_state,save_results,save_states,save_config, save_config_xyz
 export read_results,read_config,read_input,read_states,initialise_params
-export read_multihist,save_rdfs_concatenated
+export read_multihist,save_rdfs_concatenated,save_multihistograms
 using StaticArrays
 using DelimitedFiles
 using ..BoundaryConditions
@@ -393,6 +393,30 @@ function save_rdfs_concatenated(rdf_list::Vector{Vector{Float64}}, save_director
         end
     end
     println("All RDFs saved to $(filepath)")
+end
+
+function save_multihistograms(histograms::Vector{Matrix{Float64}}, save_directory::String, filename::String)
+    # Create the full path for the output file
+    filepath = joinpath(save_directory, filename)
+
+    # Open the file for writing
+    open(filepath, "w") do io
+        for idx in 1:length(histograms)
+            histogram = histograms[idx]
+            # Write a header indicating the histogram index
+            println(io, "Histogram $(idx)")
+            
+            # Write the matrix data row by row
+            for row in 1:size(histogram, 1)
+                writedlm(io, histogram[row, :]', ',')  # Write the row as a comma-separated line
+            end
+
+            # Add an empty line to separate histograms
+            println(io)
+        end
+    end
+
+    println("All histograms saved to $(filepath)")
 end
 
 end

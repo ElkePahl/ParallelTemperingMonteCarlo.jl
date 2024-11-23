@@ -16,14 +16,14 @@ pressure = 10e9
 
 # temperature grid
 ti = 900
-tf = 2000
-n_traj = 25
+tf = 1400
+n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -132,14 +132,16 @@ end
 
 pos_ne32 = pos
 
+PressureFactor = 0.816901409
+
 #convert to Bohr
 AtoBohr = 1.8897259886
-pos_ne32 = pos_ne32 * AtoBohr
+pos_ne32 = pos_ne32 * AtoBohr * PressureFactor
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-box_length = Cell_Repeats * L_start * AtoBohr
+box_length = Cell_Repeats * L_start * AtoBohr * PressureFactor
 bc_ne32 = CubicBC(box_length)   
 
 #starting configuration
@@ -168,7 +170,7 @@ mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,e
 # println(test)
 
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
-plot(temp_result,cp)
+# plot(temp_result,cp)
 
 println(temp.t_grid)
 println(results.heat_cap)
@@ -179,8 +181,12 @@ println(results.heat_cap)
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
 
+data = [results.ev_histogram[i] for i in 1:n_traj]
+filename = "all_histograms.csv"
+save_multihistograms(data, save_directory, filename)
+
 # for i in 1:n_traj
-#   println(results.rdf[i])
+#   println(results.rdf[i])S
 # end
 
 max_value, index = findmax(cp)

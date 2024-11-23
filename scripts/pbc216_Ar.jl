@@ -11,12 +11,12 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 216
-pressure = 101325 
+pressure = 10e9 
 
 # temperature grid
 ti = 90.
 tf = 150.
-n_traj = 25
+n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -280,13 +280,16 @@ pos_ar216 = [[ 1.56624152,  0.90426996,  0.        ],
 # Apply scaling factor to atomic positions
 pos_ar216 = pos_ar216 * scaling_factor_start
 
+#For pressure make initial structure smaller
+PressureFactor = 0.816901409
+
 # Convert to Bohr for Argon
 AtoBohr = 1.8897259886 * 0.98 
-pos_ar216 = pos_ar216 * AtoBohr
+pos_ar216 = pos_ar216 * AtoBohr * PressureFactor
 
 # Box dimensions - ensure equal x and y lengths
-box_length = 18.79489824 * AtoBohr * scaling_factor_start
-box_height = 15.34597014 * AtoBohr * scaling_factor_start
+box_length = 18.79489824 * AtoBohr * scaling_factor_start * PressureFactor
+box_height = 15.34597014 * AtoBohr * scaling_factor_start * PressureFactor
 
 # Use equal x and y dimensions in RhombicBC
 bc_ar216 = RhombicBC(box_length, box_height)
@@ -304,6 +307,9 @@ mc_states, results = ptmc_run!(save_directory, mc_params, temp, start_config, po
 
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 plot(temp_result, cp)
+
+filename = "all_rdfs.csv"
+save_rdfs_concatenated(results.rdf, save_directory, filename)
 
 max_value, index = findmax(cp)
 t_max = temp_result[index]
