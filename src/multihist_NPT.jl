@@ -170,7 +170,7 @@ function multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile)
     println("temperature array: ",temp_result)
     println("heat capacity array: ",cp)
 
-    return cp
+    return temp_result, cp
 end
 
 

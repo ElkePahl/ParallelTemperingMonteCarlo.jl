@@ -118,11 +118,16 @@ println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^
 results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 # Random.seed!(1234)
-# @time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
+ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false)
 
+temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 
+filename = "all_rdfs.csv"
+save_rdfs_concatenated(results.rdf, save_directory, filename)
 
-
+data = [results.ev_histogram[i] for i in 1:n_traj]
+filename = "all_histograms.csv"
+save_multihistograms(data, save_directory, filename)
 
 # plot(temp.t_grid,results.heat_cap)
 

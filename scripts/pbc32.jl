@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 101325
+pressure = 10e9
 
 # temperature grid
-ti = 10.
-tf = 40.
-n_traj = 25
+ti = 900
+tf = 1400
+n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -89,10 +89,10 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
 
 #convert to Bohr
 AtoBohr = 1.8897259886
-pos_ne32 = pos_ne32 * AtoBohr
+pos_ne32 = pos_ne32 * AtoBohr * 0.816901409
 
 #binding sphere
-box_length = 8.7674 * AtoBohr
+box_length = 8.7674 * AtoBohr * 0.816901409
 bc_ne32 = CubicBC(box_length)   
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
@@ -102,7 +102,7 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-#mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
