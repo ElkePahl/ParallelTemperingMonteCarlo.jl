@@ -122,8 +122,8 @@ ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=false
 
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 
-filename = "all_rdfs.csv"
-save_rdfs_concatenated(results.rdf, save_directory, filename)
+# filename = "all_rdfs.csv"
+# save_rdfs_concatenated(results.rdf, save_directory, filename)
 
 data = [results.ev_histogram[i] for i in 1:n_traj]
 filename = "all_histograms.csv"

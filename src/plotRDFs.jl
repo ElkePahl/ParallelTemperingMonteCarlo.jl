@@ -75,4 +75,4 @@ filepath = joinpath(save_directory, filename)
 plot_rdfs_with_colormap_no_temps(filepath)
 
 # Plot specific ranges (e.g., 1:3 and 6:9)
-plot_rdfs_with_colormap_no_temps(filepath; ranges=[1:1, 20:32])
+#plot_rdfs_with_colormap_no_temps(filepath; ranges=[1:1, 20:32])

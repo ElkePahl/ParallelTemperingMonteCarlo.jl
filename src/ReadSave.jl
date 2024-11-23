@@ -15,7 +15,7 @@ using ..MCStates
 
 
 export save_init,save_histparams,checkpoint
-export read_init,setresults,rebuild_states,read_config,build_states
+export read_init,setresults,rebuild_states,read_config,build_states,save_rdfs_concatenated,save_multihistograms
 #---------------------------------------------------------------#
 #-----------------------Static Parameters-----------------------#
 #---------------------------------------------------------------#
@@ -422,6 +422,49 @@ function build_states(mc_params,ensemble,temp,potential)
     end
     return mc_states,results
 
+end
+
+function save_rdfs_concatenated(rdf_list::Vector{Vector{Float64}}, save_directory::String, filename::String)
+    # Construct the full file path
+    filepath = joinpath(save_directory, filename)
+    
+    # Open the file for writing
+    open(filepath, "w") do io
+        for i in 1:length(rdf_list)
+            rdf_data = rdf_list[i]
+            # Write a header indicating which RDF this is
+            println(io, "RDF")
+            # Write the RDF data as a single line
+            writedlm(io, rdf_data', ',')  # Transpose to write as a row
+            # Add a separator between RDFs
+            println(io)  # Blank line for separation
+        end
+    end
+    println("All RDFs saved to $(filepath)")
+end
+
+function save_multihistograms(histograms::Vector{Matrix{Float64}}, save_directory::String, filename::String)
+    # Create the full path for the output file
+    filepath = joinpath(save_directory, filename)
+
+    # Open the file for writing
+    open(filepath, "w") do io
+        for idx in 1:length(histograms)
+            histogram = histograms[idx]
+            # Write a header indicating the histogram index
+            println(io, "Histogram $(idx)")
+            
+            # Write the matrix data row by row
+            for row in 1:size(histogram, 1)
+                writedlm(io, histogram[row, :]', ',')  # Write the row as a comma-separated line
+            end
+
+            # Add an empty line to separate histograms
+            println(io)
+        end
+    end
+
+    println("All histograms saved to $(filepath)")
 end
 
 end
