@@ -15,8 +15,8 @@ n_atoms = 32
 pressure = 10e9
 
 # temperature grid
-ti = 600
-tf = 1200
+ti = 700
+tf = 1300
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 

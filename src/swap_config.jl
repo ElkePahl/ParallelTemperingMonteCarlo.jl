@@ -45,9 +45,9 @@ implemented for `CubicBC` and  `RhombicBC`
 """
 function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
-    mc_state.dist2_mat = new_dist2_mat
-    mc_state.potential_variables.en_atom_vec = en_vec_new
-    mc_state.en_tot = new_en_tot
+    mc_state.dist2_mat, new_dist2_mat = new_dist2_mat, mc_state.dist2_mat
+    mc_state.potential_variables.en_atom_vec, en_vec_new = en_vec_new, mc_state.potential_variables.en_atom_vec
+    mc_state.en_tot, new_en_tot = new_en_tot, mc_state.en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
 
@@ -56,8 +56,8 @@ end
 
 function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    mc_state.dist2_mat = new_dist2_mat
-    mc_state.potential_variables.en_atom_vec = en_vec_new
+    mc_state.dist2_mat, new_dist2_mat = new_dist2_mat, mc_state.dist2_mat
+    mc_state.potential_variables.en_atom_vec, en_vec_new = en_vec_new, mc_state.potential_variables.en_atom_vec
     mc_state.en_tot = new_en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
