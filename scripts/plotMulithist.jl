@@ -86,7 +86,7 @@ function plot_histograms_with_colormap(
 end
 
 # Usage example:
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
 filename = "all_histograms.csv"
 filepath = joinpath(save_directory, filename)
 

@@ -15,15 +15,15 @@ n_atoms = 32
 pressure = 101325
 
 # temperature grid
-ti = 100.
-tf = 150.
+ti = 80
+tf = 130
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 20000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -164,8 +164,14 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
+filename = "all_rdfs.csv"
+save_rdfs_concatenated(results.rdf, save_directory, filename)
+
 temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
-plot(temp_result,cp)
+
+data = [results.ev_histogram[i] for i in 1:n_traj]
+filename = "all_histograms.csv"
+save_multihistograms(data, save_directory, filename)
 
 max_value, index = findmax(cp)
 t_max = temp_result[index]
@@ -173,8 +179,8 @@ println(t_max)
 
 # plot(temp.t_grid,results.heat_cap)
 
-data = [results.en_histogram[i] for i in 1:n_traj]
-plot(data)
+# data = [results.en_histogram[i] for i in 1:n_traj]
+# plot(data)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
