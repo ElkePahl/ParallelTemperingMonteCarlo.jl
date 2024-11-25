@@ -138,8 +138,16 @@ function volume_change(mc_state::MCState)
     #change r_cut
     mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
     #get the new dist2 matrix
-    #mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
-    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
+    mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
+    #broadcast!(*, mc_state.ensemble_variables.new_dist2_mat, mc_state.dist2_mat, scale^2)
+    #mul!(mc_state.ensemble_variables.new_dist2_mat, mc_state.dist2_mat, scale^2)
+    # Initialize the computation function with pre-allocation
+    #compute_distance2_mat! = get_distance2_mat_computer(mc_state.ensemble_variables.trial_config)
+
+    # Compute the distance squared matrix in-place
+    #mc_state.ensemble_variables.new_dist2_mat = compute_distance2_mat!(mc_state.ensemble_variables.trial_config)
+
+    #mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
     #println(mc_state.ensemble_variables.new_dist2_mat[1,2])
     return mc_state
 end
