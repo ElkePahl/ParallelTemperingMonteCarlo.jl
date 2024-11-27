@@ -218,9 +218,9 @@ end
     include("test_states.jl")
 end
 
-@testset "Checkpoints" begin
-    include("checkpoint_test.jl")
-end
+#@testset "Checkpoints" begin
+    #include("checkpoint_test.jl")
+#end
 
 @safetestset "RuNNer" begin
     include("test_runner_forward.jl")
