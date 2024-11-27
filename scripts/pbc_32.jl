@@ -13,7 +13,7 @@ pressure=101325
 # temperature grid
 
 ti = 15.
-tf = 35.
+tf = 50.
 
 n_traj = 32
 

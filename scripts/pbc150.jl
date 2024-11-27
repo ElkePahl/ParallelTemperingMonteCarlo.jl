@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 150
-pressure = 101325 * 150000
+pressure = 101325
 
 # temperature grid
-ti = 1500.
-tf = 2000.
+ti = 10.
+tf = 40.
 n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -40,8 +40,8 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-#c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765] #ne
-c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069] #ar
+c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765] #ne
+#c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069] #ar
 pot = ELJPotentialEven{6}(c)
 
 a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
@@ -50,7 +50,7 @@ c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
 potB = ELJPotentialB{6}(a,b,c1)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
 potlut=LookuptablePotential(link)
 
 #-------------------------------------------------------------#
@@ -219,8 +219,8 @@ pos_ne150 = [[ 1.56624152,  0.90426996,  0.        ],
 [18.79489824, 10.85123956, 12.78830846]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 0.98 * 1.25
-#AtoBohr = 1.0
+#AtoBohr = 1.8897259886 * 0.98 * 1.25
+AtoBohr = 1.0
 pos_ne150 = pos_ne150 * AtoBohr
 
 
@@ -236,7 +236,7 @@ start_config = Config(pos_ne150, bc_ne150)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)

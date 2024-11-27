@@ -158,6 +158,16 @@ function volume_change_z(conf::Config, bc::RhombicBC, max_vchange, max_height, l
     return trial_config,1/scale
 end
 
+function mat_scale!(new_dist2_mat::Matrix{Float64}, dist2_mat::Matrix{Float64}, scale::Float64)
+    for i=1:32
+        for j=1:i
+            new_dist2_mat[i,j] = dist2_mat[i,j]*scale^2
+            new_dist2_mat[j,i] = new_dist2_mat[i,j]
+        end
+    end
+    return new_dist2_mat
+end
+
 
 function volume_change(mc_state::MCState)
     #change volume
@@ -165,9 +175,12 @@ function volume_change(mc_state::MCState)
     #change r_cut
     mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
 
+    
     #get the new dist2 matrix
     mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
     #mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat * scale^2
+    #mc_state.ensemble_variables.new_dist2_mat = mat_scale!(mc_state.ensemble_variables.new_dist2_mat, mc_state.dist2_mat, scale)
+
 
     return mc_state
 end

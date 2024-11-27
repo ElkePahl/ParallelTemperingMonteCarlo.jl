@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 101325 * 10000
+pressure = 101325
 
 # temperature grid
-ti = 300.
-tf = 600.
+ti = 10.
+tf = 50.
 n_traj = 25
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 100000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -40,8 +40,8 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-#c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
-c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
+c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
 pot = ELJPotentialEven{6}(c)
 
 

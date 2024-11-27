@@ -45,8 +45,16 @@ implemented for `CubicBC` and  `RhombicBC`
 """
 function swap_config_v!(mc_state::MCState,potential_variables,bc::CubicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
-    mc_state.dist2_mat = new_dist2_mat
-    mc_state.potential_variables.en_atom_vec = en_vec_new
+    #mc_state.dist2_mat = copy(new_dist2_mat)
+    for i in eachindex(mc_state.dist2_mat)
+        mc_state.dist2_mat[i] = new_dist2_mat[i]
+    end
+    #mc_state.dist2_mat, new_dist2_mat = new_dist2_mat, mc_state.dist2_mat
+    #mc_state.potential_variables.en_atom_vec = copy(en_vec_new)
+    for i in eachindex(mc_state.potential_variables.en_atom_vec)
+        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
+    end
+    #mc_state.potential_variables.en_atom_vec, en_vec_new = en_vec_new, mc_state.potential_variables.en_atom_vec
     mc_state.en_tot = new_en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
@@ -56,8 +64,16 @@ end
 
 function swap_config_v!(mc_state::MCState,potential_variables::DimerPotentialVariables,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    mc_state.dist2_mat = new_dist2_mat
-    mc_state.potential_variables.en_atom_vec = en_vec_new
+    #mc_state.dist2_mat = new_dist2_mat
+    for i in eachindex(mc_state.dist2_mat)
+        mc_state.dist2_mat[i] = new_dist2_mat[i]
+    end
+
+    #mc_state.potential_variables.en_atom_vec = en_vec_new
+    for i in eachindex(mc_state.potential_variables.en_atom_vec)
+        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
+    end
+
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z==0
         mc_state.count_vol[1] += 1
@@ -72,8 +88,16 @@ end
 
 function swap_config_v!(mc_state::MCState,potential_variables::ELJPotentialBVariables,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    mc_state.dist2_mat = new_dist2_mat
-    mc_state.potential_variables.en_atom_vec = en_vec_new
+    #mc_state.dist2_mat = new_dist2_mat
+    for i in eachindex(mc_state.dist2_mat)
+        mc_state.dist2_mat[i] = new_dist2_mat[i]
+    end
+
+    #mc_state.potential_variables.en_atom_vec = en_vec_new
+    for i in eachindex(mc_state.potential_variables.en_atom_vec)
+        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
+    end
+
     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
         mc_state.potential_variables.tan_mat =  mc_state.potential_variables.new_tan_mat
     end
@@ -91,8 +115,16 @@ end
 
 function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariables,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    mc_state.dist2_mat = new_dist2_mat
-    mc_state.potential_variables.en_atom_vec = en_vec_new
+    #mc_state.dist2_mat = new_dist2_mat
+    for i in eachindex(mc_state.dist2_mat)
+        mc_state.dist2_mat[i] = new_dist2_mat[i]
+    end
+
+    #mc_state.potential_variables.en_atom_vec = en_vec_new
+    for i in eachindex(mc_state.potential_variables.en_atom_vec)
+        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
+    end
+    
     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
         mc_state.potential_variables.tan_mat =  mc_state.potential_variables.new_tan_mat
     end
