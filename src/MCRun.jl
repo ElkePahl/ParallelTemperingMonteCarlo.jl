@@ -88,11 +88,13 @@ end
 """
     mc_step!((mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
 Distributes each state in `mc_state` to the mc_move function in accordance with a `move_strat`, `ensemble` and `pot`
+
+    Threading: run mc_move for different trajectories in different threads, to speed up the program.
 """
 function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) where stype <: MCState
 
-    #Threads.@threads for state in mc_states
-    for state in mc_states
+    Threads.@threads for state in mc_states
+    #for state in mc_states
 
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
