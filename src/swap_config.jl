@@ -29,7 +29,7 @@ function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where
     mc_state.config.pos[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom,:] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:,i_atom] = mc_state.new_dist2_vec
-    mc_state.en_tot = mc_state.new_en 
+    mc_state.en_tot,mc_state.new_en = mc_state.new_en, mc_state.en_tot
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
     
@@ -84,7 +84,7 @@ function swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
 end
 
 function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
-    potential_variables.component_vector = potential_variables.new_component_vector
+    potential_variables.component_vector,potential_variables.new_component_vector = potential_variables.new_component_vector,potential_variables.component_vector
 end
 
 function swap_vars!(i_atom,potential_variables::NNPVariables)
@@ -97,8 +97,10 @@ end
 
 function swap_vars!(i_atom,potential_variables::NNPVariables2a)
 
-    potential_variables.en_atom_vec = potential_variables.new_en_atom 
-    potential_variables.g_matrix = copy(potential_variables.new_g_matrix) 
+    potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom,potential_variables.en_atom_vec
+
+    potential_variables.g_matrix,potential_variables.new_g_matrix = potential_variables.new_g_matrix,potential_variables.g_matrix
+
     potential_variables.f_matrix[i_atom,:] = potential_variables.new_f_vec
     potential_variables.f_matrix[:,i_atom] = potential_variables.new_f_vec
     
@@ -109,7 +111,7 @@ Function designed to exchange relevant variables when swapping an atom. Accepts 
 """
 function swap_move_config!(mc_state,indices)
     #swap energy
-    mc_state.en_tot = mc_state.new_en
+    mc_state.en_tot, mc_state.new_en = mc_state.new_en,mc_state.en_tot
     #swap positions 
     mc_state.config.pos[indices[1]],mc_state.config.pos[indices[2]] = mc_state.config.pos[indices[2]],mc_state.config.pos[indices[1]]
     #swap dist2mat
@@ -127,6 +129,6 @@ function swap_move_config!(mc_state,indices)
     mc_state.potential_variables.f_matrix[indices[1],indices[1]],mc_state.potential_variables.f_matrix[indices[2],indices[2]] = 1.,1.
 
     #swap en_atom_vec and gmat
-    mc_state.potential_variables.en_atom_vec = mc_state.potential_variables.new_en_atom
-    mc_state.potential_variables.g_matrix = copy(mc_state.potential_variables.new_g_matrix)
+    mc_state.potential_variables.en_atom_vec,mc_state.potential_variables.new_en_atom = mc_state.potential_variables.new_en_atom,mc_state.potential_variables.en_atom_vec
+    mc_state.potential_variables.g_matrix,mc_state.potential_variables.new_g_matrix = mc_state.potential_variables.new_g_matrix,mc_state.potential_variables.g_matrix
 end
