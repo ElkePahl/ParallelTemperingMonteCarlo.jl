@@ -88,8 +88,8 @@ function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
 end
 
 function swap_vars!(i_atom,potential_variables::NNPVariables)
-    potential_variables.en_atom_vec = potential_variables.new_en_atom 
-    potential_variables.g_matrix = potential_variables.new_g_matrix 
+    potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom ,potential_variables.en_atom_vec
+    potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix , potential_variables.g_matrix
 
     potential_variables.f_matrix[i_atom,:] = potential_variables.new_f_vec
     potential_variables.f_matrix[:,i_atom] = potential_variables.new_f_vec
