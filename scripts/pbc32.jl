@@ -11,18 +11,19 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 101325
+#pressure = 101325
+pressure = 50000000000
 
 # temperature grid
-ti = 10.
-tf = 40.
-n_traj = 25
+ti = 1500.
+tf = 2500.
+n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -41,12 +42,17 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #-------------------------------------------------------------#
 
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
 pot = ELJPotentialEven{6}(c)
 
+
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
+potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+separated_volume=false
+ensemble = NPT(n_atoms,pressure*3.398928944382626e-14,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
@@ -88,7 +94,9 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886
+AtoBohr = 1.8897259886 * 0.98
+#When the unit of distance is still Angstrom:
+#AtoBohr = 1.0
 pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
@@ -97,15 +105,17 @@ bc_ne32 = CubicBC(box_length)
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-start_config = Config(pos_ne32, bc_ne32)
+start_config_1 = Config(pos_ne32, bc_ne32)
+start_config_2 = Config(pos_ne32, bc_ne32)
+start_config = [start_config_1,start_config_2]
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-#mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 #to check code in REPL
-@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 ## 
