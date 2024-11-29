@@ -11,18 +11,19 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 32
-pressure = 101325
+#pressure = 101325
+pressure = 50000000000
 
 # temperature grid
-ti = 10.
-tf = 50.
-n_traj = 25
+ti = 1500.
+tf = 2500.
+n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -45,7 +46,7 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
@@ -93,7 +94,7 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [0.0000,        2.1918,        2.1918]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 0.98 * 1.25
+AtoBohr = 1.8897259886 * 0.98
 #When the unit of distance is still Angstrom:
 #AtoBohr = 1.0
 pos_ne32 = pos_ne32 * AtoBohr
@@ -104,7 +105,9 @@ bc_ne32 = CubicBC(box_length)
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-start_config = Config(pos_ne32, bc_ne32)
+start_config_1 = Config(pos_ne32, bc_ne32)
+start_config_2 = Config(pos_ne32, bc_ne32)
+start_config = [start_config_1,start_config_2]
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#

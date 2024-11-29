@@ -11,18 +11,19 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 96
-pressure = 101325
+pressure = 1000000000
+#pressure = 101325
 
 # temperature grid
 ti = 20.
-tf = 50.
-n_traj = 16
+tf = 100.
+n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 20000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -56,7 +57,7 @@ potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=true
+separated_volume=false
 ensemble = NPT(n_atoms,pressure*3.398928944382626e-14,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
@@ -165,8 +166,8 @@ pos_ne96 = [[ 1.56624152,  0.90426996,  0.        ],
 [14.09617368,  8.13842967, 12.78830846]]
 
 #convert to Bohr
-#AtoBohr = 1.8897259886 * 0.98
-AtoBohr = 1.0
+AtoBohr = 1.8897259886 * 0.98
+#AtoBohr = 1.0
 pos_ne96 = pos_ne96 * AtoBohr
 
 
@@ -186,7 +187,7 @@ start_config = Config(pos_ne96, bc_ne96)
 
 #ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 
 #multihistogram_NPT(ensemble, temp, results, 10^(-9), false)

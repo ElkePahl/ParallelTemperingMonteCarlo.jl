@@ -11,18 +11,19 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 150
-pressure = 101325
+#pressure = 101325
+pressure = 1000000000
 
 # temperature grid
-ti = 10.
-tf = 40.
+ti = 50.
+tf = 300.
 n_traj = 16
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -56,7 +57,7 @@ potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
+separated_volume=true
 ensemble = NPT(n_atoms,pressure*3.398928944382626e-14,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
@@ -219,7 +220,7 @@ pos_ne150 = [[ 1.56624152,  0.90426996,  0.        ],
 [18.79489824, 10.85123956, 12.78830846]]
 
 #convert to Bohr
-#AtoBohr = 1.8897259886 * 0.98 * 1.25
+#AtoBohr = 1.8897259886 * 0.98
 AtoBohr = 1.0
 pos_ne150 = pos_ne150 * AtoBohr
 
@@ -236,7 +237,7 @@ start_config = Config(pos_ne150, bc_ne150)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 
 #to check code in REPL
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)

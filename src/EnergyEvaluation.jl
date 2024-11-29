@@ -146,8 +146,8 @@ struct LookuptablePotential <: AbstractDimerPotentialB
     table::Matrix{Float64}
     start_dist::Float64
     start_angle::Float64
-    l_dist::Int32
-    l_angle::Int32
+    l_dist::Int32     #how many distances
+    l_angle::Int32    #how many angles
     d_dist::Float64
     d_angle::Float64
     c6coeff::Float64
@@ -193,7 +193,7 @@ end
 
 function dimer_energy(pot::LookuptablePotential, r2, tan)
     angle_index=round(Int32,atan(abs(tan))/pot.d_angle*180.0/pi+1)
-    if r2 <= pot.start_dist
+    if r2 <= pot.start_dist^2
         e = pot.table[angle_index,1]
     elseif r2 <= (pot.start_dist+pot.l_dist*pot.d_dist)^2
         dist_index=round(Int32,(r2^0.5-pot.start_dist)/pot.d_dist)

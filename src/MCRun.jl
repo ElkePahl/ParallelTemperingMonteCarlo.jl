@@ -234,7 +234,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
         - save::Bool or Int : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Vector,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     cd(workingdirectory)
     #initialise the states and results etc
     if save != false
@@ -244,6 +244,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     mc_states,move_strategy,results,n_steps,start_counter = initialisation(mc_params,temp,start_config,potential,ensemble)
 
     println("params set")
+    println("new version")
     #Equilibration 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
 
