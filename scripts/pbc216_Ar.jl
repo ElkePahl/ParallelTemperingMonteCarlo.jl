@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 1 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -305,13 +305,13 @@ start_config = Config(pos_ar216, bc_ar216)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params, temp, start_config, pot, ensemble)
 
-temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
-plot(temp_result, cp)
+# temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+# plot(temp_result, cp)
 
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
 
-max_value, index = findmax(cp)
-t_max = temp_result[index]
-println(t_max)
+# max_value, index = findmax(cp)
+# t_max = temp_result[index]
+# println(t_max)
 

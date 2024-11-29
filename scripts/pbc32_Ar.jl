@@ -17,13 +17,13 @@ pressure = 101325
 # temperature grid
 ti = 80
 tf = 130
-n_traj = 25
+n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10000 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -143,7 +143,9 @@ box_length = Cell_Repeats * L_start * AtoBohr
 bc_ne32 = CubicBC(box_length)   
 
 #starting configuration
-start_config = Config(pos_ne32, bc_ne32)
+start_config_1 = Config(pos_ne32, bc_ne32)
+start_config_2 = Config(pos_ne32, bc_ne32)
+start_config = [start_config_1, start_config_2]
 
 # #convert to Bohr
 # AtoBohr = 1.8897259886
@@ -164,10 +166,13 @@ start_config = Config(pos_ne32, bc_ne32)
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
+temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
 
-temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+println(temp.t_grid)
+println(results.heat_cap)
 
 data = [results.ev_histogram[i] for i in 1:n_traj]
 filename = "all_histograms.csv"

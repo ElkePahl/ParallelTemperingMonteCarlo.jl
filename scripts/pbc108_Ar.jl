@@ -169,7 +169,7 @@ mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,e
 # test = histogram_initialise(ensemble, temp, results)
 # println(test)
 
-temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+#temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 # plot(temp_result,cp)
 
 println(temp.t_grid)
@@ -181,9 +181,9 @@ println(results.heat_cap)
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
 
-data = [results.ev_histogram[i] for i in 1:n_traj]
-filename = "all_histograms.csv"
-save_multihistograms(data, save_directory, filename)
+# data = [results.ev_histogram[i] for i in 1:n_traj]
+# filename = "all_histograms.csv"
+# save_multihistograms(data, save_directory, filename)
 
 # for i in 1:n_traj
 #   println(results.rdf[i])S

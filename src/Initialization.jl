@@ -39,15 +39,23 @@ returns the following structs:
     - consider shuffling mc_params to include the tempgrid and cut down the number of inputs.
 
 """
-function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
+function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Vector,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
 
 
 
     move_strategy = MoveStrategy(ensemble)
     n_steps = length(move_strategy)
     
-    mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
-
+    #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
+    mc_states = Array{MCState}(undef, mc_params.n_traj)
+    for i in 1:mc_params.n_traj
+        if rem(i,2) == 0
+            mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[1],ensemble,potential)
+        else
+            mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[2],ensemble,potential)
+        end
+    end
+        
     println(mc_states[1].en_tot)
     
     results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)

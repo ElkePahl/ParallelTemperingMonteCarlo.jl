@@ -23,7 +23,7 @@ temp = TempGrid{n_traj}(ti, tf)
 
 # MC simulation details
 
-mc_cycles = 10000 # default 20% equilibration cycles on top
+mc_cycles = 1 # default 20% equilibration cycles on top
 mc_sample = 1  # sample every mc_sample MC cycles
 
 displ_atom = 0.1 # Angstrom 
@@ -305,9 +305,13 @@ mc_states, results = ptmc_run!(save_directory, mc_params, temp, start_config, po
 # temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 # plot(temp_result, cp)
 
-max_value, index = findmax(cp)
-t_max = temp_result[index]
-println(t_max)
+filename = "all_rdfs.csv"
+save_rdfs_concatenated(results.rdf, save_directory, filename)
+
+
+# max_value, index = findmax(cp)
+# t_max = temp_result[index]
+# println(t_max)
 
 # For REPL check
 # @profview ptmc_run!(mc_params, temp, start_config, pot, ensemble)
