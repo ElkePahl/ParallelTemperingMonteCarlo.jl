@@ -76,7 +76,9 @@ function plot_histograms_with_colormap(
             label=label,
             color=colormap[idx],
             linewidth=2,
-            legend=false
+            legend=false,
+            framestyle=:box,
+            xlim=(10, 110)
         )
     end
     xlabel!(x_label)

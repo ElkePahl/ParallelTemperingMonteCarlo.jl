@@ -111,7 +111,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index, sa
             update_max_stepsize!(state,mc_params.n_adjust,ensemble)
         end
     end
-    if rem(index, 50000) == 0 
+    if rem(index, 1) == 0 
         for (i, state) in enumerate(mc_states)
             filename = "configurations_cycle_state_$(i).dat"
             save_config(filename, state, index, save_directory)
@@ -204,7 +204,7 @@ Main call for the ptmc program. Given `mc_params` dictating the number of cycles
 
     the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
 """
-function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config::Vector,potential::Ptype,ensemble::Etype;rdfsave=true,restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;rdfsave=true,restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
 
     #initialise the states and results etc
     mc_states,move_strategy,results,n_steps = initialisation(mc_params,temp,start_config,potential,ensemble)

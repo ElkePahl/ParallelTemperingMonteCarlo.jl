@@ -37,7 +37,7 @@ max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
 
 
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -159,14 +159,14 @@ start_config = [start_config_1, start_config_2]
 
 # length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-# start_config = Config(pos_ne32, bc_ne32)
+start_config = Config(pos_ne32, bc_ne32)
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(save_directory, mc_params,temp,start_config,pot,ensemble)
 
-temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+# temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
@@ -178,9 +178,9 @@ data = [results.ev_histogram[i] for i in 1:n_traj]
 filename = "all_histograms.csv"
 save_multihistograms(data, save_directory, filename)
 
-max_value, index = findmax(cp)
-t_max = temp_result[index]
-println(t_max) 
+# max_value, index = findmax(cp)
+# t_max = temp_result[index]
+# println(t_max) 
 
 # plot(temp.t_grid,results.heat_cap)
 

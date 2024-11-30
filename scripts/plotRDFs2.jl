@@ -3,7 +3,7 @@ using Plots
 using Colors
 
 # Function to read and plot RDFs from the concatenated file
-function plot_rdfs_with_colormap_no_temps(filepath::String; ranges::Union{Nothing, Vector{UnitRange{Int}}}=nothing)
+function plot_rdfs_with_colormap_no_temps(filepath::String, Δr::Float64, a0::Float64; ranges::Union{Nothing, Vector{UnitRange{Int}}}=nothing)
     # Read the file content
     lines = readlines(filepath)
     rdf_data_list = []
@@ -49,22 +49,26 @@ function plot_rdfs_with_colormap_no_temps(filepath::String; ranges::Union{Nothin
     # Generate temperature labels for the color map
     temperature_range = range(1000, 2000, length=length(selected_indices))
 
+    # Calculate distance values (r/a0)
+    max_bins = maximum(length.(rdf_data_list))
+    r_values = (1:max_bins) .* Δr ./ a0
+
     # Plot the selected RDFs with the color map
     plt = plot()
     for (plot_idx, rdf_idx) in enumerate(selected_indices)
         rdf_data = rdf_data_list[rdf_idx]
-        bin_indices = 1:length(rdf_data)
+        distance_values = r_values[1:length(rdf_data)]
         plot!(
             plt,
-            bin_indices,
+            distance_values,
             rdf_data,
             label=nothing,  # No individual labels
             color=colormap[plot_idx / length(selected_indices)],
             linewidth=2,
             legend=false,
             framestyle=:box,
-            xlims=(0, 500),
-            ylims=(0, 8e5)
+            xlims=(0, maximum(r_values)),
+            ylims=(0, 5e5)
         )
     end
 
@@ -79,23 +83,29 @@ function plot_rdfs_with_colormap_no_temps(filepath::String; ranges::Union{Nothin
         dummy_data,
         color=colormap,
         colorbar_title="Temperature (K)",
-        clim=(1000, 2000),
+        clim=(10, 20),
         alpha=0  # Make heatmap invisible
     )
 
-    xlabel!("Bin Index")
+    # Adjust the color bar title's position (if needed)
+    colorbar_title_location =:bottom  # You can try :top, :bottom, or :right
+
+    xlabel!("r/a₀")
     ylabel!("g(r)")
-    # title!("Radial Distribution Functions")
     display(plt)
 end
 
-# Usage example:
+# Example usage:
 save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Ar"
 filename = "all_rdfs.csv"
 filepath = joinpath(save_directory, filename)
 
+# Define the bin spacing (Δr) and the scaling factor (a₀)
+Δr = 0.01  # Example bin size in arbitrary units
+a0 = 1.8897259886   # Example scaling factor
+
 # Plot all RDFs
-plot_rdfs_with_colormap_no_temps(filepath)
+plot_rdfs_with_colormap_no_temps(filepath, Δr, a0)
 
 # # Plot specific ranges (e.g., 1:3 and 6:9)
-# plot_rdfs_with_colormap_no_temps(filepath; ranges=[1:2])
+# plot_rdfs_with_colormap_no_temps(filepath, Δr, a0; ranges=[1:2])

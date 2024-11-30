@@ -12,6 +12,7 @@ P_108 = [0.000101325, 1, 10, 15, 25, 50, 100]
 P_150 = [0.000101325, 1, 5, 10, 15, 50, 100]
 P_216 = [0.000101325, 1, 25, 35, 50, 100]
 P_HCP = [0.000101325, 5, 10, 15, 50, 100]
+P_256 = [1, 5, 10, 15, 100]
 
 # Temperatures (K)
 T_plus_27 = [123.40438499160605, 123.58013615667511,
@@ -29,6 +30,8 @@ T_plus_108 = [108, 303, 1230, 1624, 2412, 4092, 7571]
 T_plus_150 = [107, 307, 804, 1232, 1655, 4172, 7677]
 T_plus_216 = [110, 312, 2407, 3157, 4150, 7701]
 T_plus_HCP = [108, 780, 1250, 1637, 3880, 7180]
+T_plus_256 = [314, 803, 1255, 1672, 7782]
+
 
 # Calculate T_M from T_plus
 T_M_factor = 1 + log(2^(1/3))
@@ -39,6 +42,7 @@ T_M_108 = T_plus_108 ./ T_M_factor
 T_M_150 = T_plus_150 ./ T_M_factor
 T_M_216 = T_plus_216 ./ T_M_factor
 T_M_HCP = T_plus_HCP ./ T_M_factor
+T_M_256 = T_plus_256 ./ T_M_factor
 
 # Define the model function
 function Kechin_TM_P(x, p)
@@ -57,6 +61,7 @@ fit_108 = curve_fit(Kechin_TM_P, P_108, T_M_108, p0)
 fit_150 = curve_fit(Kechin_TM_P, P_150, T_M_150, p0)
 fit_216 = curve_fit(Kechin_TM_P, P_216, T_M_216, p0)
 fit_HCP = curve_fit(Kechin_TM_P, P_HCP, T_M_HCP, p0)
+fit_256 = curve_fit(Kechin_TM_P, P_256, T_M_256, p0)
 
 # Generate P_fit and compute fitted temperatures
 P_fit = range(0.0001, stop=100, length=100)
@@ -67,6 +72,7 @@ T_M_108_fit = Kechin_TM_P(P_fit, fit_108.param)
 T_M_150_fit = Kechin_TM_P(P_fit, fit_150.param)
 T_M_216_fit = Kechin_TM_P(P_fit, fit_216.param)
 T_M_HCP_fit = Kechin_TM_P(P_fit, fit_HCP.param)
+T_M_256_fit = Kechin_TM_P(P_fit, fit_256.param)
 
 # Experimental data
 P_exp = [64, 65, 66, 70, 74, 77]
@@ -90,13 +96,14 @@ scatter!(plt, P_216, T_M_216, label="216 FCC Result", color="red", marker=:circl
 scatter!(plt, P_HCP, T_M_HCP, label="216 HCP Result", color="purple", marker=:circle)
 
 # Plot fitted curves on the main plot
-plot!(plt, P_fit, T_M_27_fit, label="27 Kechin Fit", color="red", linestyle=:dot)
-plot!(plt, P_fit, T_M_32_fit, label="32 Kechin Fit", color="blue", linestyle=:dot)
-plot!(plt, P_fit, T_M_96_fit, label="96 Kechin Fit", color="red", linestyle=:dashdot)
-plot!(plt, P_fit, T_M_108_fit, label="108 Kechin Fit", color="blue", linestyle=:dashdot)
-plot!(plt, P_fit, T_M_150_fit, label="150 Kechin Fit", color="red", linestyle=:dash)
+# plot!(plt, P_fit, T_M_27_fit, label="27 Kechin Fit", color="red", linestyle=:dot)
+# plot!(plt, P_fit, T_M_32_fit, label="32 Kechin Fit", color="blue", linestyle=:dot)
+# plot!(plt, P_fit, T_M_96_fit, label="96 Kechin Fit", color="red", linestyle=:dashdot)
+# plot!(plt, P_fit, T_M_108_fit, label="108 Kechin Fit", color="blue", linestyle=:dashdot)
+# plot!(plt, P_fit, T_M_150_fit, label="150 Kechin Fit", color="red", linestyle=:dash)
 plot!(plt, P_fit, T_M_216_fit, label="216 FCC Kechin Fit", color="red")
 plot!(plt, P_fit, T_M_HCP_fit, label="216 HCP Kechin Fit", color="purple")
+plot!(plt, P_fit, T_M_256_fit, label="256 Kechin Fit", color="blue")
 
 plot!(plt, P_E, T_M_E, label="Ref. PTMC", color="black")
 # Plot experimental data with error bars on the main plot
@@ -104,7 +111,7 @@ scatter!(plt, P_exp, T_M_exp, yerror=T_M_exp_error, label="Ref. Experimental Res
 
 # Customize the main plot
 xlims!(plt, 0, 100)
-ylims!(plt, 0, 8000)
+ylims!(plt, 0, 7000)
 xlabel!(plt, "Pressure (GPa)")
 ylabel!(plt, "Melting Temperature (K)")
 #title!(plt, "Melting Temperature vs. Pressure")
@@ -135,14 +142,15 @@ scatter!(
 scatter!(plt, P_HCP, T_M_HCP, label="", color="purple", marker=:circle, subplot=2)
 
 # Plot fitted curves on the inset plot
-plot!(plt, P_fit, T_M_27_fit, label="", color="red", linestyle=:dot, subplot=2)
-plot!(plt, P_fit, T_M_32_fit, label="", color="blue", linestyle=:dot, subplot=2)
-plot!(plt, P_fit, T_M_96_fit, label="", color="red", linestyle=:dashdot, subplot=2)
-plot!(plt, P_fit, T_M_108_fit, label="", color="blue", linestyle=:dashdot, subplot=2)
+#plot!(plt, P_fit, T_M_27_fit, label="", color="red", linestyle=:dot, subplot=2)
+#plot!(plt, P_fit, T_M_32_fit, label="", color="blue", linestyle=:dot, subplot=2)
+#plot!(plt, P_fit, T_M_96_fit, label="", color="red", linestyle=:dashdot, subplot=2)
+#plot!(plt, P_fit, T_M_108_fit, label="", color="blue", linestyle=:dashdot, subplot=2)
 plot!(plt, P_E, T_M_E, label="", color="black", subplot=2)
-plot!(plt, P_fit, T_M_150_fit, label="", color="red", linestyle=:dash, subplot=2)
+#plot!(plt, P_fit, T_M_150_fit, label="", color="red", linestyle=:dash, subplot=2)
 plot!(plt, P_fit, T_M_216_fit, label="", color="red", subplot=2)
 plot!(plt, P_fit, T_M_HCP_fit, label="", color="purple", subplot=2)
+plot!(plt, P_fit, T_M_256_fit, label="", color="blue", subplot=2)
 
 # Plot experimental data with error bars in the inset plot
 scatter!(plt, P_exp, T_M_exp, yerror=T_M_exp_error, label="", color="grey", marker=:diamond, subplot=2)
@@ -150,8 +158,8 @@ scatter!(plt, P_exp, T_M_exp, yerror=T_M_exp_error, label="", color="grey", mark
 # Customize the inset plot
 # xlims!(plt, 80, 100, subplot=2)
 # ylims!(plt, 4000, 6500, subplot=2)
-xlims!(plt, 0, 20, subplot=2)
-ylims!(plt, 0, 2000, subplot=2)
+xlims!(plt, 80, 100, subplot=2)
+ylims!(plt, 4000, 6500, subplot=2)
 # framestyle!(plt, :box, subplot=2)
 # legend!(plt, false, subplot=2)
 
