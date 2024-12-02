@@ -6,7 +6,7 @@ using StaticArrays,DelimitedFiles,Random
 export initialisation
 
 
-using ..MachineLearningPotential
+#using ..MachineLearningPotential
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -49,13 +49,12 @@ function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,
     mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
     # shared_config1 = start_config[1]
     # shared_config2 = start_config[2]
-    # mc_states = Array{MCState}(undef, mc_params.n_traj)
-    # for i in 1:mc_params.n_traj
-    #     if rem(i,2) == 0
-    #         mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],shared_config1,ensemble,potential)
-    #     else
-    #         mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],shared_config2,ensemble,potential)
-    #     end
+    #mc_states = Array{MCState}(undef, mc_params.n_traj)
+    # for i in 1:16 
+    #     mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[1],ensemble,potential)
+    # end
+    # for i in 17:32
+    #     mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[2],ensemble,potential)
     # end
         
     println(mc_states[1].en_tot)

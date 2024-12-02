@@ -22,7 +22,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1 #default 20% equilibration cycles on top
+mc_cycles = 1000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -516,11 +516,11 @@ length(pos_ar216) == n_atoms || error("Number of atoms and positions do not matc
 
 # Create starting configuration
 
-# start_config_1 = Config(pos_ar216, bc_ar216)
-# start_config_2 = Config(pos_ar216_HCP, bc_ar216)
-# start_config = [start_config_1, start_config_2]
+start_config_1 = Config(pos_ar216, bc_ar216)
+start_config_2 = Config(pos_ar216_HCP, bc_ar216)
+start_config = [start_config_1, start_config_2]
 
-start_config = Config(pos_ar216, bc_ar216)
+# start_config = Config(pos_ar216, bc_ar216)
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#

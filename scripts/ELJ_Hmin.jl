@@ -3,8 +3,8 @@ using Optim
 using ParallelTemperingMonteCarlo  # Assuming this module provides ELJPotentialEven and dimer_energy
 
 # Specify the directories for reading and writing files
-input_dir = "/nesi/nobackup/uoa02731/sam/Ar/Rhombic/150/100/Configs"
-output_dir_minimized = "/nesi/nobackup/uoa02731/sam/Ar/Rhombic/150/100/Configs/Emin/minimized"
+input_dir = "/nesi/nobackup/uoa02731/sam/Ar/Rhombic/HCP/216/100/Configs/Hmin"
+output_dir_minimized = "/nesi/nobackup/uoa02731/sam/Ar/Rhombic/HCP/216/100/Configs/Hmin/min"
 
 # Structures for handling periodic boundary conditions
 struct EMCubicBC
@@ -189,7 +189,7 @@ function optimize_structure(atoms, coeff, bc, pressure)
     lj_wrapper(x) = lj_elj(x, N, pot, bc, pressure)
 
     # Set options to show trace and set the gradient tolerance
-    options = Optim.Options(g_tol=5e-4, show_trace=true)
+    options = Optim.Options(g_tol=5e-3, show_trace=true)
     
     # First iteration of optimization
     println("Starting first optimization iteration...")

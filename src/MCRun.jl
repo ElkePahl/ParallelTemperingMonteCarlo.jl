@@ -111,7 +111,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index, sa
             update_max_stepsize!(state,mc_params.n_adjust,ensemble)
         end
     end
-    if rem(index, 50000) == 0 
+    if rem(index, 1000) == 0 
         for (i, state) in enumerate(mc_states)
             filename = "configurations_cycle_state_$(i).dat"
             save_config(filename, state, index, save_directory)

@@ -11,7 +11,7 @@ P_32 = [0.000101325, 1*1.01325, 5*1.01325, 10*1.01325,
 P_108 = [0.000101325, 1, 10, 15, 25, 50, 100]
 P_150 = [0.000101325, 1, 5, 10, 15, 50, 100]
 P_216 = [0.000101325, 1, 25, 35, 50, 100]
-P_HCP = [0.000101325, 5, 10, 15, 50, 100]
+P_HCP = [0.000101325, 5, 10, 15, 60, 75, 100]
 P_256 = [1, 5, 10, 15, 100]
 
 # Temperatures (K)
@@ -29,7 +29,7 @@ T_plus_32 = [110, 330, 855, 1340, 1797.2935884104504,
 T_plus_108 = [108, 303, 1230, 1624, 2412, 4092, 7571]
 T_plus_150 = [107, 307, 804, 1232, 1655, 4172, 7677]
 T_plus_216 = [110, 312, 2407, 3157, 4150, 7701]
-T_plus_HCP = [108, 780, 1250, 1637, 3880, 7180]
+T_plus_HCP = [108, 780, 1250, 1637, 4800, 5820, 7780]
 T_plus_256 = [314, 803, 1255, 1672, 7782]
 
 
@@ -118,50 +118,50 @@ ylabel!(plt, "Melting Temperature (K)")
 
 # Now, add the inset plot
 # Plot the inset data using subplot=2 and inset=bbox(...)
-scatter!(
-    plt,
-    P_216, T_M_216,
-    label="",
-    color="red",
-    marker=:circle,
-    framestyle=:box,
-    inset=bbox(0.2, 0.05, 0.3, 0.3),
-    subplot=2,
-    xtickfontsize=6,
-    ytickfontsize=6,
-    xguidefontsize=8,
-    yguidefontsize=8
-)
+# scatter!(
+#     plt,
+#     P_216, T_M_216,
+#     label="",
+#     color="red",
+#     marker=:circle,
+#     framestyle=:box,
+#     inset=bbox(0.2, 0.05, 0.3, 0.3),
+#     subplot=2,
+#     xtickfontsize=6,
+#     ytickfontsize=6,
+#     xguidefontsize=8,
+#     yguidefontsize=8
+# )
 
-# Add other datasets and fits to the inset plot
-#scatter!(plt, P_32, T_M_32, label="", color="cyan", marker=:circle, subplot=2)
-#scatter!(plt, P_96, T_M_96, label="", color="green", marker=:circle, subplot=2)
-#scatter!(plt, P_108, T_M_108, label="", color="blue", marker=:circle, subplot=2)
-#scatter!(plt, P_150, T_M_150, label="", color="magenta", marker=:circle, subplot=2)
-#scatter!(plt, P_216, T_M_216, label="", color="red", marker=:circle, subplot=2)
-scatter!(plt, P_HCP, T_M_HCP, label="", color="purple", marker=:circle, subplot=2)
+# # Add other datasets and fits to the inset plot
+# #scatter!(plt, P_32, T_M_32, label="", color="cyan", marker=:circle, subplot=2)
+# #scatter!(plt, P_96, T_M_96, label="", color="green", marker=:circle, subplot=2)
+# #scatter!(plt, P_108, T_M_108, label="", color="blue", marker=:circle, subplot=2)
+# #scatter!(plt, P_150, T_M_150, label="", color="magenta", marker=:circle, subplot=2)
+# #scatter!(plt, P_216, T_M_216, label="", color="red", marker=:circle, subplot=2)
+# scatter!(plt, P_HCP, T_M_HCP, label="", color="purple", marker=:circle, subplot=2)
 
-# Plot fitted curves on the inset plot
-#plot!(plt, P_fit, T_M_27_fit, label="", color="red", linestyle=:dot, subplot=2)
-#plot!(plt, P_fit, T_M_32_fit, label="", color="blue", linestyle=:dot, subplot=2)
-#plot!(plt, P_fit, T_M_96_fit, label="", color="red", linestyle=:dashdot, subplot=2)
-#plot!(plt, P_fit, T_M_108_fit, label="", color="blue", linestyle=:dashdot, subplot=2)
-plot!(plt, P_E, T_M_E, label="", color="black", subplot=2)
-#plot!(plt, P_fit, T_M_150_fit, label="", color="red", linestyle=:dash, subplot=2)
-plot!(plt, P_fit, T_M_216_fit, label="", color="red", subplot=2)
-plot!(plt, P_fit, T_M_HCP_fit, label="", color="purple", subplot=2)
-plot!(plt, P_fit, T_M_256_fit, label="", color="blue", subplot=2)
+# # Plot fitted curves on the inset plot
+# #plot!(plt, P_fit, T_M_27_fit, label="", color="red", linestyle=:dot, subplot=2)
+# #plot!(plt, P_fit, T_M_32_fit, label="", color="blue", linestyle=:dot, subplot=2)
+# #plot!(plt, P_fit, T_M_96_fit, label="", color="red", linestyle=:dashdot, subplot=2)
+# #plot!(plt, P_fit, T_M_108_fit, label="", color="blue", linestyle=:dashdot, subplot=2)
+# plot!(plt, P_E, T_M_E, label="", color="black", subplot=2)
+# #plot!(plt, P_fit, T_M_150_fit, label="", color="red", linestyle=:dash, subplot=2)
+# plot!(plt, P_fit, T_M_216_fit, label="", color="red", subplot=2)
+# plot!(plt, P_fit, T_M_HCP_fit, label="", color="purple", subplot=2)
+# plot!(plt, P_fit, T_M_256_fit, label="", color="blue", subplot=2)
 
-# Plot experimental data with error bars in the inset plot
-scatter!(plt, P_exp, T_M_exp, yerror=T_M_exp_error, label="", color="grey", marker=:diamond, subplot=2)
+# # Plot experimental data with error bars in the inset plot
+# scatter!(plt, P_exp, T_M_exp, yerror=T_M_exp_error, label="", color="grey", marker=:diamond, subplot=2)
 
-# Customize the inset plot
+# # Customize the inset plot
+# # xlims!(plt, 80, 100, subplot=2)
+# # ylims!(plt, 4000, 6500, subplot=2)
 # xlims!(plt, 80, 100, subplot=2)
 # ylims!(plt, 4000, 6500, subplot=2)
-xlims!(plt, 80, 100, subplot=2)
-ylims!(plt, 4000, 6500, subplot=2)
-# framestyle!(plt, :box, subplot=2)
-# legend!(plt, false, subplot=2)
+# # framestyle!(plt, :box, subplot=2)
+# # legend!(plt, false, subplot=2)
 
 # Display the plot
 display(plt)
