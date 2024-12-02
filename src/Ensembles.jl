@@ -121,7 +121,7 @@ end
 """
 set_ensemble_variables(config::Config{N,BC,T}, ensemble)
 initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT`);
-required to allow for neutral initialisation in defining the MCState [`MCStates.MCState`](@ref) struct. 
+required to allow for neutral initialisation in defining the MCState [`ParallelTemperingMonteCarlo.MCStates.MCState`](@ref) struct. 
 """
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))

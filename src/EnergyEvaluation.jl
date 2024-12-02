@@ -144,7 +144,7 @@ end
 Sums the dimer energies for atom `i` with all other atoms 
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
 see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
-and potential information `pot` [`Abstract_Potential`](@ref) 
+and potential information `pot` [`AbstractPotential`](@ref) 
 
 second method includes additional variable `r_cut` to exclude distances outside the cutoff radius of the potential.
 
@@ -209,7 +209,7 @@ calculates total energy of configuration.
 First two methods are for standard dimer potentials, one with a cutoff radius, one without a cutoff radius. The final two methods are for the same calculation using a magnetic potential such as the ELJB potential. 
 
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
-and potential information `pot` [`Abstract_Potential`](@ref) 
+and potential information `pot` [`AbstractPotential`](@ref) 
 """
 function dimer_energy_config(distmat, NAtoms, potential_variables::DimerPotentialVariables,pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)

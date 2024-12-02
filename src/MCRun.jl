@@ -198,7 +198,7 @@ end
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs. 
     Second method:
-The second method relies on a series of checkpoint files -see Checkpoint module ['Checkpoint'](@ref)- to autoinitialise the ptmc_cycle. Still accepts restart as an argument to indicate whether this is a clean start with configs or a restart from a checkpoint at a given index. 
+The second method relies on a series of checkpoint files -see Checkpoint module [`ReadSave`](@ref)- to autoinitialise the ptmc_cycle. Still accepts restart as an argument to indicate whether this is a clean start with configs or a restart from a checkpoint at a given index. 
 
 
     kwargs currently implemented are:

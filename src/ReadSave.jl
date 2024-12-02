@@ -2,7 +2,6 @@
     Checkpoint
 Module designed to save relevant parameters and configurations throughout the simulation to allow restarting.
 """
-
 module ReadSave
 
 using StaticArrays,DelimitedFiles
@@ -135,7 +134,7 @@ function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where 
 end
 """
     save_checkpoint(mc_states::Vector{stype}) where stype <: MCState
-Function to save the configuration of each state in a vector of `mc_states`. writes each configuration according to [`writeconfig`](@ref) into a file config.i where i indicates the order of the states. 
+Function to save the configuration of each state in a vector of `mc_states`. writes each configuration according to [`write_config`](@ref) into a file config.i where i indicates the order of the states. 
 """
 function save_configs(mc_states::Vector{stype}) where stype <: MCState
     for saveindex in eachindex(mc_states)
@@ -317,6 +316,13 @@ function read_config(xyzdata)
     config=Config(configvectors,bc)
 
     return config
+end
+"""
+    write_config(xyzdata)
+placeholder to fulfill documentation reference
+"""
+function write_config(xyzdata)
+    return
 end
 """
     setresults(histparams,histdata,histv_data,r2data)

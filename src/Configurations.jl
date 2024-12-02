@@ -8,8 +8,7 @@ This module defines types and functions for working with atomic configurations o
 
 ## Exported functions
 - [`distance2`](@ref)
-- [`get_distance_mat`](@ref)
-- [`move_atom!`](@ref)
+- [`get_distance2_mat`](@ref)
 """
 module Configurations
 
@@ -167,14 +166,14 @@ function distance2(a,b,bc::RhombicBC)
 end
 
 #distance matrix
+
+
+#get_distance2_mat(conf::Config{N}) where N = [distance2(a,b,conf.bc) for a in conf.pos, b in conf.pos]
 """
     get_distance2_mat(conf::Config{N})
 
 Builds the matrix of squared distances between positions of configuration.
 """
-
-#get_distance2_mat(conf::Config{N}) where N = [distance2(a,b,conf.bc) for a in conf.pos, b in conf.pos]
-
 function get_distance2_mat(conf::Config{N}) where N
     mat=zeros(N,N)
     for i=1:N
