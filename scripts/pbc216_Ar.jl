@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 216
-pressure = 10e9 
+pressure = 20e9 
 
 # temperature grid
-ti = 90.
-tf = 130.
+ti = 1800
+tf = 2200
 n_traj = 32
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 mc_sample = 1  #sample every mc_sample MC cycles
 
@@ -516,16 +516,17 @@ length(pos_ar216) == n_atoms || error("Number of atoms and positions do not matc
 
 # Create starting configuration
 
-start_config_1 = Config(pos_ar216, bc_ar216)
-start_config_2 = Config(pos_ar216_HCP, bc_ar216)
-start_config = [start_config_1, start_config_2]
+# start_config_1 = Config(pos_ar216, bc_ar216)
+# start_config_2 = Config(pos_ar216_HCP, bc_ar216)
+# start_config = [start_config_1, start_config_2]
 
-# start_config = Config(pos_ar216, bc_ar216)
-
+start_config = Config(pos_ar216, bc_ar216)
+start_config2 = Config(pos_ar216_HCP, bc_ar216)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(save_directory, mc_params, temp, start_config, pot, ensemble)
+mc_states, results = ptmc_run!(save_directory, mc_params, temp, start_config, start_config2, pot, ensemble)
+#@benchmark ptmc_run!(save_directory, mc_params, temp, start_config, pot, ensemble)
 
 #temp_result, cp = multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
 
@@ -539,7 +540,7 @@ save_multihistograms(data, save_directory, filename)
 filename = "all_rdfs.csv"
 save_rdfs_concatenated(results.rdf, save_directory, filename)
 
-max_value, index = findmax(cp)
-t_max = temp_result[index]
-println(t_max)
+# max_value, index = findmax(cp)
+# t_max = temp_result[index]
+# println(t_max)
 

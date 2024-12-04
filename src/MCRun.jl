@@ -204,10 +204,10 @@ Main call for the ptmc program. Given `mc_params` dictating the number of cycles
 
     the kwargs are the __unimplemented portion__ of the code that needs to be reinserted through reimplementing save/restart and dealing with the update_max_stepsize function in case the user wants to vary the acceptance ratios. 
 """
-function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype;rdfsave=true,restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function ptmc_run!(save_directory::String, mc_params::MCParams,temp::TempGrid,start_config1::Config,start_config2::Config,potential::Ptype,ensemble::Etype;rdfsave=true,restart=false,start_counter=1, min_acc=0.4,max_acc=0.6,save=false,save_dir=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
 
     #initialise the states and results etc
-    mc_states,move_strategy,results,n_steps = initialisation(mc_params,temp,start_config,potential,ensemble)
+    mc_states,move_strategy,results,n_steps = initialisation(mc_params,temp,start_config1,start_config2,potential,ensemble)
     println("params set")
     #Equilibration 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart, save_directory)

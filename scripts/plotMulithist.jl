@@ -78,7 +78,7 @@ function plot_histograms_with_colormap(
             linewidth=2,
             legend=false,
             framestyle=:box,
-            xlim=(10, 110)
+            xlim=(60, 100)
         )
     end
     xlabel!(x_label)
@@ -88,7 +88,7 @@ function plot_histograms_with_colormap(
 end
 
 # Usage example:
-save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data"
+save_directory = "/Users/samuelcase/Dropbox/PTMC_Lit&Coding/Sam_Results/Data/Figs"
 filename = "all_histograms.csv"
 filepath = joinpath(save_directory, filename)
 
