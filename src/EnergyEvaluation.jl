@@ -692,6 +692,7 @@ Bundle of variables used for the NNP potential:
 Todo: someone who knows what these are should write a better description
 """
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
+
     en_atom_vec::Vector{T}
     new_en_atom::Vector{T}
     g_matrix::Matrix{T}
