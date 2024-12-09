@@ -29,8 +29,8 @@ include("swap_config.jl")
     get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
 Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for: 
 
-        - NVT ensemble without r_cut
-        - NPT ensemble with r_cut
+-   NVT ensemble without r_cut
+-   NPT ensemble with r_cut
 """
 function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NVTVariables}
     if movetype == "atommove"
@@ -59,7 +59,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
 end
 """
     acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
-acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
+[`acc_test!`](@ref) function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the [`swap_config!`](@ref) function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates. 
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
@@ -68,11 +68,11 @@ function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Ety
 end
 """
     mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
-basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES.
-     calculates an index for the move
-     generates either a volume or atom move depending on movestrat[index]
-     calculates energy based on the pot and new move 
-     tests acc and swaps if relevant 
+Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES.
+-   Calculates an index for the move
+-   Generates either a volume or atom move depending on `movestrat[index]`
+-   Calculates energy based on the pot and new move 
+-   Tests acc and swaps if relevant 
 """
 function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
     mc_state.ensemble_variables.index = rand(1:N)
@@ -85,8 +85,8 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
     return mc_state
 end
 """
-    mc_step!((mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
-Distributes each state in `mc_state` to the mc_move function in accordance with a `move_strat`, `ensemble` and `pot`
+    mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble) where stype <: MCState
+Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
 function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) where stype <: MCState
     for state in mc_states
@@ -99,9 +99,9 @@ end
 """
     mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
     mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx)
-Basic function utilised by the simulation. For each of the `n_steps` run a single mc_step on the `mc_states` according to `pot`, `move_strat` and `ensemble`. then complete the parallel_tempering_exchange and update_step_size.
+Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `pot`, `move_strat` and `ensemble`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
 
-    Second method includes the sampling_step! which updates the `results` struct. The first method is used by the equilibration_cycle and therefore does __not__ update the results struct. 
+Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct. 
 """
 function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
 
@@ -141,7 +141,7 @@ function check_e_bounds(energy,ebounds)
 end
 """
     reset_counters(state)
-        after equilibration this resets the count stats to zero
+After equilibration this resets the count stats to zero
 """
 function reset_counters(state)
     state.count_atom = [0,0]
@@ -174,9 +174,9 @@ end
 """
 
     equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
-while initialisation sets mc_states,params etc we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the equilibration_cycle! function that optionally removes the thermalisation from restart.
+While initialisation sets `mc_states`, `params` etc. we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the [`equilibration_cycle!`](@ref) function that optionally removes the thermalisation from restart.
 
-    N.B. Restart is currently non-functional, do not try use it
+N.B. Restart is currently non-functional, do not try use it
 """
 function equilibration(mc_states::Vector{stype},move_strat,mc_params,pot,ensemble,n_steps,results,restart) where stype <: MCState
 
@@ -197,15 +197,15 @@ end
     ptmc_run!(restart::Bool;rdfsave=true,acc= [0.4, 0.6],save=true,save_freq=1000)
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs. 
-    Second method:
-The second method relies on a series of checkpoint files -see Checkpoint module [`ReadSave`](@ref)- to autoinitialise the ptmc_cycle. Still accepts restart as an argument to indicate whether this is a clean start with configs or a restart from a checkpoint at a given index. 
+-   Second method:
+The second method relies on a series of checkpoint files -see Checkpoint module [`ReadSave`](@ref)- to autoinitialise an MC cycle. Still accepts restart as an argument to indicate whether this is a clean start with configs or a restart from a checkpoint at a given index. 
 
 
-    kwargs currently implemented are:
-        - rdfsave::Bool : tells the simulation whether or not to generate and save radial distribution functions (a resource intensive step) -- set to false
-        - restart::Bool : tells the simulation whether or not we are beginning from a partially complete simulation - set false for method one. 
-        - acc::Vector : sets the min and max acceptance rates used to adjust stepsize for the simulation - set [0.4 0.6] for a target of 40-60% acceptance 
-        - save::Bool or Int : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
+-   kwargs currently implemented are:
+    -   `rdfsave::Bool` : tells the simulation whether or not to generate and save radial distribution functions (a resource intensive step) -- set to false
+    -   `restart::Bool` : tells the simulation whether or not we are beginning from a partially complete simulation - set false for method one. 
+    -   `acc::Vector` : sets the min and max acceptance rates used to adjust stepsize for the simulation - set [0.4 0.6] for a target of 40-60% acceptance 
+    -   `save::Bool` or `Int` : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
 
 """
 function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = false,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble

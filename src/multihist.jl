@@ -10,10 +10,10 @@ export multihistogram,postprocess
 
 """
     readfile(xdir::String)
-method 1: xdir::String -reads output files for the FORTRAN PTMC code written by Edison Florez.
-method 2: output::output,Tvals::TempGrid - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
+Method 1: `xdir::String` -reads output files for the FORTRAN PTMC code written by Edison Florez.
+Method 2: `output::Output`, `Tvals::TempGrid` - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
 
-xdir is the directory containing the histogram information usually /path/to/output/histograms
+`xdir` is the directory containing the histogram information usually `/path/to/output/histograms`
 
 `HistArray` is the NTrajxNBins array containing all histogram counts
 `energyvector` is an NBins length vector containing the energy value of each bin
@@ -71,7 +71,7 @@ function readfile(output::Output, Tvals::TempGrid )
 end
 """ 
     processhist!(HistArray,energyvector,beta,NBins)
-This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent NaN errors when doing the required calculations.
+This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent `NaN` errors when doing the required calculations.
 
 `HistArray,energyvector` are the total histograms and values of the energy bins respectively, they are only changed by normalisation and removal of unnecessary rows
 `nsum` is merely the total histogram count for each energy bin
@@ -104,10 +104,10 @@ function processhist!(HistArray,energyvector,NBins,NTraj)
 end
 """
     initialise(xdir::String)
-    (Output::Output,Tvec::TempGrid)
-function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code for method one, or directly from the output data given from the Julia PTMC code.
-    
-    We read the files with readfile, process the file with processhist! and output all relevant arrays and constants as defined in the constituent functions.
+    initialise(Output::Output,Tvec::TempGrid)
+Function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code for method one, or directly from the output data given from the Julia PTMC code.
+
+We read the files with `readfile`, process the file with `processhist!` and output all relevant arrays and constants as defined in the constituent functions.
 
 """
 function initialise(xdir::String)
@@ -130,7 +130,7 @@ end
 """
     nancheck(X::Vector)
     nancheck(X::Matrix)
-function to ensure no vector or matrix contains NaN as this ruins the linear algebra.
+Function to ensure no vector or matrix contains `NaN` as this ruins the linear algebra.
 """
 function nancheck(X :: Vector)
     N = length(X)
@@ -157,7 +157,7 @@ function nancheck(X::Matrix)
 end
 """ 
     bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
-function to calculate the b vector relevant to solving the RHS of the multihistogram equation. 
+Function to calculate the `b` vector relevant to solving the RHS of the multihistogram equation. 
 
 """
 function bvector(HistArray::Matrix,energyvector,beta,nsum,NTraj,NBins)
@@ -217,7 +217,7 @@ function amatrix(HistArray :: Matrix,nsum,NTraj)
 end
 """ 
     systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins,kB)
-systemsolver is used to determine the solution Alpha to the linear equation Ax = b where A and b are the A matrix and b vector described above. This is fundamentally how the multihistogram method works
+[`systemsolver`](@ref) is used to determine the solution Alpha to the linear equation `Ax = b` where `A` and `b` are the A matrix and b vector described above. This is fundamentally how the multihistogram method works.
 """
 function systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
     #solve the b vector
@@ -242,7 +242,7 @@ function systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
 end
 """
     Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
-Having determined the vector solution to Ax=b, we input alpha and the "b-matrix" the term n_{ij}*(ln(n_{ij} + beta_iE_j) we can find the entropy as a function of Energy.
+Having determined the vector solution to `Ax=b`, we input `alpha` and the "b-matrix" the term `n_{ij}*(ln(n_{ij} + beta_iE_j)` we can find the entropy as a function of energy.
 """
 function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
     S_E = []
@@ -257,7 +257,7 @@ end
     analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64; NPoints=600)
 NB: NPoints is an optional keyword expressing how dense the points should be populated. 
 
-analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
+Analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
@@ -336,16 +336,11 @@ return Z,Cv,dCv,S_T,T
 end
 """ 
     runmultihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
-
 This function completely determines the properties of a system given by the output of the initialise function and a specified directory to write to. It outputs four files with the following information:
-
-    histograms.data The top line are the corresponding energy values and the next NTraj lines are the raw histogram data. This file can be used to plot the histograms if needed. 
-    
-    Sol.X containing the solution to the linear equation Ax=B, 
-
-    S.data containing the energy values and corresponding entropies 
-
-    analysis.NVT containing the temperatures, partition function, heat capacity and its derivative. NB now includes the temperature dependent Entropy function.
+-   `histograms.data` The top line are the corresponding energy values and the next `NTraj` lines are the raw histogram data. This file can be used to plot the histograms if needed. 
+-   `Sol.X` containing the solution to the linear equation `Ax=B`, 
+-   `S.data` containing the energy values and corresponding entropies 
+-   `analysis.NVT` containing the temperatures, partition function, heat capacity and its derivative. NB now includes the temperature dependent Entropy function.
     
 """
 function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String,NPoints)
@@ -391,8 +386,7 @@ end
     multihistogram(xdir::String)
     multihistogram(output::Output,Tvec::TempGrid)
 Function has two methods which vary only in how the initialise function is called: one takes a directory and writes the output of the multihistogram analysis to that directory, the other takes the output and temperature grid and writes to the current directory unless specified otherwise.
-    
-    The output of this function are the four files defined in run_multihistogram.
+The output of this function are the four files defined in [`run_multihistogram`](@ref).
 
 """
 function multihistogram(xdir::String; NPoints=600)

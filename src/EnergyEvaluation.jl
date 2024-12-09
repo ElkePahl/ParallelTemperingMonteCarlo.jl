@@ -1,20 +1,19 @@
 """
     module EnergyEvaluation
 Structs and functions relating to the calculation of energy. Includes both low and high level functions from individual PES calculations to state-specific functions. The structure is as follows:
-    Define abstract potential and potential_variables
-    -Define PES functions
-        -  DimerPotential 
-        -  ELJB 
-        -  Embedded Atom Model 
-        -  Machine Learning Potentials 
-    -EnergyUpdate function
-        Calculates a new energy based on a trialpos for each PES type 
-    - InitialiseEnergy function 
-            Calculates potentialvariables and total energy from a new config to be used when initialising MCStates 
-    -SetVariables function 
-            Initialises the potential variables, aka creates a blank version of the struct for each type of PES
+-   Define abstract potential and potential_variables
+-   Define PES functions
+    -   DimerPotential 
+    -   ELJB 
+    -   Embedded Atom Model 
+    -   Machine Learning Potentials 
+-   EnergyUpdate function
+    -   Calculates a new energy based on a trialpos for each PES type 
+-   InitialiseEnergy function 
+    -   Calculates potentialvariables and total energy from a new config to be used when initialising MCStates 
+-   SetVariables function 
+    -   Initialises the potential variables, aka creates a blank version of the struct for each type of PES
 """
-
 module EnergyEvaluation 
 
 using StaticArrays,LinearAlgebra,StructArrays
@@ -45,18 +44,18 @@ export energy_update!,set_variables,initialise_energy,dimer_energy_config
     AbstractPotential
 Abstract type for possible potentials.
 implemented subtype: 
-- AbstractDimerPotential
-- AbstractDimerPotentialB
-- EmbeddedAtomPotential
-- AbstractMachineLearningPotential
+- [`AbstractDimerPotential`](@ref)
+- [`AbstractDimerPotentialB`](@ref)
+- [`EmbeddedAtomPotential`](@ref)
+- [`AbstractMachineLearningPotential`](@ref)
 
 
 When defining a new type, the functions relating a potential to the rest of the Monte Carlo code are explicated at the end of this file. Each potential also requires a PotentialVariable [`AbstractPotentialVariables`](@ref) struct to hold all non-static information relating a potential to the current configuration. 
 
  Needs method for:
-    energy_update! [`energy_update!`](@ref)
-    initialise_energy [`initialise_energy`](@ref) 
-    set_variables [`set_variables`](@ref)
+- [`energy_update!`](@ref)
+- [`initialise_energy`](@ref) 
+- [`set_variables`](@ref)
 
 """
 abstract type AbstractPotential end
@@ -64,11 +63,11 @@ abstract type AbstractPotential end
 """
     AbstractPotentialVariables
 An abstract type defining a class of mutable struct containing all the relevant vectors and arrays each potential will need throughout the course of a simulation to prevent over-definitions inside the MCState struct.
-    implemented subtype:
-    -DimerPotentialVariables
-    -ELJPotentialBVariables
-    -EmbeddedAtomVariables
-    -NNPVariables
+Implemented subtypes:
+- [`DimerPotentialVariables`](@ref)
+- [`ELJPotentialBVariables`](@ref)
+- [`EmbeddedAtomVariables`](@ref)
+- [`NNPVariables`](@ref)
 
 """
 abstract type AbstractPotentialVariables end
@@ -79,19 +78,24 @@ abstract type AbstractPotentialVariables end
 #--------------------------Dimer Structs--------------------------#
 """
     AbstractDimerPotential <: AbstractPotential
- implemented dimer potentials:   
-    - ELJPotential [`ELJPotential`](@ref)
-    - ELJPotentialEven [`ELJPotentialEven`](@ref)
+Implemented dimer potentials:   
+-   [`ELJPotential`](@ref)
+-   [`ELJPotentialEven`](@ref)
 
 Needs methods for 
-    - dimer_energy_atom [`dimer_energy_atom`](@ref)
-    - dimer_energy_config [`dimer_energy_config`](@ref)
+-   [`dimer_energy_atom`](@ref)
+-   [`dimer_energy_config`](@ref)
 """   
 abstract type AbstractDimerPotential <: AbstractPotential end
+"""
+    AbstractDimerPotentialB <: AbstractPotential
+Implemented dimer potentials:   
+-   [`ELJPotentialB`](@ref)
+"""
 abstract type AbstractDimerPotentialB <: AbstractPotential end
 """
     DimerPotentialVariables
-The struct contains only the `en_atom_vec``, particular special features for this potential type. 
+The struct contains only the `en_atom_vec`, particular special features for this potential type. 
 This vector is the energy per atom in the system.
 """
 mutable struct DimerPotentialVariables{T} <: AbstractPotentialVariables
@@ -101,8 +105,8 @@ end
 #Need to include ELJB here to prevent recursive definitions erroring 
 ##
 """
-ELJPotentialB{N,T}
-   Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
+    ELJPotentialB{N,T}
+Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a`, `coeff_b`, `coeff_c`
 """
 struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
     coeff_a::SVector{N,T}
@@ -127,6 +131,10 @@ function ELJPotentialB(a,b,c)
     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
 end
 
+"""
+    ELJPotentialBVariables{T}
+Contains the `en_atom_vec`, `tan_mat` and `new_tan_vec` for the ELJPotentialB potential.
+"""
 mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Array{T}
     tan_mat::Matrix{T}
@@ -143,10 +151,9 @@ end
 
 Sums the dimer energies for atom `i` with all other atoms 
 Needs vector of squared distances `d2vec` between atom `i` and all other atoms in configuration
-see  `get_distance2_mat` [`get_distance2_mat`](@ref) 
-and potential information `pot` [`AbstractPotential`](@ref) 
+See [`get_distance2_mat`](@ref) and potential information `pot` [`AbstractPotential`](@ref) 
 
-second method includes additional variable `r_cut` to exclude distances outside the cutoff radius of the potential.
+Second method includes additional variable `r_cut` to exclude distances outside the cutoff radius of the potential.
 
 Final two methods relate to the use of magnetic field potentials such as the ELJB potential.
 """
@@ -208,7 +215,7 @@ calculates total energy of configuration.
 
 First two methods are for standard dimer potentials, one with a cutoff radius, one without a cutoff radius. The final two methods are for the same calculation using a magnetic potential such as the ELJB potential. 
 
-Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
+Needs squared distances matrix, see [`get_distance2_mat`](@ref) 
 and potential information `pot` [`AbstractPotential`](@ref) 
 """
 function dimer_energy_config(distmat, NAtoms, potential_variables::DimerPotentialVariables,pot::AbstractDimerPotential)
@@ -332,8 +339,8 @@ end
 """
     ELJPotential{N,T} 
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
-as sum over c_i r^(-i), starting with i=6 up to i=N+6
-field name: coeff : contains ELJ coefficients c_ifrom i=6 to i=N+6, coefficient for every power needed.
+as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6`
+field name: `coeff` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6`, coefficient for every power needed.
 """
 struct ELJPotential{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
@@ -356,11 +363,11 @@ end
 """
     dimer_energy(pot::ELJPotential{N}, r2)
 Calculates energy of dimer for given potential `pot` and squared distance `r2` between atoms
-methods implemented for:
+Methods implemented for:
 
-    - ELJPotential [`ELJPotential`](@ref)
+-   [`ELJPotential`](@ref)
 
-    - ELJPotentialEven [`ELJPotentialEven`](@ref)
+-   [`ELJPotentialEven`](@ref)
 """
 function dimer_energy(pot::ELJPotential{N}, r2) where N
     r = sqrt(r2)
@@ -376,8 +383,8 @@ end
 """
     ELJPotentialEven{N,T} 
 Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
-as sum over c_i r^(-i), starting with i=6 up to i=N+6 with only even integers i
-field name: coeff : contains ELJ coefficients c_i from i=6 to i=N+6 in steps of 2, coefficient for every even power needed.
+as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6` with only even integers `i`
+field name: `coeff` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6` in steps of 2, coefficient for every even power needed.
 """
 struct ELJPotentialEven{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
@@ -411,9 +418,9 @@ end
 """
     lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
     lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
-The long range correction for the extended Lennard-Jones potential (even). r_cut is the cutoff distance.
+The long range correction for the extended Lennard-Jones potential (even). `r_cut` is the cutoff distance.
 lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
-Second method applies to the ELJ potential in extreme magnetic fields ELJB
+Second method applies to the ELJ potential in extreme magnetic fields ELJB.
 """
 function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
     
@@ -475,15 +482,15 @@ end
 #     new_tan_vec::Vector{T}
 # end
 """
-    dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
-Dimer energy when the distance square between two atom is r2 and the angle between the line connecting them and z-direction is tan.
-When r2 < 5.30, returns 1.
+    dimer_energy(pot::ELJPotentialB{N}, r2, z_angle) where N
+Dimer energy when the distance square between two atom is `r2` and the angle between the line connecting them and z-direction is `z_angle`.
+When `r2 < 5.30`, returns 1.
 """
-function dimer_energy(pot::ELJPotentialB{N}, r2, tan) where N
+function dimer_energy(pot::ELJPotentialB{N}, r2, z_angle) where N
    
     if r2>=5.30
         r6inv = 1/(r2*r2*r2)
-        t2=2/(tan^2+1)-1     #cos(2*theta)
+        t2=2/(z_angle^2+1)-1     #cos(2*theta)
         t4=2*t2^2-1
         sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1]*t2 + pot.coeff_b[1]*t4)
         r6inv/=r2
@@ -504,11 +511,11 @@ end
 """
     EmbeddedAtomPotential
 Struct containing the important quantities for calculating EAM (specifically Sutton-Chen type) potentials.
-    Fields:
-    `n` the exponent for the two-body repulsive ϕ component
-    `m` the exponent for the embedded electron density ρ
-    `ean` multiplicative factor ϵa^n /2 for ϕ
-    `eCam` multiplicative factor ϵCa^(m/2) for ρ 
+-   Fields:
+    -   `n` the exponent for the two-body repulsive ϕ component
+    -   `m` the exponent for the embedded electron density ρ
+    -   `ean` multiplicative factor `ϵa^n /2` for ϕ
+    -   `eCam` multiplicative factor `ϵCa^(m/2)` for ρ 
 
 """
 struct EmbeddedAtomPotential <: AbstractPotential
@@ -527,6 +534,10 @@ function EmbeddedAtomPotential(n,m,ϵ,C,a)
     return EmbeddedAtomPotential(n,m,epsan,epsCam)
 end
 
+"""
+    EmbeddedAtomVariables{T}
+Contains the `component_vector` and `new_component_vector` for the EAM potential.
+"""
 mutable struct EmbeddedAtomVariables{T} <: AbstractPotentialVariables
     component_vector::Matrix{T}
     new_component_vector::Matrix{T}
@@ -605,16 +616,20 @@ end
 #-----------------------------------------------------------#
 #----------------Machine Learning Potentials----------------#
 #-----------------------------------------------------------#
-
+"""
+    AbstractMachineLearningPotential <: AbstractPotential
+Abstract type for all Machine Learning Potentials.
+"""
 abstract type AbstractMachineLearningPotential <: AbstractPotential end
 
 """
     RuNNerPotential <: AbstractMachineLearningPotential
 Contains the important structs required for a neural network potential defined in the MachineLearningPotential package:
-    Fields are:
-    nnp -- a struct containing the weights, biases and neural network parameters.
-    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
-    r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
+-   Fields are:
+    -   `nnp` -- a struct containing the weights, biases and neural network parameters.
+    -   `radsymfunctions` -- a vector containing the hyperparameters used to calculate symmetry function values
+    -   `angsymfunctions` -- a vector containing the hyperparameters used to calculate symmetry function values
+    -   `r_cut` -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
 """
 struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
     nnp:: NeuralNetworkPotential
@@ -630,6 +645,11 @@ function RuNNerPotential(nnp,radsymvec,angsymvec)
     angvec = StructVector([asymm for asymm in angsymvec])
     return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut)
 end
+
+"""
+    NNPVariables{T}
+Bundle of variables used for the NNP potential.
+"""
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
 
     en_atom_vec::Vector{T}
@@ -642,7 +662,7 @@ mutable struct NNPVariables{T} <: AbstractPotentialVariables
 end
 """
     get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot)
-Function for finding the new state variables for calculating an NNP. Redefines new_f and new_g matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `potential_variables` according to the variables in `pot`.
+Function for finding the new state variables for calculating an NNP. Redefines `new_f` and `new_g` matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `potential_variables` according to the variables in `pot`.
 """
 function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,pot::RuNNerPotential{Nrad,Nang}) where {Nrad,Nang}
     # new_dist2_vec = [ distance2(trial_pos,b,config.bc) for b in config.pos]
@@ -654,7 +674,7 @@ function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variab
 end
 """
     calc_new_runner_energy!(potential_variables::NNPVariables,new_en,pot)
-function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
+Function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
 """
 function calc_new_runner_energy!(potential_variables::NNPVariables,pot::RuNNerPotential)
     potential_variables.new_en_atom = forward_pass(potential_variables.new_g_matrix,length(potential_variables.en_atom_vec),pot.nnp)
@@ -676,15 +696,15 @@ end
 
 Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` it operates on the `potential_variables` along with the `dist2_mat`. Using `pot` the potential to find the `new_en`. 
 
-    Has additional methods including `r_cut` where appropriate for use with periodic boundary conditions
-    
-    This function is designed as a curry function. The generic get_energy function operates on a __vector__ of states, this function takes each state and the set potential and calls the potential specific energy_update function.
+Has additional methods including `r_cut` where appropriate for use with periodic boundary conditions.
 
-        Methods defined for :
-            - AbstractDimerPotential
-            - AbstractDimerPotentialB
-            - EmbeddedAtomPotential
-            - RuNNerPotential
+This function is designed as a curry function. The generic [`get_energy!`](@ref ParallelTemperingMonteCarlo.MCRun.get_energy!) function operates on a __vector__ of states, this function takes each state and the set potential and calls the potential specific [`energy_update!`](@ref) function.
+
+-   Methods defined for :
+    -   [`AbstractDimerPotential`](@ref)
+    -   [`AbstractDimerPotentialB`](@ref)
+    -   [`EmbeddedAtomPotential`](@ref)
+    -   [`RuNNerPotential`](@ref)
 """
 function energy_update!(trial_pos,index,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
 
@@ -759,9 +779,9 @@ end
 
 Initialise energy is used during the MCState call to set the starting energy of a `config` according to the potential as `pot` and the configurational variables `potential_variables`. Written with general input means the top-level is type-invariant. 
 Methods included for:
-    - Dimer Potential with and without magnetic field and with and without PBC 
-    - EmbeddedAtomModel 
-    - Machine Learning Potentials 
+    -   Dimer Potential with and without magnetic field and with and without PBC 
+    -   EmbeddedAtomModel 
+    -   Machine Learning Potentials 
 """
 function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NVTVariables,pot::AbstractDimerPotential)
     potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,pot)
@@ -798,8 +818,7 @@ end
     set_variables(config,dist2_matrix,pot::EmbeddedAtomPotential)
     set_variables(config,dist_2_mat,pot::AbstractDimerPotential)
 
-initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the MCState function as this must be type-invariant with respect to the potential. 
-    
+Initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the [`MCState`](@ref ParallelTemperingMonteCarlo.MCStates.MCState) function as this must be type-invariant with respect to the potential. 
 """
 function set_variables(config::Config{N,BC,T},dist_2_mat,pot::AbstractDimerPotential) where {N,BC,T}
     return DimerPotentialVariables{T}(zeros(N))

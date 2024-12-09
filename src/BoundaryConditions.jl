@@ -1,7 +1,7 @@
 """ 
     module BoundaryConditions
 
-    this module provides structs and methods for different kinds of boundary conditions
+This module provides structs and methods for different kinds of boundary conditions.
         
 """
 module BoundaryConditions
@@ -15,19 +15,19 @@ export check_boundary
 """   
     AbstractBC{T} 
 Encompasses possible boundary conditions; implemented: 
-- SphericalBC [`SphericalBC`](@ref)
-- PeriodicBC [`PeriodicBC`](@ref)
+-   [`SphericalBC`](@ref)
+-   [`PeriodicBC`](@ref)
 
-needs methods implemented for
-    - atom_displacement [`atom_displacement`](@ref)
+Needs methods implemented for
+-   [`atom_displacement`](@ref ParallelTemperingMonteCarlo.MCMoves.atom_displacement)
 """
 abstract type AbstractBC{T} end
 
 """
     SphericalBC{T}(;radius)
 Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@ref).
-Needs radius of binding sphere as keyword argument   
-fieldname: `radius2`: squared radius of binding sphere
+Needs radius of binding sphere as keyword argument.
+Fieldname: `radius2`: squared radius of binding sphere
 """
 struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
@@ -37,9 +37,9 @@ end
 """
     PeriodicBC{T}
 Overarching type of boundary condition for simulating the infinite bulk
-    Implemented types:
-    - CubicBC
-    - RhombicBC
+-   Implemented types:
+    -   [`CubicBC`](@ref)
+    -   [`RhombicBC`](@ref)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 """
@@ -51,7 +51,7 @@ struct CubicBC{T} <: PeriodicBC{T}
 end
 """
     RhombicBC{T}
-Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, box_length applies to all four sides.
+Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, `box_length` applies to all four sides.
 """
 struct RhombicBC{T} <: PeriodicBC{T}
     box_length::T
@@ -69,7 +69,7 @@ check_boundary(bc::SphericalBC,pos) = sum(x->x^2,pos) > bc.radius2
 
 """
     test_cluster_inside(conf,bc::SphericalBC)
-Tests if whole cluster lies in the binding sphere     
+Tests if whole cluster lies in the binding sphere.
 """
 test_cluster_inside(conf,bc) = sum(x->outside_of_boundary(bc,x),conf.pos) == 0
 
