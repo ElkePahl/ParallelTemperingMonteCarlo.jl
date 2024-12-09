@@ -16,16 +16,15 @@ using ..Ensembles
     atom_displacement(mc_states,index)
     atom_displacement(mc_state)
 
-Generates trial position for atom, moving it from `pos` by some random displacement 
-Random displacement determined by `max_displacement`
+Generates trial position for atom, moving it from `pos` by some random displacement.
+Random displacement determined by `max_displacement`.
 These variables are additionally contained in `mc_state` where the pos is determined by `index`.
 Implemented for:
-    
-    - `SphericalBC`: trial move is repeated until moved atom is within binding sphere
-    - `CubicBC`; `RhombicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+-   `SphericalBC`: trial move is repeated until moved atom is within binding sphere
+-   `CubicBC`; `RhombicBC`: periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
 
 
-The final method is a wrapper function which unpacks mc_states, which contains all the necessary arguments for the two methods above. When we have correctly implemented move_strat this wrapper will be expanded to include other methods
+The final method is a wrapper function which unpacks `mc_states`, which contains all the necessary arguments for the two methods above. When we have correctly implemented `move_strat` this wrapper will be expanded to include other methods.
 """
 function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
@@ -86,8 +85,8 @@ end
 
 """
     volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
-scale the whole configuration, including positions and the box length.
-returns the trial configuration as a struct. 
+Scale the whole configuration, including positions and the box length.
+Returns the trial configuration as a struct. 
 """
 function volume_change(conf::Config, bc::CubicBC, max_vchange, max_length)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
@@ -120,8 +119,8 @@ end
 """
     generate_move!(mc_state,movetype::atommove)
     generate_move!(mc_state,movetype::volumemove)
-generate move is the currying function that takes mc_state and a movetype 
-and generates the variables required inside of the ensemblevariables struct within mc_state. 
+[`generate_move!`](@ref) is the currying function that takes `mc_state` and a `movetype` 
+and generates the variables required inside of the `ensemblevariables` struct within `mc_state`. 
 """
 function generate_move!(mc_state::MCState,movetype::String)
     if movetype == "atommove"

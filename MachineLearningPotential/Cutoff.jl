@@ -15,25 +15,25 @@ export cutoff_function
 
     dist2(a,b)
 
-squared distance of two vectors `a` `b` 
+Squared distance of two vectors `a`,`b` 
 """
 dist2(a,b) = (a-b)⋅(a-b)
 """
     find_distance2_mat(pos)
-given a vector called `pos` comprised of (ideally) static vectors we return a lengthXlength symmetric matrix of the squared distance
+Given a vector called `pos` comprised of (ideally) static vectors we return a lengthXlength symmetric matrix of the squared distance
 """
 find_distance2_mat(pos) = [dist2(a,b) for a in pos, b in pos]
 
 """
     thetacalc(xy,xz,disxy,disxz)
-calculates cosine theta of two vectors `xy,xz` with their sqared-distances `disxy,disxz`. 
+Calculates cosine theta of two vectors `xy,xz` with their sqared-distances `disxy,disxz`. 
 """
 thetacalc(xy,xz,disxy,disxz) = xy⋅xz/(disxy*disxz)
 
 """
     angular_measure(a,b,c,r2ij,r2ik)
     angular_measure(a,b,c)
-angular measure accepts three vectors `a`,`b`,`c` and can either accept or calculate the squared distances between them `r2_ab`,`r2_bc`, centred on vector `a`. Returns cos(θ) labelled as θ: the angular measure.
+Accepts three vectors `a`,`b`,`c` and can either accept or calculate the squared distances between them `r2_ab`,`r2_bc`, centred on vector `a`. Returns cos(θ) labelled as θ: the angular measure.
 """
 function angular_measure(a,b,c,r2ab,r2ac)
     θ = (a - b)⋅(a - c)/sqrt(r2ab*r2ac) 
@@ -66,11 +66,10 @@ end
 #------------------------------------------------------------------#
 """
     cutoff_function(r_scaled)
-
     cutoff_function(r_ij,r_cut)
     cutoff_function(dist_vec::T,r_cut) where {T<:Array}
 
-Implementation of the type 2 cutoff function. Either accepts scaled radius `r_scaled` or the interatomiic distance `r_ij` and the cutoff radius `r_cut`. Calculation is described in the RuNNer documentation, given as 1/2 (cos(πx) + 1) where x is (r_ij - r_i,c)/(rc - r_i,c). As an inner cutoff is not used by the potentials we are interested in, we have not included a method. A third method is included for creating a matrix or vector to match the distances provided. 
+Implementation of the type 2 cutoff function. Either accepts scaled radius `r_scaled` or the interatomiic distance `r_ij` and the cutoff radius `r_cut`. Calculation is described in the RuNNer documentation, given as `1/2 (cos(πx) + 1)` where `x` is `(r_ij - r_i,c)/(rc - r_i,c)`. As an inner cutoff is not used by the potentials we are interested in, we have not included a method. A third method is included for creating a matrix or vector to match the distances provided. 
 """
 function cutoff_function(r_scaled)
     

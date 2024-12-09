@@ -4,11 +4,11 @@
 This module defines types and functions for working with atomic configurations of N atoms.
 
 ## Exported types  
-- [`Config`](@ref) 
+-   [`Config`](@ref) 
 
 ## Exported functions
-- [`distance2`](@ref)
-- [`get_distance2_mat`](@ref)
+-   [`distance2`](@ref)
+-   [`get_distance2_mat`](@ref)
 """
 module Configurations
 
@@ -82,9 +82,9 @@ export get_centre,recentre!
     Config{N}(positions::Vector{SVector{3,T}}, bc::AbstractBC)
     Config(pos, bc::BC) where {BC<:AbstractBC}
 Generates a configuration of `N` atomic positions, each position saved as SVector of length 3.
-Fieldnames: 
-    - `pos`: vector of x,y, and z coordinates of every atom 
-    - `bc`: boundary condition
+-   Fieldnames: 
+    -   `pos`: vector of x,y, and z coordinates of every atom 
+    -   `bc`: boundary condition
 """
 struct Config{N, BC, T} 
     pos::Vector{SVector{3,T}}
@@ -119,14 +119,14 @@ Base.length(::Config{N}) where N = N
 
 """
     get_centre(position,N)
-function to find the centre of mass of a configuration. Accepts the positions and number of positions and calculates the xyz coordinates of their centre.
+Function to find the centre of mass of a configuration. Accepts the positions and number of positions and calculates the xyz coordinates of their centre.
 """
 function get_centre(position,N)
     return [sum([pos[1] for pos in position]),sum([pos[2] for pos in position]),sum([pos[3] for pos in position])]./N
 end
 """
     recentre!(conf::Config{N,BC,T}) where {N,BC,T}
-function to change the centre of mass of a configuration `conf' to [0,0,0] in cartesian space
+Function to change the centre of mass of a configuration `conf` to [0,0,0] in Cartesian space.
 """
 function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
     cofm = get_centre(conf.pos,N)
@@ -140,11 +140,11 @@ end
     distance2(a,b,bc::SphericalBC)
     distance2(a,b,bc::CubicBC) 
     distance2(a,b,bc::RhombicBC)
-method 1&2 -
+Method 1&2 -
 Finds the distance between two positions a and b.
-method 3 -
+Method 3 -
 Finds the distance between two positions a and the nearest image of b in a cubic box.
-method 4 - 
+Method 4 - 
 Finds the distance between two positions a and the nearest image of b in a rhombic box.
 Minimum image convension in the z-direction is the same as the cubic box.
 In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
@@ -189,11 +189,11 @@ end
     get_tan(a,b,bc::SphericalBC)
     get_tan(a,b,bc::CubicBC)
     get_tan(a,b,bc::RhombicBC)
-method 1&2 :
+Method 1&2 :
 tan of the angle between the line connecting two points a and b, and the z-direction
-method 3:
+Method 3:
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
-method 4: 
+Method 4: 
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a rhombic boundary
 """
 function get_tan(a,b)
@@ -270,7 +270,8 @@ end
 """
     get_volume(bc::CubicBC)
     get_volume(bc::RhombicBC)
-returns the volume of a box according to its geometry for use where the ensemble does not imply a fixed V. 
+
+Returns the volume of a box according to its geometry for use where the ensemble does not imply a fixed `V`.
 """
 function get_volume(bc::CubicBC)
     return bc.box_length^3

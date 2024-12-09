@@ -14,22 +14,20 @@ export MCState#, NNPState
     MCState(temp, beta, config::Config, pot; kwargs...) 
 Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
 
-Fieldnames:
-- `temp`: temperature
-- `beta`: inverse temperature
-- `config`: actual configuration in Markov chain [`Config`](@ref)  
-- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
--`new_dist2_vec`: calculates the new r2 between atoms based on a trial move
-- `new_en` : new energy value for trial configuraiton
-- `en_tot`: total energy of `config`; generated automatically when `pot` given
-
-- `potential_variables` : mutable struct containing energy-related variables for the current configuration
-- `ensemble_variables` : mutable struct containing ensemble-related variables for the current configuraiton
-- `ham`: vector containing sampled energies - generated in MC run
-- `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
-- `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
-
-- `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
+-   Fieldnames:
+    -   `temp`: temperature
+    -   `beta`: inverse temperature
+    -   `config`: actual configuration in Markov chain [`Config`](@ref)  
+    -   `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
+    -   `new_dist2_vec`: calculates the new r2 between atoms based on a trial move
+    -   `new_en` : new energy value for trial configuraiton
+    -   `en_tot`: total energy of `config`; generated automatically when `pot` given
+    -   `potential_variables` : mutable struct containing energy-related variables for the current configuration
+    -   `ensemble_variables` : mutable struct containing ensemble-related variables for the current configuraiton
+    -   `ham`: vector containing sampled energies - generated in MC run
+    -   `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
+    -   `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
+    -   `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
 """
 mutable struct MCState{T,N,BC,PVType,EVType}
     temp::T
@@ -51,7 +49,7 @@ end
 
 """
     max_length(bc)
-    Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
+Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
 """
 function max_length(bc::SphericalBC)
     return 30.
@@ -63,7 +61,10 @@ function max_length(bc::RhombicBC)
     return bc.box_length*1.8
 end
 
-
+"""
+    MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; kwargs...)
+Constructor for the [`MCState`](@ref) struct.
+"""
 function MCState(
     temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; 
     max_displ = [0.1,0.1,1.], max_boxlength = max_length(config.bc), count_atom = [0,0], count_vol = [0,0], count_exc = [0,0]

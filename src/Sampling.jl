@@ -17,9 +17,8 @@ using ..Ensembles
     update_energy_tot(mc_state,ensemble::NVT)
     update_energy_tot(mc_state,ensemble::NPT)
 
-function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
-    
-    Two methods avoids needless for-loops, where the JIT can save us computation time.
+Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
+Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
 function update_energy_tot(mc_states,ensemble::NVT)
         for state in mc_states
@@ -36,7 +35,8 @@ function update_energy_tot(mc_states,ensemble::NPT)
 end
 """
     find_hist_index(mc_state,results,delta_en_hist)
-returns the histogram index of a single mc_state energy and returns this value. 
+    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+Returns the histogram index of a single `mc_state` energy and returns this value. 
 """
 function find_hist_index(mc_state,results,delta_en_hist)
 
@@ -50,11 +50,6 @@ function find_hist_index(mc_state,results,delta_en_hist)
         return hist_index +1
     end
 end
-
-"""
-    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
-returns the histogram index of a single mc_state energy and returns this value. 
-"""
 function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
 
     hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
@@ -83,9 +78,9 @@ end
     initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
     initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
-Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from e_bounds and (with 2% either side additionally) used to determine the energy grating for the histogram (delta_en_hist). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is 2*r2 and distance**2 is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as en_histogram
+Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from `e_bounds` and (with 2% either side additionally) used to determine the energy grating for the histogram (`delta_en_hist`). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is `2*r2` and `distance**2` is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as `en_histogram`.
 
-Returns delta_en_hist,delta_r2
+Returns `delta_en_hist`, `delta_r2`
 """
 function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
 
@@ -158,7 +153,8 @@ end
 
 """
     update_histograms!(mc_states,results,delta_en_hist)
-Self explanatory name, updates the energy histograms in results using the current mc_states.en_tot
+    update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+Self explanatory name, updates the energy histograms in `results` using the current `mc_states.en_tot`
 
 """
 function update_histograms!(mc_states,results,delta_en_hist)
@@ -169,11 +165,6 @@ function update_histograms!(mc_states,results,delta_en_hist)
 
 end
 
-"""
-    update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
-Self explanatory name, updates the energy histograms in results using the current mc_states.en_tot
-
-"""
 function update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
      for i_traj in eachindex(mc_states)
         @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist)
@@ -186,7 +177,7 @@ rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
       
 """
     update_rdf!(mc_states,results,delta_r2)
-Self explanatory name, iterates over mc_states and adds to the appropriate results.rdf histogram. Type stable by the initialise function specifying a vector of integers.  
+Self explanatory name, iterates over `mc_states` and adds to the appropriate `results.rdf` histogram. Type stable by the initialise function specifying a vector of integers.  
 
 """
 function update_rdf!(mc_states,results,delta_r2)
@@ -207,9 +198,9 @@ end
     sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results)
     sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
 
-Function performed at the end of an mc_cycle! after equilibration. Updates the E,E**2 totals for each mc_state, updates the energy and radial histograms and then returns the modified mc_states and results.
+Function performed at the end of an [`mc_cycle!`](@ref ParallelTemperingMonteCarlo.MCRun.mc_cycle!) after equilibration. Updates the `E,E**2` totals for each `mc_state`, updates the energy and radial histograms and then returns the modified `mc_states` and `results`.
 
-N.B. we have now included the delta_en, delta_v and delta_r2 values in the results struct to allow for more general methods such as this.  
+N.B. we have now included the `delta_en`, `delta_v` and `delta_r2` values in the `results` struct to allow for more general methods such as this.  
 
 Second method does not perform the rdf calculation. This is designed to improve the speed of sampling where the rdf is not required.
 
@@ -240,7 +231,7 @@ end
 
 """
     finalise_results(mc_states,mc_params,results)
-Function designed to take a complete mc simulation and calculate the averages. 
+Function designed to take a complete MC simulation and calculate the averages. 
 """
 function finalise_results(mc_states,mc_params,results)
 

@@ -1,7 +1,7 @@
 """ 
     module InputParams
 
-this module provides structs and methods to arrange input parameters
+This module provides structs and methods to arrange input parameters.
 """
 module InputParams
 
@@ -23,13 +23,13 @@ const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
 """
     MCParams(cycles, n_traj, n_atoms; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100, n_bin = 100)
 Type that collects MC specific data; field names: 
-    - `mc_cycle`: number of MC cycles
-    - `eq_cycles`: number of equilibration cycles (default 20% of `mc_cycle`)
-    - `mc_sample`: gives number of MC cycles after which energy is saved (default: 1)
-    - `n_traj`: number of trajectories (ie. temperatures) propagated in parallel
-    - `n_atoms`: number N of atoms in configuration
-    - `n_adjust`: number of moves after which step size of atom/volume moves is adjusted (default: 100)
-    - `n_bin`: number of histogram bins (default: 100)
+-   `mc_cycle`: number of MC cycles
+-   `eq_cycles`: number of equilibration cycles (default 20% of `mc_cycle`)
+-   `mc_sample`: gives number of MC cycles after which energy is saved (default: 1)
+-   `n_traj`: number of trajectories (ie. temperatures) propagated in parallel
+-   `n_atoms`: number N of atoms in configuration
+-   `n_adjust`: number of moves after which step size of atom/volume moves is adjusted (default: 100)
+-   `n_bin`: number of histogram bins (default: 100)
 """
 struct MCParams
     mc_cycles::Int
@@ -53,13 +53,13 @@ end
     TempGrid{N}(ti, tf; tdistr) 
     TempGrid(ti, tf, N; tdistr=:geometric)
 Generates grid of `N` temperatures and inverse temperatures for MC calculation
-between initial and final temperatures `ti` and `tf`
-Field names:
-    - `t_grid`: temperatures (in K)
-    - `beta_grid`: inverse temperatures (in atomic units)
-Keyword argument `tdistr`:
-    - :geometric (default): generates geometric temperature distribution
-    - :equally_spaced: generates equally spaced temperature grid (not implemented presently)
+between initial and final temperatures `ti` and `tf`.
+-   Field names:
+    -   `t_grid`: temperatures (in K)
+    -   `beta_grid`: inverse temperatures (in atomic units)
+-   Keyword argument `tdistr`:
+    -   `:geometric` (default): generates geometric temperature distribution
+    -   `:equally_spaced`: generates equally spaced temperature grid (not implemented presently)
 """
 struct TempGrid{N,T} 
     t_grid::SVector{N,T}
@@ -84,20 +84,19 @@ TempGrid(ti, tf, N; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 """
     Output{T}(n_bin; en_min = 0)
 Collects output of MC calculation; field names:
-    - `n_bin`: number of energy bins for histograms
-    - `en_min`: minimum energy found during calculation
-    - `en_max`: maximum energy found during calculation
-    - `v_min`: minimum volume
-    - `v_max`: maximum volume
-    - `delta_en_hist`: the step size associated with the energy histogram 
-    - `delta_v_hist`: step size associated with volume histogram
-    - `delta_r2`: step size associated with the rdf histogram
-    - `max_displ`: final maximum displacements
-    - `en_avg`: inner energy U(T) (as average over sampled energies)
-    - `heat_cap`: heat capacities C(T) 
-    - `rdf`: radial distribution information
-    - `count_stat_*`: statistics of accepted atom, volume and rotation moves 
-                 and attempted and successful parallel-tempering exchanges
+-   `n_bin`: number of energy bins for histograms
+-   `en_min`: minimum energy found during calculation
+-   `en_max`: maximum energy found during calculation
+-   `v_min`: minimum volume
+-   `v_max`: maximum volume
+-   `delta_en_hist`: the step size associated with the energy histogram 
+-   `delta_v_hist`: step size associated with volume histogram
+-   `delta_r2`: step size associated with the rdf histogram
+-   `max_displ`: final maximum displacements
+-   `en_avg`: inner energy U(T) (as average over sampled energies)
+-   `heat_cap`: heat capacities C(T) 
+-   `rdf`: radial distribution information
+-   `count_stat_*`: statistics of accepted atom, volume and rotation moves and attempted and successful parallel-tempering exchanges
 """
 mutable struct Output{T}
     n_bin::Int

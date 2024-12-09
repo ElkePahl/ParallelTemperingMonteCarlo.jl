@@ -16,7 +16,7 @@ export total_symm!,symmetry_calculation!,total_thr_symm!
 #-------------------------------------------------------------------#
 """
     adjust_symm_val!(g_value,r_sum,f_prod,η,g_norm)
-Designed to update the radial symmetry function value `g_value`. Accepts the hyperparameter `η` as well as `r_sum`, `f_prod` and `g_norm` and adds the individual contribution of g_{ij}. 
+Designed to update the radial symmetry function value `g_value`. Accepts the hyperparameter `η` as well as `r_sum`, `f_prod` and `g_norm` and adds the individual contribution of `g_{ij}`. 
 """
 function adjust_symm_val!(g_value,r_sum,f_prod,η,g_norm)
     #adjusts radial type 2 symmetry function
@@ -25,7 +25,7 @@ function adjust_symm_val!(g_value,r_sum,f_prod,η,g_norm)
 end
 """
     adjust_radial_symm_val!(g_value1,g_value2,rnew_ij,r2_ij,fnew_ij,f2_ij,η,g_norm)
-Taking the i and j symmetry function values `g_value#` we use the hyperparameters `η,g_norm` as well as the old and new distances and cutoff functions `rnew_ij,fnew_ij` `r2_ij,f2_ij` adds the new symmetry value and subtracts the old one based on g_{ij}
+Taking the `i` and `j` symmetry function values `g_value1,g_value2` we use the hyperparameters `η,g_norm` as well as the old and new distances and cutoff functions `rnew_ij,fnew_ij` `r2_ij,f2_ij` adds the new symmetry value and subtracts the old one based on `g_{ij}`
 """
 function adjust_radial_symm_val!(g_value1,g_value2,rnew_ij,r2_ij,fnew_ij,f2_ij,η,g_norm)
  
@@ -38,9 +38,8 @@ end
     adjust_angular_symm_val!(g_value,θ_new,θ_old,exp_new,exp_old,tpz)
     adjust_angular_symm_val!(g_value,exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
 
-Functions for adjusting angular symmetry function value from `g_value` by calculating the exponential component `exp_old,exp_new`, theta components `θ_val_old,θ_val_new` from the angles `θ_old,θ_new` and the normalisaiton factor `tpz` These are used to subtract the old g value and add the new one. 
+Functions for adjusting angular symmetry function value from `g_value` by calculating the exponential component `exp_old,exp_new`, theta components `θ_val_old,θ_val_new` from the angles `θ_old,θ_new` and the normalisaiton factor `tpz` These are used to subtract the old `g` value and add the new one. 
 """
-
 function adjust_angular_symm_val!(g_value,θ_new,θ_old,exp_new,exp_old,tpz)
 
     g_value += exp_new*θ_new*tpz
@@ -58,7 +57,7 @@ end
 #---------------------------------------------------------------------------#
 """
     calc_new_symmetry_value!(g_vector,indexi,indexj,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
-Call for the radial symmetry value designed to curry the input from `g_vector` at positions `indexi,indexj` to the adjust_radial_symm_val! function. It unpacks the radial distances from `dist2_mat,new_dist2_vector` and the cutoff functions from `f_matrix,new_f_vec` as well as the hyperparameters `η,g_norm` and gives these values to the lower level functions. 
+Call for the radial symmetry value designed to curry the input from `g_vector` at positions `indexi,indexj` to the [`adjust_radial_symm_val!`](@ref) function. It unpacks the radial distances from `dist2_mat,new_dist2_vector` and the cutoff functions from `f_matrix,new_f_vec` as well as the hyperparameters `η,g_norm` and gives these values to the lower level functions. 
 """
 function calc_new_symmetry_value!(g_vector,indexi,indexj,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
     g_vector[indexi],g_vector[indexj] = adjust_radial_symm_val!(g_vector[indexi],g_vector[indexj],new_dist2_vector[indexj],dist2_mat[indexi,indexj],new_f_vector[indexj],f_matrix[indexi,indexj],η,g_norm)
@@ -68,7 +67,7 @@ end
     calc_new_symmetry_value!(g_vector,indices,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
     calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,λ,ζ,tpz)
 
-Currying functions from higher-level data structures such as the radial distances in `dist2_mat,new_dist2_vector` and cutoff functions `f_matrix,new_f_vector` as well as positions in `newposition,position` and passes these to lower level functions along with hyperparameters `η,λ,ζ,tpz` to adjust the values in `g_vector` at positions `indexi,indexj,indexk` calculates the required exponential component and angles to pass down to adjust_angular_symm_val!
+Currying functions from higher-level data structures such as the radial distances in `dist2_mat,new_dist2_vector` and cutoff functions `f_matrix,new_f_vector` as well as positions in `newposition,position` and passes these to lower level functions along with hyperparameters `η,λ,ζ,tpz` to adjust the values in `g_vector` at positions `indexi,indexj,indexk` calculates the required exponential component and angles to pass down to [`adjust_angular_symm_val!`](@ref)
 """
 function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ,tpz)
 
@@ -97,7 +96,7 @@ end
 
 Method one is designed for radial symmetry functions. Given an atom at `atomindex` along with high level data structures: `dist2_mat,new_dist2_vector,f_matrix,new_f_vector` containing the new and old positions, distances and cutoff functions. Given a single `symmetry_function` we iterate over all other atoms and pass their index to lower level currying functions.  The positions `newposition,position` are included for consistency with the higher-level function.
 
-Method two is designed to do the same for the angular symmetry function using the same inputs. Double loop over all j all k and use calc_new_symmetry_value! over `g_vector`
+Method two is designed to do the same for the angular symmetry function using the same inputs. Double loop over all `j,k` and use [`calc_new_symmetry_value!`](@ref) over `g_vector`
 """
 function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,symmetry_function::RadialType2)
     if symmetry_function.type_vec == Int(11)
@@ -136,7 +135,7 @@ function angular_symmetry_calculation!(g_vector,atomindex,newposition,position,d
 end
 """
     total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined symmetry_calculation function. 
+Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined [`symmetry_calculation!`](@ref) function. 
 """
 # function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
 #     for g_index in eachindex(total_symmetry_vector)

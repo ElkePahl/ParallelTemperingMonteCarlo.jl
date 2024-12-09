@@ -3,13 +3,12 @@
 """
     swap_config!(mc_state,movetype)
 
-function for replacing the MC state and potential variables values with the updated values when metropolis condition is met. 
+Function for replacing the MC state and potential variables values with the updated values when metropolis condition is met. 
 Implemented for the following `move_type`:
-    - atommove 
-    - volumemove
-All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
+-   `atommove` 
+-   `volumemove`
+All methods also call the [`swap_vars!`](@ref) function which distributes the appropriate `mc_states.potential_variables` values into the current `mc_state` struct.
 """
-
 function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
@@ -40,8 +39,8 @@ function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where
 end
 """
     swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
-swaps mc states and ensemble variables in case of accepted volume move for NPT ensemble
-implemented for `CubicBC` and  `RhombicBC`
+Swaps `mc_state`s and ensemble variables in case of accepted volume move for NPT ensemble.
+Implemented for [`CubicBC`](@ref ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
 """
 function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
     mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
@@ -67,14 +66,17 @@ end
 
 """
     swap_vars!(i_atom,potential_variables::V)
-
-called by `swap_atom_config!` function; 
+Called by `swap_atom_config!` function; 
 takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration 
 and replaces the current values with the new values such as:
-    - Under magnetic fields, the new tan matrix replaces the old
-    - In the EAM, we replace the rho and phi vectors with the new updated versions
-    - Using an NNP we require the new G matrix and F matrix to replace the old versions. 
-implemented for potential variables = `DimerPotentialVariables`,`ELJPotentialBVariables`,`EmbeddedAtomVariables`,`NNPVariables`
+-   Under magnetic fields, the new tan matrix replaces the old
+-   In the EAM, we replace the rho and phi vectors with the new updated versions
+-   Using an NNP we require the new G matrix and F matrix to replace the old versions. 
+Implemented for potential variables:
+-   [`DimerPotentialVariables`](@ref)
+-   [`ELJPotentialBVariables`](@ref)
+-   [`EmbeddedAtomVariables`](@ref)
+-   [`NNPVariables`](@ref)
 """
 function swap_vars!(i_atom,potential_variables::V) where V <: DimerPotentialVariables
 end

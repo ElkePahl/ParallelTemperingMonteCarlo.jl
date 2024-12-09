@@ -91,7 +91,7 @@ end
 #-----------------------------------------------------------------#
 """
     save_histparams(results)
-Initialises and populates a data file containing the information necessary to interpret histogram data
+Initialises and populates a data file containing the information necessary to interpret histogram data.
 """
 function save_histparams(results)
     # if ispath("./checkpoint/hist_info.data")==true
@@ -109,7 +109,7 @@ end
 """
     checkpoint_config(savefile , config::Config{N,BC,T}, max_displ) 
         BC=SphericalBC,CubicBC,RhombicBC
-Function writes a single config in the standard xyz format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and bothtypes of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions x,y,z in order.
+Function writes a single config in the standard `xyz` format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and both types of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions `x,y,z` in order.
 """
 function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:SphericalBC,Ptype,Etype}
     writedlm(savefile,[N,"$BC r2: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
@@ -134,7 +134,7 @@ function checkpoint_config(savefile , state::MCState{T,N,BC,Ptype,Etype}) where 
 end
 """
     save_checkpoint(mc_states::Vector{stype}) where stype <: MCState
-Function to save the configuration of each state in a vector of `mc_states`. writes each configuration according to [`write_config`](@ref) into a file config.i where i indicates the order of the states. 
+Function to save the configuration of each state in a vector of `mc_states`. Writes each configuration according to [`checkpoint_config`](@ref) into a file `config.i` where `i` indicates the order of the states. 
 """
 function save_configs(mc_states::Vector{stype}) where stype <: MCState
     for saveindex in eachindex(mc_states)
@@ -146,7 +146,7 @@ function save_configs(mc_states::Vector{stype}) where stype <: MCState
 end
 """
     checkpoint(index,mc_states,results,ensemble;rdfsave=false)
-Function to save relevant information about the current state of the system at step `index`. saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired. 
+Function to save relevant information about the current state of the system at step `index`. Saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired. 
 """
 function checkpoint(index,mc_states,results,ensemble::NVT,rdfsave)
     
@@ -201,7 +201,10 @@ end
 """
     readpotential(potinfovec)
 Function to convert delimited file contents `potinfovec` into a potential. Implemented for:
-    ELJEven,ELJ,ELJB and EmbeddedAtomPotential
+-   [`ELJPotentialEven`](@ref)
+-   [`ELJPotential`](@ref)
+-   [`ELJPotentialB`](@ref)
+-   [`EmbeddedAtomPotential`](@ref)
 """
 function readpotential(potinfovec)
 
@@ -227,7 +230,7 @@ end
 """
     read_params(paramsvec)
     read_params(paramsvec,restart)
-Function to turn a delimited `paramsvec` into an MCParams and TempGrid struct. Second method includes a bool `restart` to determine whether or not to set eq_cycles=0 or 0.2*cycles if not restarting
+Function to turn a delimited `paramsvec` into an [`MCParams`](@ref) and [`TempGrid`](@ref) struct. Second method includes a bool `restart` to determine whether or not to set `eq_cycles=0` or `0.2*cycles` if not restarting
 """
 function read_params(paramsvec)
     parameters = MCParams(paramsvec[1],0,paramsvec[2],paramsvec[3],paramsvec[4],paramsvec[5],paramsvec[6],paramsvec[7],paramsvec[8])
@@ -247,7 +250,7 @@ function read_params(paramsvec,restart,eq_cycles)
 end
 """
     read_init()
-Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function. returns 
+Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function. 
 """
 function read_init(restart::Bool, eq_cycles)
     readfile=open("./checkpoint/params.data","r+")
@@ -267,7 +270,7 @@ end
 
 """
     read_checkpoint_config(xyzdata)
-Function designed to take a single xyz-style checkpoint file and return the configuration and max displacement data associated with a saved mc_state. This is used to reconstruct an mc simulation from checkpoints
+Function designed to take a single `xyz`-style checkpoint file and return the configuration and max displacement data associated with a saved `mc_state`. This is used to reconstruct an MC simulation from checkpoints.
 """
 function read_checkpoint_config(xyzdata)
     N=xyzdata[1,1]
@@ -298,7 +301,7 @@ function read_checkpoint_config(xyzdata)
 end
 """
     read_config(xyzdata)
-designed to read in one xyz-style file with one configuration and return this for starting a simulaiton from files without restarting.
+Designed to read in one `xyz`-style file with one configuration and return this for starting a simulation from files without restarting.
 """
 function read_config(xyzdata)
     N=xyzdata[1,1]
@@ -316,13 +319,6 @@ function read_config(xyzdata)
     config=Config(configvectors,bc)
 
     return config
-end
-"""
-    write_config(xyzdata)
-placeholder to fulfill documentation reference
-"""
-function write_config(xyzdata)
-    return
 end
 """
     setresults(histparams,histdata,histv_data,r2data)
@@ -362,7 +358,7 @@ function setresults(histparams,histdata,histv_data,r2data)
 end
 """
     rebuild_states(n_traj,ensemble,temps,potential)
-Function to rebuild the MCStates vector and results struct from checkpoint information. The `ensemble` `temps` and `potential` along with `n_traj` are reconstructed elsewhere, but required to accurately recreate the states. 
+Function to rebuild the `MCStates` vector and `results` struct from checkpoint information. The `ensemble` `temps` and `potential` along with `n_traj` are reconstructed elsewhere, but required to accurately recreate the states. 
 """
 function rebuild_states(n_traj,ensemble,temps,potential)
     histinfofile=open("./checkpoint/hist_info.data","r+")
@@ -401,7 +397,7 @@ function rebuild_states(n_traj,ensemble,temps,potential)
 end
 """
     build_states(mc_params,ensemble,temp,potential)
-For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty Output struct named `results` and a vector of `mc_states` using either: one configuration stored in config.data OR a series of configurations stored in config.i. NB if config.i doesn't exist the default will be config.1 . In this way states can be initialised with different starting configurations.  
+For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty [`Output`](@ref) struct named `results` and a vector of `mc_states` using either: one configuration stored in `config.data` OR a series of configurations stored in `config.i`. NB if `config.i` doesn't exist the default will be `config.1`. In this way states can be initialised with different starting configurations.  
 """
 function build_states(mc_params,ensemble,temp,potential)
     if ispath("./checkpoint/config.1")

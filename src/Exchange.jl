@@ -1,9 +1,8 @@
 """
     module Exchange
 
-Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle. Includes update_max_stepsize which controls the frequency of
+Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle. Includes [`update_max_stepsize!`](@ref) which controls the frequency of
 """
-
 module Exchange
 
 using ..MCStates
@@ -51,8 +50,8 @@ export parallel_tempering_exchange!,update_max_stepsize!
     metropolis_condition(::volumemove,mc_state,ensemble)
 
 Function returning the probability value associated with a trial move. Four methods included. The last two methods are separatig functions taking a `movetype`, `mc_state` and `ensemble` and separating them into volume and atom moves defined in the first two functions, namely:
-    - accepts `delta_energy` and `beta` and determines the thermodynamic probability of the single-atom move
-    - accepts pressure by way of `ensemble`, `delta_energy` delta_volume by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
+-   accepts `delta_energy` and `beta` and determines the thermodynamic probability of the single-atom move
+-   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
 """
 function metropolis_condition(delta_energy, beta)
     prob_val = exp(-delta_energy*beta)
@@ -113,7 +112,7 @@ end
 
 """
     parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
-This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
+This function takes a vector of `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 """
 function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NVT)
     n_exc = rand(1:mc_params.n_traj-1)
@@ -135,7 +134,7 @@ end
 
 """
     parallel_tempering_exchange!(mc_states,mc_params,ensemble:NPT)
-This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
+This function takes a vector of `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
 Acceptance is determined by enthalpy instead of energy. 
 """
 function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
@@ -160,13 +159,13 @@ end
 
 """
     update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT)
-update_max_stepsize!(mc_state::MCState, n_update, ensemble::NVT; min_acc = 0.4, max_acc = 0.6)
+    update_max_stepsize!(mc_state::MCState, n_update, ensemble::NVT; min_acc = 0.4, max_acc = 0.6)
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
 if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
 each cycle consists of `a` atom, `v` volume moves.
 Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).  
 
-Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble
+Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble.
 """
 function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT,min_acc,max_acc)
     #atom moves

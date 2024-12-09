@@ -18,10 +18,7 @@ lib_path() = joinpath(@__DIR__, "lib") # path to folder where to find "librunner
 
 """
     NeuralNetworkPotential
-The basic struct containing the parameters of the neural network itself. `n_layers` and `n_params` define the length of the vectors, these are required by the Fortran program. `num_nodes` is a vector containing the number of nodes per layer, also required to appropriately assign the parameters to the correct node. `activation_functions` should usually be [1 2 2 1] meaning "linear, tanh, tanh, linear" last is the vector of parameters assigned to each connexion.
-
-    (num_nodes::Vector,activation_functions::Vector, parameters)
-unpacks the `num_nodes` vector and `parameters` and assigns their lengths to the missing struct parameters.
+The basic struct containing the parameters of the neural network itself. `n_layers` and `n_params` define the length of the vectors, these are required by the Fortran program. `num_nodes` is a vector containing the number of nodes per layer, also required to appropriately assign the parameters to the correct node. `activation_functions` should usually be `[1 2 2 1]` meaning "linear, tanh, tanh, linear" last is the vector of parameters assigned to each connexion.
 """
 struct NeuralNetworkPotential
     n_layers::Int32
@@ -30,6 +27,11 @@ struct NeuralNetworkPotential
     activation_functions::Vector{Int32}
     parameters::Vector{Float64}
 end
+
+"""
+    NeuralNetworkPotential(num_nodes::Vector,activation_functions::Vector, parameters)
+Unpacks the `num_nodes` vector and `parameters` and assigns their lengths to the missing struct parameters.
+"""
 function NeuralNetworkPotential(num_nodes::Vector,activation_functions::Vector, parameters)
     return NeuralNetworkPotential(length(num_nodes),length(parameters),num_nodes,activation_functions,parameters)
 end
@@ -40,7 +42,7 @@ end
     forward_pass( eatom,input::AbstractArray, batchsize, num_layers, num_nodes, activation_functions, num_parameters, parameters,dir)
 
 
-calls the RuNNer forward pass module written by A. Knoll located in `directory`. This self-defines the `eatoms` output, a vector of the atomic energies. `batchsize` is based on the number of atoms whose energies we want to determine. The remaining inputs are contained in `nnparams.` Details of this struct can be found in the definition of the NeuralNetworkPotential struct.
+Calls the RuNNer forward pass module written by A. Knoll located in `directory`. This self-defines the `eatoms` output, a vector of the atomic energies. `batchsize` is based on the number of atoms whose energies we want to determine. The remaining inputs are contained in `nnparams.` Details of this struct can be found in the definition of the [`NeuralNetworkPotential`](@ref) struct.
 The last two definitions are identical except eatoms is an input rather than a vector determined during the calculation. This can save memory in the long run.
 """
 function forward_pass( input::AbstractArray, batchsize, num_layers, num_nodes, activation_functions, num_parameters, parameters)
