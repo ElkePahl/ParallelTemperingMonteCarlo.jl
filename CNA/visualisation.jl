@@ -74,32 +74,51 @@ Outputs:
 colour: (String) String representation of the RGB values that make up the desired colour for the input atom.
 """
 function colourAtom(atomNum,classification,capSymmetries)
+	# Define colours in RGB format
+	colours = Dict{String,String}(
+		"dark red" => "153  0  0",
+		"dark orange" => "153  76  0",
+		"dark green" => "76  153  0",
+		"dark blue" => "0  0  153",
+		"dark purple" => "76  0  153",
+		"light red" => "255  102  102",
+		"light orange" => "255  178  102",
+		"light green" => "178  255  102",
+		"light blue" => "102  102  255",
+		"light purple" => "178  102  255",
+		"grey" => "76  76  76",
+		"red" => "255  0  0",
+		"orange" => "255  128  0",
+		"green" => "128  255  0",
+		"blue" => "0  0  255",
+		"purple" => "127  0  255",
+	)
 	for key in keys(classification) # For each list of atoms that have a symmetry
 		if atomNum in key # If this atom is in that list
 			symmetry = get!(classification,key,nothing) # Find what symmetry it has
 			if occursin("Core",symmetry) # If symmetry is a core symmetry
 				if occursin("ICO",symmetry) # If symmetry is icosahedral
-					return "153  0  0" # Return dark red
+					return colours["dark red"]
 				elseif occursin("BCC",symmetry)
-					return "153  76  0" # Return dark orange
+					return colours["dark orange"]
 				elseif occursin("FCC",symmetry)
-					return "76  153  0" # Return dark green
+					return colours["dark green"]
 				elseif occursin("HCP",symmetry)
-					return "0  0  153" # Return dark blue
+					return colours["dark blue"]
 				else # IF OTHER
-					return "76  0  153" # Return dark purple
+					return colours["dark purple"]
 				end
 			else # If not a coe symmetry
 				if occursin("ICO",symmetry)
-					return "255  0  0" # Return red
+					return colours["red"]
 				elseif occursin("BCC",symmetry)
-					return "255  128  0" # Return orange
+					return colours["orange"]
 				elseif occursin("FCC",symmetry)
-					return "128  255  0" # Return green
+					return colours["green"]
 				elseif occursin("HCP",symmetry)
-					return "0  0  255" # Return blue
+					return colours["blue"]
 				else # If OTHER
-					return "127  0  255" # Return purple
+					return colours["purple"]
 				end
 			end
 		end
@@ -110,33 +129,33 @@ function colourAtom(atomNum,classification,capSymmetries)
 		for key in keys(dict) # For each capping atom
 			if atomNum == key # If this atom is the capping atom
 				if occursin("ICO",symmetry)
-					return "255  102  102" # Return light red
+					return colours["light red"]
 				elseif occursin("BCC",symmetry)
-					return "255  178  102" # Return light orange
+					return colours["light orange"]
 				elseif occursin("FCC",symmetry)
-					return "178  255  102" # Return light green
+					return colours["light green"]
 				elseif occursin("HCP",symmetry)
-					return "102  102  255" # Return light blue
+					return colours["light blue"]
 				else
-					return "178  102  255" # Return light purple
+					return colours["light purple"]
 				end
 			elseif atomNum in get!(dict,key,nothing) # If atom is a capped atom
 				if occursin("ICO",symmetry)
-					return "255  0  0" # Return red
+					return colours["red"]
 				elseif occursin("BCC",symmetry)
-					return "255  128  0" # Return orange
+					return colours["orange"]
 				elseif occursin("FCC",symmetry)
-					return "128  255  0" # Return green
+					return colours["green"]
 				elseif occursin("HCP",symmetry)
-					return "0  0  255" # Return blue
+					return colours["blue"]
 				else
-					return "127  0  255" # Return purple
+					return colours["purple"]
 				end
 			end
 		end
 	end
 
-	return "76  76  76" # IF atom does not have a symmetry, return grey
+	return colours["grey"] # IF atom does not have a symmetry, return grey
 end
 
 end
