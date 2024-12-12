@@ -178,7 +178,7 @@ pos_cu38 = [[2.3603476948363165, 2.3603476948363165, 0.0],
 n_bin = 100
 AtoBohr = 1.8897259886
 
-bc_cu38 = SphericalBC(radius=7.0*AtoBohr) 
+bc_cu38 = SphericalBC(radius=6.0*AtoBohr) 
 start_config = Config(pos_cu38, bc_cu38)
 
 
