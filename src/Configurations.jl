@@ -78,9 +78,9 @@ export get_centre,recentre!
 
 #struct for configurations
 """
-    Config(pos::Vector{SVector{3,T}}, bc::AbstractBC)
-    Config{N}(positions::Vector{SVector{3,T}}, bc::AbstractBC)
-    Config(pos, bc::BC) where {BC<:AbstractBC}
+    Config(pos::Vector{SVector{3,T}}, bc::BC) where BC <: AbstractBC
+    Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where BC <: AbstractBC
+    Config(pos::PositionArray, bc::BC) where BC <: AbstractBC
 Generates a configuration of `N` atomic positions, each position saved as SVector of length 3.
 -   Fieldnames: 
     -   `pos`: vector of x,y, and z coordinates of every atom 
@@ -107,8 +107,8 @@ function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
 end
 
 #not type stable, allows for input of positions as vector or tuples
-function Config(pos, bc::BC) where {BC<:AbstractBC}
-    poss = [SVector{3}(p[i] for i in 1:3) for p in pos]
+function Config(pos::PositionArray, bc::BC) where {BC<:AbstractBC}
+    poss = [SVector{3}(p[1:3]) for p in pos]
     N = length(poss)
     T = eltype(poss[1])
     return Config{N,BC,T}(poss, bc)
@@ -118,10 +118,10 @@ end
 Base.length(::Config{N}) where N = N
 
 """
-    get_centre(position,N)
+    get_centre(position::PositionArray,N::Number)
 Function to find the centre of mass of a configuration. Accepts the positions and number of positions and calculates the xyz coordinates of their centre.
 """
-function get_centre(position,N)
+function get_centre(position::PositionArray,N::Number)
     return [sum([pos[1] for pos in position]),sum([pos[2] for pos in position]),sum([pos[3] for pos in position])]./N
 end
 """
@@ -136,10 +136,10 @@ function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
 
 end
 """
-    distance2(a,b) 
-    distance2(a,b,bc::SphericalBC)
-    distance2(a,b,bc::CubicBC) 
-    distance2(a,b,bc::RhombicBC)
+    distance2(a::PositionVector,b::PositionVector) 
+    distance2(a::PositionVector,b::PositionVector,bc::SphericalBC)
+    distance2(a::PositionVector,b::PositionVector,bc::CubicBC)
+    distance2(a::PositionVector,b::PositionVector,bc::RhombicBC)
 Method 1&2 -
 Finds the distance between two positions a and b.
 Method 3 -
@@ -149,16 +149,16 @@ Finds the distance between two positions a and the nearest image of b in a rhomb
 Minimum image convension in the z-direction is the same as the cubic box.
 In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
 """
-distance2(a,b) = (a-b)⋅(a-b)
+distance2(a::PositionVector,b::PositionVector) = (a-b)⋅(a-b)
 
-distance2(a,b,bc::SphericalBC) = distance2(a,b)
-function distance2(a,b,bc::CubicBC)
+distance2(a::PositionVector,b::PositionVector,bc::SphericalBC) = distance2(a,b)
+function distance2(a::PositionVector,b::PositionVector,bc::CubicBC)
     b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z=b[3]+bc.box_length*round((a[3]-b[3])/bc.box_length)
     return distance2(a,[b_x,b_y,b_z])
 end
-function distance2(a,b,bc::RhombicBC)
+function distance2(a::PositionVector,b::PositionVector,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
@@ -185,10 +185,10 @@ function get_distance2_mat(conf::Config{N}) where N
 end
 
 """
-    get_tan(a,b)
-    get_tan(a,b,bc::SphericalBC)
-    get_tan(a,b,bc::CubicBC)
-    get_tan(a,b,bc::RhombicBC)
+    get_tan(a::PositionVector,b::PositionVector)
+    get_tan(a::PositionVector,b::PositionVector,bc::SphericalBC)
+    get_tan(a::PositionVector,b::PositionVector,bc::CubicBC)
+    get_tan(a::PositionVector,b::PositionVector,bc::RhombicBC)
 Method 1&2 :
 tan of the angle between the line connecting two points a and b, and the z-direction
 Method 3:
@@ -196,68 +196,26 @@ tan of the angle between the line connecting two points a and the nearest image 
 Method 4: 
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a rhombic boundary
 """
-function get_tan(a,b)
-    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
-    return tan
-end
-function get_tan(a,b,bc::SphericalBC)
-    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
-    return tan
-end
-function get_tan(a,b,bc::CubicBC)
+get_tan(a::PositionVector,b::PositionVector)=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+get_tan(a::PositionVector,b::PositionVector,bc::SphericalBC) = get_tan(a,b)
+function get_tan(a::PositionVector,b::PositionVector,bc::CubicBC)
     b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z = b[3] + bc.box_length*round((a[3]-b[3])/bc.box_length)
-    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
-    return tan
+    return ((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
 end
-function get_tan(a,b,bc::RhombicBC)
+function get_tan(a::PositionVector,b::PositionVector,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
-    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
-    return tan
+    return ((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
 end
 
 """
-    get_theta_mat(conf::Config{N},conf.bc::SphericalBC)
-
+    get_tantheta_mat(conf::Config,bc::BC) where BC <: AbstractBC
 Builds the matrix of tan of angles between positions of configuration in a spherical boundary.
 """
-
-function get_tantheta_mat(conf::Config,bc::SphericalBC)
-    N=length(conf.pos)
-    mat=zeros(N,N)
-    for i=1:N
-        for j=i+1:N
-            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j])
-        end
-    end
-    return mat
-end
-
-"""
-    get_theta_mat(conf::Config{N},conf.bc::CubicBC)
-
-Builds the matrix of tan of angles between positions of configuration in a cubic boundary.
-"""
-function get_tantheta_mat(conf::Config,bc::CubicBC)
-    N=length(conf.pos)
-    mat=zeros(N,N)
-    for i=1:N
-        for j=i+1:N
-            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j],bc)
-        end
-    end
-    return mat
-end
-
-"""
-    get_theta_mat(conf::Config{N},conf.bc::CubicBC)
-
-Builds the matrix of tan of angles between positions of configuration in a rhombic boundary.
-"""
-function get_tantheta_mat(conf::Config,bc::RhombicBC)
+function get_tantheta_mat(conf::Config,bc::BC) where BC <: AbstractBC
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N

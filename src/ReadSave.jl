@@ -293,8 +293,7 @@ function read_checkpoint_config(xyzdata)
         count_atom = xyzdata[2,8]
         count_vol=xyzdata[2,9]
     end
-    configvectors = [xyzdata[2+i,2:4] for i in 1:N]
-
+    configvectors = Vector{Vector{Float64}}([xyzdata[2+i,2:4] for i in 1:N])
     config=Config(configvectors,bc)
 
     return config , max_displ, count_atom, count_vol
