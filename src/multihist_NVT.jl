@@ -78,7 +78,7 @@ Multihistogram analysis for NVT:
 -   `readfile` can only be false.
 -   Example: `multihistogram_NVT(ensemble, temp, results, 10^(-3), false)`
 """
-function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
+function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile; debug=false)
     if readfile==false
         tempnumber,tempnumber_result = temp_trajectories(temp)
         k,temp_o,beta,Emin,Ebins,dEhist,ENhistogram = histogram_initialise_en(ensemble,temp,results)
@@ -88,7 +88,7 @@ function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
     free_energy, new_free_energy, normalconst, ncycles = free_energy_initialise(ENhistogram,Ebins,tempnumber,tempnumber_result)
     
     for it=1:1000
-        println("iteration=",it)
+        if debug println("iteration=",it) end
         for i=1:tempnumber
             local betat
             betat=beta[i]
@@ -108,11 +108,11 @@ function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
             delta=delta+abs(new_free_energy[i]-free_energy[i])^2
             free_energy[i]=new_free_energy[i]
         end
-        println(delta)
-        println()
+        if debug println(delta) end
+        if debug println() end
     
         if delta<conv_threshold
-            println("iteration finished")
+            if debug println("iteration finished") end
             break             #if converged, exit the loop
         end
     end
@@ -135,14 +135,14 @@ function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
             eenergy=eenergy+quasiprob(betat,m,ncycles,dEhist,Emin,tempnumber,ENhistogram,beta,free_energy)/normalconst[i]*energy_t
             eenergy2=eenergy2+quasiprob(betat,m,ncycles,dEhist,Emin,tempnumber,ENhistogram,beta,free_energy)/normalconst[i]*energy_t^2
         end
-        println("temperature: ",temp_result[i])
-        println("energy: ",eenergy)
-        println("heat capacity: ", (eenergy2-eenergy^2)/(k*temp_result[i]^2))
-        println()
+        if debug println("temperature: ",temp_result[i]) end
+        if debug println("energy: ",eenergy) end
+        if debug println("heat capacity: ", (eenergy2-eenergy^2)/(k*temp_result[i]^2)) end
+        if debug println() end
         cv[i]=(eenergy2-eenergy^2)/(k*temp_result[i]^2)
     end
-    println("temperature array: ",temp_result)
-    println("heat capacity array: ",cv)
+    if debug println("temperature array: ",temp_result) end
+    if debug println("heat capacity array: ",cv) end
 
     return cv
 end
