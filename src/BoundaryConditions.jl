@@ -12,7 +12,7 @@ export check_boundary, PositionVector, PositionArray
     PositionVector = Union{SVector{3, T}, Vector{T}} where T <: Number
 Type alias for all kinds of acceptable position vectors.
 """
-const PositionVector = Union{SVector{3, T}, Vector{T}} where T <: Number
+const PositionVector = Union{SVector{3,T},Vector{T}} where T <: Number
 """
     PositionArray = Union{Vector{Vector{T}}, Vector{SVector{3, T}}} where T <: Number
 Type alias for a list of positions.
@@ -20,7 +20,6 @@ Type alias for a list of positions.
 const PositionArray = Union{Vector{Vector{T}}, Vector{SVector{3, T}}} where T <: Number
 # include("SphericalBC.jl")
 # could be named SphericalBC.jl
-
 """   
     AbstractBC{T} 
 Encompasses possible boundary conditions; implemented: 
@@ -28,7 +27,7 @@ Encompasses possible boundary conditions; implemented:
 -   [`PeriodicBC`](@ref)
 
 Needs methods implemented for
--   [`atom_displacement`](@ref ParallelTemperingMonteCarlo.MCMoves.atom_displacement)
+-   [`atom_displacement`](@ref Main.ParallelTemperingMonteCarlo.MCMoves.atom_displacement)
 """
 abstract type AbstractBC{T} end
 

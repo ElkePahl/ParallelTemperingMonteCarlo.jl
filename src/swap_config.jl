@@ -26,7 +26,7 @@ end
 """
     swap_atom_config(mc_state::MCState,i_atom,trial_pos)
 """
-function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
+function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom::Int,trial_pos::PositionVector) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     mc_state.config.pos[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom,:] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:,i_atom] = mc_state.new_dist2_vec
@@ -40,9 +40,9 @@ end
 """
     swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
 Swaps `mc_state`s and ensemble variables in case of accepted volume move for NPT ensemble.
-Implemented for [`CubicBC`](@ref ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
+Implemented for [`CubicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
 """
-function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
+function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat::Matrix{N},en_vec_new::VorS,new_en_tot::Number) where N <: Number
     mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
     mc_state.dist2_mat = new_dist2_mat
     mc_state.potential_variables.en_atom_vec = en_vec_new
@@ -53,7 +53,7 @@ function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_d
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
-function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
+function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new_dist2_mat::Matrix{N},en_vec_new::VorS,new_en_tot::Number) where N <: Number
     mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
     mc_state.dist2_mat = new_dist2_mat
     mc_state.potential_variables.en_atom_vec = en_vec_new
@@ -78,20 +78,20 @@ Implemented for potential variables:
 -   [`EmbeddedAtomVariables`](@ref)
 -   [`NNPVariables`](@ref)
 """
-function swap_vars!(i_atom,potential_variables::V) where V <: DimerPotentialVariables
+function swap_vars!(i_atom::Int,potential_variables::V) where V <: DimerPotentialVariables
 end
 
-function swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
+function swap_vars!(i_atom::Int,potential_variables::ELJPotentialBVariables)
     potential_variables.tan_mat[i_atom,:] = potential_variables.new_tan_vec
     potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
 
 end
 
-function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
+function swap_vars!(i_atom::Int,potential_variables::EmbeddedAtomVariables)
     potential_variables.component_vector = potential_variables.new_component_vector
 end
 
-function swap_vars!(i_atom,potential_variables::NNPVariables)
+function swap_vars!(i_atom::Int,potential_variables::NNPVariables)
     potential_variables.en_atom_vec = potential_variables.new_en_atom 
     potential_variables.g_matrix = potential_variables.new_g_matrix 
 
