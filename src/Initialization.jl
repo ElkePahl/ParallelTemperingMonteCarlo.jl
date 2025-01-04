@@ -20,7 +20,7 @@ using ..Ensembles
 
 """
     initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::NVT)
-    initialisation(restart::Bool;eq_cycles)
+    initialisation(restart::Bool;eq_cycles::Number)
 Basic function for establishing the structs and parameters required for the simulation. Inputs for method one are:
 -   `mc_params`: the basic values and parameters concerning how long our simulation runs.
 -   `temp`: a grid of temp and beta values passed to the mc_states struct.
@@ -58,7 +58,7 @@ function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,
     start_counter=1
     return mc_states,move_strategy,results,n_steps,start_counter
 end
-function initialisation(restart::Bool,eq_cycles)
+function initialisation(restart::Bool,eq_cycles::Number)
 
     mc_params,temp,ensemble,potential = read_init(restart,eq_cycles)
     

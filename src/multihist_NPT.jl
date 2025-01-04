@@ -4,15 +4,16 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
 using ..Ensembles
+using ..EnergyEvaluation
 export multihistogram_NPT
 
-function temp_trajectories(temp)
+function temp_trajectories(temp::TempGrid)
     tempnumber = length(temp.t_grid)
     tempnumber_result = tempnumber * 10
     return tempnumber,tempnumber_result
 end
 
-function histogram_initialise(ensemble,temp,results)
+function histogram_initialise(ensemble::AbstractEnsemble,temp::TempGrid,results::Output)
     p=ensemble.pressure
     k=3.166811429/10^6
     temp_o=temp.t_grid
@@ -29,14 +30,14 @@ function histogram_initialise(ensemble,temp,results)
     return p,k,temp_o,beta,Emin,Vmin,Ebins,Vbins,dEhist,dVhist,EVhistogram
 end
 
-function Temp_grid_result(ti,tf,tempnumber_result)
+function Temp_grid_result(ti::Number,tf::Number,tempnumber_result::Int)
     temp_grid_result = TempGrid{tempnumber_result}(ti,tf) 
     temp_result=temp_grid_result.t_grid
     beta_result=temp_grid_result.beta_grid
     return temp_result,beta_result
 end
-
-function free_energy_initialise(EVhistogram,Ebins,Vbins,tempnumber,tempnumber_result)
+const NPTHistogram = Vector{Matrix{Float64}}
+function free_energy_initialise(EVhistogram::NPTHistogram,Ebins::Int,Vbins::Int,tempnumber::Int,tempnumber_result::Int)
     free_energy=Array{Float64}(undef,tempnumber)
     new_free_energy=Array{Float64}(undef,tempnumber)
     normalconst=Array{Float64}(undef,tempnumber_result)
@@ -59,7 +60,7 @@ function free_energy_initialise(EVhistogram,Ebins,Vbins,tempnumber,tempnumber_re
     return free_energy, new_free_energy, normalconst, ncycles
 end
 
-function quasiprob(betat,m,n,ncycles,dEhist,dVhist,Emin,Vmin,tempnumber,EVhistogram,beta,p,free_energy)
+function quasiprob(betat::Number,m::Int,n::Int,ncycles::VorS,dEhist::Number,dVhist::Number,Emin::Number,Vmin::Number,tempnumber::Number,EVhistogram,beta::VorS,p::Number,free_energy::VorS)
     energy_t=Emin+(m-0.5)*dEhist
     volume=Vmin+(n-0.5)*dVhist
     quasiprob=0
@@ -79,13 +80,14 @@ function quasiprob(betat,m,n,ncycles,dEhist,dVhist,Emin,Vmin,tempnumber,EVhistog
 end
 
 """
-    multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile)
+    multihistogram_NPT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; debug = false)
 Multihistogram analysis for NPT:
 -   `conv_threshold` is the convergence threshold, which user can choose.
+-   `debug` kwarg determines whether to print debug information. Defaults to false.
 -   Now "readfile" can only be false.
 -   Example: `multihistogram_NPT(ensemble, temp, results, 10^(-3), false)`
 """
-function multihistogram_NPT(ensemble, temp, results, conv_threshold, readfile; debug=false)
+function multihistogram_NPT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; debug=false)
     if readfile==false
         tempnumber,tempnumber_result = temp_trajectories(temp)
         p,k,temp_o,beta,Emin,Vmin,Ebins,Vbins,dEhist,dVhist,EVhistogram = histogram_initialise(ensemble,temp,results)

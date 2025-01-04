@@ -6,12 +6,13 @@ using ..MachineLearningPotential
 using ..EnergyEvaluation
 using ..Ensembles
 #using ..InputParams
+const Ptype = T where T <: AbstractPotential
+const Etype = T where T <: AbstractEnsemble
 
-export MCState#, NNPState
+export MCState, Etype, Ptype, MCStateVector#, NNPState
 """
-    MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
-        max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])
-    MCState(temp, beta, config::Config, pot; kwargs...) 
+    MCState(temp::Number, beta::Number, config::Config{N, BC, T}, dist2_mat::Matrix{Number}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.bc), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}
+    MCState(temp::Number, beta::Number, config::Config, ensemble::Etype, pot::Ptype; kwargs...)
 Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
 
 -   Fieldnames:
@@ -46,9 +47,11 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     count_vol::Vector{Int}
     count_exc::Vector{Int}
 end    
-
+const MCStateVector = Vector{T} where T <: MCState
 """
-    max_length(bc)
+    max_length(bc::SphericalBC)
+    max_length(bc::CubicBC)
+    max_length(bc::RhombicBC)
 Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
 """
 function max_length(bc::SphericalBC)
@@ -62,20 +65,21 @@ function max_length(bc::RhombicBC)
 end
 
 """
-    MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; kwargs...)
+    (MCState(temp::Number, beta::Number, config::Config{N, BC, T}, dist2_mat::Matrix{Z}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.bc), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}) where Z <: Number
+    MCState(temp::Number, beta::Number, config::Config, ensemble::Etype, pot::Ptype; kwargs...)
 Constructor for the [`MCState`](@ref) struct.
 """
 function MCState(
-    temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; 
+    temp::Number, beta::Number, config::Config{N,BC,T}, dist2_mat::Matrix{Z}, new_dist2_vec::VorS,new_en::Number, en_tot::Number,potentialvariables::AbstractPotentialVariables,ensemble_variables::AbstractEnsembleVariables; 
     max_displ = [0.1,0.1,1.], max_boxlength = max_length(config.bc), count_atom = [0,0], count_vol = [0,0], count_exc = [0,0]
-) where {T,N,BC}
+) where {T,N,BC} where {Z<:Number} 
     ham = T[]
     MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(count_atom), copy(count_vol), copy(count_exc)
         )
 end
-function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
-    kwargs...) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function MCState(temp::Number,beta::Number,config::Config,ensemble::Etype,pot::Ptype;
+    kwargs...)
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
     

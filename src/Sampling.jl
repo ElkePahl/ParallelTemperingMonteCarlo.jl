@@ -20,13 +20,13 @@ using ..Ensembles
 Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
 Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
-function update_energy_tot(mc_states,ensemble::NVT)
+function update_energy_tot(mc_states::MCStateVector,ensemble::NVT)
         for state in mc_states
             state.ham[1] += state.en_tot 
             state.ham[2] += (state.en_tot*state.en_tot)
         end
 end
-function update_energy_tot(mc_states,ensemble::NPT)
+function update_energy_tot(mc_states::MCStateVector,ensemble::NPT)
     for state in mc_states
         state.ham[1] += state.en_tot + ensemble.pressure* get_volume(state.config.bc)
         state.ham[2] += (state.en_tot + ensemble.pressure* get_volume(state.config.bc))*(state.en_tot + ensemble.pressure* get_volume(state.config.bc))
@@ -38,7 +38,7 @@ end
     find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
 Returns the histogram index of a single `mc_state` energy and returns this value. 
 """
-function find_hist_index(mc_state,results,delta_en_hist)
+function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number)
 
     hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
 
@@ -50,7 +50,7 @@ function find_hist_index(mc_state,results,delta_en_hist)
         return hist_index +1
     end
 end
-function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
 
     hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
     hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
@@ -82,7 +82,7 @@ Function to create the energy and radial histograms at the end of equilibration.
 
 Returns `delta_en_hist`, `delta_r2`
 """
-function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
+function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::AbstractArray{N, 1},bc::SphericalBC) where N <: Number
 
     # incl 6% leeway
 
@@ -157,7 +157,7 @@ end
 Self explanatory name, updates the energy histograms in `results` using the current `mc_states.en_tot`
 
 """
-function update_histograms!(mc_states,results,delta_en_hist)
+function update_histograms!(mc_states::MCStateVector,results::Output,delta_en_hist::Number)
      for i_traj in eachindex(mc_states)
         @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
         results.en_histogram[i_traj][histindex] +=1
@@ -165,7 +165,7 @@ function update_histograms!(mc_states,results,delta_en_hist)
 
 end
 
-function update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+function update_histograms!(mc_states::MCStateVector,results::Output,delta_en_hist::Number,delta_v_hist::Number)
      for i_traj in eachindex(mc_states)
         @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist)
         results.ev_histogram[i_traj][histindex_e,histindex_v] +=1
@@ -180,7 +180,7 @@ rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
 Self explanatory name, iterates over `mc_states` and adds to the appropriate `results.rdf` histogram. Type stable by the initialise function specifying a vector of integers.  
 
 """
-function update_rdf!(mc_states,results,delta_r2)
+function update_rdf!(mc_states::MCStateVector,results::Output,delta_r2::Number)
     for j_traj in eachindex(mc_states)
         #for element in mc_states[j_traj].dist2_mat 
         for k_traj in 1:j_traj
@@ -198,7 +198,7 @@ end
     sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results)
     sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
 
-Function performed at the end of an [`mc_cycle!`](@ref ParallelTemperingMonteCarlo.MCRun.mc_cycle!) after equilibration. Updates the `E,E**2` totals for each `mc_state`, updates the energy and radial histograms and then returns the modified `mc_states` and `results`.
+Function performed at the end of an [`mc_cycle!`](@ref Main.ParallelTemperingMonteCarlo.MCRun.mc_cycle!) after equilibration. Updates the `E,E**2` totals for each `mc_state`, updates the energy and radial histograms and then returns the modified `mc_states` and `results`.
 
 N.B. we have now included the `delta_en`, `delta_v` and `delta_r2` values in the `results` struct to allow for more general methods such as this.  
 
@@ -208,7 +208,7 @@ Second method does not perform the rdf calculation. This is designed to improve 
 TO IMPLEMENT:
 This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
 """
-function sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results,rdfsave)
+function sampling_step!(mc_params::MCParams,mc_states::MCStateVector,ensemble::NVT,save_index::Int,results::Output,rdfsave::Bool)
     if rem(save_index, mc_params.mc_sample) == 0
 
         update_energy_tot(mc_states,ensemble)
@@ -233,7 +233,7 @@ end
     finalise_results(mc_states,mc_params,results)
 Function designed to take a complete MC simulation and calculate the averages. 
 """
-function finalise_results(mc_states,mc_params,results)
+function finalise_results(mc_states::MCStateVector,mc_params::MCParams,results::Output)
 
     #Energy average
     n_sample = mc_params.mc_cycles / mc_params.mc_sample

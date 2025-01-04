@@ -10,11 +10,14 @@ using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
 using ..Ensembles
+#using ..MCRun
 
 """
-    atom_displacement(pos, max_displacement, bc)
-    atom_displacement(mc_states,index)
-    atom_displacement(mc_state)
+    atom_displacement(pos::PositionVector, max_displacement::Number, bc::SphericalBC)
+    atom_displacement(pos::PositionVector, max_displacement::Number, bc::CubicBC)
+    atom_displacement(pos::PositionVector, max_displacement::Number, bc::RhombicBC)
+    atom_displacement(mc_state::MCState{T, N, BC}) where {T, N, BC <: PeriodicBC}
+    atom_displacement(mc_state::MCState{T, N, BC}) where {T, N, BC <: SphericalBC}
 
 Generates trial position for atom, moving it from `pos` by some random displacement.
 Random displacement determined by `max_displacement`.
@@ -26,7 +29,7 @@ Implemented for:
 
 The final method is a wrapper function which unpacks `mc_states`, which contains all the necessary arguments for the two methods above. When we have correctly implemented `move_strat` this wrapper will be expanded to include other methods.
 """
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
+function atom_displacement(pos::PositionVector, max_displacement::Number, bc::SphericalBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     # count = 0
@@ -39,14 +42,14 @@ function atom_displacement(pos, max_displacement, bc::SphericalBC)
     return trial_pos
 end
 
-function atom_displacement(pos, max_displacement, bc::CubicBC)
+function atom_displacement(pos::PositionVector, max_displacement::Number, bc::CubicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= bc.box_length*[round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length)]
     return trial_pos
 end
 
-function atom_displacement(pos, max_displacement, bc::RhombicBC)
+function atom_displacement(pos::PositionVector, max_displacement::Number, bc::RhombicBC)
     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
     trial_pos = pos + delta_move
     trial_pos -= [bc.box_length*round((trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length)+bc.box_length/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_length*3^0.5/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height)]
@@ -84,11 +87,13 @@ function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC
 end 
 
 """
-    volume_change(conf::Config, max_vchange, bc::PeriodicBC) 
+    volume_change(conf::Config, bc::CubicBC, max_vchange::Number, max_length::Number)
+    volume_change(conf::Config, bc::RhombicBC, max_vchange::Number, max_length::Number)
+    volume_change(mc_state::MCState) 
 Scale the whole configuration, including positions and the box length.
 Returns the trial configuration as a struct. 
 """
-function volume_change(conf::Config, bc::CubicBC, max_vchange, max_length)
+function volume_change(conf::Config, bc::CubicBC, max_vchange::Number, max_length::Number)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
     if conf.bc.box_length >= max_length && scale > 1.
         scale=1.
@@ -97,7 +102,7 @@ function volume_change(conf::Config, bc::CubicBC, max_vchange, max_length)
     return trial_config,scale
 end
 
-function volume_change(conf::Config, bc::RhombicBC, max_vchange, max_length)
+function volume_change(conf::Config, bc::RhombicBC, max_vchange::Number, max_length::Number)
     scale = exp((rand()-0.5)*max_vchange)^(1/3)
     if conf.bc.box_length >= max_length && scale > 1.
         scale=1.
@@ -117,8 +122,7 @@ function volume_change(mc_state::MCState)
 end
 
 """
-    generate_move!(mc_state,movetype::atommove)
-    generate_move!(mc_state,movetype::volumemove)
+    generate_move!(mc_state::MCState,movetype::String)
 [`generate_move!`](@ref) is the currying function that takes `mc_state` and a `movetype` 
 and generates the variables required inside of the `ensemblevariables` struct within `mc_state`. 
 """
