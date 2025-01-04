@@ -24,6 +24,14 @@ docs/src/
 # environment.
 Manifest.toml
 
+checkpoint/
+analysis.NVT
+Sol.X
+todo.txt
+test_test.jl
+compile_shared.sh
+fortran/
+
 scripts-elke/
 workspace*
 .DS_Store 

@@ -2,8 +2,15 @@
 Running `julia --project make.jl` while in the `docs` directory will generate the documentation pages for all submodules defined in the lists below.
 """
 
-push!(LOAD_PATH,"../src/")
-using Documenter, ParallelTemperingMonteCarlo
+include("../src/ParallelTemperingMonteCarlo.jl")
+using Documenter, Literate
+using .ParallelTemperingMonteCarlo
+
+EXAMPLES_INPUT = joinpath(@__DIR__, "../examples")
+EXAMPLES_OUTPUT = joinpath(@__DIR__, "src/")
+EXAMPLES_FILES = filter(endswith(".jl"), readdir(EXAMPLES_INPUT))
+EXAMPLES_PAIRS = Pair{String,String}[]
+EXAMPLES_NUMS = Int[]
 
 #Top layer of submodules
 surface = sort([
@@ -40,14 +47,14 @@ main_module = "ParallelTemperingMonteCarlo"
 Generates the documentation markdown files for a (sub)module given the path of its parent module and its name. These will be automatically included in the documentation pages.
 """
 function write_md(parent_module::String, module_name::String)
-    fpath = joinpath("src", module_name * ".md")
+    fpath = joinpath(dirname(@__FILE__), "src", module_name * ".md")
     open(fpath, "w") do io
         write(io, "# $module_name\n\n```@autodocs\nModules = [$parent_module.$module_name]\n```")
     end
 end
 
 #Create home page
-open(joinpath("src", "index.md"), "w") do io
+open(joinpath(dirname(@__FILE__), "src", "index.md"), "w") do io
     write(io, "# $main_module\n\n```@contents\n```")
 end
 
@@ -70,6 +77,23 @@ for (parent, children) in submodules
     end
     push!(pages, parent => subpages) #Currently the name of the parent module is the name of the navbar group
 end
+
+THRESHOLD_IGNORE = String[]
+#Adding examples
+for fn in EXAMPLES_FILES
+    fnmd_full = Literate.markdown(
+        joinpath(EXAMPLES_INPUT, fn), EXAMPLES_OUTPUT;
+        documenter = true, execute = true
+        )
+    filepath = chop(fn; head = 0, tail = 2) * "md"
+    push!(EXAMPLES_PAIRS, fn => filepath)
+    push!(THRESHOLD_IGNORE, filepath)
+end
+push!(pages, "Examples" => EXAMPLES_PAIRS)
+
+Documenter.HTMLWriter.HTML(
+    size_threshold_ignore = THRESHOLD_IGNORE,
+)
 
 makedocs(sitename="$main_module",
     pages = pages,
