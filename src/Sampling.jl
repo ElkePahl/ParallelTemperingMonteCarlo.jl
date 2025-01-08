@@ -3,7 +3,7 @@ module MCSampling
 #export sampling_step!
 
 
-export sampling_step!, initialise_histograms!,finalise_results
+export sampling_step!, initialise_histograms!,finalise_results, update_energy_tot, find_hist_index, update_histograms!, update_rdf!, rdf_index
 
 
 using StaticArrays,LinearAlgebra
@@ -14,8 +14,8 @@ using ..BoundaryConditions
 using ..EnergyEvaluation
 using ..Ensembles
 """
-    update_energy_tot(mc_state,ensemble::NVT)
-    update_energy_tot(mc_state,ensemble::NPT)
+    update_energy_tot(mc_states::MCStateVector, ensemble::NVT)
+    update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
 
 Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
 Two methods avoids needless for-loops, where the JIT can save us computation time.
@@ -34,8 +34,8 @@ function update_energy_tot(mc_states,ensemble::NPT)
 
 end
 """
-    find_hist_index(mc_state,results,delta_en_hist)
-    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+    find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number)
+    find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number, delta_v_hist::Number)
 Returns the histogram index of a single `mc_state` energy and returns this value. 
 """
 function find_hist_index(mc_state,results,delta_en_hist)
@@ -75,9 +75,9 @@ function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
 end
 
 """
-    initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
-    initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
-    initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
+    initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::SphericalBC) where N <: Number
+    initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::CubicBC; debug = false) where N <: Number
+    initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::RhombicBC) where N <: Number
 Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from `e_bounds` and (with 2% either side additionally) used to determine the energy grating for the histogram (`delta_en_hist`). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is `2*r2` and `distance**2` is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as `en_histogram`.
 
 Returns `delta_en_hist`, `delta_r2`
@@ -100,7 +100,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
     end
     return results
 end
-function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
+function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::AbstractArray{N, 1},bc::CubicBC; debug = false) where N <: Number
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
@@ -109,8 +109,8 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
     results.v_min = bc.box_length^3*0.8
     results.v_max = bc.box_length^3*2.0
 
-    println(results.v_min)
-    println(results.v_max)
+    if debug println(results.v_min) end
+    if debug println(results.v_max) end
 
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
 
@@ -125,7 +125,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::CubicBC)
     end
     return results
 end
-function initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
+function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::AbstractArray{N, 1},bc::RhombicBC) where N <: Number
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
@@ -152,8 +152,8 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::RhombicBC)
 end
 
 """
-    update_histograms!(mc_states,results,delta_en_hist)
-    update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
+    update_histograms!(mc_states::MCStateVector, results::Output, delta_en_hist::Number)
+    update_histograms!(mc_states::MCStateVector, results::Output, delta_en_hist::Number, delta_v_hist::Number)
 Self explanatory name, updates the energy histograms in `results` using the current `mc_states.en_tot`
 
 """
@@ -176,7 +176,7 @@ end
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
       
 """
-    update_rdf!(mc_states,results,delta_r2)
+    update_rdf!(mc_states::MCStateVector, results::Output, delta_r2::Number)
 Self explanatory name, iterates over `mc_states` and adds to the appropriate `results.rdf` histogram. Type stable by the initialise function specifying a vector of integers.  
 
 """
@@ -195,8 +195,8 @@ function update_rdf!(mc_states,results,delta_r2)
     
 end
 """
-    sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results)
-    sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results)
+    sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::NVT, save_index::Int, results::Output, rdfsave::Bool)
+    sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::NPT, save_index::Int, results::Output, rdfsave::Bool)
 
 Function performed at the end of an [`mc_cycle!`](@ref ParallelTemperingMonteCarlo.MCRun.mc_cycle!) after equilibration. Updates the `E,E**2` totals for each `mc_state`, updates the energy and radial histograms and then returns the modified `mc_states` and `results`.
 
@@ -219,7 +219,7 @@ function sampling_step!(mc_params,mc_states,ensemble::NVT,save_index,results,rdf
         end
     end 
 end
-function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results,rdfsave)
+function sampling_step!(mc_params::MCParams,mc_states::MCStateVector,ensemble::NPT,save_index::Int,results::Output,rdfsave::Bool)
     if rem(save_index, mc_params.mc_sample) == 0
 
         update_energy_tot(mc_states,ensemble)
@@ -230,7 +230,7 @@ function sampling_step!(mc_params,mc_states,ensemble::NPT,save_index,results,rdf
 end
 
 """
-    finalise_results(mc_states,mc_params,results)
+    finalise_results(mc_states::MCStateVector, mc_params::MCParams, results::Output)
 Function designed to take a complete MC simulation and calculate the averages. 
 """
 function finalise_results(mc_states,mc_params,results)
