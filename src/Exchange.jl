@@ -64,7 +64,6 @@ function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_chan
     prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
 end
 
 

@@ -314,7 +314,7 @@ function read_config(xyzdata)
     elseif contains(xyzdata[2,1], "RhombicBC")
         bc = RhombicBC(xyzdata[2,3],xyzdata[2,4])
     end
-    configvectors = [xyzdata[2+i,2:4] for i in 1:N]
+    configvectors = Vector{Vector{Float64}}([xyzdata[2+i,2:4] for i in 1:N])
 
     config=Config(configvectors,bc)
 
