@@ -31,7 +31,9 @@ fieldname: `radius2`: squared radius of binding sphere
 """
 struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
-    SphericalBC(; radius::T) where T = new{T}(radius*radius)
+    SphericalBC(; radius::T) where T <: Number = new{T}(radius*radius)
+    SphericalBC{T}(x::T) where T <: Number = new{T}(x*x)
+    SphericalBC(x::T) where T <: Number = new{T}(x*x)
 end
 
 """

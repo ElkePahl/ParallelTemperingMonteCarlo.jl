@@ -126,8 +126,10 @@ and generates the variables required inside of the ensemblevariables struct with
 function generate_move!(mc_state::MCState,movetype::String)
     if movetype == "atommove"
         return atom_displacement(mc_state)
-    else
+    elseif movetype == "volumemove"
         return volume_change(mc_state)
+    else
+        error("Error: movetype not recognised")
     end
 end
 # function generate_move!(mc_state,movetype::atommove)

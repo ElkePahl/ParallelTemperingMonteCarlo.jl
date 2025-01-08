@@ -54,7 +54,7 @@ end
     Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
 """
 function max_length(bc::SphericalBC)
-    return 30.
+    return Inf
 end
 function max_length(bc::CubicBC)
     return bc.box_length*1.8
