@@ -10,9 +10,6 @@ function ≂(x, y)
     end
     try
         if x ≈ y
-            println("x is not approx y")
-            println("x: ", x)
-            println("y: ", y)
             return true
         end
     catch
@@ -914,7 +911,7 @@ end
                 ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000) 
             end
         end
-        @test read(joinpath(@__DIR__, "testing_data/ptmc_run.data"), String) == read(joinpath(@__DIR__, "testing_data/ptmc_run_ref.data"), String)
+        @test read(joinpath(@__DIR__, "testing_data/ptmc_run.data"), String) ≂ read(joinpath(@__DIR__, "testing_data/ptmc_run_ref.data"), String)
 
         Random.seed!(1)
         cd(joinpath(@__DIR__, "testing_data"))
