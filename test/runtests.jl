@@ -1,7 +1,6 @@
 using Test
 using SafeTestsets
-include("../src/ParallelTemperingMonteCarlo.jl")
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra, DelimitedFiles
 using Random
 "Lenient comparison operator for `struct`, both mutable and immutable (type with \\eqsim)."
@@ -787,15 +786,26 @@ end
 
         Random.seed!(1)
         @test test_results[:mc_cycle_npt_rdf] ≂ mc_cycle!(npt_states, npt_strategy, mc_params, eljpot_b, npt, npt_steps, npt_results, npt_counter, true)
-        Random.seed!(1)
-        #For some reason, this code calls rdf_update on delta_r2 = 0 throwing an Inf error. Will check this later.
-        #mc_cycle!(nvt_states, nvt_strategy, mc_params, eljpot_b, nvt, nvt_steps, nvt_results, nvt_counter, true)
 
+        Random.seed!(1)
+        @test_throws InexactError mc_cycle!(nvt_states, nvt_strategy, mc_params, eljpot_b, nvt, nvt_steps, nvt_results, nvt_counter, true)
         Random.seed!(1)
         @test test_results[:mc_cycle_npt_rdf] ≂ mc_cycle!(npt_states, npt_strategy, mc_params, eljpot_b, npt, npt_steps, npt_results, npt_counter, false)
         Random.seed!(1)
-        #Same issue as above.
-        #mc_cycle!(nvt_states, nvt_strategy, mc_params, eljpot_b, nvt, nvt_steps, nvt_results, nvt_counter, false)
+        @test test_results[:mc_cycle_nvt_nordf] ≂ mc_cycle!(nvt_states, nvt_strategy, mc_params, eljpot_b, nvt, nvt_steps, nvt_results, nvt_counter, false)
+
+        bc = SphericalBC(8.)
+        config = Config(random_test_samples[:pos], bc)
+        nvt_states, nvt_strategy, nvt_results, nvt_steps, nvt_counter = initialisation(mc_params, temp, config, eljpot_b, nvt)
+        nvt_results=initialise_histograms!(mc_params,nvt_results,[-0.006 , -0.002],bc)
+
+        for state in nvt_states
+            push!(state.ham, 0)
+            push!(state.ham, 0)
+        end
+
+        @test test_results[:mc_cycle_nvt_rdf] ≂ mc_cycle!(nvt_states, nvt_strategy, mc_params, eljpot_b, nvt, nvt_steps, nvt_results, nvt_counter, true)
+
     end
 
     @testset "check_e_bounds" begin
@@ -906,7 +916,11 @@ end
         end
         @test read(joinpath(@__DIR__, "testing_data/ptmc_run.data"), String) == read(joinpath(@__DIR__, "testing_data/ptmc_run_ref.data"), String)
 
-        #To implement: ptmc_run!(restart::Bool), not sure how to construct the required files - Blake
+        Random.seed!(1)
+        cd(joinpath(@__DIR__, "testing_data"))
+        #Way of determining whether code runs without error, as a unit test.
+        @test ptmc_run!(true) isa Any
+        cd(joinpath(@__DIR__, ".."))
     end
 end
 

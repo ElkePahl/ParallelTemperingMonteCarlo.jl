@@ -2,13 +2,7 @@
 # This is an example calculation for finding the melting temperature of a 13 Ne atom cluster using a Monte Carlo simulation.
 # First, we load PTMC and Plots:
 using Plots
-PROJECT_PATH = "../.."
-include(joinpath(PROJECT_PATH, "src", "ParallelTemperingMonteCarlo.jl"))
-using .ParallelTemperingMonteCarlo
-# If you installed the package using the Pkg REPL, you can use the following:
-# ```julia
-# using ParallelTemperingMonteCarlo
-# ```
+using ParallelTemperingMonteCarlo
 # Then, we set up the simulation parameters. Firstly, we set the number of atoms:
 n_atoms = 13;
 # Then, we set the temperature grid, which defines the range of temperatures we consider.

@@ -1,6 +1,5 @@
 using Test
-include("../src/ParallelTemperingMonteCarlo.jl")
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 
 @testset "multihist_NVT" begin
     ensemble=NVT(13)
