@@ -60,7 +60,7 @@ start_config = Config(pos_ne13, bc_ne13)
 # The data this simulation obtains is stored in various local files created in the current working directory.
 ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000);
 # This method accesses the stored data created from the ptmc_run! method and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
-energies,histogramdata,T,Z,Cv,dCv,S = postprocess(; xdir=joinpath(PROJECT_PATH, "examples"));
+energies,histogramdata,T,Z,Cv,dCv,S = postprocess(; xdir=joinpath("../..", "examples"));
 # Plot of heat capacity against temperature:
 plot(T,Cv,label="Cv")
 # Plot of the heat capacity gradient against temperature:
