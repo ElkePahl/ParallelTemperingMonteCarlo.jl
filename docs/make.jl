@@ -100,4 +100,6 @@ makedocs(sitename="$main_module",
 
 deploydocs(
     repo = "github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git",
+    branch = "Blake",
+    dirname = "gh-pages",
 )
