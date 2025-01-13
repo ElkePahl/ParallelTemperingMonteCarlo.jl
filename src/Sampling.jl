@@ -3,7 +3,7 @@ module MCSampling
 #export sampling_step!
 
 
-export sampling_step!, initialise_histograms!,finalise_results
+export sampling_step!, initialise_histograms!,finalise_results, update_energy_tot, find_hist_index, update_histograms!, rdf_index, update_rdf!
 
 
 using StaticArrays,LinearAlgebra
