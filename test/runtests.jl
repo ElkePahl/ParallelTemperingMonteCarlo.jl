@@ -1,7 +1,6 @@
 using Test
 using SafeTestsets
-include("../src/ParallelTemperingMonteCarlo.jl")
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra, DelimitedFiles
 using Random
 "Lenient comparison operator for `struct`, both mutable and immutable (type with \\eqsim)."
@@ -385,7 +384,7 @@ end
     new_d2_spherical_vec = new_d2_mat_spherical[index,:]
     new_tanmat_spherical = get_tantheta_mat(config2, sphericalbc)
     new_tanvec_spherical = new_tanmat_spherical[index,:]
-    @testset "dimer_energy_update" begin
+    @testset "dimer_energy_update!" begin
         r_cut = 50
         @test dimer_energy_update!(index,d2mat_spherical,new_d2_spherical_vec,0.0,eljpot_even) ≈ 0.00045929693400654364
         @test dimer_energy_update!(index,d2mat_spherical,new_d2_spherical_vec,0.0,r_cut,eljpot_even) ≈ 0.0004603835196235889
