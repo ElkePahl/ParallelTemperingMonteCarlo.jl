@@ -30,6 +30,10 @@ Trial.jl
 .vscode/
 *.data
 scripts/*.data
-
+analysis.NVT
+compile_shared.sh
+Sol.X
+todo.txt
+fortran/
 .vscode
 .DS_Store
