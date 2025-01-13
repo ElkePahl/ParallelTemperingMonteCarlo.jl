@@ -2,9 +2,7 @@
 # This is an example calculation for finding the melting temperature of a 13 Ne atom cluster using a Monte Carlo simulation.
 # First, we load PTMC and Plots:
 using Plots
-PROJECT_PATH = "../.."
-include(joinpath(PROJECT_PATH, "src", "ParallelTemperingMonteCarlo.jl"))
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 # If you installed the package using the Pkg REPL, you can use the following:
 # ```julia
 # using ParallelTemperingMonteCarlo
@@ -66,7 +64,7 @@ start_config = Config(pos_ne13, bc_ne13)
 # The data this simulation obtains is stored in various local files created in the current working directory.
 ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000);
 # This method accesses the stored data created from the ptmc_run! method and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
-energies,histogramdata,T,Z,Cv,dCv,S = postprocess(; xdir=joinpath(PROJECT_PATH, "examples"));
+energies,histogramdata,T,Z,Cv,dCv,S = postprocess(; xdir=joinpath("../..", "examples"));
 # Plot of heat capacity against temperature:
 plot(T,Cv,label="Cv")
 # Plot of the heat capacity gradient against temperature:

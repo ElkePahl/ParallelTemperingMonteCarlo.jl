@@ -2,9 +2,8 @@
 Running `julia --project make.jl` while in the `docs` directory will generate the documentation pages for all submodules defined in the lists below.
 """
 
-include("../src/ParallelTemperingMonteCarlo.jl")
 using Documenter, Literate
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 
 EXAMPLES_INPUT = joinpath(@__DIR__, "../examples")
 EXAMPLES_OUTPUT = joinpath(@__DIR__, "src/")
@@ -97,4 +96,8 @@ Documenter.HTMLWriter.HTML(
 
 makedocs(sitename="$main_module",
     pages = pages,
+)
+
+deploydocs(
+    repo = "github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git"
 )
