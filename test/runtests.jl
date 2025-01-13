@@ -10,9 +10,6 @@ function ≂(x, y)
     end
     try
         if x ≈ y
-            println("x is not approx y")
-            println("x: ", x)
-            println("y: ", y)
             return true
         end
     catch
