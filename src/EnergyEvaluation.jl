@@ -279,7 +279,7 @@ function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_var
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end 
-function dimer_energy_config(distmat::Matrix, NAtoms::Int,potential_variables::DimerPotentialVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotential)
+function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::DimerPotentialVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
