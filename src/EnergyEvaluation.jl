@@ -235,10 +235,11 @@ function dimer_energy_atom(i::Int, d2vec::VorS, tanvec::VorS, r_cut::Number, pot
     return sum1
 end
 """
-    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_variables::DimerPotentialVariables,pot::AbstractDimerPotential)
-    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::DimerPotentialVariables, r_cut::Number, bc::CubicBC, pot::AbstractDimerPotential)
-    dimer_energy_config(distmat::Matrix, NAtoms::Int,potential_variables::DimerPotentialVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotential)
-    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::ELJPotentialBVariables, r_cut::Number, bc::CubicBC, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_variables::DimerPotentialVariables, pot::AbstractDimerPotential)
+    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_variables::DimerPotentialVariables, r_cut::Number, bc::CubicBC, pot::AbstractDimerPotential)
+    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_variables::DimerPotentialVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotential)
+    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_variables::ELJPotentialBVariables, r_cut::Number, bc::CubicBC, pot::AbstractDimerPotentialB)
 Stores the total of dimer energies of one atom with all other atoms in vector and
 calculates total energy of configuration.
 
