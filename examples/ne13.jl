@@ -1,41 +1,16 @@
-# # PTMC with 13 Ne atoms
-# This is an example calculation for finding the melting temperature of a 13 Ne atom cluster using a Monte Carlo simulation.
-# First, we load PTMC and Plots:
+# # Example 1: Melting a 13-Atoms Neon Cluster 
+# This is an example calculation for finding the melting temperature of a 13-atoms neon cluster using a parallel-tempering Monte Carlo simulation.
+# First, we load ParallelTemperingMonteCarlo and Plots:
 using Plots
 using ParallelTemperingMonteCarlo
-# Then, we set up the simulation parameters. Firstly, we set the number of atoms:
+# ## Setting up the Model
+# Firstly, we set the number of atoms:
 n_atoms = 13;
-# Then, we set the temperature grid, which defines the range of temperatures we consider.
-# This is done by defining the upper and lower temperature limits, along with the number of temperatures we want to sample.
-ti = 4.;
-tf = 16.;
-n_traj = 25;
-temp = TempGrid{n_traj}(ti,tf)
-# Now we set the hyperparameters for this simulation:
-# - `mc_cycles` is the number of Monte Carlo cycles we want to run, the longer the more accurate but also more expensive.
-# - `mc_sample` is the number of MC cycles after which the energy of the state is recorded.
-# - `max_displ_atom` determines the maximum displacement of an atom over a cycle.
-# - `n_adjust` is the number of moves after which the step size of atom moves is adjusted.
-mc_cycles = 1000;
-mc_sample = 1;
-displ_atom = 0.1;
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj];
-n_adjust = 100;
-# For neatness, these are all placed in a `MCParams` struct:
-mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
-# Here, we define the Leonard-Jones potential with coefficients for even powers of r, starting from -6 and decreasing:
+# Next, we define the potential, here a Lennard Jones potential with coefficients for even powers of r, starting from -6 and decreasing:
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
-# One can also model this atom cluster in the presence of a uniform magnetic field along the z-axis, with a new Leonard-Jones potential given by:
-a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608];
-b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751];
-c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203];
-potB = ELJPotentialB{6}(a,b,c1)
-# We then define which constants to keep constant, using either NVT(keeping N, the number of atoms, V, the volume, and T, the temperature constant) or NPT(keeping N, P, the pressure, and T constant).
-# From this, we derive a MoveStrategy to feed into the PTMC simulation.
-ensemble = NVT(n_atoms);
-move_strat = MoveStrategy(ensemble)
-# These are the initial positions of the icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom, which we then convert to Bohr radii.
+# We further have to define the starting configuration of the simulation. For Ne13 we choose the icosahedral ground state of Ne13 (from the Cambridge cluster database). 
+# The atomic positions are given in Angstrom, which are then converted to Bohr radii (as the program uses atomic units).
 pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [2.023342172678102,	-2.136126268595355, 0.666071287554958],
 [2.033761811732818,	-0.643989413759464, -2.133000349161121],
@@ -51,15 +26,47 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 [0.000002325340981,	0.000000762100600, 0.000000414930733]];
 AtoBohr = 1.8897259886;
 pos_ne13 = pos_ne13 * AtoBohr
-# This represents a solid boundary around the cluster, otherwise the atoms would dissipate, and provides the external pressure the cluster would face in a macro environment, and the radius should be adjusted to mimic such.
-# Finding this radius is a non-trivial task, so choose the value that gets the most clean results.
+# Finally, we have to choose appropriate boundary conditions, here spherical boundary conditions (solid boundary around the cluster), to suppress atom loss processes.  
+# Finding this radius is a non-trivial task, and has to be chosen and tested carefully. A radius chosen too small wil exert artificial pressure on the cluster while a too large value leads to atoms being ejected.
 bc_ne13 = SphericalBC(radius=5.32*AtoBohr) 
 # We package the initial configuration and boundary conditions into a Config struct:
 start_config = Config(pos_ne13, bc_ne13)
-# Here, we run the simulation. This method returns the current state and results of the simulation, but that is outside the scope of this example.
-# The data this simulation obtains is stored in various local files created in the current working directory.
-ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000);
-# This method accesses the stored data created from the ptmc_run! method and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
+# ## Setting up the simulation parameters
+# We  first set the temperature grid, which defines the range of temperatures we consider.
+# This is done by defining the upper and lower temperature limits, along with the number of temperatures (also called trajectories) we want to sample.
+# Note, that a geometrical distribution of temperatures is chosen to maximise overlaps in the energy histograms.
+ti = 4.;
+tf = 16.;
+n_traj = 25;
+temp = TempGrid{n_traj}(ti,tf)
+# Now we set the hyperparameters for this simulation:
+# - `mc_cycles` is the number of Monte Carlo cycles we want to run, the longer the more accurate but also more expensive.
+# - `mc_sample` is the number of MC cycles after which the energy of the state is recorded.
+# - `max_displ_atom` determines the maximum displacement of an atom over a cycle. The maximum displacement is automatically adjusted in the program guaranteeing a 40-60% acceptance rate.
+# - `n_adjust` is the number of moves after which the step size of atom moves is adjusted.
+mc_cycles = 1000;
+mc_sample = 1;
+displ_atom = 0.1;
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj];
+n_adjust = 100;
+# For neatness, all parameters are collected in a `MCParams` struct:
+mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust = n_adjust)
+# We then define the ensemble, here we are using the NVT ensemble (keeping N, the number of atoms, V, the volume, and T, the temperature constant).
+# This allows us to derive a MoveStrategy to feed into the PTMC simulation. Here, we do `n_atoms` atom displacements of randomy chosen atoms per Monte Carlo cycle.
+ensemble = NVT(n_atoms);
+move_strat = MoveStrategy(ensemble)
+# ## Running the Simulation
+# Finally, we run the simulation. This method returns the current state and results of the simulation.
+# The data is stored in various local files created in the current working directory.
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000);
+# ## Post-processing and analyzing of results
+# The raw heat capacity plot is obtained from:
+plot(temp.t_grid,results.heat_cap)
+# and the energy histograms by:
+data = [results.en_histogram[i] for i in 1:n_traj]
+plot(data)
+# For post-processing of the data we use the multihistogram method. This method accesses the stored data created from the ptmc_run! method 
+# and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
 energies,histogramdata,T,Z,Cv,dCv,S = postprocess(; xdir=joinpath("../..", "examples"));
 # Plot of heat capacity against temperature:
 plot(T,Cv,label="Cv")
