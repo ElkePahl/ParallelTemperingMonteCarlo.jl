@@ -118,10 +118,10 @@ end
 Base.length(::Config{N}) where N = N
 
 """
-    get_centre(position::PositionArray,N::Number)
+    get_centre(position::PositionArray,N::Int64)
 Function to find the centre of mass of a configuration. Accepts the positions and number of positions and calculates the xyz coordinates of their centre.
 """
-function get_centre(position::PositionArray,N::Number)
+function get_centre(position::PositionArray,N::Int64)
     return [sum([pos[1] for pos in position]),sum([pos[2] for pos in position]),sum([pos[3] for pos in position])]./N
 end
 """
