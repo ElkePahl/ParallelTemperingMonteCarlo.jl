@@ -32,6 +32,7 @@ test_test.jl
 compile_shared.sh
 fortran/
 /statprof
+notes.txt
 
 scripts-elke/
 workspace*
