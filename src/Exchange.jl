@@ -114,7 +114,7 @@ end
     parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 """
-function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NVT)
+function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCParams,ensemble::NVT)
     n_exc = rand(1:mc_params.n_traj-1)
 
     mc_states[n_exc].count_exc[1] += 1
@@ -137,7 +137,7 @@ end
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
 Acceptance is determined by enthalpy instead of energy. 
 """
-function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NPT)
+function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCParams,ensemble::NPT)
     n_exc = rand(1:mc_params.n_traj-1)
 
     mc_states[n_exc].count_exc[1] += 1
