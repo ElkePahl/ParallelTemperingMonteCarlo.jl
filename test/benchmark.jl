@@ -308,6 +308,31 @@ begin
         global suite["MCRun"]["acc_test!"]["NPT"] = @benchmarkable acc_test!(mcstate,ensemble, movetype) setup=(ensemble = get_npt(); mcstate = get_mcstate(ensemble = ensemble); movetype = rand(["atommove", "volumemove"]))
     end
 
+    global suite["MCRun"]["swap_config!"] = BenchmarkGroup()
+    begin
+        global suite["MCRun"]["swap_config!"]["atommove"] = @benchmarkable swap_config!(mcstate, movetype) setup=(mcstate = get_mcstate(); movetype = "atommove")
+        global suite["MCRun"]["swap_config!"]["volumemove"] = @benchmarkable swap_config!(mcstate, movetype) setup=(mcstate = get_mcstate(ensemble = get_npt()); movetype = "volumemove")
+    end
+
+    global suite["MCRun"]["swap_atom_config!"] = BenchmarkGroup()
+    begin
+        global suite["MCRun"]["swap_atom_config!"]["swap_atom_config!"] = @benchmarkable swap_atom_config!(mcstate, atom_index, trial_pos) setup=(mcstate = get_mcstate(); atom_index = get_index(); trial_pos = get_pos())
+    end
+
+    global suite["MCRun"]["swap_config_v!"] = BenchmarkGroup()
+    begin
+        global suite["MCRun"]["swap_config_v!"]["CubicBC"] = @benchmarkable swap_config_v!(mc_state, bc, trial_config, new_dist2_mat, en_vec_new, en_tot) setup=(ensemble = get_npt(); bc = get_cubic_bc(); mc_state = get_mcstate(ensemble = ensemble, config = get_config(bc)); trial_config = mc_state.ensemble_variables.trial_config; new_dist2_mat = mc_state.ensemble_variables.new_dist2_mat; en_vec_new = mc_state.potential_variables.en_atom_vec; en_tot = mc_state.new_en)
+        global suite["MCRun"]["swap_config_v!"]["RhombicBC"] = @benchmarkable swap_config_v!(mc_state, bc, trial_config, new_dist2_mat, en_vec_new, en_tot) setup=(ensemble = get_npt(); bc = get_rhombic_bc(); mc_state = get_mcstate(ensemble = ensemble, config = get_config(bc)); trial_config = mc_state.ensemble_variables.trial_config; new_dist2_mat = mc_state.ensemble_variables.new_dist2_mat; en_vec_new = mc_state.potential_variables.en_atom_vec; en_tot = mc_state.new_en)
+    end
+
+    global suite["MCRun"]["swap_vars!"] = BenchmarkGroup()
+    begin
+        global suite["MCRun"]["swap_vars!"]["DimerPotentialVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_eljpot_even()))
+        global suite["MCRun"]["swap_vars!"]["ELJBVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_eljpot_b()))
+        global suite["MCRun"]["swap_vars!"]["EAMVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_eam()))
+        global suite["MCRun"]["swap_vars!"]["RuNNerVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_RuNNerPotential()))
+    end
+
     global suite["MCRun"]["mc_move!"] = BenchmarkGroup()
     begin
         global suite["MCRun"]["mc_move!"]["NVT"] = @benchmarkable mc_move!(mcstate, movestrat, pot, ensemble) setup=(ensemble = get_nvt(); pot = get_pot(ensemble = ensemble); init = initialise(ensemble = ensemble, pot = pot); mcstate = rand(init[1]); movestrat = init[2])
@@ -419,7 +444,7 @@ end
 cd(joinpath(@__DIR__, "testing_data/"))
 #It is highly recommended to not benchmark the whole test suite at once, as it can take a long time to run,
 #and is probably unnecessary. Instead, here index into only the functions you wish to benchmark.
-to_run = suite["EnergyEvaluation"]["calc_components"]
+to_run = suite["MCRun"]["swap_vars!"]
 tune!(to_run)
 cd(joinpath(@__DIR__, ".."))
 trials = run(to_run)

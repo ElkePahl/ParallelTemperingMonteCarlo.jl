@@ -1,5 +1,5 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
-
+export swap_config!, swap_atom_config!, swap_config_v!, swap_vars!
 """
     swap_config!(mc_state,movetype)
 
@@ -65,9 +65,11 @@ function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new
 end
 
 """
-    swap_vars!(i_atom,potential_variables::V)
-
-called by `swap_atom_config!` function; 
+    swap_vars!(i_atom::Int, potential_variables::V) where V <: DimerPotentialVariables
+    swap_vars!(i_atom::Int, potential_variables::ELJPotentialBVariables)
+    swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
+    swap_vars!(i_atom::Int, potential_variables::NNPVariables)
+Called by `swap_atom_config!` function; 
 takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration 
 and replaces the current values with the new values such as:
     - Under magnetic fields, the new tan matrix replaces the old
