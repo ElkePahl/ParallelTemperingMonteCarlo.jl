@@ -169,7 +169,7 @@ begin
         global suite["EnergyEvaluation"]["set_variables"]["ELJEven"] = @benchmarkable set_variables(config, d2mat, $(get_eljpot_even())) setup=(config = get_config(get_spherical_bc()); d2mat = get_distance2_mat(config))
         global suite["EnergyEvaluation"]["set_variables"]["ELJB"] = @benchmarkable set_variables(config, d2mat, $(get_eljpot_b())) setup=(config = get_config(get_spherical_bc()); d2mat = get_distance2_mat(config))
         global suite["EnergyEvaluation"]["set_variables"]["EmbeddedAtomPotential"] = @benchmarkable set_variables(config, d2mat, $(get_eam())) setup=(config = get_config(get_spherical_bc()); d2mat = get_distance2_mat(config))
-        global suite["EnergyEvaluation"]["set_variables"]["RuNNerPotential"] = @benchmarkable set_variables(config, d2mat, $(get_RuNNerPotential())) setup=(config = get_config(get_spherical_bc()); d2mat = get_distance2_mat(config))
+        #global suite["EnergyEvaluation"]["set_variables"]["RuNNerPotential"] = @benchmarkable set_variables(config, d2mat, $(get_RuNNerPotential())) setup=(config = get_config(get_spherical_bc()); d2mat = get_distance2_mat(config))
     end
 
     global suite["EnergyEvaluation"]["energy_update!"] = BenchmarkGroup()
@@ -330,7 +330,7 @@ begin
         global suite["MCRun"]["swap_vars!"]["DimerPotentialVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_eljpot_even()))
         global suite["MCRun"]["swap_vars!"]["ELJBVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_eljpot_b()))
         global suite["MCRun"]["swap_vars!"]["EAMVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_eam()))
-        global suite["MCRun"]["swap_vars!"]["RuNNerVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_RuNNerPotential()))
+        #global suite["MCRun"]["swap_vars!"]["RuNNerVariables"] = @benchmarkable swap_vars!(atom_index, pot_vars) setup=(atom_index = get_index(); config = get_config(get_nvt_bc()); pot_vars = set_variables(config, get_distance2_mat(config), get_RuNNerPotential()))
     end
 
     global suite["MCRun"]["mc_move!"] = BenchmarkGroup()
@@ -444,7 +444,7 @@ end
 cd(joinpath(@__DIR__, "testing_data/"))
 #It is highly recommended to not benchmark the whole test suite at once, as it can take a long time to run,
 #and is probably unnecessary. Instead, here index into only the functions you wish to benchmark.
-to_run = suite["MCRun"]["swap_vars!"]
+to_run = suite
 tune!(to_run)
 cd(joinpath(@__DIR__, ".."))
 trials = run(to_run)
