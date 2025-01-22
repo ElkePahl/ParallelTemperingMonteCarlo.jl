@@ -2,7 +2,7 @@ pro_file = Dict(
     "test" => "ne13.jl",
     "release" => "ne55.jl",
 )
-mode = "release"
+mode = "test"
 call = :(include(joinpath(@__DIR__,"..","scripts",pro_file[$mode])))
 eval(call)
 
