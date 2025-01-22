@@ -446,8 +446,9 @@ cd(joinpath(@__DIR__, "testing_data/"))
 #and is probably unnecessary. Instead, here index into only the functions you wish to benchmark.
 to_run = suite
 tune!(to_run)
-cd(joinpath(@__DIR__, ".."))
 trials = run(to_run)
+cd(joinpath(@__DIR__, ".."))
+
 # I hope you ran this in the Julia REPL, because to view the results you need to run something simiilar to the following:
 # using BenchmarkPlots, StatsPlots
 # plot(trials["function_name"]["benchmark_descriptor"])
