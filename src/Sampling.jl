@@ -36,49 +36,38 @@ function update_energy_tot(mc_states,ensemble::NPT)
 
 end
 """
-    find_hist_index(mc_state,results,delta_en_hist)
-returns the histogram index of a single mc_state energy and returns this value. 
+    find_hist_index(hist_index::Number, n_bin::Int)
+    find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number)
+    find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number, delta_v_hist::Number)
+Returns the histogram index of a single `mc_state` energy and returns this value. 
 """
-function find_hist_index(mc_state,results,delta_en_hist)
-
-    hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
-
+function find_hist_index(hist_index::Number, n_bin::Int)
     if hist_index < 1
         return 1
-    elseif hist_index > results.n_bin
-        return results.n_bin+2
+    elseif hist_index > n_bin
+        return n_bin+2
     else
-        return hist_index +1
+        return floor(Int,hist_index) +1
     end
 end
+function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number)
 
-"""
-    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
-returns the histogram index of a single mc_state energy and returns this value. 
-"""
-function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+    hist_index = (mc_state.en_tot - results.en_min)/delta_en_hist +1
 
-    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
-    hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
+    return find_hist_index(hist_index,results.n_bin)
+end
+function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
 
-    if hist_index_e < 1
-        hist_index_e = 1
-    elseif hist_index_e > results.n_bin
-        hist_index_e = results.n_bin+2
-    else
-        hist_index_e += 1
-    end
+    hist_index_e = (mc_state.en_tot - results.en_min)/delta_en_hist +1
+    hist_index_v = (mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist +1
 
-    if hist_index_v < 1
-        hist_index_v = 1
-    elseif hist_index_v > results.n_bin
-        hist_index_v = results.n_bin+2
-    else
-        hist_index_v += 1
-    end
+    hist_index_e = find_hist_index(hist_index_e,results.n_bin)
+
+    hist_index_v = find_hist_index(hist_index_v,results.n_bin)
 
     return hist_index_e, hist_index_v
 end
+
 
 """
     initialise_histograms!(mc_params,results,e_bounds,bc::SphericalBC)
