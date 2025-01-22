@@ -4,7 +4,8 @@ module MCSampling
 
 
 export sampling_step!, initialise_histograms!,finalise_results
-
+export update_energy_tot, find_hist_index, update_histograms!, update_rdf!
+export update_rdf!, rdf_index
 
 using StaticArrays,LinearAlgebra
 using ..MCStates

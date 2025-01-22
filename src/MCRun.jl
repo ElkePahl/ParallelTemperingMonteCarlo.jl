@@ -4,6 +4,8 @@ module MCRun
 export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results,get_energy!
 export atom_move!
 export exc_acceptance, exc_trajectories!
+export acc_test!,check_e_bounds,reset_counters,equilibration_cycle!,equilibration
+export mc_move!
 
 using StaticArrays,DelimitedFiles
 using ..MCStates

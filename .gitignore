@@ -30,6 +30,6 @@ Trial.jl
 .vscode/
 *.data
 scripts/*.data
-
+checkpoint/
 .vscode
 .DS_Store
