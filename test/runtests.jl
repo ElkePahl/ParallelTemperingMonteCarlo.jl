@@ -48,8 +48,6 @@ function ≂(x, y)
     return true
 end
 
-include(joinpath(@__DIR__, "setup_params.jl"))
-
 random_test_samples_and_test_results = Dict(
     "Configurations" => "testing_data/Configurations.jl",
     "EnergyEvaluation" => "testing_data/EnergyEvaluation.jl",
