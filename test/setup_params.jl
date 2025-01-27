@@ -10,6 +10,7 @@ get_pos() = rand(SVector{3,Float64}) * 10
 get_posvec() = [get_pos() for i in 1:n_atom]
 get_config(bc::AbstractBC) = Config(get_posvec(), bc)
 get_n_by_n() = rand(n_atom, n_atom)
+get_n_vec() = rand(n_atom)
 get_mc_params() = MCParams(rand(10:500), rand(10:500), n_atom; eq_percentage = rand())
 get_tempgrid(; n_traj = rand(10:500)) = TempGrid{n_traj}(rand(10:500), rand(10:500))
 get_index() = rand(1:n_atom)
@@ -114,3 +115,7 @@ function get_RuNNerPotential()
     nnp = NeuralNetworkPotential(num_nodes,activation_functions,weights)
     return RuNNerPotential(nnp,radsymmvec, angularsymmvec)
 end
+get_dimer_vars(config) = set_variables(config, get_distance2_mat(config), get_eljpot_even())
+get_eljb_vars(config) = set_variables(config, get_distance2_mat(config), get_eljpot_b())
+get_eam_vars(config) = set_variables(config, get_distance2_mat(config), get_eam())
+get_RuNNer_vars(config) = set_variables(config, get_distance2_mat(config), get_RuNNerPotential())
