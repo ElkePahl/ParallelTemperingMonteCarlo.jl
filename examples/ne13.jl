@@ -67,7 +67,7 @@ data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
 # For post-processing of the data we use the multihistogram method. This method accesses the stored data created from the ptmc_run! method 
 # and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
-energies,histogramdata,T,Z,Cv,dCv,S = postprocess(; xdir=joinpath("../..", "examples"));
+energies,histogramdata,T,Z,Cv,dCv,S = postprocess();
 # Plot of heat capacity against temperature:
 plot(T,Cv,label="Cv")
 # Plot of the heat capacity gradient against temperature:
