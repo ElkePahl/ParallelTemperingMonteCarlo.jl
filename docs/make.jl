@@ -90,12 +90,13 @@ for fn in EXAMPLES_FILES
 end
 push!(pages, "Examples" => EXAMPLES_PAIRS)
 
-Documenter.HTMLWriter.HTML(
-    size_threshold_ignore = THRESHOLD_IGNORE,
-)
 
 makedocs(sitename="$main_module",
     pages = pages,
+    format = Documenter.HTMLWriter.HTML(
+    size_threshold_ignore = THRESHOLD_IGNORE,
+    size_threshold = nothing,
+)
 )
 
 deploydocs(
