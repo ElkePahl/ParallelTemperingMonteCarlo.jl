@@ -32,7 +32,7 @@ end
     RadialType2{T}(eta,r_cut,type_vector) 
     RadialType2{T}(eta,r_cut,type_vector::Vector,G_vals::Vector) 
 
-Various definitions of the RadialType2 struct to account for new normalisation factors required by the neural network to simplify the math. One only accepts the standard hyperparameters trained by the neural network and sets the offset and normalisation factors to zero and one respectively. The other accepts G_min,G_max and calculates the normalisation and offset manually
+Various definitions of the [`RadialType2`](@ref) struct to account for new normalisation factors required by the neural network to simplify the math. One only accepts the standard hyperparameters trained by the neural network and sets the offset and normalisation factors to zero and one respectively. The other accepts `G_min,G_max` and calculates the normalisation and offset manually
 """
 function RadialType2{T}(eta,r_cut,type_vector) where {T}
     return RadialType2(eta,r_cut,type_vector,0.,1.)
@@ -57,8 +57,8 @@ end
 """
     AngularType3{T}(eta,lambda,zeta,r_cut,type_vec::Vector) where {T}
     AngularType3{T}(eta,lambda,zeta,r_cut,type_vector::Vector,G_vals::Vector) where {T}
-Functions to initialise the AngularType3 structs based on various different definitions. If we don't include the offset and normalisation factors the two power of (one minus) zeta factor inlcudes no normalisation, and the offset is zero. 
-Second definition includes a vector containing G_max and G_min in a vector, it sets the offset and renormalises tpz to include G_norm. 
+Functions to initialise the [`AngularType3`](@ref) structs based on various different definitions. If we don't include the offset and normalisation factors the two power of (one minus) zeta factor inlcudes no normalisation, and the offset is zero. 
+Second definition includes a vector containing `G_max` and `G_min` in a vector, it sets the offset and renormalises `tpz` to include `G_norm`. 
 """
 function AngularType3{T}(eta,lambda,zeta,r_cut,type_vec) where {T}
     tpz = 2.0^(1-zeta)
@@ -76,7 +76,7 @@ end
 """
     exponential_part(η,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk)
     exponential_part(η,rsum,f_prod)
-calculates the exponential portion of the symmetry function for the angular symmetry function. Preserves the values we can maintain throughout iterating over theta. Second method simply reduces the inputs to what is actually required. 
+Calculates the exponential portion of the symmetry function for the angular symmetry function. Preserves the values we can maintain throughout iterating over `theta`. Second method simply reduces the inputs to what is actually required. 
 """
 exponential_part(η,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk) = exp(-η*(r2_ij+r2_ik+r2_jk))* f_ij * f_ik * f_jk
 exponential_part(η,rsum,f_prod) = exp(-η*(rsum))*f_prod
@@ -87,7 +87,7 @@ Calculates the angular portion of a single symmetry function, this requires iter
 theta_part(θ,λ,ζ) = (1+λ*θ)^ζ
 """
     symmfunc_calc(θ_vec,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
-Calculates the three g_values corresponding to the three atoms iterated over, builds the foundation of the total symm function as calculated below.
+Calculates the three `g_values` corresponding to the three atoms iterated over, builds the foundation of the total symm function as calculated below.
 """
 function symmfunc_calc(θ_vec,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
 
@@ -98,7 +98,7 @@ function symmfunc_calc(θ_vec,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
 end
 """
     update_g_vals!(g_vec,g_vals,atomindex,index2,index3)
-function to correctly update the symmvalues 'g_vals' at the indices in 'g_vec'
+Function to correctly update the symmvalues `g_vals` at the indices in `g_vec`
  """
 function update_g_vals!(g_vec,g_vals,atomindex,index2,index3)
 
@@ -115,7 +115,7 @@ Accepts interatomic distance squared `r2_ij`, the cutoff function 'fc_ij' and a 
     calc_one_symm_val(θ,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
     (position1,position2,position3,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
 
-returns a single symmetry function value from the double-sum. accepts `θ` the angle between ijk centred on i, and the squared distances `r2_ij`,`r2_ik`, `r2_jk`, the cutoff function values `f_ij,f_ik,f_jk` along with the symmetry funciton parameters `η`,`λ`,`ζ`, and the cutoff radius `r_cut`.
+Returns a single symmetry function value from the double-sum. accepts `θ` the angle between `ijk` centred on `i`, and the squared distances `r2_ij`,`r2_ik`, `r2_jk`, the cutoff function values `f_ij,f_ik,f_jk` along with the symmetry function parameters `η`,`λ`,`ζ`, and the cutoff radius `r_cut`.
 
 The version with `position_i` calculates the angle between positions before calculating the symmetry functions according to the previous method.  
 """
@@ -136,7 +136,7 @@ end
 
 """ 
     calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::RadialType2)
-Accepts `positions` for consistency with angular calculation, `dist2_mat` and `f_mat` containing the distances and cutoff functions relevant to the symmetry values, lastly accepts the symmetry function over which to iterate. `g_vec` is an N_atom vector into which the total contributions of each atom are inputted. Returns the same vector. 
+Accepts `positions` for consistency with angular calculation, `dist2_mat` and `f_mat` containing the distances and cutoff functions relevant to the symmetry values, lastly accepts the symmetry function over which to iterate. `g_vec` is an `N_atom` vector into which the total contributions of each atom are input. Returns the same vector. 
 """
 function calc_symm_vals!(positions,dist2_mat,f_mat,g_vec,symm_func::RadialType2)
     N=length(g_vec)
@@ -213,7 +213,7 @@ function total_symm_calc(positions,dist2_mat,f_mat,radsymmfunctions,angsymmfunct
 end
 """
     total_thr_symm_calc(positions,dist2_mat,f_mat,total_symm_vec)
-This operates as the total_symm_calc function only threaded over the symmetry functions. 
+This operates as the [`total_symm_calc`](@ref) function only threaded over the symmetry functions. 
 """
 function total_thr_symm_calc(positions,dist2_mat,f_mat,total_symm_vec)
     g_mat = init_symm_vecs(dist2_mat,total_symm_vec)

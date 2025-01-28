@@ -14,27 +14,27 @@ export get_r_cut
 
 """
     AbstractEnsemble
-abstract type for ensemble:
-    - NVT: canonical ensemble [`NVT`](@ref)
-    - NPT: isothermal,isobaric [`NPT`](@ref)
+Abstract type for ensemble:
+-   [`NVT`](@ref): canonical ensemble
+-   [`NPT`](@ref): isothermal,isobaric ensemble
 
-    Each subtype requires a corresponding AbstractEnsembleVariable struct
+Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
 
 """
     AbstractEnsembleVariables
-Abstract struct for variables specific to ensemble that change during MC run (moves)
+Abstract struct for variables specific to ensemble that change during MC run (moves).
 """
 abstract type AbstractEnsembleVariables end
 
 """
     NVT
-canonical ensemble
-fieldnames: 
-    -n_atoms: number of atoms
-    -n_atom_moves: number of atom moves; defaults to n_atoms
-    -n_swap_moves: number of atom exchanges made; defaults to 0
+Canonical ensemble.
+-   Fieldnames: 
+    -   `n_atoms::Int64`: number of atoms
+    -   `n_atom_moves::Int64`: number of atom moves; defaults to `n_atoms`
+    -   `n_swap_moves::Int64`: number of atom exchanges made; defaults to 0
 """
 struct NVT <: AbstractEnsemble
     n_atoms::Int64
@@ -48,11 +48,11 @@ end
 
 """
     NVTVariables <: AbstractEnsembleVariables 
-NVT ensemble specific variables that change during MC run
-Fields for the NVT ensemble include:
-        - index 
-        - trial_move 
-    When trialing a new configuration we select an atom at `index` to move to position given by `trial_move`
+NVT ensemble specific variables that change during MC run:
+-   Fields:
+    -   `index::Int64`
+    -   `trial_move::SVector{3,T}`
+When trialing a new configuration we select an atom at `index` to move to position given by `trial_move`.
 """
 mutable struct  NVTVariables{T} <: AbstractEnsembleVariables
     index::Int64
@@ -61,13 +61,13 @@ end
 
 """
     NPT
-isothermal, isobaric ensemble
-fieldnames: 
-    -n_atoms: number of atoms
-    -n_atom_moves: number of atom moves; defaults to n_atoms
-    -n_volume_moves: number of volume moves; defaults to 1
-    -n_swap_moves: number of atom exchanges made; defaults to 0
-    -pressure: the fixed pressure of the system
+Isothermal, isobaric ensemble.
+-   Fieldnames: 
+    -   `n_atoms::Int64`: number of atoms
+    -   `n_atom_moves::Int64`: number of atom moves; defaults to `n_atoms`
+    -   `n_volume_moves::Int64`: number of volume moves; defaults to 1
+    -   `n_swap_moves::Int64`: number of atom exchanges made; defaults to 0
+    -   `pressure::Float64`: the fixed pressure of the system
 """
 struct NPT <: AbstractEnsemble
     n_atoms::Int64
@@ -83,17 +83,17 @@ end
 
 """
     NPTVariables <: AbstractEnsembleVariables 
-NPT ensemble specific variable that change during MC run
-Field names:
-        - index 
-        - trial_move 
-        - trial_config
-        - new_dist2_mat
-        - r_cut 
-        - new_r_cut
-    When trialing a new configuration we select an atom at `index` to move to new position `trial_move`, 
-    the index can be greater than n_atoms in which case we trial a volume move, 
-    involving a scaled `trial_config` with a `new_r_cut` having a `new_dist2_mat` this being a volume move
+NPT ensemble specific variable that change during MC run.
+-   Field names:
+    -   `index::Int64`
+    -   `trial_move::SVector{3,T}`
+    -   `trial_config::Config`
+    -   `new_dist2_mat::Matrix{T}`
+    -   `r_cut::T`
+    -   `new_r_cut::T`
+When trialing a new configuration we select an atom at `index` to move to new position `trial_move`, 
+the index can be greater than `n_atoms` in which case we trial a volume move, 
+involving a scaled `trial_config` with a `new_r_cut` having a `new_dist2_mat` this being a volume move.
 """
 mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     index::Int64
@@ -105,9 +105,9 @@ mutable struct NPTVariables{T} <: AbstractEnsembleVariables
 end
 
 """
-get_r_cut(bc<:PeriodicBC)
-finds the square of the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting).
-implemented for `CubicBC` and `RhombicBC`.
+    get_r_cut(bc<:PeriodicBC)
+Finds the square of the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting).
+Implemented for `CubicBC` and `RhombicBC`, the only viable boundary conditions for an NPT ensemble.
 """
 function get_r_cut(bc::CubicBC)
     return bc.box_length^2/4
@@ -117,44 +117,39 @@ function get_r_cut(bc::RhombicBC)
     return min(bc.box_length^2*3/16,bc.box_height^2/4)
     #return bc.box_length^2*3/16
 end
-
 """
-set_ensemble_variables(config::Config{N,BC,T}, ensemble)
-initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT`);
-required to allow for neutral initialisation in defining the MCState [`MCStates.MCState`](@ref) struct. 
+    set_ensemble_variables(config::Config{N,BC,T}, ensemble)
+Initialises the instance of [`AbstractEnsembleVariables`](@ref) (with ensemble being `NVT` or `NPT`);
+required to allow for neutral initialisation in defining the [`MCState`](@ref Main.ParallelTemperingMonteCarlo.MCStates.MCState) struct. 
 """
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
 end
 
 function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
+    if BC == SphericalBC
+        error("SphericalBC cannot be used in an NPT ensemble.")
+    end
     return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
 end
 
 """
     MoveType
-defines the abstract type for moves to establish the movestrat struct. Basic types are:
-    - `atommove`: basic move of a single atom 
-    - `volumemove`: NPT ensemble requires volume changes to maintain pressure as constant 
-    - `atomswap`: for systems with different atom types we need to exchange atoms (not yet implemented)
+Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) struct. Basic types are:
+    -   `atommove::MoveType`: basic move of a single atom 
+    -   `volumemove::MoveType`: NPT ensemble requires volume changes to maintain pressure as constant 
+    -   `atomswap::MoveType`: for systems with different atom types we need to exchange atoms (not yet implemented)
 """
-abstract type MoveType end
-
-struct atommove <: MoveType end
-
-struct volumemove <: MoveType end
-
-struct atomswap <: MoveType end
+@enum MoveType atommove volumemove atomswap
 
 """
     MoveStrategy{N,Etype}
-A struct to define the types of moves performed per MC cycle 
-Field names:
-    - ensemble: type of ensemble (NVT, NPT)
-    - movestrat: vector of strings that describes moves made per MC cycle (see `MoveType`)
+A struct to define the types of moves performed per MC cycle.
+-   Field names:
+    -   `ensemble::Etype`: type of ensemble (NVT, NPT)
+    -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle (see `MoveType`)
 """
-# for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps. 
-struct MoveStrategy{N,Etype}
+struct MoveStrategy{N,Etype} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps. 
     ensemble::Etype
     movestrat::Vector{String}
 end

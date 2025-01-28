@@ -1,6 +1,6 @@
 """
    MachineLearningPotential
-Developed for use with the ParallelTemperingMonteCarlo package (https://github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git) in order to calculate the energies of atomic structures using the RuNNer programme. Currently this module requires librunnerjulia.so -- a FORTRAN-based program to actually calculate the atomic energies. 
+Developed for use with the [`ParallelTemperingMonteCarlo`](https://github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git) package in order to calculate the energies of atomic structures using the RuNNer programme. Currently this module requires librunnerjulia.so -- a FORTRAN-based program to actually calculate the atomic energies. 
 """
 
 module MachineLearningPotential

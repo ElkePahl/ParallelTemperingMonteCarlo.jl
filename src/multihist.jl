@@ -5,22 +5,23 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 
 using ..InputParams
 using ..Initialization
+using ..EnergyEvaluation
 
 export multihistogram,postprocess
 
 """
-    readfile(xdir::String)
-method 1: xdir::String -reads output files for the FORTRAN PTMC code written by Edison Florez.
-method 2: output::output,Tvals::TempGrid - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
+    readfile(xdir::String; debug = false)
+Method 1: `xdir::String` -reads output files for the FORTRAN PTMC code written by Edison Florez.
+Method 2: `output::Output`, `Tvals::TempGrid` - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
 
-xdir is the directory containing the histogram information usually /path/to/output/histograms
+`xdir` is the directory containing the histogram information usually `/path/to/output/histograms`
 
 `HistArray` is the NTrajxNBins array containing all histogram counts
 `energyvector` is an NBins length vector containing the energy value of each bin
 `beta` is an NTraj length vector of 1/(kBT)
 `NBins,NTraj,kB` are constant values required throughout
 """
-function readfile(xdir::String)
+function readfile(xdir::String; debug = false)
     f = open("$(xdir)histE.data", "r+")
     datafile=readdlm(f)
     kB = datafile[1]
@@ -40,7 +41,7 @@ function readfile(xdir::String)
         HistArray[i,:] = hist[1:NBins,2] 
     end
 
-    println("Files Read")
+    if debug println("Files Read") end
     energyvector = [(j-1)*de + emin for j=1:NBins]
 
     return HistArray,energyvector,beta,NTraj,NBins,kB
@@ -70,14 +71,14 @@ function readfile(output::Output, Tvals::TempGrid )
     return HistArray, energyvector, Tvals.beta_grid, NTraj, output.n_bin , kB
 end
 """ 
-    processhist!(HistArray,energyvector,beta,NBins)
-This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent NaN errors when doing the required calculations.
+    processhist!(HistArray::Matrix{N}, energyvector::VorS, NBins::Int, NTraj::Int) where N <: Number
+This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent `NaN` errors when doing the required calculations.
 
 `HistArray,energyvector` are the total histograms and values of the energy bins respectively, they are only changed by normalisation and removal of unnecessary rows
 `nsum` is merely the total histogram count for each energy bin
 
 """
-function processhist!(HistArray,energyvector,NBins,NTraj)
+function processhist!(HistArray::Matrix{N},energyvector::VorS,NBins::Int,NTraj::Int) where N <: Number
     for i in 1:NTraj
         #NB in Florent's original code this factor of NBins*i normalised everything
         HistArray[i,:] = HistArray[i,:]./(NBins)#*i)
@@ -104,10 +105,10 @@ function processhist!(HistArray,energyvector,NBins,NTraj)
 end
 """
     initialise(xdir::String)
-    (Output::Output,Tvec::TempGrid)
-function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code for method one, or directly from the output data given from the Julia PTMC code.
-    
-    We read the files with readfile, process the file with processhist! and output all relevant arrays and constants as defined in the constituent functions.
+    initialise(Output::Output,Tvec::TempGrid)
+Function to retrieve all histogram information from the histogram directory outputted by Edison's PTMC code for method one, or directly from the output data given from the Julia PTMC code.
+
+We read the files with `readfile`, process the file with `processhist!` and output all relevant arrays and constants as defined in the constituent functions.
 
 """
 function initialise(xdir::String)
@@ -130,7 +131,7 @@ end
 """
     nancheck(X::Vector)
     nancheck(X::Matrix)
-function to ensure no vector or matrix contains NaN as this ruins the linear algebra.
+Function to ensure no vector or matrix contains `NaN` as this ruins the linear algebra.
 """
 function nancheck(X :: Vector)
     N = length(X)
@@ -156,11 +157,11 @@ function nancheck(X::Matrix)
     return check
 end
 """ 
-    bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
-function to calculate the b vector relevant to solving the RHS of the multihistogram equation. 
+    bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins; debug = false)
+Function to calculate the `b` vector relevant to solving the RHS of the multihistogram equation. 
 
 """
-function bvector(HistArray::Matrix,energyvector,beta,nsum,NTraj,NBins)
+function bvector(HistArray::Matrix{N},energyvector::VorS,beta::VorS,nsum::VorS,NTraj::Int,NBins::Int; debug = false) where N <: Number
     #Below we find the matrix of values n_{ij}*(ln(n_{ij} + beta_iE_j)
     #which appears frequently
     logmat = Array{Float64}(undef,NTraj,NBins)
@@ -190,15 +191,15 @@ function bvector(HistArray::Matrix,energyvector,beta,nsum,NTraj,NBins)
     for i in 1:NTraj 
         B[i] = sum( bmat[i,:] .- HistArray[i,:] .*rhvec./nsum )
     end
-    println("B Vector Calculated")
+    if debug println("B Vector Calculated") end
     return B,bmat
 end
 """
-    amatrix(HistArray :: Matrix,nsum,NTraj)
+    amatrix(HistArray :: Matrix,nsum::Vector{N},NTraj::Int) where N <: Number
 This function calculates the LHS of the multihistogram equation, the A matrix.
 """
 
-function amatrix(HistArray :: Matrix,nsum,NTraj)
+function amatrix(HistArray :: Matrix,nsum::VorS,NTraj::Int; debug = false)
     A = Array{Float64}(undef,NTraj,NTraj)
 
     for i = 1:NTraj
@@ -211,15 +212,15 @@ function amatrix(HistArray :: Matrix,nsum,NTraj)
             end
         end
     end
-    println("A Matrix Calculated")
+    if debug println("A Matrix Calculated") end
 
     return A
 end
 """ 
-    systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins,kB)
-systemsolver is used to determine the solution Alpha to the linear equation Ax = b where A and b are the A matrix and b vector described above. This is fundamentally how the multihistogram method works
+    systemsolver(HistArray::Matrix,energyvector::Vector{N},beta::Vector{N},nsum::Vector{N},NTraj::Int,NBins::Int) where N <: Number
+[`systemsolver`](@ref) is used to determine the solution Alpha to the linear equation `Ax = b` where `A` and `b` are the A matrix and b vector described above. This is fundamentally how the multihistogram method works.
 """
-function systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
+function systemsolver(HistArray::Matrix,energyvector::VorS,beta::VorS,nsum::VorS,NTraj::Int,NBins::Int; debug = false)
     #solve the b vector
     b,bmat = bvector(HistArray,energyvector,beta,nsum,NTraj,NBins)
     #solve the A matrix
@@ -231,20 +232,20 @@ function systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
         #If there isn't NaN we solve the system and get entropy
         alpha = A \ b
         #alpha = alpha.- alpha[NTraj]
-        println("system solved!")
+        if debug println("system solved!") end
         S = Entropycalc(alpha, bmat, HistArray,nsum,NBins)
-        println("Entropy Found")
+        if debug println("Entropy Found") end
         return alpha, S
     else #if NaN is present we return an error
-        println("system cannot be solved")
+        if debug println("system cannot be solved") end
     end
 
 end
 """
-    Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
-Having determined the vector solution to Ax=b, we input alpha and the "b-matrix" the term n_{ij}*(ln(n_{ij} + beta_iE_j) we can find the entropy as a function of Energy.
+    Entropycalc(alpha::Vector, bmat::Matrix, HistArray::Matrix, nsum::VorS, NBins::Int)
+Having determined the vector solution to `Ax=b`, we input `alpha` and the "b-matrix" the term `n_{ij}*(ln(n_{ij} + beta_iE_j)` we can find the entropy as a function of energy.
 """
-function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
+function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum::VorS,NBins::Int)
     S_E = []
     for j = 1:NBins 
         var = (sum(bmat[:,j] .- HistArray[:,j].*alpha))/nsum[j]
@@ -254,14 +255,14 @@ function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum,NBins)
     return S_E
 end
 """
-    analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64; NPoints=600)
-NB: NPoints is an optional keyword expressing how dense the points should be populated. 
+    analysis(energyvector::VorS, S_E::Vector, beta::VorS, kB::Float64, NPoints)
+NPoints determines how densely the points are populated.
 
-analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
+Analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
-function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
+function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPoints::Int; debug = false)
 
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
@@ -293,11 +294,11 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
        ytest = nancheck(y[i,:])
 
        if Stest == 0
-        println("Entropy is a problem")
+        if debug println("Entropy is a problem") end
        elseif energyvectest == 0
-        println("energyvector is a problem")
+        if debug println("energyvector is a problem") end
        elseif ytest == 0
-        println("vector $i at temperature $(T[i]) is a problem")
+        if debug println("vector $i at temperature $(T[i]) is a problem") end
        end
 
        count=0  #this variable was included for bug testing and should be excluded from the main program
@@ -323,7 +324,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
 
             @goto start
         end
-        println(count)
+        if debug println(count) end
        U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
        U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]       
        r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
@@ -335,20 +336,15 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
 return Z,Cv,dCv,S_T,T
 end
 """ 
-    runmultihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
-
+    run_multihistogram(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int, kB::Float64, outdir::String, NPoints::Int) where N <: Number
 This function completely determines the properties of a system given by the output of the initialise function and a specified directory to write to. It outputs four files with the following information:
-
-    histograms.data The top line are the corresponding energy values and the next NTraj lines are the raw histogram data. This file can be used to plot the histograms if needed. 
-    
-    Sol.X containing the solution to the linear equation Ax=B, 
-
-    S.data containing the energy values and corresponding entropies 
-
-    analysis.NVT containing the temperatures, partition function, heat capacity and its derivative. NB now includes the temperature dependent Entropy function.
+-   `histograms.data` The top line are the corresponding energy values and the next `NTraj` lines are the raw histogram data. This file can be used to plot the histograms if needed. 
+-   `Sol.X` containing the solution to the linear equation `Ax=B`, 
+-   `S.data` containing the energy values and corresponding entropies 
+-   `analysis.NVT` containing the temperatures, partition function, heat capacity and its derivative. NB now includes the temperature dependent Entropy function.
     
 """
-function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String,NPoints)
+function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,nsum::VorS,NTraj::Int,NBins::Int,kB::Float64,outdir::String,NPoints::Int; debug = false) where N <: Number
 
     #HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
 
@@ -357,12 +353,12 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
 
     Z,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
-    println("Quantities found")
+    if debug println("Quantities found") end
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
     #png(cvplot,"$(xdir)Cv")
     #dcvplot = plot(T,dC,xlabel="Temperature(K)",ylabel="dCv")
     #png(dcvplot,"$(xdir)dC")
-    println("analysis complete")
+    if debug println("analysis complete") end
     histfile = open("$(outdir)/histograms.data", "w")
     writedlm(histfile,[energyvector])
     writedlm(histfile,HistArray)
@@ -382,17 +378,16 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     writedlm(cvfile, ["T" "Z" "Cv" "dCv" "S(T)"])
     writedlm(cvfile, [T Z C dC S_T])
     close(cvfile)
-    println(T)
-    println(C)
+    if debug println(T) end
+    if debug println(C) end
        
 end
 
 """
-    multihistogram(xdir::String)
-    multihistogram(output::Output,Tvec::TempGrid)
+    multihistogram(xdir::String; NPoints = 600)
+    multihistogram(output::Output, Tvec::TempGrid; outdir = pwd(), NPoints = 600)
 Function has two methods which vary only in how the initialise function is called: one takes a directory and writes the output of the multihistogram analysis to that directory, the other takes the output and temperature grid and writes to the current directory unless specified otherwise.
-    
-    The output of this function are the four files defined in run_multihistogram.
+The output of this function are the four files defined in [`run_multihistogram`](@ref).
 
 """
 function multihistogram(xdir::String; NPoints=600)
