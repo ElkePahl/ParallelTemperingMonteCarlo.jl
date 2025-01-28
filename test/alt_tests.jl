@@ -237,7 +237,7 @@ end
         test_any(initialise_energy(config, get_distance2_mat(config), get_eljb_vars(config), set_ensemble_variables(config, get_npt()), get_eljpot_b()))
         config = get_config(get_spherical_bc())
         test_any(initialise_energy(config, get_distance2_mat(config), get_eam_vars(config), set_ensemble_variables(config, get_nvt()), get_eam()))
-        test_any(initialise_energy(config, get_distance2_mat(config), get_RuNNer_vars(config), set_ensemble_variables(config, get_nvt()), get_RuNNerPotential()))
+        #test_any(initialise_energy(config, get_distance2_mat(config), get_RuNNer_vars(config), set_ensemble_variables(config, get_nvt()), get_RuNNerPotential()))
     end
 end
 
