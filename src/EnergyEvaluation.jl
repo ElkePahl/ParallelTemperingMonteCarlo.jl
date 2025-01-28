@@ -34,7 +34,7 @@ export EmbeddedAtomVariables,NNPVariables
 export dimer_energy,dimer_energy_atom, dimer_energy_update!, calc_energies_from_components, invrexp, lrc
 
 
-export energy_update!,set_variables,initialise_energy,dimer_energy_config
+export energy_update!,set_variables,initialise_energy,dimer_energy_config, calc_components
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
