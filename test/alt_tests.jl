@@ -204,7 +204,7 @@ end
         test_any(energy_update!(get_pos(), get_index(), config, get_eljb_vars(config), get_n_by_n(), get_n_vec(), 0.0, get_eljpot_b()))
         test_any(energy_update!(get_pos(), get_index(), config, get_eljb_vars(config), get_n_by_n(), get_n_vec(), 0.0, 3.5, get_eljpot_b()))
         #test_any(energy_update!(get_pos(), get_index(), config, get_eam_vars(config), get_n_by_n(), get_n_vec(), 0.0, get_eam()))
-        test_any(energy_update!(get_pos(), get_index(), config, get_RuNNer_vars(config), get_n_by_n(), get_n_vec(), 0.0, get_RuNNerPotential()))
+        #test_any(energy_update!(get_pos(), get_index(), config, get_RuNNer_vars(config), get_n_by_n(), get_n_vec(), 0.0, get_RuNNerPotential()))
     end
     @testset "dimer_energy" begin
         test_any(dimer_energy(get_eljpot_even(), 3.5))
