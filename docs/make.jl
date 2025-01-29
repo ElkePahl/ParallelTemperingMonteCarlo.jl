@@ -94,11 +94,10 @@ push!(pages, "Examples" => EXAMPLES_PAIRS)
 makedocs(sitename="$main_module",
     pages = pages,
     format = Documenter.HTMLWriter.HTML(
-    size_threshold_ignore = THRESHOLD_IGNORE,
-    size_threshold = nothing,
+        size_threshold_ignore = THRESHOLD_IGNORE,
+    )
 )
-)
-
+repo = "github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git"
 deploydocs(
-    repo = "github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git"
+    repo = repo,
 )
