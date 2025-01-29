@@ -119,7 +119,7 @@ AtoBohr = 1.8897259886
 #pos_ne55 = pos_ne55 * AtoBohr
 
 #binding sphere
-bc_ne55 = SphericalBC(radius=24*AtoBohr) 
+bc_ne55 = SphericalBC(radius=14*AtoBohr) 
 
 length(pos_ne55) == n_atoms || error("number of atoms and positions not the same - check starting config")
 

@@ -16,9 +16,19 @@ export calc_delta_matrix,calc_swap_matrix
 #----------------------------------------------------------------------#
 #------------------------ New Format Functions ------------------------#
 #----------------------------------------------------------------------#
+"""
+    new_radial_symm_val!(rnew_ij,r2_ij,fnew_ij,f2_ij,η)
+Function to calculate the updated value of a radial symmetry function: That is, how much does the radial symmetry value calculated using the old distance r2_ij change when using the new distance rnew_ij using the old and new cutoff values f2_ij,fnew_ij and the parameter η. 
+
+"""
 function new_radial_symm_val!(rnew_ij,r2_ij,fnew_ij,f2_ij,η)
     return exponential_part(η,rnew_ij,fnew_ij) - exponential_part(η,r2_ij,f2_ij)
 end
+"""
+    new_angular_symm_vals(newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ)
+Function to calculate the updated value of an angular symmetry function: Using the old and new interatomic distances and positions along with cutoff values and parameters, we calculate the old and new symmetry value and return a static vector of the three new angular symmetry value, one for each atom i,j,k being the centre of the calculation.
+
+"""
 function new_angular_symm_vals(newposition,position1,position2,position3,rnew_ij,rnew_ik,r2_ij,r2_ik,r2_jk,fnew_ij,fnew_ik,f_ij,f_ik,f_jk,η,λ,ζ)
 
     θ_new,θ_old = all_angular_measure(newposition,position2,position3,rnew_ij,rnew_ik,r2_jk),all_angular_measure(position1,position2,position3,r2_ij,r2_ik,r2_jk)
@@ -29,7 +39,12 @@ function new_angular_symm_vals(newposition,position1,position2,position3,rnew_ij
 
     return SVector{3}(θ_val_new.*exp_new .- θ_val_old.*exp_old)
 end
+"""
+    calc_delta_symm_val!(g_vector,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,n1,n2,η,g_norm)
+    calc_delta_symm_val!(g_vector,positions,newposition,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,n1,n2,η,λ,ζ,tpz)
 
+Generic function to calculate the total update to the vector of symmetry values having moved a single atom defined by atomindex. The first method calculates the changes to a vector of radial symmetry values, the second calculates the changes to a vector of angular symmetry values. 
+"""
 function calc_delta_symm_val!(g_vector,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,n1,n2,η,g_norm)
     N = n1+n2
 
@@ -129,7 +144,10 @@ function calc_delta_symm_val!(g_vector,positions,newposition,atomindex,dist2_mat
     g_vector[3,n1+1:N] = g_vector[3,n1+1:N].*tpz[6]
     return g_vector
 end
-
+"""
+    calc_delta_matrix(g_mat,positions,newposition,atomindex,dist2_mat,new_dist2_vector,f_mat,new_f_vector,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
+Having moved a single atom indexed by atomindex, we calcualte the changes to the total symmetry matrix g_mat using the calc_delta_symm_val functions
+"""
 function calc_delta_matrix(g_mat,positions,newposition,atomindex,dist2_mat,new_dist2_vector,f_mat,new_f_vector,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
 
     for g_index in 1:nrad
@@ -151,6 +169,12 @@ end
 #---------------------------------------------------------------------#
 #---------------------------- Atom Swaps -----------------------------#
 #---------------------------------------------------------------------#
+"""
+    calc_swap_symm_val(g_vector,atomindex1,atomindex2,dist2_mat,f_mat,n1,n2,η,g_norm)
+    calc_swap_symm_val(g_vector,positions,atomindex1,atomindex2,dist2_mat,f_mat,n1,n2,η,λ,ζ,tpz)
+function to calculate the changes to a symmetry vector g_vector assuming we have swapped the positions of atomindex1 and atomindex2. The first method is defined for a radial symmetry function with parameters η and g_norm. Works for a system with n1 atoms of type 1 and n2 atoms of type 2.
+
+"""
 function calc_swap_symm_val(g_vector,atomindex1,atomindex2,dist2_mat,f_mat,n1,n2,η,g_norm)
 
     N = n1+n2 
@@ -309,6 +333,11 @@ function calc_swap_symm_val(g_vector,positions,atomindex1,atomindex2,dist2_mat,f
     
     return g_vector
 end
+
+"""
+    calc_swap_matrix(g_mat,positions,atomindex1,atomindex2,dist2_mat,f_mat,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
+having swapped atom at atomindex1 and atomindex2 in a system with n1 atoms of type 1 and n2 atoms of type 2, with nrad radial and nang angular symmetry functions, we calculate the changes to g_mat based on the swap. 
+"""
 function calc_swap_matrix(g_mat,positions,atomindex1,atomindex2,dist2_mat,f_mat,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
     for g_index in 1:nrad
         idx=(g_index-1)*2+1

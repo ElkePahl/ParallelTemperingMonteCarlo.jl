@@ -614,7 +614,7 @@ abstract type AbstractMachineLearningPotential <: AbstractPotential end
 Contains the important structs required for a neural network potential defined in the MachineLearningPotential package:
     Fields are:
     nnp -- a struct containing the weights, biases and neural network parameters.
-    #symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
+    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
     r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
 """
 struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
