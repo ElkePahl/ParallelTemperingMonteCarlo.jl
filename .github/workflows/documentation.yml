@@ -27,6 +27,5 @@ jobs:
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # If authenticating with GitHub Actions token
-        run: |
-          ENV["GITHUB_REF"] = "main"
-          julia --project=docs/ docs/make.jl
+          GITHUB_REF: "main"
+        run: julia --project=docs/ docs/make.jl
