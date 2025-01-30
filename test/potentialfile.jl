@@ -1,5 +1,5 @@
 using ParallelTemperingMonteCarlo,DelimitedFiles
-
+using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
 
 script_folder = @__DIR__
 data_path = joinpath(script_folder, "testing_data") 
