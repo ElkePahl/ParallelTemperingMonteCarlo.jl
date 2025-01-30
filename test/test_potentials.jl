@@ -1,3 +1,5 @@
+using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
+
 @testset "ELJPotentials" begin 
     c = [-2.,0.,1.]
     pot =  ELJPotential{3}(c)
@@ -53,6 +55,7 @@ end
     E,vars = initialise_energy(conf,d2mat,vars,evars,pot1)
     @test E ≈ -1.3495549581716526
 end
+
 @testset "RuNNerPotentialTest" begin
     include("potentialfile.jl")
     @test isa(runnerpotential,AbstractMachineLearningPotential)
