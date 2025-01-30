@@ -211,7 +211,9 @@ end
     temp1 = TempGrid{n_traj}(2, 16; tdistr = :equally_spaced)
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
 end
-
+@safetestset "RuNNer" begin
+    include("test_runner_forward.jl")
+end
 @testset "Potentials" begin 
     include("test_potentials.jl")
 end
