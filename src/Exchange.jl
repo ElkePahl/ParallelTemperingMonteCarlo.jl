@@ -74,6 +74,8 @@ function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype
     elseif movetype == "volumemove"
         #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
         return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),get_volume(mc_state.ensemble_variables.trial_config.bc),get_volume(mc_state.config.bc),mc_state.beta )
+    elseif movetype == "atomswap"
+        return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
     else   
         error("chosen move_type not implemented yet (see Exchange.jl)")
     end
@@ -115,13 +117,12 @@ end
     parallel_tempering_exchange!(mc_states,mc_params,ensemble:NVT)
 This function takes a vector of mc_states as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 """
-function parallel_tempering_exchange!(mc_states,mc_params,ensemble::NVT)
+function parallel_tempering_exchange!(mc_states,mc_params,ensemble::Etype) where Etype <: AbstractEnsemble
     n_exc = rand(1:mc_params.n_traj-1)
 
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc+1].count_exc[1] += 1
 
-    
 
     if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
         mc_states[n_exc].count_exc[2] += 1
@@ -192,7 +193,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT,min_acc
 
     return mc_state
 end
-function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NVT,min_acc,max_acc)
+function update_max_stepsize!(mc_state::MCState, n_update, ensemble::Etype,min_acc,max_acc) where Etype <: AbstractEnsemble
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
     if acc_rate < min_acc

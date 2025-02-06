@@ -7,23 +7,21 @@ function for replacing the MC state and potential variables values with the upda
 Implemented for the following `move_type`:
     - atommove 
     - volumemove
+    - swapmove for atom swaps
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
 
 function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
+    elseif movetype == "atomswap"
+        swap_move_config!(mc_state,mc_state.ensemble_variables.swap_indices)
     else
         swap_config_v!(mc_state, mc_state.config.bc, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
     end
 
 end
-# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::atommove) where {T,N,BC,P<:PotentialVariables,E<:AbstractEnsembleVariables}
-#     swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
-# end
-# function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::volumemove) where {T,N,BC,P<:PotentialVariables,E<:AbstractEnsembleVariables}
-#     swap_config_v!(mc_state, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.dist2_mat_new, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
-# end
+
 """
     swap_atom_config(mc_state::MCState,i_atom,trial_pos)
 """
@@ -31,7 +29,7 @@ function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom,trial_pos) where
     mc_state.config.pos[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom,:] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:,i_atom] = mc_state.new_dist2_vec
-    mc_state.en_tot = mc_state.new_en 
+    mc_state.en_tot,mc_state.new_en = mc_state.new_en, mc_state.en_tot
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
     
@@ -86,13 +84,51 @@ function swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
 end
 
 function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
-    potential_variables.component_vector = potential_variables.new_component_vector
+    potential_variables.component_vector,potential_variables.new_component_vector = potential_variables.new_component_vector,potential_variables.component_vector
 end
 
 function swap_vars!(i_atom,potential_variables::NNPVariables)
-    potential_variables.en_atom_vec = potential_variables.new_en_atom 
-    potential_variables.g_matrix = potential_variables.new_g_matrix 
+    potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom ,potential_variables.en_atom_vec
+    potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix , potential_variables.g_matrix
 
     potential_variables.f_matrix[i_atom,:] = potential_variables.new_f_vec
     potential_variables.f_matrix[:,i_atom] = potential_variables.new_f_vec
+end
+
+function swap_vars!(i_atom,potential_variables::NNPVariables2a)
+
+    potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom,potential_variables.en_atom_vec
+
+    potential_variables.g_matrix,potential_variables.new_g_matrix = potential_variables.new_g_matrix,potential_variables.g_matrix
+
+    potential_variables.f_matrix[i_atom,:] = potential_variables.new_f_vec
+    potential_variables.f_matrix[:,i_atom] = potential_variables.new_f_vec
+    
+end
+"""
+    swap_move_config!(mc_state,indices)
+Function designed to exchange relevant variables when swapping an atom. Accepts the `mc_state` and the atom `indices` and exchanges atom `indices[1]` with atom `indices[2]`
+"""
+function swap_move_config!(mc_state,indices)
+    #swap energy
+    mc_state.en_tot, mc_state.new_en = mc_state.new_en,mc_state.en_tot
+    #swap positions 
+    mc_state.config.pos[indices[1]],mc_state.config.pos[indices[2]] = mc_state.config.pos[indices[2]],mc_state.config.pos[indices[1]]
+    #swap dist2mat
+    mc_state.dist2_mat[indices[1],:],mc_state.dist2_mat[indices[2],:] = mc_state.dist2_mat[indices[2],:],mc_state.dist2_mat[indices[1],:]
+
+    mc_state.dist2_mat[:,indices[1]],mc_state.dist2_mat[:,indices[2]] = mc_state.dist2_mat[:,indices[2]],mc_state.dist2_mat[:,indices[1]]
+
+    mc_state.dist2_mat[indices[1],indices[1]],mc_state.dist2_mat[indices[2],indices[2]] = 0.,0.
+
+    #swap fmat
+    mc_state.potential_variables.f_matrix[indices[1],:],mc_state.potential_variables.f_matrix[indices[2],:] = mc_state.potential_variables.f_matrix[indices[2],:],mc_state.potential_variables.f_matrix[indices[1],:]
+
+    mc_state.potential_variables.f_matrix[:,indices[1]],mc_state.potential_variables.f_matrix[:,indices[2]] = mc_state.potential_variables.f_matrix[:,indices[2]],mc_state.potential_variables.f_matrix[:,indices[1]]
+
+    mc_state.potential_variables.f_matrix[indices[1],indices[1]],mc_state.potential_variables.f_matrix[indices[2],indices[2]] = 1.,1.
+
+    #swap en_atom_vec and gmat
+    mc_state.potential_variables.en_atom_vec,mc_state.potential_variables.new_en_atom = mc_state.potential_variables.new_en_atom,mc_state.potential_variables.en_atom_vec
+    mc_state.potential_variables.g_matrix,mc_state.potential_variables.new_g_matrix = mc_state.potential_variables.new_g_matrix,mc_state.potential_variables.g_matrix
 end

@@ -332,7 +332,7 @@ function analysis(energyvector, S_E :: Vector, beta,kB::Float64, NPoints)
        S_T[i] = U[i]/T[i] + kB*log(Z[i])
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
    end
-return Z,Cv,dCv,S_T,T
+return Z,U,Cv,dCv,S_T,T
 end
 """ 
     runmultihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir::String)
@@ -356,7 +356,7 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
 
-    Z,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
+    Z,U,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
     println("Quantities found")
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
     #png(cvplot,"$(xdir)Cv")
@@ -379,8 +379,8 @@ function run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outd
     close(entropyfile)
 
     cvfile = open("$(outdir)/analysis.NVT", "w")
-    writedlm(cvfile, ["T" "Z" "Cv" "dCv" "S(T)"])
-    writedlm(cvfile, [T Z C dC S_T])
+    writedlm(cvfile, ["T" "Z" "Cv" "dCv" "U(T)"])
+    writedlm(cvfile, [T Z C dC U])
     close(cvfile)
     println(T)
     println(C)
@@ -395,12 +395,12 @@ Function has two methods which vary only in how the initialise function is calle
     The output of this function are the four files defined in run_multihistogram.
 
 """
-function multihistogram(xdir::String; NPoints=600)
+function multihistogram(xdir::String; NPoints=1000)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir,NPoints)
 end
 
-function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=600)
+function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=1000)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir,NPoints)
 
