@@ -25,9 +25,9 @@ using ..BoundaryConditions
 
 
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,AbstractMachineLearningPotential
-export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential
+export AbstractDimerPotentialB,ELJPotentialB,EmbeddedAtomPotential,RuNNerPotential,RuNNerPotential2Atom
 export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
-export EmbeddedAtomVariables,NNPVariables
+export EmbeddedAtomVariables,NNPVariables,NNPVariables2a
 
 
 export dimer_energy,dimer_energy_atom,dimer_energy_config,dimer_energy_update!
@@ -666,9 +666,7 @@ Bundle of variables used for the NNP potential:
 Todo: someone who knows what these are should write a better description
 """
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
-
     en_atom_vec::Vector{T}
-
     new_en_atom::Vector{T}
     g_matrix::Matrix{T}
     f_matrix::Matrix{T}
@@ -696,8 +694,118 @@ function calc_new_runner_energy!(potential_variables::NNPVariables,pot::RuNNerPo
     new_en = sum(potential_variables.new_en_atom)
     return potential_variables,new_en
 end
+#----------------------------------------------------------#
+#--------------------NNP with two atoms--------------------#
+#----------------------------------------------------------#
+"""
+    RuNNerPotential2Atom <: AbstractMachineLearningPotential
+Contains the important structs required for a neural network potential defined in the MachineLearningPotential package for a 2 atom system:
+    Fields are:
+    nnp# -- structs containing the weights, biases and neural network parameters.
+    symmetryfunctions -- a vector containing the hyperparameters used to calculate symmetry function values
+    r_cut -- every symmetry function has an r_cut, but saving it here saves annoying memory unpacking 
+"""
+struct RuNNerPotential2Atom{Nrad,Nang,N1,N2} <: AbstractMachineLearningPotential
 
+    nnp1::NeuralNetworkPotential
+    nnp2::NeuralNetworkPotential
+    radsymfunctions::StructVector{RadialType2a{Float64}}
+    angsymfunctions::StructVector{AngularType3a{Float64}}
+    r_cut::Float64 
 
+end
+function RuNNerPotential2Atom(nnp1,nnp2,radsymvec,angsymvec,n1,n2)#,g_offsets_vec)
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    radvec=StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+
+    return RuNNerPotential2Atom{nrad,nang,n1,n2}(nnp1,nnp2,radvec,angvec,r_cut)#,SVector{nrad*2+nang*3}(g_offsets),SVector{nrad*2+nang*3}(tpz) )
+end
+"""
+    NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
+    T  variable type, usually Float64 
+    Na number of atoms
+    Ng number of symmetry functions
+Mutable parameters relevant to a 2 atom NNP using the RuNNer Package. 
+fields include:
+    -en_atom_vec: atomic energy corresponding to config
+    -new_en_atom: after an atom move, the new atomic energy
+    -g_matrix: matrix of symmetry values, length NgxNa
+    -f_matrix: matrix of cutoff function values aor atom pairs i,j
+    -new_g_matrix: after atom move, new symmetry values
+    -new_f_vec: after atom move, new cutoff values
+"""
+mutable struct NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
+    en_atom_vec::Vector
+    new_en_atom::Vector
+    g_matrix::MMatrix{Ng,Na,T} 
+    f_matrix::MMatrix{Na,Na,T}
+    new_g_matrix::MMatrix{Ng,Na,T}
+    new_f_vec::MVector{Na,T}
+end
+"""
+    get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
+        (indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
+
+Function to calculate the altered state variables after an atom move:
+
+    takes the new trial_position, its index, the total config, the current state variables, the distance matrix and updated vector and potential values.
+    Calculates the new cutoff function values, the updated symmetry function matrix and passes these back to potential_variables.
+
+Method 2 calculates the new state variables based on an atom_swap. Accepts many of the same variables, but the main difference is the `indices` vector, indicating which two atoms we are swapping. 
+Also returns, most imporantly potential_variables.new_g_matrix.
+
+"""
+function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
+
+    potential_variables.new_f_vec = MVector{N1+N2}(cutoff_function.(sqrt.(new_dist2_vec),Ref(pot.r_cut)))
+
+    potential_variables.new_g_matrix = fill!(potential_variables.new_g_matrix,0.)
+
+    potential_variables.new_g_matrix = calc_delta_matrix(potential_variables.new_g_matrix,config.pos,trial_pos,atomindex,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang,N1,N2)
+
+    potential_variables.new_g_matrix = potential_variables.g_matrix .+ potential_variables.new_g_matrix
+
+    return potential_variables
+end
+function get_new_state_vars!(indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
+    potential_variables.new_g_matrix = fill!(potential_variables.new_g_matrix,0.)
+
+    potential_variables.new_g_matrix = calc_swap_matrix(potential_variables.new_g_matrix,config.pos,indices[1],indices[2],dist2_mat,potential_variables.f_matrix,potential.radsymfunctions,potential.angsymfunctions,Nrad,Nang,N1,N2)
+    potential_variables.new_g_matrix = potential_variables.g_matrix .+ potential_variables.new_g_matrix
+
+    return potential_variables
+end
+"""
+    calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
+Function to calculate the energy of a new configuration after an atom move. Accepts the potential_variables struct and runs a forward pass on the new_g_matrix. Returns the new energy.
+
+"""
+function calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
+
+    potential_variables.new_en_atom[1:N1] = forward_pass(potential_variables.new_g_matrix[:,1:N1],N1,pot.nnp1)
+    if N2 != 0
+        potential_variables.new_en_atom[N1+1:N1+N2] = forward_pass(potential_variables.new_g_matrix[:,N1+1:N1+N2],N2,pot.nnp2)
+    end
+
+    new_en = sum(potential_variables.new_en_atom)
+
+    return potential_variables,new_en
+end
+"""
+    swap_energy_update(ensemble_variables,config,potential_variables,dist2_matrix,en_tot,pot)
+This is used as a replacement for the energy_update! function when swapping atoms. It does not function in quite the same way, but stands as a replacement. First calculates `get_new_state_vars!` and then `calc_new_runner_energy!` returning the new_energy.
+"""
+function swap_energy_update(ensemble_variables,config,potential_variables,dist2_matrix,en_tot,pot)
+    
+    potential_variables = get_new_state_vars!(ensemble_variables.swap_indices,config,potential_variables,dist2_matrix,pot)
+    
+    potential_variables, new_en = calc_new_runner_energy!(potential_variables,pot)
+
+    return potential_variables,new_en 
+end
 #----------------------------------------------------------#
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
@@ -723,44 +831,33 @@ This function is designed as a curry function. The generic [`get_energy!`](@ref 
 """
 function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotential)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
 
-    new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot)
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,pot)
 
     return potential_variables,new_en
 end
 function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,r_cut::Number,pot::AbstractDimerPotential)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
-
-    new_en = dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,r_cut,pot)
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,ensemblevariables.r_cut,pot)
 
     return potential_variables,new_en
 end
 
 function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotentialB)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
+    potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[ensemblevariables.index] = 0
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
-
-    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,pot)
 
     return potential_variables,new_en
 end
 function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,r_cut::Number,pot::AbstractDimerPotentialB)
 
-    # new_dist2_vec = [distance2(trial_pos,b,config.bc) for b in config.pos]
-    # new_dist2_vec[index] = 0.
+    potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
+    potential_variables.new_tan_vec[ensemblevariables.index] = 0
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos,b,config.bc) for b in config.pos]
-    potential_variables.new_tan_vec[index] = 0
-
-    new_en = dimer_energy_update!(index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,r_cut,pot)
+    new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,potential_variables.tan_mat,new_dist2_vec,potential_variables.new_tan_vec,en_tot,ensemblevariables.r_cut,pot)
 
     return potential_variables,new_en
 end
@@ -771,7 +868,7 @@ function energy_update!(trial_pos::PositionVector,atomindex,config::Config,poten
 
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
     
-    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,atomindex,dist2_mat[atomindex,:],new_dist2_vec,pot.n,pot.m)
+    potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,ensemblevariables.index,dist2_mat[ensemblevariables.index,:],new_dist2_vec,pot.n,pot.m)
 
     new_en = calc_energies_from_components(potential_variables.new_component_vector,pot.ean,pot.eCam)
 
@@ -779,7 +876,15 @@ function energy_update!(trial_pos::PositionVector,atomindex,config::Config,poten
 end
 function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::NNPVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential)
 
-    potential_variables = get_new_state_vars!(trial_pos,index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
+    potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
+
+    potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
+
+    return potential_variables,new_en
+end
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
+
+    potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
     potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
 
@@ -830,7 +935,18 @@ function initialise_energy(config::Config,dist2_mat::Matrix{Float64},potential_v
     en_tot = sum(potential_variables.en_atom_vec)
     return en_tot,potential_variables
 end
+function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
 
+    potential_variables.en_atom_vec[1:N1] = forward_pass(potential_variables.g_matrix[:,1:N1],N1,pot.nnp1)
+
+    if N2 != 0
+        potential_variables.en_atom_vec[N1+1:N1+N2] = forward_pass(potential_variables.g_matrix[:,N1+1:N1+N2],N2,pot.nnp2)
+    end
+
+    en_tot = sum(potential_variables.en_atom_vec)
+
+    return en_tot,potential_variables
+end
 """
     set_variables(config::Config{N, BC, T}, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential) where {N, BC, T}
     set_variables(config::Config{N, BC, T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB) where {N, BC, T}
@@ -861,5 +977,19 @@ function set_variables(config::Config{N,BC,T},dist2_mat::Matrix{Float64},pot::Ru
     
     return NNPVariables{T}(zeros(N) ,zeros(N),g_matrix,f_matrix,copy(g_matrix), zeros(N))
 end
+function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential2Atom{nrad,nang,n1,n2}) where {N,BC,T} where {nrad,nang,n1,n2}
+    if n1+n2 != N
+        println("problem")
+    end
+    Ng = nrad*2 + nang*3
+
+    f_matrix = MMatrix{N,N}(cutoff_function.(sqrt.(dist2_mat),Ref(pot.r_cut)))
+    g_temp_matrix = total_symm_calc(config.pos,dist2_mat,f_matrix,pot.radsymfunctions,pot.angsymfunctions,nrad,nang,n1,n2)
+    g_matrix = MMatrix{Ng,N}(g_temp_matrix)
+    return NNPVariables2a{T,N,Ng}(zeros(N),zeros(N),g_matrix,f_matrix,MMatrix{Ng,N}(zeros(Ng,N)),MVector{N}(zeros(N)))
+
+end
+
+
 
 end

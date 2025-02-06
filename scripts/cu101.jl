@@ -179,11 +179,11 @@ length(pos_cu101) == n_atoms || error("number of atoms and positions not the sam
 n_bin = 100
 
 #boundary conditions
-bc_cu101 = SphericalBC(radius=16*AtoBohr)   #5.32 Angstrom
+bc_cu101 = SphericalBC(radius=12*AtoBohr)   #5.32 Angstrom
 start_config = Config(pos_cu101, bc_cu101)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
 @time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
-rm("checkpoint",recursive=true)
+#rm("checkpoint",recursive=true)
 

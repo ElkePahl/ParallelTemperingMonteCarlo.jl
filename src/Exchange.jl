@@ -73,6 +73,8 @@ function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype
     elseif movetype == "volumemove"
         #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
         return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),get_volume(mc_state.ensemble_variables.trial_config.bc),get_volume(mc_state.config.bc),mc_state.beta )
+    elseif movetype == "atomswap"
+        return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
     else   
         error("chosen move_type not implemented yet (see Exchange.jl)")
     end
@@ -120,7 +122,6 @@ function parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,e
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc+1].count_exc[1] += 1
 
-    
 
     if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
         mc_states[n_exc].count_exc[2] += 1

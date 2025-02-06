@@ -2,11 +2,11 @@ module Ensembles
 
 using ..Configurations
 using ..BoundaryConditions
-using StaticArrays
+using StaticArrays,Random
 
-export AbstractEnsemble,NVT,NPT 
+export AbstractEnsemble,NVT,NPT,NNVT
 
-export AbstractEnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
+export AbstractEnsembleVariables,NVTVariables,NPTVariables,NNVTVariables,set_ensemble_variables
 
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
@@ -132,6 +132,10 @@ function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,B
     end
     return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
 end
+function set_ensemble_variables(config::Config{N,BC,T},ensemble::NNVT) where{N,BC,T}
+    N1,N2 = ensemble.natoms[1],ensemble.natoms[2]
+    return NNVTVariables{T,N,N1,N2}(1,SVector{3}(zeros(3)),SVector{2}(1,N1+1))
+end
 
 """
     MoveType
@@ -180,6 +184,19 @@ function MoveStrategy(ensemble::NVT)
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
 end
+
+function MoveStrategy(ensemble::NNVT)
+    movestrat= []
+    for m_index in 1:ensemble.n_atom_moves
+        push!(movestrat,"atommove")
+    end
+    for m_index in 1:ensemble.n_atom_swaps
+        push!(movestrat,"atomswap")
+    end
+
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
+end
+
 
 Base.length(::MoveStrategy{N}) where N = N
 

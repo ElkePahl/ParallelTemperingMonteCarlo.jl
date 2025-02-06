@@ -45,6 +45,11 @@ function writeensemble(savefile::SaveFile,ensemble::NPT)
     valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
+function writeensemble(savefile,ensemble::NNVT)
+    headersvec = ["ensemble" "n_1" "n_2" "n_atom_moves" "n_atom_swaps"]
+    valuesvec = ["NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps]
+    writedlm(savefile, [headersvec, valuesvec], ' ' )
+end
 """
     writepotential(savefile,potential::Ptype)
     Ptype = AbstractDimerPotential,AbstractDimerPotentialB,EmbeddedAtomPotential,AbstractMachineLearningPotential
@@ -193,10 +198,12 @@ Function to convert delimited file contents `ensemblevec` and convert them into 
 
 """
 function readensemble(ensemblevec)
-    if contains(ensemblevec[1],"NVT")
+    if ensemblevec[1] == "NVT"
         return NVT(ensemblevec[2],ensemblevec[3],ensemblevec[4])
     elseif contains(ensemblevec[1],"NPT")
         return NPT(ensemblevec[2],ensemblevec[3],ensemblevec[4],ensemblevec[5],ensemblevec[6])
+    elseif contains(ensemblevec[1],"NNVT")
+        return NNVT(SVector{2}(ensemblevec[2],ensemblevec[3]) , ensemblevec[4] , ensemblevec[5])
     end
 end
 """
