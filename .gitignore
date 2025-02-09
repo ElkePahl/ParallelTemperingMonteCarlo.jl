@@ -39,6 +39,5 @@ Trial.jl
 .vscode/
 /*.data
 scripts/*.data
-
 .vscode
 .DS_Store

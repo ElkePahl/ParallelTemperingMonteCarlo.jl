@@ -1,5 +1,5 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
-
+export swap_config!, swap_atom_config!, swap_config_v!, swap_vars!
 """
     swap_config!(mc_state,movetype)
 

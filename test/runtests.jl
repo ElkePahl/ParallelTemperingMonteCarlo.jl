@@ -1,3 +1,5 @@
+include(joinpath(@__DIR__, "benchmark_test.jl"))
+
 using Test
 using SafeTestsets
 using ParallelTemperingMonteCarlo
