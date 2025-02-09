@@ -333,7 +333,7 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
        S_T[i] = U[i]/T[i] + kB*log(Z[i])
        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
    end
-return Z,Cv,dCv,S_T,T
+return Z,U,Cv,dCv,S_T,T
 end
 """ 
     run_multihistogram(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int, kB::Float64, outdir::String, NPoints::Int) where N <: Number
@@ -352,7 +352,7 @@ function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,n
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
 
-    Z,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
+    Z,U,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
     if debug println("Quantities found") end
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
     #png(cvplot,"$(xdir)Cv")
@@ -375,8 +375,8 @@ function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,n
     close(entropyfile)
 
     cvfile = open("$(outdir)/analysis.NVT", "w")
-    writedlm(cvfile, ["T" "Z" "Cv" "dCv" "S(T)"])
-    writedlm(cvfile, [T Z C dC S_T])
+    writedlm(cvfile, ["T" "Z" "Cv" "dCv" "U(T)"])
+    writedlm(cvfile, [T Z C dC U])
     close(cvfile)
     if debug println(T) end
     if debug println(C) end
@@ -390,12 +390,12 @@ Function has two methods which vary only in how the initialise function is calle
 The output of this function are the four files defined in [`run_multihistogram`](@ref).
 
 """
-function multihistogram(xdir::String; NPoints=600)
+function multihistogram(xdir::String; NPoints=1000)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB, xdir,NPoints)
 end
 
-function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=600)
+function multihistogram(output::Output,Tvec::TempGrid; outdir = pwd(), NPoints=1000)
     HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(output,Tvec)
     run_multihistogram(HistArray,energyvector,beta,nsum,NTraj,NBins,kB,outdir,NPoints)
 

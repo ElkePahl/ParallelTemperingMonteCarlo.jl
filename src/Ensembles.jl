@@ -2,11 +2,11 @@ module Ensembles
 
 using ..Configurations
 using ..BoundaryConditions
-using StaticArrays
+using StaticArrays,Random
 
-export AbstractEnsemble,NVT,NPT 
+export AbstractEnsemble,NVT,NPT,NNVT
 
-export AbstractEnsembleVariables,NVTVariables,NPTVariables,set_ensemble_variables
+export AbstractEnsembleVariables,NVTVariables,NPTVariables,NNVTVariables,set_ensemble_variables
 
 export MoveType,atommove,volumemove,atomswap 
 export MoveStrategy
@@ -117,10 +117,55 @@ function get_r_cut(bc::RhombicBC)
     return min(bc.box_length^2*3/16,bc.box_height^2/4)
     #return bc.box_length^2*3/16
 end
+#---------------------------------------------------------------------#
+#--------------------------------NNVT---------------------------------#
+#---------------------------------------------------------------------#
 """
-    set_ensemble_variables(config::Config{N,BC,T}, ensemble)
-Initialises the instance of [`AbstractEnsembleVariables`](@ref) (with ensemble being `NVT` or `NPT`);
-required to allow for neutral initialisation in defining the [`MCState`](@ref Main.ParallelTemperingMonteCarlo.MCStates.MCState) struct. 
+    NNVT <: AbstractEnsemble
+Ensemble designed for systems with two types of atoms.
+    Field names:
+        - atomtypes: vector specifying the atomic number of the species
+        -natoms: vector specifying how much of each species we have in the system
+        n_atom_moves: defaults to n_total
+        n_atom_swaps: defaults to 1 per cycle
+"""
+struct NNVT <: AbstractEnsemble
+    # atomtypes::SVector{2,Int}
+    natoms::SVector{2,Int}
+    n_atom_moves::Int
+    n_atom_swaps::Int
+end
+function NNVT(natomsvec;natomswaps = 1,natommoves=sum(natomsvec))
+    if isa(natomsvec,Vector)
+        natoms = SVector{2}(natomsvec)
+    elseif isa(natomsvec,SVector)
+        natoms = natomsvec
+    end
+    return NNVT(natoms,natommoves,natomswaps)
+end
+
+"""
+    NNVTVariables <: AbstractEnsembleVariables
+NNVT - specific ensembles for moves made during an NNVT run.
+Fields include:
+    - index: Used for standard atom moves
+    - trial_move: Used for standard atom moves
+    - atom_list1: index of atoms of type one
+    - atom_list2: index of atoms of type two 
+"""
+mutable struct NNVTVariables{T,N,N1,N2} <: AbstractEnsembleVariables
+    index::Int64
+    trial_move::SVector{3,T}
+    swap_indices::SVector{2,Int}
+end
+
+#---------------------------------------------------------------------#
+#------------------------global functions-----------------------------#
+#---------------------------------------------------------------------#
+"""
+set_ensemble_variables(config::Config{N,BC,T}, ensemble)
+initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT`);
+required to allow for neutral initialisation in defining the MCState [`MCStates.MCState`](@ref) struct. 
 """
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
@@ -131,6 +176,10 @@ function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,B
         error("SphericalBC cannot be used in an NPT ensemble.")
     end
     return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.)
+end
+function set_ensemble_variables(config::Config{N,BC,T},ensemble::NNVT) where{N,BC,T}
+    N1,N2 = ensemble.natoms[1],ensemble.natoms[2]
+    return NNVTVariables{T,N,N1,N2}(1,SVector{3}(zeros(3)),SVector{2}(1,N1+1))
 end
 
 """
@@ -180,6 +229,19 @@ function MoveStrategy(ensemble::NVT)
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
 end
+
+function MoveStrategy(ensemble::NNVT)
+    movestrat= []
+    for m_index in 1:ensemble.n_atom_moves
+        push!(movestrat,"atommove")
+    end
+    for m_index in 1:ensemble.n_atom_swaps
+        push!(movestrat,"atomswap")
+    end
+
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
+end
+
 
 Base.length(::MoveStrategy{N}) where N = N
 

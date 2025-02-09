@@ -24,7 +24,7 @@ jobs:
         # julia-arch: [x64, x86]
         julia-arch: [x64]
         # os: [ubuntu-latest, windows-latest, macOS-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         # 32-bit Julia binaries are not available on macOS
         # exclude:
         #   - os: macOS-latest

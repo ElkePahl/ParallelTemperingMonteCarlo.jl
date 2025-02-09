@@ -20,7 +20,7 @@ using ..Ensembles
 Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
 Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
-function update_energy_tot(mc_states::MCStateVector,ensemble::NVT)
+function update_energy_tot(mc_states::MCStateVector,ensemble::Etype) where Etype <: AbstractEnsemble
         for state in mc_states
             state.ham[1] += state.en_tot 
             state.ham[2] += (state.en_tot*state.en_tot)
@@ -200,7 +200,7 @@ Second method does not perform the rdf calculation. This is designed to improve 
 TO IMPLEMENT:
 This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
 """
-function sampling_step!(mc_params::MCParams,mc_states::MCStateVector,ensemble::NVT,save_index::Int,results::Output,rdfsave::Bool)
+function sampling_step!(mc_params::MCParams,mc_states::MCStateVector,ensemble::AbstractEnsemble,save_index::Int,results::Output,rdfsave::Bool)
     if rem(save_index, mc_params.mc_sample) == 0
 
         update_energy_tot(mc_states,ensemble)

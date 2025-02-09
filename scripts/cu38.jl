@@ -15,9 +15,9 @@ Random.seed!(1234)
 
 n_atoms = 38
 
-ti = 300.
-tf = 1300.
-n_traj = 28
+ti = 150.
+tf = 1200.
+n_traj = 36
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -178,7 +178,7 @@ pos_cu38 = [[2.3603476948363165, 2.3603476948363165, 0.0],
 n_bin = 100
 AtoBohr = 1.8897259886
 
-bc_cu38 = SphericalBC(radius=14*AtoBohr) 
+bc_cu38 = SphericalBC(radius=6.0*AtoBohr) 
 start_config = Config(pos_cu38, bc_cu38)
 
 
