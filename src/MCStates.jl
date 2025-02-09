@@ -7,7 +7,7 @@ using ..EnergyEvaluation
 using ..Ensembles
 #using ..InputParams
 
-export MCState#, NNPState
+export MCState, max_length#, NNPState
 """
     MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
         max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])

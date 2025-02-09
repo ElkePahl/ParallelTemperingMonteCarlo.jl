@@ -1,5 +1,5 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
-
+export swap_config!, swap_atom_config!, swap_config_v!, swap_vars!
 """
     swap_config!(mc_state,movetype)
 
@@ -10,7 +10,6 @@ Implemented for the following `move_type`:
     - swapmove for atom swaps
 All methods also call the swap_vars! function which distributes the appropriate `mc_states.potential_variables` values into the current mc_state struct.
 """
-
 function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
@@ -64,9 +63,11 @@ function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new
 end
 
 """
-    swap_vars!(i_atom,potential_variables::V)
-
-called by `swap_atom_config!` function; 
+    swap_vars!(i_atom::Int, potential_variables::V) where V <: DimerPotentialVariables
+    swap_vars!(i_atom::Int, potential_variables::ELJPotentialBVariables)
+    swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
+    swap_vars!(i_atom::Int, potential_variables::NNPVariables)
+Called by `swap_atom_config!` function; 
 takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration 
 and replaces the current values with the new values such as:
     - Under magnetic fields, the new tan matrix replaces the old
@@ -76,17 +77,14 @@ implemented for potential variables = `DimerPotentialVariables`,`ELJPotentialBVa
 """
 function swap_vars!(i_atom,potential_variables::V) where V <: DimerPotentialVariables
 end
-
 function swap_vars!(i_atom,potential_variables::ELJPotentialBVariables)
     potential_variables.tan_mat[i_atom,:] = potential_variables.new_tan_vec
     potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
 
 end
-
 function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
     potential_variables.component_vector,potential_variables.new_component_vector = potential_variables.new_component_vector,potential_variables.component_vector
 end
-
 function swap_vars!(i_atom,potential_variables::NNPVariables)
     potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom ,potential_variables.en_atom_vec
     potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix , potential_variables.g_matrix
