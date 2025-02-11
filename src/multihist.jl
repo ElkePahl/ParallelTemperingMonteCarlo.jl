@@ -11,6 +11,7 @@ export multihistogram,postprocess
 
 """
     readfile(xdir::String; debug = false)
+    readfile(output::Output, Tvals::TempGrid)
 Method 1: `xdir::String` -reads output files for the FORTRAN PTMC code written by Edison Florez.
 Method 2: `output::Output`, `Tvals::TempGrid` - designed to receive output data from the Julia PTMC program: as the beta vector and NBins are defined in the structs they can be directly unpacked as output.
 
@@ -157,7 +158,7 @@ function nancheck(X::Matrix)
     return check
 end
 """ 
-    bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins; debug = false)
+    bvector(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int; debug = false) where N <: Number
 Function to calculate the `b` vector relevant to solving the RHS of the multihistogram equation. 
 
 """
@@ -195,10 +196,9 @@ function bvector(HistArray::Matrix{N},energyvector::VorS,beta::VorS,nsum::VorS,N
     return B,bmat
 end
 """
-    amatrix(HistArray :: Matrix,nsum::Vector{N},NTraj::Int) where N <: Number
+    amatrix(HistArray::Matrix, nsum::VorS, NTraj::Int; debug = false)
 This function calculates the LHS of the multihistogram equation, the A matrix.
 """
-
 function amatrix(HistArray :: Matrix,nsum::VorS,NTraj::Int; debug = false)
     A = Array{Float64}(undef,NTraj,NTraj)
 
@@ -217,7 +217,7 @@ function amatrix(HistArray :: Matrix,nsum::VorS,NTraj::Int; debug = false)
     return A
 end
 """ 
-    systemsolver(HistArray::Matrix,energyvector::Vector{N},beta::Vector{N},nsum::Vector{N},NTraj::Int,NBins::Int) where N <: Number
+    systemsolver(HistArray::Matrix, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int; debug = false)
 [`systemsolver`](@ref) is used to determine the solution Alpha to the linear equation `Ax = b` where `A` and `b` are the A matrix and b vector described above. This is fundamentally how the multihistogram method works.
 """
 function systemsolver(HistArray::Matrix,energyvector::VorS,beta::VorS,nsum::VorS,NTraj::Int,NBins::Int; debug = false)
@@ -255,7 +255,7 @@ function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum::VorS,
     return S_E
 end
 """
-    analysis(energyvector::VorS, S_E::Vector, beta::VorS, kB::Float64, NPoints)
+    analysis(energyvector::VorS, S_E::Vector, beta::VorS, kB::Float64, NPoints::Int; debug = false)
 NPoints determines how densely the points are populated.
 
 Analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
@@ -336,7 +336,7 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
 return Z,U,Cv,dCv,S_T,T
 end
 """ 
-    run_multihistogram(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int, kB::Float64, outdir::String, NPoints::Int) where N <: Number
+    run_multihistogram(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int, kB::Float64, outdir::String, NPoints::Int; debug = false) where N <: Number
 This function completely determines the properties of a system given by the output of the initialise function and a specified directory to write to. It outputs four files with the following information:
 -   `histograms.data` The top line are the corresponding energy values and the next `NTraj` lines are the raw histogram data. This file can be used to plot the histograms if needed. 
 -   `Sol.X` containing the solution to the linear equation `Ax=B`, 
@@ -384,8 +384,8 @@ function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,n
 end
 
 """
-    multihistogram(xdir::String; NPoints = 600)
-    multihistogram(output::Output, Tvec::TempGrid; outdir = pwd(), NPoints = 600)
+    multihistogram(xdir::String; NPoints = 1000)
+    multihistogram(output::Output, Tvec::TempGrid; outdir = pwd(), NPoints = 1000)
 Function has two methods which vary only in how the initialise function is called: one takes a directory and writes the output of the multihistogram analysis to that directory, the other takes the output and temperature grid and writes to the current directory unless specified otherwise.
 The output of this function are the four files defined in [`run_multihistogram`](@ref).
 

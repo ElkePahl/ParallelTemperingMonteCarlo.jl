@@ -29,8 +29,9 @@ function writeparams(savefile::SaveFile,params::MCParams,temp::TempGrid)
     writedlm(savefile, [headersvec, paramsvec], ' ' )
 end
 """
-    writeensemble(savefile,ensemble::NVT)
-    writeensemble(savefile,ensemble::NPT)
+    writeensemble(savefile::SaveFile, ensemble::NVT)
+    writeensemble(savefile::SaveFile, ensemble::NPT)
+    writeensemble(savefile::SaveFile, ensemble::NNVT)
 Function to write the `ensemble` data into a savefile including the move types. First method is for the NVT ensemble which does not include volume changes, second method is NPT ensemble and does inclue volume moves.
 """
 function writeensemble(savefile::SaveFile,ensemble::NVT)
@@ -45,14 +46,16 @@ function writeensemble(savefile::SaveFile,ensemble::NPT)
     valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
-function writeensemble(savefile,ensemble::NNVT)
+function writeensemble(savefile::SaveFile,ensemble::NNVT)
     headersvec = ["ensemble" "n_1" "n_2" "n_atom_moves" "n_atom_swaps"]
     valuesvec = ["NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 """
-    writepotential(savefile,potential::Ptype)
-    Ptype = AbstractDimerPotential,AbstractDimerPotentialB,EmbeddedAtomPotential,AbstractMachineLearningPotential
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractDimerPotential
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractDimerPotentialB
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: EmbeddedAtomPotential
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractMachineLearningPotential
 Function to write potential surface information into `savefile`. implemented methods are the Embedded Atom Model, Extended Lennard-Jones and ELJ in Magnetic Field. This does not work for machine learning potentials.
 """
 function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: AbstractDimerPotential
@@ -113,8 +116,9 @@ end
 #-----------------------Save Configurations-----------------------#
 #-----------------------------------------------------------------#
 """
-    checkpoint_config(savefile , config::Config{N,BC,T}, max_displ) 
-        BC=SphericalBC,CubicBC,RhombicBC
+    checkpoint_config(savefile::SaveFile, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: SphericalBC, Ptype, Etype}
+    checkpoint_config(savefile::SaveFile, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: CubicBC, Ptype, Etype}
+    checkpoint_config(savefile::SaveFile, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: RhombicBC, Ptype, Etype}
 Function writes a single config in the standard `xyz` format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and both types of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions `x,y,z` in order.
 """
 function checkpoint_config(savefile::SaveFile, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:SphericalBC,Ptype,Etype}
@@ -139,7 +143,7 @@ function checkpoint_config(savefile::SaveFile, state::MCState{T,N,BC,Ptype,Etype
     end
 end
 """
-    save_checkpoint(mc_states::Vector{stype}) where stype <: MCState
+    save_configs(mc_states::MCStateVector)
 Function to save the configuration of each state in a vector of `mc_states`. Writes each configuration according to [`checkpoint_config`](@ref) into a file `config.i` where `i` indicates the order of the states. 
 """
 function save_configs(mc_states::MCStateVector)
@@ -151,7 +155,8 @@ function save_configs(mc_states::MCStateVector)
     end
 end
 """
-    checkpoint(index,mc_states,results,ensemble;rdfsave=false)
+    checkpoint(index::Int, mc_states::MCStateVector, results::Output, ensemble::AbstractEnsemble, rdfsave::Bool)
+    checkpoint(index::Int, mc_states::MCStateVector, results::Output, ensemble::NPT, rdfsave::Bool)
 Function to save relevant information about the current state of the system at step `index`. Saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired. 
 """
 function checkpoint(index::Int,mc_states::MCStateVector,results::Output,ensemble::AbstractEnsemble,rdfsave::Bool)
@@ -195,7 +200,6 @@ end
 """
     readensemble(ensemblevec)  
 Function to convert delimited file contents `ensemblevec` and convert them into an ensemble.
-
 """
 function readensemble(ensemblevec)
     if ensemblevec[1] == "NVT"
@@ -364,7 +368,7 @@ function setresults(histparams,histdata,histv_data,r2data)
     return results
 end
 """
-    rebuild_states(n_traj,ensemble,temps,potential)
+    rebuild_states(n_traj::Int, ensemble::AbstractEnsemble, temps::TempGrid, potential::AbstractPotential)
 Function to rebuild the `MCStates` vector and `results` struct from checkpoint information. The `ensemble` `temps` and `potential` along with `n_traj` are reconstructed elsewhere, but required to accurately recreate the states. 
 """
 function rebuild_states(n_traj::Int,ensemble::AbstractEnsemble,temps::TempGrid,potential::AbstractPotential)
@@ -403,7 +407,7 @@ function rebuild_states(n_traj::Int,ensemble::AbstractEnsemble,temps::TempGrid,p
     return [state for state in mcstates] , results
 end
 """
-    build_states(mc_params,ensemble,temp,potential)
+    build_states(mc_params::MCParams, ensemble::AbstractEnsemble, temp::TempGrid, potential::AbstractPotential)
 For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty [`Output`](@ref) struct named `results` and a vector of `mc_states` using either: one configuration stored in `config.data` OR a series of configurations stored in `config.i`. NB if `config.i` doesn't exist the default will be `config.1`. In this way states can be initialised with different starting configurations.  
 """
 function build_states(mc_params::MCParams,ensemble::AbstractEnsemble,temp::TempGrid,potential::AbstractPotential)

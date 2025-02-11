@@ -1,7 +1,7 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
 
 """
-    swap_config!(mc_state,movetype)
+    swap_config!(mc_state::MCState{T, N, BC, P, E}, movetype::String) where {T, N, BC, P <: AbstractPotentialVariables, E <: AbstractEnsembleVariables}
 
 Function for replacing the MC state and potential variables values with the updated values when metropolis condition is met. 
 Implemented for the following `move_type`:
@@ -22,7 +22,7 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
 end
 
 """
-    swap_atom_config(mc_state::MCState,i_atom,trial_pos)
+    swap_atom_config!(mc_state::MCState{T, N, BC, P, E}, i_atom::Int, trial_pos::PositionVector) where {T, N, BC, P <: AbstractPotentialVariables, E <: AbstractEnsembleVariables}
 """
 function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom::Int,trial_pos::PositionVector) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     mc_state.config.pos[i_atom] = trial_pos
@@ -36,7 +36,8 @@ function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom::Int,trial_pos::
     
 end
 """
-    swap_config_v!(mc_state,trial_config,dist2_mat_new,en_vec_new,new_en_tot)
+    swap_config_v!(mc_state::MCState, bc::CubicBC, trial_config::Config, new_dist2_mat::Matrix{N}, en_vec_new::VorS, new_en_tot::Number) where N <: Number
+    swap_config_v!(mc_state::MCState, bc::RhombicBC, trial_config::Config, new_dist2_mat::Matrix{N}, en_vec_new::VorS, new_en_tot::Number) where N <: Number
 Swaps `mc_state`s and ensemble variables in case of accepted volume move for NPT ensemble.
 Implemented for [`CubicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
 """
@@ -63,7 +64,11 @@ function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new
 end
 
 """
-    swap_vars!(i_atom,potential_variables::V)
+    swap_vars!(i_atom::Int, potential_variables::V) where V <: DimerPotentialVariables
+    swap_vars!(i_atom::Int, potential_variables::ELJPotentialBVariables)
+    swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
+    swap_vars!(i_atom::Int, potential_variables::NNPVariables)
+    swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
 Called by `swap_atom_config!` function; 
 takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration 
 and replaces the current values with the new values such as:
@@ -84,11 +89,11 @@ function swap_vars!(i_atom::Int,potential_variables::ELJPotentialBVariables)
     potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
 
 end
-function swap_vars!(i_atom,potential_variables::EmbeddedAtomVariables)
+function swap_vars!(i_atom::Int,potential_variables::EmbeddedAtomVariables)
     potential_variables.component_vector,potential_variables.new_component_vector = potential_variables.new_component_vector,potential_variables.component_vector
 end
 
-function swap_vars!(i_atom,potential_variables::NNPVariables)
+function swap_vars!(i_atom::Int,potential_variables::NNPVariables)
     potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom ,potential_variables.en_atom_vec
     potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix , potential_variables.g_matrix
 
@@ -96,7 +101,7 @@ function swap_vars!(i_atom,potential_variables::NNPVariables)
     potential_variables.f_matrix[:,i_atom] = potential_variables.new_f_vec
 end
 
-function swap_vars!(i_atom,potential_variables::NNPVariables2a)
+function swap_vars!(i_atom::Int,potential_variables::NNPVariables2a)
 
     potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom,potential_variables.en_atom_vec
 
@@ -107,10 +112,10 @@ function swap_vars!(i_atom,potential_variables::NNPVariables2a)
     
 end
 """
-    swap_move_config!(mc_state,indices)
+    swap_move_config!(mc_state::MCState,indices::VorS)
 Function designed to exchange relevant variables when swapping an atom. Accepts the `mc_state` and the atom `indices` and exchanges atom `indices[1]` with atom `indices[2]`
 """
-function swap_move_config!(mc_state,indices)
+function swap_move_config!(mc_state::MCState,indices::VorS)
     #swap energy
     mc_state.en_tot, mc_state.new_en = mc_state.new_en,mc_state.en_tot
     #swap positions 

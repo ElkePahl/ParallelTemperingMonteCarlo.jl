@@ -111,22 +111,23 @@ Type alias for a collection of numbers. The name derives from most collections b
 """
 const VorS = T where T <: AbstractArray{Z, 1} where Z <: Number
 """
-    ELJPotentialEven{N,T} 
+    ELJPotentialEven{N,T}
 Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
 as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6` with only even integers `i`
 field name: `coeff::SVector{N,T}` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6` in steps of 2, coefficient for every even power needed.
+Constructors:
+    ELJPotentialEven{N}(c::VorS) where N
+    ELJPotentialEven(c::VorS)
 """
 struct ELJPotentialEven{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
 end
-
 function ELJPotentialEven{N}(c::VorS) where N
     @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
     coeff = SVector{N}(c)
     T = eltype(c)
     return ELJPotentialEven{N,T}(coeff)
 end
-
 function ELJPotentialEven(c::VorS) 
     N = length(c)
     coeff = SVector{N}(c)
@@ -135,7 +136,10 @@ function ELJPotentialEven(c::VorS)
 end
 """
     ELJPotentialB{N,T}
-Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a::SVector{N,T}`, `coeff_b::SVector{N,T}`, `coeff_c::SVector{N,T}`
+Extended Lennard-Jones Potential in a magnetic field where there is anisotropy in the coefficient vectors `coeff_a::SVector{N,T}`, `coeff_b::SVector{N,T}`, `coeff_c::SVector{N,T}`.
+Constructors:
+    ELJPotentialB{N}(a::VorS, b::VorS, c::VorS) where N
+    ELJPotentialB(a::VorS, b::VorS, c::VorS)
 """
 struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
     coeff_a::SVector{N,T}
@@ -150,7 +154,6 @@ function ELJPotentialB{N}(a::VorS,b::VorS,c::VorS) where N
     T = eltype(c)
     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
 end
-
 function ELJPotentialB(a::VorS,b::VorS,c::VorS) 
     N = length(c)
     coeff_a = SVector{N}(a)
@@ -159,7 +162,6 @@ function ELJPotentialB(a::VorS,b::VorS,c::VorS)
     T = eltype(c)
     return ELJPotentialB{N,T}(coeff_a,coeff_b,coeff_c)
 end
-
 """
     ELJPotentialBVariables{T}
 Contains the `en_atom_vec::Array{T}`, `tan_mat::Matrix{T}` and `new_tan_vec::Vector{T}` for the ELJPotentialB potential.
@@ -353,7 +355,7 @@ end
     dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},tanmat::Matrix{Float64},new_dist2_vec::VorS,new_tan_vec::VorS,en_tot::Float64,pot::AbstractDimerPotentialB)
     dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},tanmat::Matrix{Float64},new_dist2_vec::VorS,new_tan_vec::VorS,en_tot::Float64,r_cut::Number,pot::AbstractDimerPotentialB)
 
-`dimer_energy_update` is the potential-level-call where for a single mc_state we take the new position `pos`, for atom at `index` , inside the current `config` , where the interatomic distances `dist2_mat` and the new vector based on the new position `new_dist2_vec`; these use the `potential` to calculate a delta_energy and modify the current `en_tot`. These quantities are modified in place and returned 
+`dimer_energy_update` is the potential-level-call where for a single `mc_state` we take the new position `pos`, for atom at `index` , inside the current `config` , where the interatomic distances `dist2_mat` and the new vector based on the new position `new_dist2_vec`; these use the `potential` to calculate a delta_energy and modify the current `en_tot`. These quantities are modified in place and returned.
 
 Final two methods are for use with a dimer potential in a magnetic field, where there is anisotropy in the coefficients.
 """ 
@@ -385,10 +387,13 @@ end
 #----------------------------------------------------------#
 
 """
-    ELJPotential{N,T} 
+    ELJPotential{N,T}
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
 as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6`
 field name: `coeff::SVector{N,T}` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6`, coefficient for every power needed.
+Constructors:
+    ELJPotential{N}(c::VorS) where N
+    ELJPotential(c::VorS)
 """
 struct ELJPotential{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
@@ -763,16 +768,14 @@ mutable struct NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
     new_f_vec::MVector{Na,T}
 end
 """
-    get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
-        (indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
-
+    get_new_state_vars!(trial_pos, atomindex, config::Config, potential_variables::NNPVariables2a, dist2_mat, new_dist2_vec, pot::RuNNerPotential2Atom{Nrad, Nang, N1, N2}) where {Nrad, Nang, N1, N2}
+    get_new_state_vars!(indices, config, potential_variables, dist2_mat, potential::RuNNerPotential2Atom{Nrad, Nang, N1, N2}) where {Nrad, Nang, N1, N2}
 Function to calculate the altered state variables after an atom move:
-
-    takes the new trial_position, its index, the total config, the current state variables, the distance matrix and updated vector and potential values.
-    Calculates the new cutoff function values, the updated symmetry function matrix and passes these back to potential_variables.
+Takes the new trial_position, its index, the total config, the current state variables, the distance matrix and updated vector and potential values.
+Calculates the new cutoff function values, the updated symmetry function matrix and passes these back to potential_variables.
 
 Method 2 calculates the new state variables based on an atom_swap. Accepts many of the same variables, but the main difference is the `indices` vector, indicating which two atoms we are swapping. 
-Also returns, most imporantly potential_variables.new_g_matrix.
+Also returns, most imporantly `potential_variables.new_g_matrix`.
 
 """
 function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
@@ -798,7 +801,6 @@ end
 """
     calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
 Function to calculate the energy of a new configuration after an atom move. Accepts the potential_variables struct and runs a forward pass on the new_g_matrix. Returns the new energy.
-
 """
 function calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
 
@@ -827,9 +829,13 @@ end
 #----------------------Top Level Call----------------------#
 #----------------------------------------------------------#
 """
-   energy_update!(ensemblevariables::Etype,config::Config,potential_variables::PVtypes,dist2_mat::Matrix{N},new_dist2_vec::Vector{N},en_tot::Number,pot::Ptype) where {Etype <: NVTVariables, N <: Float}
-   Ptype,PVType = DimerPotential,DimerPotentialB,EmbeddedAtomModel,RuNNerPotential,RuNNerPotential2Atom 
-
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables, dist2_mat, new_dist2_vec, en_tot, pot::AbstractDimerPotential) where Etype <: NVTVariables
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables, dist2_mat, new_dist2_vec, en_tot, pot::AbstractDimerPotential) where Etype <: NPTVariables
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables::ELJPotentialBVariables, dist2_mat, new_dist2_vec, en_tot, pot::AbstractDimerPotentialB) where Etype <: NVTVariables
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables::ELJPotentialBVariables, dist2_mat, new_dist2_vec, en_tot, pot::AbstractDimerPotentialB) where Etype <: NPTVariables
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables::EmbeddedAtomVariables, dist2_mat, new_dist2_vec, en_tot, pot::EmbeddedAtomPotential) where Etype <: AbstractEnsembleVariables
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables::NNPVariables, dist2_mat, new_dist2_vec, en_tot, pot::RuNNerPotential) where Etype <: AbstractEnsembleVariables
+    energy_update!(ensemblevariables::Etype, config::Config, potential_variables::NNPVariables2a, dist2_mat, new_dist2_vec, en_tot, pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
 Energy update function for use within a cycle. at the top level this is called with the new position `trial_pos` which is the `index`-th atom in the `config` it operates on the `potential_variables` along with the `dist2_mat`. Using `pot` the potential to find the `new_en`. 
 
 Has additional methods including `r_cut` where appropriate for use with periodic boundary conditions.
@@ -843,20 +849,20 @@ This function is designed as a curry function. The generic [`get_energy!`](@ref 
     -   [`RuNNerPotential`](@ref)
     -   [`RuNNerPotential2Atom`](@ref)
 """
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential) where Etype <: NVTVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotential) where Etype <: NVTVariables
 
 
     new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,pot)
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential) where Etype <: NPTVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotential) where Etype <: NPTVariables
 
     new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,ensemblevariables.r_cut,pot)
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB) where Etype <: NVTVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotentialB) where Etype <: NVTVariables
 
     potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[ensemblevariables.index] = 0
@@ -865,7 +871,7 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotentialB) where Etype <: NPTVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotentialB) where Etype <: NPTVariables
 
     potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[ensemblevariables.index] = 0
@@ -874,7 +880,7 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat,new_dist2_vec,en_tot,pot::EmbeddedAtomPotential) where Etype <: AbstractEnsembleVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::EmbeddedAtomPotential) where Etype <: AbstractEnsembleVariables
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
     
     potential_variables.new_component_vector = calc_components(potential_variables.new_component_vector,ensemblevariables.index,dist2_mat[ensemblevariables.index,:],new_dist2_vec,pot.n,pot.m)
@@ -883,7 +889,7 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential) where Etype <: AbstractEnsembleVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential) where Etype <: AbstractEnsembleVariables
 
     potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
@@ -891,7 +897,7 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables2a,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
 
     potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
@@ -908,7 +914,7 @@ end
     initialise_energy(config::Config,dist2_mat::Matrix{Float64},potential_variables::AbstractPotentialVariables,ensemble_variables::NVTVariables,pot::AbstractDimerPotentialB)
     initialise_energy(config::Config,dist2_mat::Matrix{Float64},potential_variables::AbstractPotentialVariables,ensemble_variables::NPTVariables,pot::AbstractDimerPotentialB)
     initialise_energy(config::Config,dist2_mat::Matrix{Float64},potential_variables::AbstractPotentialVariables,ensemble_variables::AbstractEnsembleVariables,pot::EmbeddedAtomPotential)
-    initialise_energy(config::Config, dist2_mat::Matrix{Float64}, potential_variables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables, pot::RuNNerPotential)
+    initialise_energy(config::Config,dist2_mat::Matrix{Float64},potential_variables::AbstractPotentialVariables,ensemble_variables::AbstractEnsembleVariables,pot::RuNNerPotential)
 
 Initialise energy is used during the MCState call to set the starting energy of a `config` according to the potential as `pot` and the configurational variables `potential_variables`. Written with general input means the top-level is type-invariant. 
 Methods included for:
@@ -961,6 +967,7 @@ end
     set_variables(config::Config{N, BC, T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB) where {N, BC, T}
     set_variables(config::Config{N, BC, T}, dist2_matrix::Matrix{Float64}, pot::EmbeddedAtomPotential) where {N, BC, T}
     (set_variables(config::Config{N, BC, T}, dist2_mat::Matrix{Float64}, pot::RuNNerPotential{nrad, nang}) where {N, BC, T}) where {nrad, nang}
+    (set_variables(config::Config{N, BC, T}, dist2_mat, pot::RuNNerPotential2Atom{nrad, nang, n1, n2}) where {N, BC, T}) where {nrad, nang, n1, n2}
 Initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the [`MCState`](@ref Main.ParallelTemperingMonteCarlo.MCStates.MCState) function as this must be type-invariant with respect to the potential. 
 """
 function set_variables(config::Config{N,BC,T},dist_2_mat::Matrix{Float64},pot::AbstractDimerPotential) where {N,BC,T}
@@ -986,7 +993,7 @@ function set_variables(config::Config{N,BC,T},dist2_mat::Matrix{Float64},pot::Ru
     
     return NNPVariables{T}(zeros(N) ,zeros(N),g_matrix,f_matrix,copy(g_matrix), zeros(N))
 end
-function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential2Atom{nrad,nang,n1,n2}) where {N,BC,T} where {nrad,nang,n1,n2}
+function set_variables(config::Config{N,BC,T},dist2_mat::Matrix{Float64},pot::RuNNerPotential2Atom{nrad,nang,n1,n2}) where {N,BC,T} where {nrad,nang,n1,n2}
     if n1+n2 != N
         println("problem")
     end

@@ -46,10 +46,8 @@ export parallel_tempering_exchange!,update_max_stepsize!
 # end
 """
     metropolis_condition(delta_energy::Number, beta::Number)
-    metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_changed::Float64,volume_unchanged::Float64,beta::Float64) where Etype <: NPT
-    metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
-    metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
-
+    metropolis_condition(ensemble::Etype, delta_energy::Float64, volume_changed::Float64, volume_unchanged::Float64, beta::Float64) where Etype <: NPT
+    metropolis_condition(movetype::String, mc_state::MCState, ensemble::Etype) where Etype <: AbstractEnsemble
 Function returning the probability value associated with a trial move. Four methods included. The last two methods are separatig functions taking a `movetype`, `mc_state` and `ensemble` and separating them into volume and atom moves defined in the first two functions, namely:
 -   accepts `delta_energy` and `beta` and determines the thermodynamic probability of the single-atom move
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
@@ -66,8 +64,6 @@ function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_chan
     return ifelse(prob_val > 1, T(1), prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-
-
 function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
@@ -115,7 +111,9 @@ end
 
 """
     parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NVT) where T <: MCState
-This function takes a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
+    parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NPT) where T <: MCState
+These functions take a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
+The second method uses enthalpy instead of energy to determine acceptance. 
 """
 function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCParams,ensemble::AbstractEnsemble)
     n_exc = rand(1:mc_params.n_traj-1)
@@ -133,12 +131,6 @@ function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCPara
 
     return mc_states
 end
-
-"""
-    parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NPT) where T <: MCState
-This function takes a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
-Acceptance is determined by enthalpy instead of energy. 
-"""
 function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCParams,ensemble::NPT)
     n_exc = rand(1:mc_params.n_traj-1)
 
@@ -161,7 +153,7 @@ end
 
 """
     update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number)
-    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NVT, min_acc::Number, max_acc::Number)
+    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::Etype, min_acc::Number, max_acc::Number) where Etype <: AbstractEnsemble
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
 if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
 each cycle consists of `a` atom, `v` volume moves.

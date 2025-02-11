@@ -123,11 +123,11 @@ end
 """
     NNVT <: AbstractEnsemble
 Ensemble designed for systems with two types of atoms.
-    Field names:
-        - atomtypes: vector specifying the atomic number of the species
-        -natoms: vector specifying how much of each species we have in the system
-        n_atom_moves: defaults to n_total
-        n_atom_swaps: defaults to 1 per cycle
+-   Field names:
+    -   atomtypes: vector specifying the atomic number of the species
+    -   natoms: vector specifying how much of each species we have in the system
+    -   n_atom_moves: defaults to n_total
+    -   n_atom_swaps: defaults to 1 per cycle
 """
 struct NNVT <: AbstractEnsemble
     # atomtypes::SVector{2,Int}
@@ -163,9 +163,11 @@ end
 #------------------------global functions-----------------------------#
 #---------------------------------------------------------------------#
 """
-set_ensemble_variables(config::Config{N,BC,T}, ensemble)
-initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT`);
-required to allow for neutral initialisation in defining the MCState [`MCStates.MCState`](@ref) struct. 
+    set_ensemble_variables(config::Config{N, BC, T}, ensemble::NVT) where {N, BC, T}
+    set_ensemble_variables(config::Config{N, BC, T}, ensemble::NPT) where {N, BC, T}
+    set_ensemble_variables(config::Config{N, BC, T}, ensemble::NNVT) where {N, BC, T}
+Initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT`);
+required to allow for neutral initialisation in defining the MCState [`Main.ParallelTemperingMonteCarlo.MCStates.MCState`](@ref) struct. 
 """
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
     return NVTVariables{T}(1,SVector{3}(zeros(3)))
@@ -197,6 +199,10 @@ A struct to define the types of moves performed per MC cycle.
 -   Field names:
     -   `ensemble::Etype`: type of ensemble (NVT, NPT)
     -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle (see `MoveType`)
+Constructors:
+-   MoveStrategy(ensemble::NPT)
+-   MoveStrategy(ensemble::NVT)
+-   MoveStrategy(ensemble::NNVT)
 """
 struct MoveStrategy{N,Etype} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps. 
     ensemble::Etype

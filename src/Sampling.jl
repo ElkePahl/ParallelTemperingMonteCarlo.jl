@@ -14,7 +14,7 @@ using ..BoundaryConditions
 using ..EnergyEvaluation
 using ..Ensembles
 """
-    update_energy_tot(mc_states::MCStateVector, ensemble::NVT)
+    update_energy_tot(mc_states::MCStateVector, ensemble::Etype) where Etype <: AbstractEnsemble
     update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
 
 Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
@@ -187,9 +187,8 @@ function update_rdf!(mc_states::MCStateVector,results::Output,delta_r2::Number)
     
 end
 """
-    sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::NVT, save_index::Int, results::Output, rdfsave::Bool)
+    sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::AbstractEnsemble, save_index::Int, results::Output, rdfsave::Bool)
     sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::NPT, save_index::Int, results::Output, rdfsave::Bool)
-
 Function performed at the end of an [`mc_cycle!`](@ref Main.ParallelTemperingMonteCarlo.MCRun.mc_cycle!) after equilibration. Updates the `E,E**2` totals for each `mc_state`, updates the energy and radial histograms and then returns the modified `mc_states` and `results`.
 
 N.B. we have now included the `delta_en`, `delta_v` and `delta_r2` values in the `results` struct to allow for more general methods such as this.  
