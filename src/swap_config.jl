@@ -92,7 +92,6 @@ function swap_vars!(i_atom::Int,potential_variables::ELJPotentialBVariables)
     potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
 
 end
-
 function swap_vars!(i_atom::Int,potential_variables::EmbeddedAtomVariables)
     potential_variables.component_vector,potential_variables.new_component_vector = potential_variables.new_component_vector,potential_variables.component_vector
 end
