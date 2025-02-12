@@ -40,3 +40,4 @@ Trial.jl
 scripts/*.data
 .vscode
 .DS_Store
+/statprof/
