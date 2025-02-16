@@ -182,12 +182,15 @@ Self explanatory name, iterates over mc_states and adds to the appropriate resul
 function update_rdf!(mc_states,results,delta_r2)
     for j_traj in eachindex(mc_states)
         #for element in mc_states[j_traj].dist2_mat 
-        for k_traj in 1:j_traj
+        for i in 1:length(mc_states[1].config.pos)
+            for k in 1:i
 #            println(delta_r2)
 #            println(mc_states[j_traj].dist2_mat[k_traj])
-            idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
-            if idx != 0 && idx <= results.n_bin*5
-                results.rdf[j_traj][idx] +=1
+                idx=rdf_index(mc_states[j_traj].dist2_mat[i,k],delta_r2)
+                if idx != 0 && idx <= results.n_bin*5
+                    #println(idx)
+                    results.rdf[j_traj][idx] +=1
+                end
             end
         end
     end
