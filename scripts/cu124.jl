@@ -194,3 +194,4 @@ n_bin = 100
 bc_cu124 = SphericalBC(radius=16*AtoBohr)   #5.32 Angstrom
 start_config = Config(pos_cu124, bc_cu124)
 @time states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
+
