@@ -3,8 +3,8 @@ module MCSampling
 #export sampling_step!
 
 
-export sampling_step!, initialise_histograms!,finalise_results, update_energy_tot, find_hist_index, update_histograms!, update_rdf!, rdf_index
 
+export sampling_step!, initialise_histograms!,finalise_results, update_energy_tot, find_hist_index, update_histograms!, update_rdf!, rdf_index
 
 using StaticArrays,LinearAlgebra
 using ..MCStates
@@ -52,6 +52,7 @@ function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number
 
     hist_index = (mc_state.en_tot - results.en_min)/delta_en_hist +1
 
+
     return find_hist_index(hist_index,results.n_bin)
 end
 function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
@@ -60,11 +61,11 @@ function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number
     hist_index_v = (mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist +1
 
     hist_index_e = find_hist_index(hist_index_e,results.n_bin)
-
     hist_index_v = find_hist_index(hist_index_v,results.n_bin)
 
     return hist_index_e, hist_index_v
 end
+
 
 """
     initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::SphericalBC) where N <: Number
@@ -175,12 +176,15 @@ Self explanatory name, iterates over `mc_states` and adds to the appropriate `re
 function update_rdf!(mc_states::MCStateVector,results::Output,delta_r2::Number)
     for j_traj in eachindex(mc_states)
         #for element in mc_states[j_traj].dist2_mat 
-        for k_traj in 1:j_traj
+        for i in 1:length(mc_states[1].config.pos)
+            for k in 1:i
 #            println(delta_r2)
 #            println(mc_states[j_traj].dist2_mat[k_traj])
-            idx=rdf_index(mc_states[j_traj].dist2_mat[k_traj],delta_r2)
-            if idx != 0 && idx <= results.n_bin*5
-                results.rdf[j_traj][idx] +=1
+                idx=rdf_index(mc_states[j_traj].dist2_mat[i,k],delta_r2)
+                if idx != 0 && idx <= results.n_bin*5
+                    #println(idx)
+                    results.rdf[j_traj][idx] +=1
+                end
             end
         end
     end

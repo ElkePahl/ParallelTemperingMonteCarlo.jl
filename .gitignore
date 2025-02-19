@@ -24,14 +24,13 @@ docs/src/
 # environment.
 Manifest.toml
 
+
 checkpoint/
 analysis.NVT
 Sol.X
-todo.txt
-test_test.jl
-compile_shared.sh
 fortran/
 statprof/
+
 scripts-elke/
 workspace*
 .DS_Store 
@@ -39,6 +38,5 @@ Trial.jl
 .vscode/
 *.data
 scripts/*.data
-
 .vscode
 .DS_Store

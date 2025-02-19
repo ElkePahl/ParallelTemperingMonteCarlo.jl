@@ -30,8 +30,10 @@ export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
 export EmbeddedAtomVariables,NNPVariables,NNPVariables2a
 
 
+
 export dimer_energy,dimer_energy_atom,dimer_energy_config,dimer_energy_update!
-export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, VorS, get_new_state_vars!
+export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, VorS, get_new_state_vars!,calc_new_runner_energy!
+
 export swap_energy_update
 
 #-------------------------------------------------------------#
@@ -331,6 +333,24 @@ function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_var
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end
+#THIS IS A PLACEHOLDER FUNCTION AND SHOULD BE PROPERLY IMPLEMENTED
+function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::ELJPotentialBVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+
+    return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height
+end 
 #THIS IS A PLACEHOLDER FUNCTION AND SHOULD BE PROPERLY IMPLEMENTED
 function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::ELJPotentialBVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
