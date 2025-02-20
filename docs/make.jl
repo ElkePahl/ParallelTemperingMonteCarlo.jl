@@ -15,6 +15,7 @@ EXAMPLES_NUMS = Int[]
 surface = sort([
     "BoundaryConditions",
     "Configurations",
+    "CustomTypes",
     "Ensembles",
     "MachineLearningPotential",
     "EnergyEvaluation",

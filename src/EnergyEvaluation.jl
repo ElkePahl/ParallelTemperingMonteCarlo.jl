@@ -22,6 +22,7 @@ using ..MachineLearningPotential
 using ..Configurations
 using ..Ensembles 
 using ..BoundaryConditions
+using ..CustomTypes
 
 
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,AbstractMachineLearningPotential
@@ -32,7 +33,7 @@ export EmbeddedAtomVariables,NNPVariables,NNPVariables2a
 
 
 export dimer_energy,dimer_energy_atom,dimer_energy_config,dimer_energy_update!
-export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, VorS, get_new_state_vars!,calc_new_runner_energy!
+export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, get_new_state_vars!,calc_new_runner_energy!
 
 export swap_energy_update
 
@@ -61,6 +62,8 @@ When defining a new type, the functions relating a potential to the rest of the 
 
 """
 abstract type AbstractPotential end
+const Ptype = T where T <: AbstractPotential
+export Ptype
 
 """
     AbstractPotentialVariables
@@ -73,6 +76,7 @@ Implemented subtypes:
 
 """
 abstract type AbstractPotentialVariables end
+
 #-----------------------------------------------------------------------#
 #-----------------------Explicit Dimer Potentials-----------------------#
 #-----------------------------------------------------------------------#
@@ -107,11 +111,7 @@ end
 ##
 #Need to include ELJB here to prevent recursive definitions erroring 
 ##
-"""
-    VorS = T where T <: AbstractArray{Z, 1} where Z <: Number
-Type alias for a collection of numbers. The name derives from most collections being a Vector or StaticVector of numbers.
-"""
-const VorS = T where T <: AbstractArray{Z, 1} where Z <: Number
+
 """
     ELJPotentialEven{N,T}
 Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);

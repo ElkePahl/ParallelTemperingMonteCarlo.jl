@@ -21,6 +21,7 @@ using ..ReadSave
 using ..MCSampling
 
 using ..Initialization
+using ..CustomTypes
 
 
 include("swap_config.jl")

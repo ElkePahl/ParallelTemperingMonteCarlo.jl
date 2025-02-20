@@ -5,12 +5,12 @@ using ..Configurations
 using ..MachineLearningPotential
 using ..EnergyEvaluation
 using ..Ensembles
+using ..CustomTypes
 #using ..InputParams
-const Ptype = T where T <: AbstractPotential
-const Etype = T where T <: AbstractEnsemble
 
 
-export MCState, Etype, Ptype, MCStateVector,max_length#, NNPState
+
+export MCState,max_length#, NNPState
 
 """
     MCState(temp::Number, beta::Number, config::Config{N, BC, T}, dist2_mat::Matrix{Number}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.bc), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}
@@ -48,8 +48,10 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     count_atom::Vector{Int}
     count_vol::Vector{Int}
     count_exc::Vector{Int}
-end    
+end
+
 const MCStateVector = Vector{T} where T <: MCState
+export MCStateVector
 """
     max_length(bc::SphericalBC)
     max_length(bc::CubicBC)

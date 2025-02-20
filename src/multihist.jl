@@ -6,6 +6,7 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 using ..InputParams
 using ..Initialization
 using ..EnergyEvaluation
+using ..CustomTypes
 
 export multihistogram,postprocess
 

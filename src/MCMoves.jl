@@ -10,6 +10,7 @@ using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
 using ..Ensembles
+using ..CustomTypes
 #using ..MCRun
 
 """

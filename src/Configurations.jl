@@ -15,6 +15,7 @@ module Configurations
 using StaticArrays, LinearAlgebra
 
 using ..BoundaryConditions
+using ..CustomTypes
 
 export Config
 export distance2, get_distance2_mat, get_tan, get_tantheta_mat, get_volume

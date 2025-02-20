@@ -5,6 +5,7 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 using ..InputParams
 using ..Ensembles
 using ..EnergyEvaluation
+using ..CustomTypes
 export multihistogram_NPT
 
 function temp_trajectories(temp::TempGrid)
