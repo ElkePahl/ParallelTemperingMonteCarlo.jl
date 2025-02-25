@@ -40,4 +40,7 @@ Trial.jl
 scripts/*.data
 .vscode
 .DS_Store
+
 /statprof/
+/scripts/tests.ipynb
+
