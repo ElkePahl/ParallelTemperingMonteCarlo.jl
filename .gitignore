@@ -41,3 +41,4 @@ Trial.jl
 scripts/*.data
 .vscode
 .DS_Store
+/scripts/tests.ipynb
