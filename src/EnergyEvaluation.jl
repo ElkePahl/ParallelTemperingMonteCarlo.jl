@@ -641,6 +641,7 @@ struct  RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
     radsymfunctions::StructVector{RadialType2{Float64}} #SVector{Nrad,RadialType2}
     angsymfunctions::StructVector{AngularType3{Float64}}
     r_cut::Float64
+    boundary::Float64
 end
 function RuNNerPotential(nnp,radsymvec,angsymvec)
     r_cut = radsymvec[1].r_cut
@@ -648,7 +649,16 @@ function RuNNerPotential(nnp,radsymvec,angsymvec)
     nang = length(angsymvec)
     radvec=StructVector([rsymm for rsymm in radsymvec])
     angvec = StructVector([asymm for asymm in angsymvec])
-    return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut)
+    return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut,0.0)
+end
+
+function RuNNerPotential(nnp,radsymvec,angsymvec,boundary)
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    radvec=StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+    return RuNNerPotential{nrad,nang}(nnp,radvec,angvec,r_cut,boundary*boundary)
 end
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Vector{T}
@@ -696,8 +706,9 @@ struct RuNNerPotential2Atom{Nrad,Nang,N1,N2} <: AbstractMachineLearningPotential
     radsymfunctions::StructVector{RadialType2a{Float64}}
     angsymfunctions::StructVector{AngularType3a{Float64}}
     r_cut::Float64 
-
+    boundary::Float64
 end
+
 function RuNNerPotential2Atom(nnp1,nnp2,radsymvec,angsymvec,n1,n2)#,g_offsets_vec)
     r_cut = radsymvec[1].r_cut
     nrad = length(radsymvec)
@@ -705,7 +716,16 @@ function RuNNerPotential2Atom(nnp1,nnp2,radsymvec,angsymvec,n1,n2)#,g_offsets_ve
     radvec=StructVector([rsymm for rsymm in radsymvec])
     angvec = StructVector([asymm for asymm in angsymvec])
 
-    return RuNNerPotential2Atom{nrad,nang,n1,n2}(nnp1,nnp2,radvec,angvec,r_cut)#,SVector{nrad*2+nang*3}(g_offsets),SVector{nrad*2+nang*3}(tpz) )
+    return RuNNerPotential2Atom{nrad,nang,n1,n2}(nnp1,nnp2,radvec,angvec,r_cut,0.0)#,SVector{nrad*2+nang*3}(g_offsets),SVector{nrad*2+nang*3}(tpz) )
+end
+function RuNNerPotential2Atom(nnp1,nnp2,radsymvec,angsymvec,n1,n2,boundary)#,g_offsets_vec)
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    radvec=StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+
+    return RuNNerPotential2Atom{nrad,nang,n1,n2}(nnp1,nnp2,radvec,angvec,r_cut,boundary*boundary)#,SVector{nrad*2+nang*3}(g_offsets),SVector{nrad*2+nang*3}(tpz) )
 end
 """
     NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
@@ -853,9 +873,13 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
 end
 function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential) where Etype <: AbstractEnsembleVariables
 
-    potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
+    if any(new_dist2_vec[i] < pot.boundary for i in eachindex(new_dist2_vec) if i != ensemblevariables.index)
+        new_en = 100.
+    else
+        potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
-    potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
+        potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
+    end
 
     return potential_variables,new_en
 end
