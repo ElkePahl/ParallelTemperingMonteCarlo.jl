@@ -2,6 +2,7 @@ module ParallelTemperingMonteCarlo
 
 using Reexport
 
+include("CustomTypes.jl")
 include("BoundaryConditions.jl")
 include("Configurations.jl")
 include("Ensembles.jl")
@@ -22,24 +23,24 @@ include("multihist.jl")
 include("multihist_NPT.jl")
 include("multihist_NVT.jl")
 
+@reexport using .CustomTypes
+@reexport using .BoundaryConditions
+@reexport using .Configurations
+@reexport using .Ensembles
+@reexport using .MachineLearningPotential
+@reexport using .EnergyEvaluation
+@reexport using .MCStates
+@reexport using .InputParams
 
- @reexport using .BoundaryConditions
- @reexport using .Configurations
- @reexport using .Ensembles
- @reexport using .MachineLearningPotential
- @reexport using .EnergyEvaluation
- @reexport using .MCStates
- @reexport using .InputParams
-
- @reexport using .MCMoves
- @reexport using .Exchange
- @reexport using .MCSampling
- @reexport using .ReadSave
- @reexport using .Initialization
- @reexport using .MCRun
- @reexport using .Multihistogram
- @reexport using .Multihistogram_NPT
- @reexport using .Multihistogram_NVT
+@reexport using .MCMoves
+@reexport using .Exchange
+@reexport using .MCSampling
+@reexport using .ReadSave
+@reexport using .Initialization
+@reexport using .MCRun
+@reexport using .Multihistogram
+@reexport using .Multihistogram_NPT
+@reexport using .Multihistogram_NVT
 
  
 

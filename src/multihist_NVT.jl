@@ -5,15 +5,16 @@ using DelimitedFiles, LinearAlgebra, StaticArrays
 using ..InputParams
 using ..EnergyEvaluation
 using ..Ensembles
+using ..CustomTypes
 export multihistogram_NVT
 
-function temp_trajectories(temp)
+function temp_trajectories(temp::TempGrid)
     tempnumber = length(temp.t_grid)
     tempnumber_result = tempnumber * 10
     return tempnumber,tempnumber_result
 end
 
-function histogram_initialise_en(ensemble::NVT,temp,results)
+function histogram_initialise_en(ensemble::NVT,temp::TempGrid,results::Output)
     k=3.166811429/10^6
     temp_o=temp.t_grid
     beta=temp.beta_grid
@@ -25,14 +26,14 @@ function histogram_initialise_en(ensemble::NVT,temp,results)
     return k,temp_o,beta,Emin,Ebins,dEhist,ENhistogram
 end
 
-function Temp_grid_result(ti,tf,tempnumber_result)
+function Temp_grid_result(ti::Number,tf::Number,tempnumber_result::Int)
     temp_grid_result = TempGrid{tempnumber_result}(ti,tf) 
     temp_result=temp_grid_result.t_grid
     beta_result=temp_grid_result.beta_grid
     return temp_result,beta_result
 end
-
-function free_energy_initialise(ENhistogram,Ebins,tempnumber,tempnumber_result)
+const NVTHistogram = Vector{Vector{Float64}}
+function free_energy_initialise(ENhistogram::NVTHistogram,Ebins::Int,tempnumber::Int,tempnumber_result::Int)
     free_energy=Array{Float64}(undef,tempnumber)
     new_free_energy=Array{Float64}(undef,tempnumber)
     normalconst=Array{Float64}(undef,tempnumber_result)
@@ -53,7 +54,7 @@ function free_energy_initialise(ENhistogram,Ebins,tempnumber,tempnumber_result)
     return free_energy, new_free_energy, normalconst, ncycles
 end
 
-function quasiprob(betat,m,ncycles,dEhist,Emin,tempnumber,ENhistogram,beta,free_energy)
+function quasiprob(betat::Number,m::Int,ncycles::VorS,dEhist::Number,Emin::Number,tempnumber::Int,ENhistogram::Vector{Vector{N}},beta::VorS,free_energy::VorS) where N <: Number
     energy_t=Emin+(m-0.5)*dEhist
     quasiprob=0
     denom=0
@@ -72,13 +73,14 @@ function quasiprob(betat,m,ncycles,dEhist,Emin,tempnumber,ENhistogram,beta,free_
 end
 
 """
-Multihistogram analysis for NVT
-    multihistgram_NVT(ensemble, temp, results, conv_threshold, readfile)
-    conv_threshold is the convergence threshold, which user can choose.
-    Now "readfile" can only be false.
-    Example: multihistogram_NVT(ensemble, temp, results, 10^(-3), false)
+    multihistogram_NVT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; debug = false)
+Multihistogram analysis for NVT:
+-   `conv_threshold` is the convergence threshold, which user can choose.
+-   `debug` kwarg determines whether to print debug information. Defaults to false.
+-   `readfile` can only be false.
+-   Example: `multihistogram_NVT(ensemble, temp, results, 10^(-3), false)`
 """
-function multihistogram_NVT(ensemble, temp, results, conv_threshold, readfile)
+function multihistogram_NVT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; debug=false)
     if readfile==false
         tempnumber,tempnumber_result = temp_trajectories(temp)
         k,temp_o,beta,Emin,Ebins,dEhist,ENhistogram = histogram_initialise_en(ensemble,temp,results)
