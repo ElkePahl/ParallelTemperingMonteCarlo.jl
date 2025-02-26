@@ -429,7 +429,7 @@ function calc_new_symmetry_value!(g_vector,indexi,indexj,indexk,newposition,posi
 
 end
 """
-    symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,symmetry_function::RadialType2)
+    radial_symmetry_calculation!(g_vector, atomindex, dist2_mat, new_dist2_vector, f_matrix, new_f_vector, symmetry_function::RadialType2)
     symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dis_vector,f_matrix,new_f_vector,symmetry_function::AngularType3)
 
 Method one is designed for radial symmetry functions. Given an atom at `atomindex` along with high level data structures: `dist2_mat,new_dist2_vector,f_matrix,new_f_vector` containing the new and old positions, distances and cutoff functions. Given a single `symmetry_function` we iterate over all other atoms and pass their index to lower level currying functions.  The positions `newposition,position` are included for consistency with the higher-level function.
@@ -448,6 +448,10 @@ function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vec
     end
     return g_vector
 end
+"""
+    angular_symmetry_calculation!(g_vector, atomindex, newposition, position, dist2_mat, new_dis_vector, f_matrix, new_f_vector, symmetry_function::AngularType3)
+This method is designed to do the same as the radial symmetry function for the angular symmetry function using the same inputs. Double loop over all `j,k` and use [`calc_new_symmetry_value!`](@ref) over `g_vector`.
+"""
 function angular_symmetry_calculation!(g_vector,atomindex,newposition,position,dist2_mat,new_dis_vector,f_matrix,new_f_vector,symmetry_function::AngularType3)
 
     N = length(g_vector)
@@ -482,7 +486,13 @@ Top level function to calculate the total change to the matrix of symmetry funct
 #     return g_matrix
 # end
 
+#     return g_matrix
+# end
 
+"""
+    total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
+Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined [`radial_symmetry_calculation!`](@ref) and [`angular_symmetry_calculation!`](@ref) functions. 
+"""
 function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
     for g_index in 1:Nrad
 #@views

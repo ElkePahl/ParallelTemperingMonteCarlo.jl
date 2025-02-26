@@ -1,6 +1,5 @@
 using Test
 using ParallelTemperingMonteCarlo
-
 @testset "multihist_NVT" begin
     ensemble=NVT(13)
     temp = TempGrid{32}(5,16) 

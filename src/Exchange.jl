@@ -65,8 +65,6 @@ function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_chan
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-
-
 function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)

@@ -22,6 +22,7 @@ using ..MachineLearningPotential
 using ..Configurations
 using ..Ensembles 
 using ..BoundaryConditions
+using ..CustomTypes
 
 
 export AbstractPotential,AbstractDimerPotential,ELJPotential,ELJPotentialEven,AbstractMachineLearningPotential
@@ -59,6 +60,8 @@ When defining a new type, the functions relating a potential to the rest of the 
 
 """
 abstract type AbstractPotential end
+const Ptype = T where T <: AbstractPotential
+export Ptype
 
 """
     AbstractPotentialVariables
@@ -71,6 +74,7 @@ Implemented subtypes:
 
 """
 abstract type AbstractPotentialVariables end
+
 #-----------------------------------------------------------------------#
 #-----------------------Explicit Dimer Potentials-----------------------#
 #-----------------------------------------------------------------------#
@@ -105,6 +109,7 @@ end
 ##
 #Need to include ELJB here to prevent recursive definitions erroring 
 ##
+
 """
     VorS = T where T <: AbstractArray{Z, 1} where Z <: Number
 Type alias for a collection of numbers. The name derives from most collections being a Vector or StaticVector of numbers.
@@ -327,7 +332,7 @@ function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_var
     end 
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
-end 
+end
 #THIS IS A PLACEHOLDER FUNCTION AND SHOULD BE PROPERLY IMPLEMENTED
 function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::ELJPotentialBVariables, r_cut::Number, bc::RhombicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
@@ -384,7 +389,7 @@ end
 #----------------------------------------------------------#
 
 """
-    ELJPotential{N,T} 
+    ELJPotential{N,T}
 Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
 as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6`
 field name: `coeff::SVector{N,T}` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6`, coefficient for every power needed.
@@ -694,6 +699,7 @@ Bundle of variables used for the NNP potential:
 Todo: someone who knows what these are should write a better description
 """
 mutable struct NNPVariables{T} <: AbstractPotentialVariables
+
     en_atom_vec::Vector{T}
     new_en_atom::Vector{T}
     g_matrix::Matrix{T}
@@ -784,16 +790,14 @@ mutable struct NNPVariables2a{T,Na,Ng} <: AbstractPotentialVariables
     new_f_vec::MVector{Na,T}
 end
 """
-    get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
-        (indices,config,potential_variables,dist2_mat,potential::RuNNerPotential2Atom{Nrad,Nang,N1,N2} ) where {Nrad,Nang,N1,N2}
-
+    get_new_state_vars!(trial_pos, atomindex, config::Config, potential_variables::NNPVariables2a, dist2_mat, new_dist2_vec, pot::RuNNerPotential2Atom{Nrad, Nang, N1, N2}) where {Nrad, Nang, N1, N2}
+    get_new_state_vars!(indices, config, potential_variables, dist2_mat, potential::RuNNerPotential2Atom{Nrad, Nang, N1, N2}) where {Nrad, Nang, N1, N2}
 Function to calculate the altered state variables after an atom move:
-
-    takes the new trial_position, its index, the total config, the current state variables, the distance matrix and updated vector and potential values.
-    Calculates the new cutoff function values, the updated symmetry function matrix and passes these back to potential_variables.
+Takes the new trial_position, its index, the total config, the current state variables, the distance matrix and updated vector and potential values.
+Calculates the new cutoff function values, the updated symmetry function matrix and passes these back to potential_variables.
 
 Method 2 calculates the new state variables based on an atom_swap. Accepts many of the same variables, but the main difference is the `indices` vector, indicating which two atoms we are swapping. 
-Also returns, most imporantly potential_variables.new_g_matrix.
+Also returns, most imporantly `potential_variables.new_g_matrix`.
 
 """
 function get_new_state_vars!(trial_pos,atomindex,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {Nrad,Nang,N1,N2}
@@ -819,7 +823,6 @@ end
 """
     calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
 Function to calculate the energy of a new configuration after an atom move. Accepts the potential_variables struct and runs a forward pass on the new_g_matrix. Returns the new energy.
-
 """
 function calc_new_runner_energy!(potential_variables::NNPVariables2a{T,Na,Ng},pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
 
@@ -924,7 +927,7 @@ function energy_update!(trial_pos::PositionVector,index::Int,config::Config,pote
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables2a,dist2_mat,new_dist2_vec,en_tot,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
+function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables2a,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
 
     potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
@@ -1019,7 +1022,7 @@ function set_variables(config::Config{N,BC,T},dist2_mat::Matrix{Float64},pot::Ru
     
     return NNPVariables{T}(zeros(N) ,zeros(N),g_matrix,f_matrix,copy(g_matrix), zeros(N))
 end
-function set_variables(config::Config{N,BC,T},dist2_mat,pot::RuNNerPotential2Atom{nrad,nang,n1,n2}) where {N,BC,T} where {nrad,nang,n1,n2}
+function set_variables(config::Config{N,BC,T},dist2_mat::Matrix{Float64},pot::RuNNerPotential2Atom{nrad,nang,n1,n2}) where {N,BC,T} where {nrad,nang,n1,n2}
     if n1+n2 != N
         println("problem")
     end

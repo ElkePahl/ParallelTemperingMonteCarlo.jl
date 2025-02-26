@@ -29,8 +29,9 @@ function writeparams(savefile::SaveFile,params::MCParams,temp::TempGrid)
     writedlm(savefile, [headersvec, paramsvec], ' ' )
 end
 """
-    writeensemble(savefile,ensemble::NVT)
-    writeensemble(savefile,ensemble::NPT)
+    writeensemble(savefile::SaveFile, ensemble::NVT)
+    writeensemble(savefile::SaveFile, ensemble::NPT)
+    writeensemble(savefile::SaveFile, ensemble::NNVT)
 Function to write the `ensemble` data into a savefile including the move types. First method is for the NVT ensemble which does not include volume changes, second method is NPT ensemble and does inclue volume moves.
 """
 function writeensemble(savefile::SaveFile,ensemble::NVT)
@@ -45,14 +46,16 @@ function writeensemble(savefile::SaveFile,ensemble::NPT)
     valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
-function writeensemble(savefile,ensemble::NNVT)
+function writeensemble(savefile::SaveFile,ensemble::NNVT)
     headersvec = ["ensemble" "n_1" "n_2" "n_atom_moves" "n_atom_swaps"]
     valuesvec = ["NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 """
-    writepotential(savefile,potential::Ptype)
-    Ptype = AbstractDimerPotential,AbstractDimerPotentialB,EmbeddedAtomPotential,AbstractMachineLearningPotential
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractDimerPotential
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractDimerPotentialB
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: EmbeddedAtomPotential
+    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractMachineLearningPotential
 Function to write potential surface information into `savefile`. implemented methods are the Embedded Atom Model, Extended Lennard-Jones and ELJ in Magnetic Field. This does not work for machine learning potentials.
 """
 function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: AbstractDimerPotential
@@ -195,7 +198,6 @@ end
 """
     readensemble(ensemblevec)  
 Function to convert delimited file contents `ensemblevec` and convert them into an ensemble.
-
 """
 function readensemble(ensemblevec)
     if ensemblevec[1] == "NVT"

@@ -21,6 +21,8 @@ Abstract type for ensemble:
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
+const Etype = T where T <: AbstractEnsemble
+export Etype
 
 """
     AbstractEnsembleVariables

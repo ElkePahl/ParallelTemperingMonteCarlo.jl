@@ -52,6 +52,7 @@ function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number
 end
 function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
 
+
     return find_hist_index(hist_index,results.n_bin)
 end
 function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
@@ -60,7 +61,6 @@ function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number
     hist_index_v = (mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist +1
 
     hist_index_e = find_hist_index(hist_index_e,results.n_bin)
-
     hist_index_v = find_hist_index(hist_index_v,results.n_bin)
 
     return hist_index_e, hist_index_v

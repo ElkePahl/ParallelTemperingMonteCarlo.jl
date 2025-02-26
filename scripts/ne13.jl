@@ -1,4 +1,5 @@
-using ParallelTemperingMonteCarlo
+include("../src/ParallelTemperingMonteCarlo.jl")
+using .ParallelTemperingMonteCarlo
 using Random
 
 #demonstration of the new verison of the new code   

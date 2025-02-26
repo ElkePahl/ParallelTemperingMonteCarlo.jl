@@ -1,7 +1,7 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
 export swap_config!, swap_atom_config!, swap_config_v!, swap_vars!
 """
-    swap_config!(mc_state,movetype)
+    swap_config!(mc_state::MCState{T, N, BC, P, E}, movetype::String) where {T, N, BC, P <: AbstractPotentialVariables, E <: AbstractEnsembleVariables}
 
 Function for replacing the MC state and potential variables values with the updated values when metropolis condition is met. 
 Implemented for the following `move_type`:
@@ -21,7 +21,7 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
 end
 
 """
-    swap_atom_config(mc_state::MCState,i_atom,trial_pos)
+    swap_atom_config!(mc_state::MCState{T, N, BC, P, E}, i_atom::Int, trial_pos::PositionVector) where {T, N, BC, P <: AbstractPotentialVariables, E <: AbstractEnsembleVariables}
 """
 function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom::Int,trial_pos::PositionVector) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     mc_state.config.pos[i_atom] = trial_pos
@@ -96,7 +96,7 @@ function swap_vars!(i_atom::Int,potential_variables::NNPVariables)
     potential_variables.f_matrix[:,i_atom] = potential_variables.new_f_vec
 end
 
-function swap_vars!(i_atom,potential_variables::NNPVariables2a)
+function swap_vars!(i_atom::Int,potential_variables::NNPVariables2a)
 
     potential_variables.en_atom_vec,potential_variables.new_en_atom = potential_variables.new_en_atom,potential_variables.en_atom_vec
 
@@ -107,10 +107,10 @@ function swap_vars!(i_atom,potential_variables::NNPVariables2a)
     
 end
 """
-    swap_move_config!(mc_state,indices)
+    swap_move_config!(mc_state::MCState,indices::VorS)
 Function designed to exchange relevant variables when swapping an atom. Accepts the `mc_state` and the atom `indices` and exchanges atom `indices[1]` with atom `indices[2]`
 """
-function swap_move_config!(mc_state,indices)
+function swap_move_config!(mc_state::MCState,indices::VorS)
     #swap energy
     mc_state.en_tot, mc_state.new_en = mc_state.new_en,mc_state.en_tot
     #swap positions 

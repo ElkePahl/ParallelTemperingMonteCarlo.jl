@@ -5,6 +5,7 @@ using ..Configurations
 using ..MachineLearningPotential
 using ..EnergyEvaluation
 using ..Ensembles
+using ..CustomTypes
 #using ..InputParams
 const Ptype = T where T <: AbstractPotential
 const Etype = T where T <: AbstractEnsemble
