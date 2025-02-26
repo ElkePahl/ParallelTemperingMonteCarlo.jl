@@ -26,7 +26,7 @@ abstract type AngularSymmFunction{T} <: AbstractSymmFunction{T} end
 struct RadialType2{T} <: RadialSymmFunction{T}
     eta::T
     r_cut::T
-    type_vec::Vector{T}
+    type_vec::Int #Vector{T}
     G_offset::T
     G_norm::T
 end
@@ -86,7 +86,7 @@ struct AngularType3{T} <:AngularSymmFunction{T}
     lambda::T
     zeta::T
     r_cut::T
-    type_vec::Vector{T}
+    type_vec::Int #Vector{T}
     tpz::T
     G_offset::T
     #G_norm::T
