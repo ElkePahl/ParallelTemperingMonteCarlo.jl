@@ -6,7 +6,7 @@ using ParallelTemperingMonteCarlo
 # ## Setting up the Model
 # Firstly, we set the number of atoms:
 n_atoms = 13;
-# Next, we define the potential, here a Lennard Jones potential with coefficients for even powers of r, starting from -6 and decreasing:
+# Next, we define the potential, here an extended Lennard Jones potential with coefficients for even powers of r, starting from powers of -6 to -16:
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
 # We further have to define the starting configuration of the simulation. For Ne13 we choose the icosahedral ground state of Ne13 (from the Cambridge cluster database). 
@@ -27,11 +27,11 @@ pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
 AtoBohr = 1.8897259886;
 pos_ne13 = pos_ne13 * AtoBohr
 # Finally, we have to choose appropriate boundary conditions, here spherical boundary conditions (solid boundary around the cluster), to suppress atom loss processes.  
-# Finding this radius is a non-trivial task, and has to be chosen and tested carefully. A radius chosen too small wil exert artificial pressure on the cluster while a too large value leads to atoms being ejected.
+# Finding this radius is a non-trivial task, and has to be chosen and tested carefully. A radius chosen too small will exert artificial pressure on the cluster while a too large value leads to atoms being ejected.
 bc_ne13 = SphericalBC(radius=5.32*AtoBohr) 
-# We package the initial configuration and boundary conditions into a Config struct:
+# We package the initial configuration and boundary conditions into a `Config` struct:
 start_config = Config(pos_ne13, bc_ne13)
-# ## Setting up the simulation parameters
+# ## Setting up the Simulation Parameters
 # We  first set the temperature grid, which defines the range of temperatures we consider.
 # This is done by defining the upper and lower temperature limits, along with the number of temperatures (also called trajectories) we want to sample.
 # Note, that a geometrical distribution of temperatures is chosen to maximise overlaps in the energy histograms.
@@ -44,7 +44,7 @@ temp = TempGrid{n_traj}(ti,tf)
 # - `mc_sample` is the number of MC cycles after which the energy of the state is recorded.
 # - `max_displ_atom` determines the maximum displacement of an atom over a cycle. The maximum displacement is automatically adjusted in the program guaranteeing a 40-60% acceptance rate.
 # - `n_adjust` is the number of moves after which the step size of atom moves is adjusted.
-mc_cycles = 1000;
+mc_cycles = 100000;
 mc_sample = 1;
 displ_atom = 0.1;
 max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj];
@@ -59,13 +59,13 @@ move_strat = MoveStrategy(ensemble)
 # Finally, we run the simulation. This method returns the current state and results of the simulation.
 # The data is stored in various local files created in the current working directory.
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000);
-# ## Post-processing and analyzing of results
+# ## Post-processing and Analyzing of Results
 # The raw heat capacity plot is obtained from:
 plot(temp.t_grid,results.heat_cap)
 # and the energy histograms by:
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
-# For post-processing of the data we use the multihistogram method. This method accesses the stored data created from the ptmc_run! method 
+# For post-processing of the data we use the multihistogram method. This method accesses the stored data created from the `ptmc_run!` method 
 # and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
 energies,histogramdata,T,Z,Cv,dCv,S = postprocess();
 # Plot of heat capacity against temperature:
