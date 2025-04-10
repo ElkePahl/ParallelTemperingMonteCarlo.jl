@@ -109,7 +109,7 @@ end
 """
 get_r_cut(bc<:PeriodicBC)
 finds the square of the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting).
-implemented for `CubicBC` and `RhombicBC`.
+implemented for `CubicBC`, `RhombicBC` and `RectangularBC`.
 """
 function get_r_cut(bc::CubicBC)
     return bc.box_length^2/4
@@ -118,6 +118,10 @@ end
 function get_r_cut(bc::RhombicBC)
     return min(bc.box_length^2*3/16,bc.box_height^2/4)
     #return bc.box_length^2*3/16
+end
+
+function get_r_cut(bc::RectangularBC)
+    return min(bc.box_length^2/4,bc.box_height^2/4)
 end
 
 """

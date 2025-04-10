@@ -194,7 +194,7 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT,min_acc
         end
         mc_state.count_vol[2] = 0
     else
-        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves *2/3)
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves *1/2)
         #println("acc rate volume = ",acc_rate)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
@@ -203,12 +203,21 @@ function update_max_stepsize!(mc_state::MCState, n_update, ensemble::NPT,min_acc
         end
         mc_state.count_vol[2] = 0
 
-        acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves /3)
-        #println("acc rate volume z = ",acc_rate)
+        acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves *1/3)
+        #println("acc rate volume = ",acc_rate)
         if acc_rate < min_acc
             mc_state.max_displ[3] *= 0.9
         elseif acc_rate > max_acc
             mc_state.max_displ[3] *= 1.1
+        end
+        mc_state.count_vol_xy[2] = 0
+
+        acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves /6)
+        #println("acc rate volume z = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[4] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[4] *= 1.1
         end
         mc_state.count_vol_z[2] = 0
     end

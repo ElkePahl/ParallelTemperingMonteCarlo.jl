@@ -192,15 +192,34 @@ mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
 end
 
 function dimer_energy(pot::LookuptablePotential, r2, tan)
-    angle_index=round(Int32,atan(abs(tan))/pot.d_angle*180.0/pi+1)
-    if r2 <= pot.start_dist^2
+    #if (typeof(atan(abs(tan)))==Float64 && abs(tan) >=0 && abs(tan) <= 10^6) == false
+        #println(tan, " ", atan(abs(tan)))
+    #end
+    #if tan == NaN || tan == Inf #|| atan(abs(tan)) == NaN
+        #angle_index = 91
+    #else
+    #if tan != NaN && atan(abs(tan)) == NaN
+        #println(tan)
+    #end
+    angle_index=1
+    if tan >0.00872687153 && tan <= 114.592845357
+        angle_index=round(Int32,atan(abs(tan))/pot.d_angle*180.0/pi+1.)
+    elseif tan > 114.592845357
+        angle_index = 91
+    end
+
+    if r2 <= (pot.start_dist+0.5*pot.d_dist)^2
         e = pot.table[angle_index,1]
     elseif r2 <= (pot.start_dist+pot.l_dist*pot.d_dist)^2
         dist_index=round(Int32,(r2^0.5-pot.start_dist)/pot.d_dist)
+        if dist_index==0
+            println(r2)
+        end
         e = pot.table[angle_index,dist_index]
     else
         e = pot.c6coeff/r2^3
     end
+
     return e
 end 
 #---------------------------------------------------------------------------#
@@ -331,6 +350,26 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotential
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * 3/4 * bc.box_length/bc.box_height  
 end 
+function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::RectangularBC, pot::AbstractDimerPotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    for i in 1:NAtoms
+        for j=i+1:NAtoms
+            if distmat[i,j] <= r_cut
+                e_ij=dimer_energy(pot,distmat[i,j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end 
+    if bc.box_length < bc.box_height
+        return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * bc.box_length/bc.box_height  
+    else
+        return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * bc.box_height^2/bc.box_length^2  
+    end
+end 
 function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
@@ -395,16 +434,53 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end 
 
+
+function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, r_cut, bc::RectangularBC, pot::AbstractDimerPotentialB)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+    
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
+
+    if bc.box_length < bc.box_height
+        return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * bc.box_length/bc.box_height
+    else
+        return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * bc.box_height^2/bc.box_length^2
+    end
+end 
+
 """
     dimer_energy_config(distmat, NAtoms, pot::LookupTablePotential)
     dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::CubicBC, pot::LookupTablePotential)
     dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::RhombicBC, pot::LookupTablePotential)
+    dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, bc::RectangularBC, pot::LookupTablePotential)
 Stores the total of dimer energies of one atom with all other atoms in vector and
 calculates total energy of configuration.
 
 First method is for standard dimer potentials. The other two methods are periodic boundary with a cutoff distance.
-Difference between cubic boundary and rhombic boundary is the calculation of long range correction.
-The function lrc(NAtoms,r_cut,pot) assumes the box shape is cubic when the atom density is calculated. Here for the rhombic box case, it is adjusted.
+Difference between cubic boundary, rhombic and rectangular boundary is the calculation of long range correction.
+The function lrc(NAtoms,r_cut,pot) assumes the box shape is cubic when the atom density is calculated. Here for the rhombic and rectangular box case, it is adjusted.
 
 Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@ref) 
 and potential information `pot` [`Abstract_Potential`](@ref) 
@@ -472,6 +548,41 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
 
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
+end 
+
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RectangularBC, pot::LookuptablePotential)
+    dimer_energy_vec = zeros(NAtoms)
+    energy_tot = 0.
+
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
+
+    if bc.box_length < bc.box_height
+        return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * bc.box_length/bc.box_height    #no 0.5*energy_tot
+    else
+        return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * bc.box_height^2/bc.box_length^2    #no 0.5*energy_tot
+    end
 end 
 """
     dimer_energy_update!(index,dist2_mat,new_dist2_vec,en_tot,pot::AbstractDimerPotential)
@@ -592,6 +703,7 @@ function ELJPotentialEven(c)
 end
 
 function dimer_energy(pot::ELJPotentialEven{N}, r2) where N
+    #r2 *= 1.8897259886^2
     r6inv = 1/(r2*r2*r2)
     sum1 = 0.
     for i = 1:N
@@ -644,10 +756,14 @@ function lrc(NAtoms,r_cut,pot::ELJPotentialB{N}) where N
 end
 function lrc(NAtoms,r_cut,pot::LookuptablePotential)
     
-    r_cut_sqrt=r_cut^0.5
-    rc3 = r_cut*r_cut_sqrt
-    e_lrc = pot.c6coeff / rc3 / 3
-    e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    if r_cut <= 10
+        e_lrc=1.0
+    else
+        r_cut_sqrt=r_cut^0.5
+        rc3 = r_cut*r_cut_sqrt
+        e_lrc = pot.c6coeff / rc3 / 3
+        e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
+    end
     return e_lrc
 end
 #----------------------------------------------------------#

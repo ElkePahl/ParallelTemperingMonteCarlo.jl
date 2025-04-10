@@ -141,6 +141,7 @@ end
     distance2(a,b,bc::SphericalBC)
     distance2(a,b,bc::CubicBC) 
     distance2(a,b,bc::RhombicBC)
+    distance2(a,b,bc::RectangularBC)
 method 1&2 -
 Finds the distance between two positions a and b.
 method 3 -
@@ -162,6 +163,12 @@ end
 function distance2(a,b,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
+    b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
+    return distance2(a,SVector(b_x,b_y,b_z))
+end
+function distance2(a,b,bc::RectangularBC)
+    b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
     return distance2(a,SVector(b_x,b_y,b_z))
 end
@@ -190,6 +197,7 @@ end
     get_tan(a,b,bc::SphericalBC)
     get_tan(a,b,bc::CubicBC)
     get_tan(a,b,bc::RhombicBC)
+    get_tan(a,b,bc::RectangularBC)
 method 1&2 :
 tan of the angle between the line connecting two points a and b, and the z-direction
 method 3:
@@ -216,6 +224,13 @@ function get_tan(a,b,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return tan
+end
+function get_tan(a,b,bc::RectangularBC)
+    b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z = b[3] + bc.box_height*round((a[3]-b[3])/bc.box_height)
     tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
     return tan
 end
@@ -268,6 +283,17 @@ function get_tantheta_mat(conf::Config,bc::RhombicBC)
     end
     return mat
 end
+
+function get_tantheta_mat(conf::Config,bc::RectangularBC)
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=i+1:N
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j],bc)
+        end
+    end
+    return mat
+end
 """
     get_volume(bc::CubicBC)
     get_volume(bc::RhombicBC)
@@ -280,5 +306,10 @@ end
 function get_volume(bc::RhombicBC)
     return bc.box_length^2 * bc.box_height * 3^0.5/2
 end
+
+function get_volume(bc::RectangularBC)
+    return bc.box_length^2 * bc.box_height
+end
+
 
 end

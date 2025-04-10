@@ -11,12 +11,12 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 27
-pressure = 101325
+pressure = 50000000000
 
 # temperature grid
-ti = 20.
-tf = 30.
-n_traj = 25
+ti = 1500.
+tf = 3000.
+n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
@@ -55,8 +55,9 @@ potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14,separated_volume)
+separated_volume=true
+pressure_scale=3.398928944382626e-14*1.8897259886^3
+ensemble = NPT(n_atoms,pressure*pressure_scale,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 
@@ -95,7 +96,8 @@ pos_ne27 = [[ 1.56624152,  0.90426996,  0.        ],
        [ 9.39744912,  5.42561978,  5.11532339]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 0.98
+#AtoBohr = 1.8897259886 * 0.98
+AtoBohr = 1.0
 pos_ne27 = pos_ne27 * AtoBohr
 
 
@@ -106,7 +108,9 @@ bc_ne27 = RhombicBC(box_length, box_height)
 
 length(pos_ne27) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-start_config = Config(pos_ne27, bc_ne27)
+start_config_1 = Config(pos_ne27, bc_ne27)
+start_config_2 = Config(pos_ne27, bc_ne27)
+start_config = [start_config_1,start_config_2]
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#

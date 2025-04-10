@@ -79,7 +79,7 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
     mc_state.ensemble_variables.index = rand(1:N)
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
-
+    
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
     acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
@@ -148,7 +148,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
     #end
 
     if rem(idx,mc_params.mc_sample) == 0
-        sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave)
+        sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave,idx)
     end
     
     return mc_states 
@@ -172,6 +172,8 @@ end
 function reset_counters(state)
     state.count_atom = [0,0]
     state.count_vol = [0,0]
+    state.count_vol_xy = [0,0]
+    state.count_vol_z = [0,0]
     state.count_exc = [0,0]
 end
 
@@ -234,6 +236,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
         - save::Bool or Int : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
 
 """
+#function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
 function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Vector,potential::Ptype,ensemble::Etype; rdfsave = true,restart=false,save=false,workingdirectory=pwd()) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
     cd(workingdirectory)
     #initialise the states and results etc
@@ -256,11 +259,19 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Vector,poten
     
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
+
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
         if save == false
         elseif rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
         end
+
+        #if rem(i,100000)==0
+            #println(i)
+            #results = finalise_results_convergence(i,mc_states,mc_params,results)
+            #println(results.heat_cap)
+        #end
+
     end
     println("MC loop done.")
 
@@ -270,7 +281,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Vector,poten
     return mc_states,results
 end
 
-function ptmc_run!(restart::Bool;rdfsave=true,save=1000,eq_cycles=0.2)
+function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
 
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
     println("params set")

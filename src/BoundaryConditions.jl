@@ -6,7 +6,7 @@
 """
 module BoundaryConditions
 
-export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC
+export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
 export check_boundary
 
 # include("SphericalBC.jl")
@@ -40,6 +40,7 @@ Overarching type of boundary condition for simulating the infinite bulk
     Implemented types:
     - CubicBC
     - RhombicBC
+    - RectangularBC
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 """
@@ -54,6 +55,14 @@ end
 Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, box_length applies to all four sides.
 """
 struct RhombicBC{T} <: PeriodicBC{T}
+    box_length::T
+    box_height::T
+end
+"""
+    RectangularBC{T}
+Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, box_length applies to all four sides.
+"""
+struct RectangularBC{T} <: PeriodicBC{T}
     box_length::T
     box_height::T
 end
