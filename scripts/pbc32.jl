@@ -102,8 +102,7 @@ pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
 box_length = 8.7674 * AtoBohr
-#bc_ne32 = CubicBC(box_length)
-bc_ne32 = RectangularBC(box_length,box_length)   
+bc_ne32 = CubicBC(box_length)
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 

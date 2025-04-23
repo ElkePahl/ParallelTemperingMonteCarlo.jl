@@ -18,15 +18,15 @@ AtoBohr = 1.8897261259077824
 #AtoBohr = 1.0
 
 # temperature grid
-ti = 1600.
-tf = 2100.
-n_traj = 16
+ti = 1500.
+tf = 2500.
+n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 10 #default 20% equilibration cycles on top
+mc_cycles = 700000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -55,7 +55,7 @@ potB = ELJPotentialB{6}(a,b,c1)
 
 
 #link="/nesi/nobackup/uoa02731/diana/new_simulations/look-up_table.txt"
-link="/Users/tiantianyu/Downloads/look-up_table.txt"
+link="/nesi/nobackup/uoa02731/diana/look-up_table.txt"
 potlut=LookuptablePotential(link)
 
 #-------------------------------------------------------------#
@@ -518,7 +518,7 @@ bc_ne216 = RhombicBC(box_length, box_height)
 #length(pos_ne216) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 start_config_1 = Config(pos_ne216_fcc_start, bc_ne216)
-start_config_2 = Config(pos_ne216_hcp_start, bc_ne216)
+start_config_2 = Config(pos_ne216_fcc_start, bc_ne216)
 start_config = [start_config_1,start_config_2]
 #start_config = Config(pos_ne216, bc_ne216)
 
@@ -531,7 +531,29 @@ mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-#multihistogram_NPT(ensemble, temp, results, 10^(-9), false)
+multihistogram_NPT(ensemble, temp, results, 10^(-6), false)
+
+e_avg=[]
+v_avg=[]
+
+for i=1:n_traj
+    e_index=findmax(results.ev_histogram[i])[2][1]
+    v_index=findmax(results.ev_histogram[i])[2][2]
+
+    e_i = results.en_min + results.delta_en_hist * (e_index+0.5)
+    v_i = results.v_min + results.delta_v_hist * (v_index+0.5)
+
+    push!(e_avg,e_i/n_atoms)
+    push!(v_avg,v_i/n_atoms/AtoBohr^3)
+end
+
+println(e_avg)
+println(v_avg)
+
+
+for i=1:n_traj
+    println(results.rdf[i])
+end
 
 
 

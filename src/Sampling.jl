@@ -183,7 +183,7 @@ function initialise_histograms!(mc_params,results,e_bounds,bc::RectangularBC)
 
     results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
 
-    results.delta_r2 = (3/8*bc.box_length^2 + 1/4*bc.box_height^2)/results.n_bin/5
+    results.delta_r2 = (1/2*bc.box_length^2 + 1/4*bc.box_height^2)/results.n_bin/5
 
     for i_traj in 1:mc_params.n_traj       
 

@@ -11,21 +11,21 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 108
-pressure = 101325
-#pressure = 50000000000
+#pressure = 101325
+pressure = 50000000000
 #AtoBohr = 1.8897261259077824
 AtoBohr = 1.0
 
 # temperature grid
-ti = 20
-tf = 40
+ti = 1300
+tf = 2200
 n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 500000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -48,15 +48,16 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
+separated_volume=true
 pressure_scale=3.398928944382626e-14#*1.8897259886^3
 ensemble = NPT(n_atoms,pressure*2.2937122783969076e-13/AtoBohr^3,separated_volume)
 move_strat = MoveStrategy(ensemble)
+lh=0.92
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
@@ -172,12 +173,20 @@ pos_ne108 =  [[-6.58,       -6.58,       -6.58],
 [4.39,        2.19,        4.39],
 [2.19,        4.39,        4.39]]
 
-pos_ne108 = pos_ne108 * AtoBohr
+
+for i=1:n_atoms
+    pos_ne108[i][1] *=lh
+    pos_ne108[i][2] *=lh
+    pos_ne108[i][1] *=lh
+    pos_ne108[i][2] *=lh
+end
+
+pos_ne108 = pos_ne108 * AtoBohr * 0.85
 
 #binding sphere
-box_length = 13.16 * AtoBohr
+box_length = 13.16 * AtoBohr * 0.85
 #bc_ne108 = CubicBC(box_length)
-bc_ne108 = RectangularBC(box_length, box_length)   
+bc_ne108 = RectangularBC(box_length*lh, box_length)   
 
 length(pos_ne108) == n_atoms || error("number of atoms and positions not the same - check starting config")
 

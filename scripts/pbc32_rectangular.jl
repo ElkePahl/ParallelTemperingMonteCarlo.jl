@@ -17,15 +17,15 @@ pressure = 101325
 AtoBohr = 1.0
 
 # temperature grid
-ti = 25
-tf = 40
+ti = 30
+tf = 50
 n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -49,15 +49,16 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
+separated_volume=true
 pressure_scale=3.398928944382626e-14#*1.8897259886^3
 ensemble = NPT(n_atoms,pressure*2.2937122783969076e-13/AtoBohr^3,separated_volume)
 move_strat = MoveStrategy(ensemble)
+lh = 0.92   #the initial length/height ratio
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
@@ -97,12 +98,20 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [2.1918,        0.0000,        2.1918],
  [0.0000,        2.1918,        2.1918]]
 
+ for i=1:n_atoms
+    pos_ne32[i][1] *=lh
+    pos_ne32[i][2] *=lh
+    pos_ne32[i][1] *=lh
+    pos_ne32[i][2] *=lh
+end
+
 
 pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
 box_length = 8.7674 * AtoBohr
-bc_ne32 = RectangularBC(box_length, box_length)   
+#bc_ne32 = CubicBC(box_length)
+bc_ne32 = RectangularBC(box_length*lh,box_length)   
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
