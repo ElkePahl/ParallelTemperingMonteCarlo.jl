@@ -38,10 +38,7 @@ end
     find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number, delta_v_hist::Number)
 Returns the histogram index of a single `mc_state` energy and returns this value. 
 """
-function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number)
-
-    hist_index = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
-
+function find_hist_index(hist_index::Number, n_bin::Int)
     if hist_index < 1
         return 1
     elseif hist_index > n_bin
@@ -50,7 +47,9 @@ function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number
         return floor(Int,hist_index) +1
     end
 end
-function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
+function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number)
+
+    hist_index = (mc_state.en_tot - results.en_min)/delta_en_hist +1
 
 
     return find_hist_index(hist_index,results.n_bin)

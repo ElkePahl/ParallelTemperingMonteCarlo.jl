@@ -105,6 +105,47 @@ mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     r_cut::T
     new_r_cut::T
 end
+#---------------------------------------------------------------------#
+#--------------------------------NNVT---------------------------------#
+#---------------------------------------------------------------------#
+"""
+    NNVT <: AbstractEnsemble
+Ensemble designed for systems with two types of atoms.
+-   Field names:
+    -   atomtypes: vector specifying the atomic number of the species
+    -   natoms: vector specifying how much of each species we have in the system
+    -   n_atom_moves: defaults to n_total
+    -   n_atom_swaps: defaults to 1 per cycle
+"""
+struct NNVT <: AbstractEnsemble
+    # atomtypes::SVector{2,Int}
+    natoms::SVector{2,Int}
+    n_atom_moves::Int
+    n_atom_swaps::Int
+end
+function NNVT(natomsvec;natomswaps = 1,natommoves=sum(natomsvec))
+    if isa(natomsvec,Vector)
+        natoms = SVector{2}(natomsvec)
+    elseif isa(natomsvec,SVector)
+        natoms = natomsvec
+    end
+    return NNVT(natoms,natommoves,natomswaps)
+end
+
+"""
+    NNVTVariables <: AbstractEnsembleVariables
+NNVT - specific ensembles for moves made during an NNVT run.
+Fields include:
+    - index: Used for standard atom moves
+    - trial_move: Used for standard atom moves
+    - atom_list1: index of atoms of type one
+    - atom_list2: index of atoms of type two 
+"""
+mutable struct NNVTVariables{T,N,N1,N2} <: AbstractEnsembleVariables
+    index::Int64
+    trial_move::SVector{3,T}
+    swap_indices::SVector{2,Int}
+end
 
 """
     get_r_cut(bc<:PeriodicBC)

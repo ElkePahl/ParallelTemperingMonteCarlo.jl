@@ -34,7 +34,7 @@ export EmbeddedAtomVariables,NNPVariables,NNPVariables2a
 export dimer_energy,dimer_energy_atom,dimer_energy_config,dimer_energy_update!
 
 
-export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, VorS, get_new_state_vars!
+export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, get_new_state_vars!
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
@@ -109,12 +109,6 @@ end
 ##
 #Need to include ELJB here to prevent recursive definitions erroring 
 ##
-
-"""
-    VorS = T where T <: AbstractArray{Z, 1} where Z <: Number
-Type alias for a collection of numbers. The name derives from most collections being a Vector or StaticVector of numbers.
-"""
-const VorS = T where T <: AbstractArray{Z, 1} where Z <: Number
 """
     ELJPotentialEven{N,T} 
 Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
@@ -870,21 +864,21 @@ This function is designed as a curry function. The generic [`get_energy!`](@ref 
     -   [`EmbeddedAtomPotential`](@ref)
     -   [`RuNNerPotential`](@ref)
 """
-function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotential)
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotential)
 
 
     new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,pot)
 
     return potential_variables,new_en
 end
-function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,r_cut::Number,pot::AbstractDimerPotential)
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::AbstractPotentialVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,r_cut::Number,pot::AbstractDimerPotential)
 
     new_en = dimer_energy_update!(ensemblevariables.index,dist2_mat,new_dist2_vec,en_tot,ensemblevariables.r_cut,pot)
 
     return potential_variables,new_en
 end
 
-function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotentialB)
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::AbstractDimerPotentialB)
 
     potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[ensemblevariables.index] = 0
@@ -893,7 +887,7 @@ function energy_update!(trial_pos::PositionVector,index::Int,config::Config,pote
 
     return potential_variables,new_en
 end
-function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,r_cut::Number,pot::AbstractDimerPotentialB)
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::ELJPotentialBVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,r_cut::Number,pot::AbstractDimerPotentialB)
 
     potential_variables.new_tan_vec = [get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos]
     potential_variables.new_tan_vec[ensemblevariables.index] = 0
@@ -902,7 +896,7 @@ function energy_update!(trial_pos::PositionVector,index::Int,config::Config,pote
 
     return potential_variables,new_en
 end
-function energy_update!(trial_pos::PositionVector,atomindex,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::EmbeddedAtomPotential)
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::EmbeddedAtomVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::EmbeddedAtomPotential)
     # new_dist2_vec = [distance2(trial_pos,b) for b in config.pos]
 
     # new_dist2_vec[atomindex] = 0.
@@ -915,7 +909,7 @@ function energy_update!(trial_pos::PositionVector,atomindex,config::Config,poten
 
     return potential_variables,new_en
 end
-function energy_update!(trial_pos::PositionVector,index::Int,config::Config,potential_variables::NNPVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential)
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::NNPVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential)
 
     if any(new_dist2_vec[i] < pot.boundary for i in eachindex(new_dist2_vec) if i != ensemblevariables.index)
         new_en = 100.
@@ -927,7 +921,7 @@ function energy_update!(trial_pos::PositionVector,index::Int,config::Config,pote
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::Etype,config::Config,potential_variables::NNPVariables2a,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::NNPVariables2a,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
 
     potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 

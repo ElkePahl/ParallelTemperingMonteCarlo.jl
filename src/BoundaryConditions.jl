@@ -5,19 +5,9 @@ This module provides structs and methods for different kinds of boundary conditi
         
 """
 module BoundaryConditions
-using StaticArrays
+using StaticArrays, ..CustomTypes
 export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC
-export check_boundary, PositionVector, PositionArray
-"""
-    PositionVector = Union{SVector{3, T}, Vector{T}} where T <: Number
-Type alias for all kinds of acceptable position vectors.
-"""
-const PositionVector = Union{SVector{3,T},Vector{T}} where T <: Number
-"""
-    PositionArray = Union{Vector{Vector{T}}, Vector{SVector{3, T}}} where T <: Number
-Type alias for a list of positions.
-"""
-const PositionArray = Union{Vector{Vector{T}}, Vector{SVector{3, T}}} where T <: Number
+export check_boundary
 # include("SphericalBC.jl")
 # could be named SphericalBC.jl
 """   
