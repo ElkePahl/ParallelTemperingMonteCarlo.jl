@@ -45,3 +45,8 @@ scripts/*.data
 /statprof/
 /scripts/tests.ipynb
 
+input_files/
+output_files/
+cu38_test/
+Cu55/
+src/TestContents.jl
