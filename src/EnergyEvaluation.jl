@@ -921,7 +921,7 @@ function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Con
 
     return potential_variables,new_en
 end
-function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::NNPVariables2a,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential2Atom) where Etype <: AbstractEnsembleVariables
+function energy_update!(ensemblevariables::AbstractEnsembleVariables,config::Config,potential_variables::NNPVariables2a,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},en_tot::Number,pot::RuNNerPotential2Atom)
 
     potential_variables = get_new_state_vars!(ensemblevariables.trial_move,ensemblevariables.index,config,potential_variables,dist2_mat,new_dist2_vec,pot)
 
