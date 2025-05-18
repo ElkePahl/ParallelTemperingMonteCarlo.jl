@@ -107,10 +107,18 @@ end
     mc_step!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, pot::Ptype, ensemble::Etype, n_steps::Int) where {N, E}
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
-function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype,n_steps::Int) where {N,E}
+function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype,n_steps::Int; ground_energy = 0) where {N,E}
     for state in mc_states
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
+            if state.new_en < ground_energy * 0.95 && ground_energy != 0
+                ground_energy = state.new_en
+                content = ""
+                content *= "Ground energy found at step $i_step\n"
+                content *= "Energy: $(state.en_tot)\n"
+                content *= "$(state.config.pos)\n"
+                write("ground_states/" * string(rand(0:9)) * ".txt",content)
+            end
         end
     end
     return mc_states
@@ -123,9 +131,9 @@ Basic function utilised by the simulation. For each of the `n_steps` run a singl
 
 Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct. 
 """
-function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,index::Int) where {N,E}
+function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,index::Int; ground_energy = 0) where {N,E}
 
-        mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps)
+        mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps; ground_energy = ground_energy)
 
     if rand() < 0.1
         parallel_tempering_exchange!(mc_states,mc_params,ensemble)
@@ -137,7 +145,7 @@ function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_par
     end
     return mc_states
 end
-function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,results::Output,idx::Int,rdfsave::Bool) where {N,E}
+function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,results::Output,idx::Int,rdfsave::Bool; ground_energy = 0) where {N,E}
 
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
 
@@ -235,7 +243,8 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     end
 
     mc_states,move_strategy,results,n_steps,start_counter = initialisation(mc_params,temp,start_config,potential,ensemble)
-
+    ground_energy = mc_states[1].en_tot
+    println("ground energy: ",ground_energy)
     println("params set")
     #Equilibration 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
@@ -248,7 +257,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
 
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
+        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave; ground_energy = ground_energy)
         if save == false
         elseif rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)

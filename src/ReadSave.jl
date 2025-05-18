@@ -326,7 +326,6 @@ function read_config(xyzdata)
     configvectors = Vector{Vector{Float64}}([xyzdata[2+i,2:4] for i in 1:N])
 
     config=Config(configvectors,bc)
-    println(typeof(config))
     return config
 end
 """
