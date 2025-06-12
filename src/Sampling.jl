@@ -55,7 +55,7 @@ end
     find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
 returns the histogram index of a single mc_state energy and returns this value. 
 """
-function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::CubicBC)
 
     if (mc_state.en_tot - results.en_min)/delta_en_hist < -1000
         println(mc_state.en_tot)
@@ -64,6 +64,64 @@ function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
     end
     hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
     hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
+
+    if hist_index_e < 1
+        hist_index_e = 1
+    elseif hist_index_e > results.n_bin
+        hist_index_e = results.n_bin+2
+    else
+        hist_index_e += 1
+    end
+
+    if hist_index_v < 1
+        hist_index_v = 1
+    elseif hist_index_v > results.n_bin
+        hist_index_v = results.n_bin+2
+    else
+        hist_index_v += 1
+    end
+
+    return hist_index_e, hist_index_v
+end
+
+function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::RectangularBC)
+
+    if (mc_state.en_tot - results.en_min)/delta_en_hist < -1000
+        println(mc_state.en_tot)
+        println(mc_state.config.pos)
+        println(mc_state.config.bc)
+    end
+    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
+    hist_index_v = floor(Int,(mc_state.config.bc.box_length^2*mc_state.config.bc.box_height - results.v_min)/delta_v_hist ) +1
+
+    if hist_index_e < 1
+        hist_index_e = 1
+    elseif hist_index_e > results.n_bin
+        hist_index_e = results.n_bin+2
+    else
+        hist_index_e += 1
+    end
+
+    if hist_index_v < 1
+        hist_index_v = 1
+    elseif hist_index_v > results.n_bin
+        hist_index_v = results.n_bin+2
+    else
+        hist_index_v += 1
+    end
+
+    return hist_index_e, hist_index_v
+end
+
+function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::RhombicBC)
+
+    if (mc_state.en_tot - results.en_min)/delta_en_hist < -1000
+        println(mc_state.en_tot)
+        println(mc_state.config.pos)
+        println(mc_state.config.bc)
+    end
+    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
+    hist_index_v = floor(Int,(mc_state.config.bc.box_length^2*mc_state.config.bc.box_height*3^0.5/2 - results.v_min)/delta_v_hist ) +1
 
     if hist_index_e < 1
         hist_index_e = 1
@@ -216,7 +274,7 @@ Self explanatory name, updates the energy histograms in results using the curren
 """
 function update_histograms!(mc_states,results,delta_en_hist,delta_v_hist)
      for i_traj in eachindex(mc_states)
-        @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist)
+        @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist,mc_states[i_traj].config.bc)
         results.ev_histogram[i_traj][histindex_e,histindex_v] +=1
     end
 
