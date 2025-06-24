@@ -50,3 +50,7 @@ output_files/
 cu38_test/
 Cu55/
 src/TestContents.jl
+
+*.xyz
+Cu146/
+41bafa7beba9fda49a3b95fc685a4670/
