@@ -108,7 +108,7 @@ end
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
 function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype,n_steps::Int; ground_energy = 0) where {N,E}
-    for state in mc_states
+    Threads.@threads for state in mc_states
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
             if state.new_en < ground_energy * 0.95 && ground_energy != 0

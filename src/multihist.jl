@@ -7,7 +7,8 @@ using ..InputParams
 using ..Initialization
 using ..EnergyEvaluation
 using ..CustomTypes
-export multihistogram,postprocess
+export multihistogram,postprocess, processhist!, initialise, readfile, systemsolver, Entropycalc, analysis, run_multihistogram
+export bvector, amatrix, nancheck
 
 """
     readfile(xdir::String; debug = false)
@@ -306,6 +307,7 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
        #below we calculate the partition function
        
        @label start
+       println("nexp = $nexp")
        XP[i,:] = exp.(y[i,:].-nexp)
        Z[i] = sum(XP[i,:] )
        
@@ -352,7 +354,7 @@ function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,n
     #png(hist,"$(xdir)histo")
     alpha,S = systemsolver(HistArray,energyvector,beta,nsum,NTraj,NBins)
 
-    Z,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
+    Z,U,C,dC,S_T,T = analysis(energyvector,S,beta,kB,NPoints)
     if debug println("Quantities found") end
     #cvplot = plot(T,C,xlabel="Temperature (K)",ylabel="Heat Capacity")
     #png(cvplot,"$(xdir)Cv")
