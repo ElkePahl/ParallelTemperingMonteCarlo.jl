@@ -133,9 +133,9 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #             save_results(results,save_dir)
 #         end
 #     end
-    if rem(idx,10000) == 0
+    if rem(idx,1000) == 0
         for i=1:length(mc_states)
-            open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
+            open("/Users/sam/GIT/ParallelTemperingMonteCarlo.jl/$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
                 println(io, length(mc_states[1].config.pos))
                 println(io,mc_states[i].config.bc.box_length)
                 println(io,mc_states[i].config.bc.box_height)
