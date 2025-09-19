@@ -202,9 +202,9 @@ function dimer_energy(pot::LookuptablePotential, r2, tan)
         #println(tan)
     #end
     angle_index=1
-    if tan >0.00872687153 && tan <= 114.592845357
+    if abs(tan) >0.00872687153 && abs(tan) <= 114.592845357
         angle_index=round(Int32,atan(abs(tan))/pot.d_angle*180.0/pi+1.)
-    elseif tan > 114.592845357
+    elseif abs(tan) > 114.592845357
         angle_index = 91
     end
 
