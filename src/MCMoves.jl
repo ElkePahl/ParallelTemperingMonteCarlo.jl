@@ -157,8 +157,8 @@ function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange, max_length, 
     if conf.bc.box_length>=max_length && scale > 1.
         scale=1/scale
     end
-    #trial_config = Config(scale_xy(conf.pos,scale),RhombicBC(conf.bc.box_length * scale, conf.bc.box_height))
-    trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
+    trial_config = Config(scale_xy(conf.pos,scale),RhombicBC(conf.bc.box_length * scale, conf.bc.box_height))
+    #trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
 
     return trial_config,scale
 end
@@ -173,8 +173,8 @@ function volume_change_z(conf::Config, bc::RhombicBC, max_vchange, max_height, l
         scale=1/scale
     end
     
-    #trial_config = Config(scale_z(conf.pos,scale),RhombicBC(conf.bc.box_length, conf.bc.box_height * scale))
-    trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
+    trial_config = Config(scale_z(conf.pos,scale),RhombicBC(conf.bc.box_length, conf.bc.box_height * scale))
+    #trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
     return trial_config,1/scale
 end
 
