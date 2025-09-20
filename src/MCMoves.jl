@@ -260,6 +260,8 @@ function volume_change_xyz(mc_state::MCState)
         #end
         mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
     end
+    println("new_tan_mat in v_change_xyz")
+    println(mc_state.potential_variables.new_tan_mat[1,2])
     return mc_state
 end
 

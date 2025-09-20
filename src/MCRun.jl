@@ -78,7 +78,7 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
 """
 function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
     #mc_state.ensemble_variables.index = rand(1:N)
-    mc_state.ensemble_variables.index = 217
+    mc_state.ensemble_variables.index = N
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
     
@@ -128,6 +128,7 @@ end
 function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave,potential)
 
     println("cycle: ",idx)
+    n_steps=1
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
 
     #     if save == true
