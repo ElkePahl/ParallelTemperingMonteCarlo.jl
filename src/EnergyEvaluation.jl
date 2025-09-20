@@ -522,7 +522,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    if abs(potential_variables.new_tan_mat[1,2]-potential_variables.tan_mat[1,2])>=e-9
+    if abs(potential_variables.new_tan_mat[1,2]-potential_variables.tan_mat[1,2])>=10^(-9)
         println("new_tan_mat!=tan_mat, use new_tan_mat")
         println("new: ",potential_variables.new_tan_mat[1,2])
         println("old: ",potential_variables.tan_mat[1,2])
