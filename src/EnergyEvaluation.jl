@@ -523,6 +523,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     energy_tot = 0.
 
     if (potential_variables.new_tan_mat[1,2]!=potential_variables.tan_mat[1,2] && potential_variables.new_tan_mat[3,4]!=potential_variables.tan_mat[3,4])
+        println("new_tan_mat!=tan_mat, use new_tan_mat")
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -534,6 +535,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
             end
         end 
     else
+        println("new_tan_mat=tan_mat, use tan_mat")
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
