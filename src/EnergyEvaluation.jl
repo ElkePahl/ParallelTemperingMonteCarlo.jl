@@ -1165,12 +1165,12 @@ end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::AbstractDimerPotentialB) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
-    return ELJPotentialBVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N),update)
+    return ELJPotentialBVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::LookuptablePotential) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
-    return LookupTableVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N),update)
+    return LookupTableVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPotential) where {N,BC,T}
     
