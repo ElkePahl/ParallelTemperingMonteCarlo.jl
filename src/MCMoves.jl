@@ -257,9 +257,10 @@ function volume_change_xyz(mc_state::MCState)
     println("tan mat: ",mc_state.potential_variables.tan_mat[1,2])
 
     if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
-        for i in eachindex(mc_state.potential_variables.tan_mat)
-            mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i] * scale
-        end
+        #for i in eachindex(mc_state.potential_variables.tan_mat)
+            #mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i] * scale
+        #end
+        mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
         println("tan mat update")
     end
     println("scale: ",scale)
