@@ -157,7 +157,8 @@ function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange, max_length, 
     if conf.bc.box_length>=max_length && scale > 1.
         scale=1/scale
     end
-    trial_config = Config(scale_xy(conf.pos,scale),RhombicBC(conf.bc.box_length * scale, conf.bc.box_height))
+    #trial_config = Config(scale_xy(conf.pos,scale),RhombicBC(conf.bc.box_length * scale, conf.bc.box_height))
+    trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
 
     return trial_config,scale
 end
@@ -172,7 +173,8 @@ function volume_change_z(conf::Config, bc::RhombicBC, max_vchange, max_height, l
         scale=1/scale
     end
     
-    trial_config = Config(scale_z(conf.pos,scale),RhombicBC(conf.bc.box_length, conf.bc.box_height * scale))
+    #trial_config = Config(scale_z(conf.pos,scale),RhombicBC(conf.bc.box_length, conf.bc.box_height * scale))
+    trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
     return trial_config,1/scale
 end
 
@@ -252,12 +254,12 @@ function volume_change_xyz(mc_state::MCState)
     mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
 
 
-    if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
+    #if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
         #for i in eachindex(mc_state.potential_variables.tan_mat)
             #mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i] * scale
         #end
-        mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
-    end
+        #mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
+    #end
     return mc_state
 end
 
