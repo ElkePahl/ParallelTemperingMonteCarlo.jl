@@ -70,10 +70,14 @@ acc_test! function now significantly contracted as a method of calculating the m
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
+        if movetype=="volumemove"
+            println("mc_state.en_tot in acc_test! ", mc_state.en_tot)
+            println()
+        end
     end
+
     if movetype=="volumemove" && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
         mc_state.potential_variables.update==false
-        println("mc_state.en_tot in acc_test! ", mc_state.en_tot)
     end
 end
 """
