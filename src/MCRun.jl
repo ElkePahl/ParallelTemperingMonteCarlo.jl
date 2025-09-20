@@ -65,6 +65,7 @@ acc_test! function now significantly contracted as a method of calculating the m
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
+        println("accepted, go to swap_config")
         swap_config!(mc_state,movetype)
     end
 end
