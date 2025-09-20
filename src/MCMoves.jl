@@ -234,7 +234,7 @@ end
 
 function volume_change_xyz(mc_state::MCState)
     #change volume
-    ra=rand(4:6)
+    ra=rand(1:6)
     if ra==1  # Choose z-direction volume change
         mc_state.ensemble_variables.xy_or_z=2        # Specify the type of volume moves chosen, z-direction
         mc_state.ensemble_variables.trial_config, scale = volume_change_z(mc_state.config, mc_state.config.bc, mc_state.max_displ[4], mc_state.max_boxheight,mc_state.lh_ratio)
@@ -250,24 +250,14 @@ function volume_change_xyz(mc_state::MCState)
 
     #get the new dist2 matrix
     mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
-    #println(typeof(mc_state.potential_variables))
 
-    #println("before update")
-    #println("new tan mat: ",mc_state.potential_variables.new_tan_mat[1,2])
-    #println("tan mat: ",mc_state.potential_variables.tan_mat[1,2])
 
     if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
         #for i in eachindex(mc_state.potential_variables.tan_mat)
             #mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i] * scale
         #end
         mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
-        #println("tan mat update")
     end
-    #println("scale: ",scale)
-    #println("new tan mat: ",mc_state.potential_variables.new_tan_mat[1,2])
-    #println("tan mat: ",mc_state.potential_variables.tan_mat[1,2])
-    #println("scale? ",mc_state.potential_variables.new_tan_mat[1,2]/mc_state.potential_variables.tan_mat[1,2])
-    #println()
     return mc_state
 end
 
