@@ -234,7 +234,7 @@ end
 
 function volume_change_xyz(mc_state::MCState)
     #change volume
-    ra=rand(1:6)
+    ra=rand(4:6)
     if ra==1  # Choose z-direction volume change
         mc_state.ensemble_variables.xy_or_z=2        # Specify the type of volume moves chosen, z-direction
         mc_state.ensemble_variables.trial_config, scale = volume_change_z(mc_state.config, mc_state.config.bc, mc_state.max_displ[4], mc_state.max_boxheight,mc_state.lh_ratio)
