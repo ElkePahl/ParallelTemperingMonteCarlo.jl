@@ -123,7 +123,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
     end
     return mc_states
 end
-function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave)
+function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave,potential)
 
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
 
@@ -138,6 +138,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
             open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
                 println(io, length(mc_states[1].config.pos))
                 println(io,mc_states[i].en_tot)
+                println(dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.bc, potential)[2])
                 println(io,mc_states[i].config.bc.box_length)
                 println(io,mc_states[i].config.bc.box_height)
                 for j=1:length(mc_states[1].config.pos)
@@ -261,7 +262,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Vector,poten
     #main loop 
     for i = start_counter:mc_params.mc_cycles 
 
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
+        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,potential)
         if save == false
         elseif rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
@@ -295,7 +296,7 @@ function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
     end
     
     for i = start_counter:mc_params.mc_cycles
-        @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave)
+        @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,potential)
 
         if save == false
         elseif rem(i,save) == 0
