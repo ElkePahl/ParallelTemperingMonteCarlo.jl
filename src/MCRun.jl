@@ -53,7 +53,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
         mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
 
     else
-        mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat,N,mc_state.potential_variables,mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
+        mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.potential_variables.new_tan_mat, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
     end
     return mc_state
 end
@@ -138,7 +138,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
             open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
                 println(io, length(mc_states[1].config.pos))
                 println(io,mc_states[i].en_tot)
-                println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.bc, potential)[2])
+                println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].potential_variables.tan_mat, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.bc, potential)[2])
                 println(io,mc_states[i].config.bc.box_length)
                 println(io,mc_states[i].config.bc.box_height)
                 for j=1:length(mc_states[1].config.pos)
