@@ -266,6 +266,7 @@ function volume_change_xyz(mc_state::MCState)
     println("scale: ",scale)
     println("new tan mat: ",mc_state.potential_variables.new_tan_mat[1,2])
     println("tan mat: ",mc_state.potential_variables.tan_mat[1,2])
+    println("scale? ",mc_state.potential_variables.new_tan_mat[1,2]/mc_state.potential_variables.tan_mat[1,2])
     println()
     return mc_state
 end
