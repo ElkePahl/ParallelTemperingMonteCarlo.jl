@@ -14,7 +14,16 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
     else
+        println("before swap")
+        println("old: ",mc_state.en_tot)
+        println("new: ",mc_state.new_en)
+
         swap_config_v!(mc_state, mc_state.potential_variables, mc_state.config.bc, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
+        
+        println("after swap")
+        println("old: ",mc_state.en_tot)
+        println("new: ",mc_state.new_en)
+        println()
     end
 
 end
@@ -229,7 +238,7 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
             mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
         end
     end
-    
+
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z==0
         mc_state.count_vol[1] += 1
