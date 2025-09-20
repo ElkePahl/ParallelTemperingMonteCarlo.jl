@@ -134,9 +134,9 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
         mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
     end
 
-    println("before swap")
-    println("tan_mat: ",mc_state.potential_variables.tan_mat[1,2])
-    println("new_tan_mat: ",mc_state.potential_variables.new_tan_mat[1,2])
+    #println("before swap")
+    #println("tan_mat: ",mc_state.potential_variables.tan_mat[1,2])
+    #println("new_tan_mat: ",mc_state.potential_variables.new_tan_mat[1,2])
 
     #if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
         #for i in eachindex(mc_state.potential_variables.tan_mat)
@@ -145,9 +145,9 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
     #end
     mc_state.potential_variables.tan_mat = get_tantheta_mat(trial_config,trial_config.bc)
 
-    println("after swap")
-    println("tan_mat: ",mc_state.potential_variables.tan_mat[1,2])
-    println("new_tan_mat: ",mc_state.potential_variables.new_tan_mat[1,2])
+    #println("after swap")
+    #println("tan_mat: ",mc_state.potential_variables.tan_mat[1,2])
+    #println("new_tan_mat: ",mc_state.potential_variables.new_tan_mat[1,2])
 
     mc_state.en_tot = new_en_tot
 

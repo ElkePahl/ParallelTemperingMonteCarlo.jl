@@ -64,9 +64,7 @@ end
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
-    println("acc_test!")
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
-        println("accepted, go to swap_config")
         swap_config!(mc_state,movetype)
     end
 end
@@ -81,16 +79,13 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
 function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
     #mc_state.ensemble_variables.index = rand(1:N)
     mc_state.ensemble_variables.index = N
-    println("tan_mat before generate_move! ",mc_state.potential_variables.tan_mat[1,2])
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
-    println("tan_mat after generate_move! ",mc_state.potential_variables.tan_mat[1,2])
     
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
-    println("tan_mat after get_energy! ",mc_state.potential_variables.tan_mat[1,2])
 
     acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
-    println("tan_mat after acc_test! ",mc_state.potential_variables.tan_mat[1,2])
+
     return mc_state
 end
 """
@@ -144,11 +139,9 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #         end
 #     end
 
-    println("tan_mat in mc_cycle! ",mc_states[1].potential_variables.tan_mat[1,2])
-    println("tan_mat in mc_cycle! ",mc_states[2].potential_variables.tan_mat[1,2])
-    #println("mc_states[1].en_tot: ",mc_states[1].en_tot)
-    #println("mc_states[1].new_en: ",mc_states[1].new_en)
-    #println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
+    println("mc_states[1].en_tot: ",mc_states[1].en_tot)
+    println("mc_states[1].new_en: ",mc_states[1].new_en)
+    println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
     println("_________________cycle done__________________")
 
     if rem(idx,1000) == 0
