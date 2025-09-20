@@ -14,7 +14,7 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
     else
-        println()
+        println("aaaaa")
         println("mc_state.en_tot before swap_config_v!", mc_state.en_tot)
         swap_config_v!(mc_state, mc_state.potential_variables, mc_state.config.bc, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
         println("mc_state.en_tot after swap_config_v!", mc_state.en_tot)
