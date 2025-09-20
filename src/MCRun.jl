@@ -71,8 +71,9 @@ function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Ety
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
     end
-    if (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
+    if movetype=="volumemove" && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
         mc_state.potential_variables.update==false
+        println("mc_state.en_tot in acc_test! ", mc_state.en_tot)
     end
 end
 """
@@ -84,14 +85,9 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
      tests acc and swaps if relevant 
 """
 function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
-    println("N=",N)
     mc_state.ensemble_variables.index = rand(1:N)
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
-    if move_strat.movestrat[mc_state.ensemble_variables.index] == "volumemove"
-        println("v index is")
-        println(mc_state.ensemble_variables.index)
-    end
     
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
