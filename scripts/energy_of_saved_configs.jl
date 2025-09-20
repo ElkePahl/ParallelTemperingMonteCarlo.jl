@@ -28,7 +28,7 @@ T_max=50.0
 T=TempGrid(T_min,T_max,N_traj)
 println(T)
 
-for t=1:1
+for t=1:N_traj
     global energy_temp
     open(folder*"/1atm/216/configuration_$(T[t]).txt") do f
 

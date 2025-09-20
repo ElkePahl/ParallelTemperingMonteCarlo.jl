@@ -20,13 +20,13 @@ AtoBohr = 1.0
 # temperature grid
 ti = 45.
 tf = 50.
-n_traj = 16
+n_traj = 2
 
 temp = TempGrid{n_traj}(ti,tf) 
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 100 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -61,7 +61,7 @@ potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
+separated_volume=true
 ensemble = NPT(n_atoms,pressure*2.2937122783969076e-13/AtoBohr^3,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
@@ -525,7 +525,7 @@ start_config = [start_config_1,start_config_1]
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mkdir("216")
+#mkdir("216")
 mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 
 #to check code in REPL

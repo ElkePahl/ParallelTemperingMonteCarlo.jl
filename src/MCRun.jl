@@ -59,6 +59,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
         end
         
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
+        println("new_en in get_energy! ",mc_state.new_en)
     end
     return mc_state
 end
@@ -144,6 +145,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #     end
 
     println("mc_states[1].en_tot: ",mc_states[1].en_tot)
+    println("mc_states[1].new_en: ",mc_states[1].new_en)
     println("dimer_energy_config: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
 
     if rem(idx,1000) == 0
