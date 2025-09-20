@@ -146,9 +146,9 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
     println("cycle: ",idx)
     println("mc_states[1].en_tot: ",mc_states[1].en_tot)
     println("mc_states[1].new_en: ",mc_states[1].new_en)
-    mc_state.potential_variables.update==true
+    mc_states[1].potential_variables.update==true
     println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
-    mc_state.potential_variables.update==false
+    mc_states[1].potential_variables.update==false
     println("dimer_energy_config false: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
 
     if rem(idx,1000) == 0
