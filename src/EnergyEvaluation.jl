@@ -370,7 +370,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotential
         return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * bc.box_height^2/bc.box_length^2  
     end
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat::Matrix, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -386,7 +386,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat::Matrix, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -403,7 +403,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, tan_mat, r_cut, bc::RhombicBC, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, tan_mat::Matrix, r_cut, bc::RhombicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -422,7 +422,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
 end 
 
 
-function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, tan_mat, r_cut, bc::RectangularBC, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, tan_mat::Matrix, r_cut, bc::RectangularBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     
@@ -460,7 +460,7 @@ Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@r
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -475,7 +475,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat, r_cut, bc::CubicBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, r_cut, bc::CubicBC, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -492,7 +492,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat, r_cut, bc::RhombicBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, r_cut, bc::RhombicBC, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -511,7 +511,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end 
 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat, r_cut, bc::RectangularBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, r_cut, bc::RectangularBC, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
