@@ -138,11 +138,12 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
     println("tan_mat: ",mc_state.potential_variables.tan_mat[1,2])
     println("new_tan_mat: ",mc_state.potential_variables.new_tan_mat[1,2])
 
-    if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
-        for i in eachindex(mc_state.potential_variables.tan_mat)
-            mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
-        end
-    end
+    #if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
+        #for i in eachindex(mc_state.potential_variables.tan_mat)
+            #mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
+        #end
+    #end
+    mc_state.potential_variables.tan_mat = get_tantheta_mat(trial_config,trial_config.bc)
 
     println("after swap")
     println("tan_mat: ",mc_state.potential_variables.tan_mat[1,2])
