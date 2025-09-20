@@ -290,7 +290,6 @@ function generate_move!(mc_state::MCState,movetype::String,ensemble)
     if movetype == "atommove"
         return atom_displacement(mc_state)
     else
-        println("volume change")
         return volume_change(mc_state,ensemble.separated_volume)
     end
 end

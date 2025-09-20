@@ -87,6 +87,10 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
     mc_state.ensemble_variables.index = rand(1:N)
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
+    if move_strat.movestrat[mc_state.ensemble_variables.index] == "volumemove"
+        println("v index is")
+        println(mc_state.ensemble_variables.index)
+    end
     
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
