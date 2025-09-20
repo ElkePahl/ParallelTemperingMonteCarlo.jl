@@ -128,7 +128,7 @@ end
 function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave,potential)
 
     println("cycle: ",idx)
-    #n_steps=1
+    n_steps=1
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
 
     #     if save == true
