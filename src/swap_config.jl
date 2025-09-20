@@ -14,11 +14,7 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
     if movetype == "atommove"
         swap_atom_config!(mc_state, mc_state.ensemble_variables.index, mc_state.ensemble_variables.trial_move)
     else
-        println("aaaaa")
-        println("mc_state.en_tot before swap_config_v! ", mc_state.en_tot)
         swap_config_v!(mc_state, mc_state.potential_variables, mc_state.config.bc, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
-        println("mc_state.en_tot after swap_config_v! ", mc_state.en_tot)
-        println()
     end
 
 end
@@ -137,20 +133,10 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
         mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
     end
     
-    println("swap_config_v!")
-    println("old: ",mc_state.potential_variables.tan_mat[1,2])
-    println("new: ",mc_state.potential_variables.new_tan_mat[1,2])
-    println("mc_state.en_tot: ",mc_state.en_tot)
-    println("new_en_tot: ", new_en_tot)
     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
-        println("swap")
         for i in eachindex(mc_state.potential_variables.tan_mat)
             mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
         end
-
-        println("old: ",mc_state.potential_variables.tan_mat[1,2])
-        println("new: ",mc_state.potential_variables.new_tan_mat[1,2])
-
     end
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z==0
@@ -163,10 +149,6 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
         mc_state.count_vol_z[1] += 1
         mc_state.count_vol_z[2] += 1
     end
-
-    println("mc_state.en_tot: ",mc_state.en_tot)
-    println("new_en_tot: ", new_en_tot)
-    println()
 
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end

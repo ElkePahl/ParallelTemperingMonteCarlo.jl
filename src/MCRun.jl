@@ -70,11 +70,6 @@ acc_test! function now significantly contracted as a method of calculating the m
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
-        if movetype=="volumemove"
-            println("mc_state.en_tot in acc_test! ", mc_state.en_tot)
-            println("mc_state.en_tot from dimer_energy_config ",dimer_energy_config(mc_state.dist2_mat, 216, mc_state.potential_variables, mc_state.ensemble_variables.r_cut, mc_state.config.bc, potential)[2])
-            println("________________________")
-        end
     end
 
     if movetype=="volumemove" && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
