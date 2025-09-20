@@ -64,6 +64,7 @@ end
 acc_test! function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the swap_config! function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how swap_config! operates. 
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
+    println("acc_test!")
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         println("accepted, go to swap_config")
         swap_config!(mc_state,movetype)
