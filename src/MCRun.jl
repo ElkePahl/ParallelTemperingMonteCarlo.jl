@@ -54,7 +54,7 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
 
     else
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
-        println("new_en in get_energy! ",mc_state.new_en)
+        #println("new_en in get_energy! ",mc_state.new_en)
     end
     return mc_state
 end
