@@ -66,6 +66,10 @@ acc_test! function now significantly contracted as a method of calculating the m
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
+    else
+        for i in eachindex(mc_state.potential_variables.tan_mat)
+            mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
+        end
     end
 end
 """
