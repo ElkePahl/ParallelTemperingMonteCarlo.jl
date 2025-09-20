@@ -411,7 +411,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -422,7 +422,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -443,7 +443,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -454,7 +454,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -526,7 +526,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -537,7 +537,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -558,7 +558,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
@@ -569,7 +569,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
-                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
                     energy_tot += e_ij
