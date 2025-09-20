@@ -1,17 +1,4 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
-using ..MCStates
-using ..BoundaryConditions
-using ..Configurations
-using ..Ensembles
-using ..InputParams
-using ..MCMoves
-using ..EnergyEvaluation
-using ..Exchange
-using ..ReadSave
-
-using ..MCSampling
-
-using ..Initialization
 
 """
     swap_config!(mc_state,movetype)
@@ -31,9 +18,6 @@ function swap_config!(mc_state::MCState{T,N,BC,P,E},movetype::String) where {T,N
         println("mc_state.en_tot before swap_config_v! ", mc_state.en_tot)
         swap_config_v!(mc_state, mc_state.potential_variables, mc_state.config.bc, mc_state.ensemble_variables.trial_config, mc_state.ensemble_variables.new_dist2_mat, mc_state.potential_variables.en_atom_vec, mc_state.new_en)
         println("mc_state.en_tot after swap_config_v! ", mc_state.en_tot)
-
-        println("dimer_energy_config result ", dimer_energy_config(mc_state.dist2_mat, 216, mc_state.potential_variables, mc_state.ensemble_variables.r_cut, mc_state.config.bc, potential)[2])
-        
         println()
     end
 
