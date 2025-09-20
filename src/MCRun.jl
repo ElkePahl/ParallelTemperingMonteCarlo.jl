@@ -137,9 +137,11 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #             save_results(results,save_dir)
 #         end
 #     end
-    println("mc_states[1].en_tot: ",mc_states[1].en_tot)
-    println("mc_states[1].new_en: ",mc_states[1].new_en)
-    println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
+
+    println("tan_mat in mc_cycle! ",mc_states[1].tan_mat[1,2])
+    #println("mc_states[1].en_tot: ",mc_states[1].en_tot)
+    #println("mc_states[1].new_en: ",mc_states[1].new_en)
+    #println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
     println("_________________cycle done__________________")
 
     if rem(idx,1000) == 0
