@@ -1,4 +1,17 @@
 # Not a module, just supplementary code for the swap_config function, this is essential given the inclusion of the new energy types.
+using ..MCStates
+using ..BoundaryConditions
+using ..Configurations
+using ..Ensembles
+using ..InputParams
+using ..MCMoves
+using ..EnergyEvaluation
+using ..Exchange
+using ..ReadSave
+
+using ..MCSampling
+
+using ..Initialization
 
 """
     swap_config!(mc_state,movetype)
