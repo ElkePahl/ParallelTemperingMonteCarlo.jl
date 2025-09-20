@@ -91,7 +91,6 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
 
     acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
-    println("en_tot acc test! ",mc_state.en_tot)
     return mc_state
 end
 """
@@ -108,7 +107,6 @@ function mc_step!(mc_states::Vector{stype},move_strat,pot,ensemble,n_steps) wher
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
         end
-        println("en_tot after mc_move! ",state.en_tot)
     end
     return mc_states
 end
