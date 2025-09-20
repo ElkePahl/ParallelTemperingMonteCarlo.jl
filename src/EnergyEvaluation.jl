@@ -134,7 +134,6 @@ mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
     tan_mat::Matrix{T}
     new_tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
-    update::Bool
 end
 
 
@@ -190,7 +189,6 @@ mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
     tan_mat::Matrix{T}
     new_tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
-    update::Bool
 end
 
 function dimer_energy(pot::LookuptablePotential, r2, tan)
@@ -409,7 +407,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     
-    if potential_variables.update==true
+    if (potential_variables.new_tan_mat[1,2]!=potential_variables.tan_mat[1,2] && potential_variables.new_tan_mat[3,4]!=potential_variables.tan_mat[3,4])
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -441,7 +439,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     
-    if potential_variables.update==true
+    if (potential_variables.new_tan_mat[1,2]!=potential_variables.tan_mat[1,2] && potential_variables.new_tan_mat[3,4]!=potential_variables.tan_mat[3,4])
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -524,7 +522,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    if potential_variables.update==true
+    if (potential_variables.new_tan_mat[1,2]!=potential_variables.tan_mat[1,2] && potential_variables.new_tan_mat[3,4]!=potential_variables.tan_mat[3,4])
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -556,7 +554,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    if potential_variables.update==true
+    if (potential_variables.new_tan_mat[1,2]!=potential_variables.tan_mat[1,2] && potential_variables.new_tan_mat[3,4]!=potential_variables.tan_mat[3,4])
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut

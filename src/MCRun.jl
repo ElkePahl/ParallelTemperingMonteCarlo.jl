@@ -53,11 +53,6 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
         mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
 
     else
-
-        if (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
-            mc_state.potential_variables.update==true
-        end
-        
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
         println("new_en in get_energy! ",mc_state.new_en)
     end
@@ -71,10 +66,6 @@ acc_test! function now significantly contracted as a method of calculating the m
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
-    end
-
-    if movetype=="volumemove" && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
-        mc_state.potential_variables.update==false
     end
 end
 """
@@ -146,10 +137,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
     println("cycle: ",idx)
     println("mc_states[1].en_tot: ",mc_states[1].en_tot)
     println("mc_states[1].new_en: ",mc_states[1].new_en)
-    mc_states[1].potential_variables.update==true
     println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
-    mc_states[1].potential_variables.update==false
-    println("dimer_energy_config false: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
 
     if rem(idx,1000) == 0
         for i=1:length(mc_states)
