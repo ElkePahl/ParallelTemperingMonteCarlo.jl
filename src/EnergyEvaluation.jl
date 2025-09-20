@@ -134,6 +134,7 @@ mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
     tan_mat::Matrix{T}
     new_tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
+    update::Bool
 end
 
 
@@ -189,6 +190,7 @@ mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
     tan_mat::Matrix{T}
     new_tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
+    update::Bool
 end
 
 function dimer_energy(pot::LookuptablePotential, r2, tan)
@@ -407,7 +409,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     
-    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+    if potential_variables.update==true
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -439,7 +441,7 @@ function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialB
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     
-    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+    if potential_variables.update==true
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -522,7 +524,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+    if potential_variables.update==true
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -554,7 +556,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+    if potential_variables.update==true
         for i in 1:NAtoms
             for j=i+1:NAtoms
                 if distmat[i,j] <= r_cut
@@ -1164,13 +1166,15 @@ function set_variables(config::Config{N,BC,T},dist_2_mat,pot::AbstractDimerPoten
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::AbstractDimerPotentialB) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
+    update = false
 
-    return ELJPotentialBVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))
+    return ELJPotentialBVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N),update)
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::LookuptablePotential) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
+    update = false
 
-    return LookupTableVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))
+    return LookupTableVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N),update)
 end
 function set_variables(config::Config{N,BC,T},dist2_matrix,pot::EmbeddedAtomPotential) where {N,BC,T}
     

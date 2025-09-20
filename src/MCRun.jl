@@ -53,6 +53,11 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
         mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,mc_state.ensemble_variables.r_cut,pot)
 
     else
+
+        if (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
+            mc_state.potential_variables.update==true
+        end
+
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
     end
     return mc_state
@@ -65,6 +70,9 @@ acc_test! function now significantly contracted as a method of calculating the m
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble #where Mtype <: MoveType
     if metropolis_condition(movetype,mc_state,ensemble) >=rand()
         swap_config!(mc_state,movetype)
+    end
+    if (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
+        mc_state.potential_variables.update==false
     end
 end
 """
