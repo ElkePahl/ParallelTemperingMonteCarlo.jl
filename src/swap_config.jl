@@ -134,6 +134,8 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
     end
     
     println("swap_config_v!")
+    println("old: ",mc_state.potential_variables.tan_mat[1,2])
+    println("new: ",mc_state.potential_variables.new_tan_mat[1,2])
     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
         println("swap")
         for i in eachindex(mc_state.potential_variables.tan_mat)
