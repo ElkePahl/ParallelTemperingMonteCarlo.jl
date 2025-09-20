@@ -83,8 +83,10 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
     
     mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
+    println("tan_mat in mc_move! ",mc_state.potential_variables.tan_mat[1])
 
     acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+    println("tan_mat after acc_test! ",mc_state.potential_variables.tan_mat[1])
     return mc_state
 end
 """
