@@ -134,6 +134,7 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
     end
     
     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
+        println("swap")
         for i in eachindex(mc_state.potential_variables.tan_mat)
             mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
         end
@@ -192,11 +193,12 @@ function swap_config_v!(mc_state::MCState,potential_variables::ELJPotentialBVari
         mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
     end
 
-     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
+    if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
         for i in eachindex(mc_state.potential_variables.tan_mat)
             mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
         end
     end
+
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z==0
         mc_state.count_vol[1] += 1
