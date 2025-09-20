@@ -136,6 +136,8 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
     println("swap_config_v!")
     println("old: ",mc_state.potential_variables.tan_mat[1,2])
     println("new: ",mc_state.potential_variables.new_tan_mat[1,2])
+    println("mc_state.en_tot: ",mc_state.en_tot)
+    println("new_en_tot: ", new_en_tot)
     if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
         println("swap")
         for i in eachindex(mc_state.potential_variables.tan_mat)
@@ -157,6 +159,10 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
         mc_state.count_vol_z[1] += 1
         mc_state.count_vol_z[2] += 1
     end
+
+    println("mc_state.en_tot: ",mc_state.en_tot)
+    println("new_en_tot: ", new_en_tot)
+    println()
 
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
