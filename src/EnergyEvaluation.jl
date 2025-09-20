@@ -291,8 +291,8 @@ end
 """
     dimer_energy_config(distmat, NAtoms, pot::AbstractDimerPotential)
     dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotentialVariables, r_cut, pot::AbstractDimerPotential)
-    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat, pot::AbstractDimerPotentialB)
-    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat, r_cut, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
+    dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, pot::AbstractDimerPotentialB)
 Stores the total of dimer energies of one atom with all other atoms in vector and
 calculates total energy of configuration.
 
@@ -370,14 +370,14 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::DimerPotential
         return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot) * bc.box_height^2/bc.box_length^2  
     end
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat::Matrix, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
             #e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
-            e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
+            e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
             energy_tot += e_ij
@@ -386,14 +386,14 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, tan_mat::Matrix, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBVariables, r_cut, bc::CubicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
             if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                 dimer_energy_vec[i] += e_ij
                 dimer_energy_vec[j] += e_ij
                 energy_tot += e_ij
@@ -403,39 +403,65 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::ELJPotentialBV
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, tan_mat::Matrix, r_cut, bc::RhombicBC, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, r_cut, bc::RhombicBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
-
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+    
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
             end
-        end
-    end 
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end 
 
 
-function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, tan_mat::Matrix, r_cut, bc::RectangularBC, pot::AbstractDimerPotentialB)
+function dimer_energy_config(distmat, NAtoms, potential_variables::ELJPotentialBVariables, r_cut, bc::RectangularBC, pot::AbstractDimerPotentialB)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
     
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
             end
-        end
-    end 
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
 
     if bc.box_length < bc.box_height
         return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * bc.box_length/bc.box_height
@@ -460,13 +486,13 @@ Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@r
 and potential information `pot` [`Abstract_Potential`](@ref) 
 """
 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
-            e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
+            e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
             energy_tot += e_ij
@@ -475,14 +501,14 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, r_cut, bc::CubicBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::CubicBC, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
             if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
+                e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
                 dimer_energy_vec[i] += e_ij
                 dimer_energy_vec[j] += e_ij
                 energy_tot += e_ij
@@ -492,39 +518,65 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, r_cut, bc::RhombicBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RhombicBC, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
             end
-        end
-    end 
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
 
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end 
 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, tan_mat::Matrix, r_cut, bc::RectangularBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RectangularBC, pot::LookuptablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
-    for i in 1:NAtoms
-        for j=i+1:NAtoms
-            if distmat[i,j] <= r_cut
-                e_ij=dimer_energy(pot,distmat[i,j],tan_mat[i,j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+    if potential_variables.tan_mat[1,2]!=potential_variables.new_tan_mat[1,2]
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.new_tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
             end
-        end
-    end 
+        end 
+    else
+        for i in 1:NAtoms
+            for j=i+1:NAtoms
+                if distmat[i,j] <= r_cut
+                    e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
+                    dimer_energy_vec[i] += e_ij
+                    dimer_energy_vec[j] += e_ij
+                    energy_tot += e_ij
+                end
+            end
+        end 
+    end
 
     if bc.box_length < bc.box_height
         return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * bc.box_length/bc.box_height    #no 0.5*energy_tot
@@ -1084,7 +1136,7 @@ function initialise_energy(config,dist2_mat,potential_variables,ensemble_variabl
     return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables::NPTVariables,pot::AbstractDimerPotentialB)
-    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,potential_variables.tan_mat,ensemble_variables.r_cut, config.bc, pot)
+    potential_variables.en_atom_vec,en_tot = dimer_energy_config(dist2_mat,length(config),potential_variables,ensemble_variables.r_cut, config.bc, pot)
     return en_tot,potential_variables 
 end
 function initialise_energy(config,dist2_mat,potential_variables,ensemble_variables,pot::EmbeddedAtomPotential)
