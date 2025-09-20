@@ -140,18 +140,7 @@ function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariab
         end
     end
 
-    
-    println("before swap config v")
-    println("en_tot: ",mc_state.en_tot)
-    println("new_en_tot: ",new_en_tot)
-    println("mc_state.new_en: ",mc_state.new_en)
-
     mc_state.en_tot = new_en_tot
-
-    println("after swap config v")
-    println("en_tot: ",mc_state.en_tot)
-    println("new_en_tot: ",new_en_tot)
-    println("mc_state.new_en: ",mc_state.new_en)
 
     if mc_state.ensemble_variables.xy_or_z==0
         mc_state.count_vol[1] += 1

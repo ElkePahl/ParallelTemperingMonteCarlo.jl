@@ -77,7 +77,8 @@ basic move for one `mc_state` according to a `move_strat` dictating the types of
      tests acc and swaps if relevant 
 """
 function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
-    mc_state.ensemble_variables.index = rand(1:N)
+    #mc_state.ensemble_variables.index = rand(1:N)
+    mc_state.ensemble_variables.index = 217
 
     mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
     
@@ -139,7 +140,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
     println("mc_states[1].new_en: ",mc_states[1].new_en)
     println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, 216, mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
     println("_________________cycle done__________________")
-    
+
     if rem(idx,1000) == 0
         for i=1:length(mc_states)
             open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
