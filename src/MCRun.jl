@@ -58,7 +58,6 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
             mc_state.potential_variables.update==true
         end
         
-        println("N in get energy! = ", N)
         mc_state.potential_variables.en_atom_vec,mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
     end
     return mc_state
@@ -73,7 +72,8 @@ function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Ety
         swap_config!(mc_state,movetype)
         if movetype=="volumemove"
             println("mc_state.en_tot in acc_test! ", mc_state.en_tot)
-            println()
+            println("mc_state.en_tot from dimer_energy_config ",dimer_energy_config(mc_state.dist2_mat, 216, mc_state.potential_variables, mc_state.ensemble_variables.r_cut, mc_state.config.bc, potential)[2])
+            println("________________________")
         end
     end
 
