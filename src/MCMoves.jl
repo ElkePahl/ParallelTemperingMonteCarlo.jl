@@ -252,7 +252,9 @@ function volume_change_xyz(mc_state::MCState)
     mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
     #println(typeof(mc_state.potential_variables))
     if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
-        mc_state.potential_variables.new_tan_mat = mc_state.potential_variables.tan_mat * scale
+        for i in eachindex(mc_states.potential_variables.tan_mat)
+            mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i] * scale
+        end
     end
     return mc_state
 end
