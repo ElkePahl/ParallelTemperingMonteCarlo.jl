@@ -132,7 +132,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,index)
 end
 function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,idx,rdfsave,potential)
 
-    println("cycle: ",idx)
+    #println("cycle: ",idx)
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
 
     #     if save == true
@@ -142,10 +142,10 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
 #         end
 #     end
 
-    println("mc_states[1].en_tot: ",mc_states[1].en_tot)
-    println("mc_states[1].new_en: ",mc_states[1].new_en)
-    println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, length(mc_states[1].config.pos), mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
-    println("_________________cycle done__________________")
+    #println("mc_states[1].en_tot: ",mc_states[1].en_tot)
+    #println("mc_states[1].new_en: ",mc_states[1].new_en)
+    #println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, length(mc_states[1].config.pos), mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
+    #println("_________________cycle done__________________")
 
     if rem(idx,10000) == 0
         for i=1:length(mc_states)
