@@ -147,7 +147,7 @@ function mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results,i
     println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, length(mc_states[1].config.pos), mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
     println("_________________cycle done__________________")
 
-    if rem(idx,1000) == 0
+    if rem(idx,10000) == 0
         for i=1:length(mc_states)
             open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
                 println(io, length(mc_states[1].config.pos))
