@@ -1,35 +1,36 @@
-module MCStates 
+module MCStates
 
 using ..BoundaryConditions
 using ..Configurations
 using ..MachineLearningPotential
 using ..EnergyEvaluation
 using ..Ensembles
+using ..CustomTypes
 #using ..InputParams
 
-export MCState#, NNPState
+
+
+export MCState,max_length#, NNPState
+
 """
-    MCState(temp, beta, config::Config{N,BC,T}, dist2_mat, en_atom_vec, en_tot; 
-        max_displ = [0.1,0.1,1.], count_atom = [0,0], count_vol = [0,0], count_rot = [0,0], count_exc = [0,0])
-    MCState(temp, beta, config::Config, pot; kwargs...) 
+    MCState(temp::Number, beta::Number, config::Config{N, BC, T}, dist2_mat::Matrix{Number}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.bc), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}
+    MCState(temp::Number, beta::Number, config::Config, ensemble::Etype, pot::Ptype; kwargs...)
 Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
 
-Fieldnames:
-- `temp`: temperature
-- `beta`: inverse temperature
-- `config`: actual configuration in Markov chain [`Config`](@ref)  
-- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
--`new_dist2_vec`: calculates the new r2 between atoms based on a trial move
-- `new_en` : new energy value for trial configuraiton
-- `en_tot`: total energy of `config`; generated automatically when `pot` given
-
-- `potential_variables` : mutable struct containing energy-related variables for the current configuration
-- `ensemble_variables` : mutable struct containing ensemble-related variables for the current configuraiton
-- `ham`: vector containing sampled energies - generated in MC run
-- `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
-- `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
-
-- `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
+-   Fieldnames:
+    -   `temp`: temperature
+    -   `beta`: inverse temperature
+    -   `config`: actual configuration in Markov chain [`Config`](@ref)
+    -   `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `pot` given
+    -   `new_dist2_vec`: calculates the new r2 between atoms based on a trial move
+    -   `new_en` : new energy value for trial configuraiton
+    -   `en_tot`: total energy of `config`; generated automatically when `pot` given
+    -   `potential_variables` : mutable struct containing energy-related variables for the current configuration
+    -   `ensemble_variables` : mutable struct containing ensemble-related variables for the current configuraiton
+    -   `ham`: vector containing sampled energies - generated in MC run
+    -   `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
+    -   `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
+    -   `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
 """
 mutable struct MCState{T,N,BC,PVType,EVType}
     temp::T
@@ -51,12 +52,15 @@ mutable struct MCState{T,N,BC,PVType,EVType}
     count_vol_xy::Vector{Int}
     count_vol_z::Vector{Int}
     count_exc::Vector{Int}
+end
 
-end    
-
+const MCStateVector = Vector{T} where T <: MCState
+export MCStateVector
 """
-    max_length(bc)
-    Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
+    max_length(bc::SphericalBC)
+    max_length(bc::CubicBC)
+    max_length(bc::RhombicBC)
+Returns the max box_length allowed when a volume change step is performed. For spherical boundary, it is not used during the MC steps.
 """
 function max_length(bc::SphericalBC)
     return 30.
@@ -84,21 +88,25 @@ function max_height(bc::RectangularBC)
     return bc.box_height*1.8
 end
 
-
+"""
+    (MCState(temp::Number, beta::Number, config::Config{N, BC, T}, dist2_mat::Matrix{Z}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.bc), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}) where Z <: Number
+    MCState(temp::Number, beta::Number, config::Config, ensemble::Etype, pot::Ptype; kwargs...)
+Constructor for the [`MCState`](@ref) struct.
+"""
 function MCState(
-    temp, beta, config::Config{N,BC,T}, dist2_mat, new_dist2_vec,new_en, en_tot,potentialvariables,ensemble_variables; 
+    temp::Number, beta::Number, config::Config{N,BC,T}, dist2_mat::Matrix{Z}, new_dist2_vec::VorS,new_en::Number, en_tot::Number,potentialvariables::AbstractPotentialVariables,ensemble_variables::AbstractEnsembleVariables;
     max_displ = [0.1,0.1,0.1,0.1], max_boxlength = max_length(config.bc), max_boxheight = max_height(config.bc), lh_ratio=max_boxlength/max_boxheight, count_atom = [0,0], count_vol = [0,0], count_vol_xy=[0,0],count_vol_z = [0,0],count_exc = [0,0]
-) where {T,N,BC}
+) where {T,N,BC} where {Z<:Number}
     ham = T[]
     MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
         temp, beta, deepcopy(config), copy(dist2_mat), copy(new_dist2_vec),new_en, en_tot,deepcopy(potentialvariables),deepcopy(ensemble_variables),ham, copy(max_displ), copy(max_boxlength), copy(max_boxheight), copy(lh_ratio), copy(count_atom), copy(count_vol), copy(count_vol_xy), copy(count_vol_z), copy(count_exc)
         )
 end
-function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
-    kwargs...) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble
+function MCState(temp::Number,beta::Number,config::Config,ensemble::Etype,pot::Ptype;
+    kwargs...)
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
-    
+
     potential_variables = set_variables(config,dist2_mat,pot)
     ensemble_variables = set_ensemble_variables(config,ensemble)
 
@@ -109,7 +117,7 @@ function MCState(temp,beta,config::Config,ensemble::Etype,pot::Ptype;
 
 end
 
-# function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs...) 
+# function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs...)
 #     dist2_mat = get_distance2_mat(config)
 #     n_atoms = length(config.pos)
 #     # tan_mat = zeros(n_atoms,n_atoms)
@@ -121,7 +129,7 @@ end
 #     MCState(temp, beta, config, dist2_mat, tan_mat, en_atom_vec, en_tot; kwargs...)
 # end
 
-# function MCState(temp, beta, config::Config, pot::AbstractDimerPotentialB; kwargs...) 
+# function MCState(temp, beta, config::Config, pot::AbstractDimerPotentialB; kwargs...)
 #     dist2_mat = get_distance2_mat(config)
 #     tan_mat = get_tantheta_mat(config,config.bc)
 #     n_atoms = length(config.pos)

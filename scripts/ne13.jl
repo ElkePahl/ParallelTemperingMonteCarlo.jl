@@ -1,7 +1,8 @@
-using ParallelTemperingMonteCarlo
+include("../src/ParallelTemperingMonteCarlo.jl")
+using .ParallelTemperingMonteCarlo
 using Random
 
-#demonstration of the new verison of the new code   
+#demonstration of the new verison of the new code
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
@@ -17,7 +18,7 @@ ti = 4.
 tf = 16.
 n_traj = 25
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
@@ -82,7 +83,7 @@ AtoBohr = 1.0
 pos_ne13 = pos_ne13 * AtoBohr
 
 #binding sphere
-bc_ne13 = SphericalBC(radius=5.32*AtoBohr) 
+bc_ne13 = SphericalBC(radius=5.32*AtoBohr)
 
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -97,6 +98,5 @@ start_config = Config(pos_ne13, bc_ne13)
 
 ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
 
-
 rm("checkpoint",recursive=true)
-## 
+##

@@ -1,3 +1,5 @@
+include(joinpath(@__DIR__, "benchmark_test.jl"))
+
 using Test
 using SafeTestsets
 using ParallelTemperingMonteCarlo
@@ -6,7 +8,7 @@ using StaticArrays, LinearAlgebra
 
 
 @testset "Ensembles" begin
-    x = MoveStrategy(NVT(10))    
+    x = MoveStrategy(NVT(10))
     @test length(x.movestrat) == length(x)
 
     bc = SphericalBC(radius=2.0)
@@ -15,7 +17,7 @@ using StaticArrays, LinearAlgebra
 
     envars_nvt = set_ensemble_variables(conf,NVT(1))
     @test typeof(envars_nvt) == NVTVariables{Float64}
-    @test typeof(envars_nvt.index) == Int64 
+    @test typeof(envars_nvt.index) == Int64
     @test length(envars_nvt.trial_move) == 3
 
     y = MoveStrategy(NPT(5,101325,false))
@@ -38,6 +40,11 @@ using StaticArrays, LinearAlgebra
     envars_npt = set_ensemble_variables(conf4,NPT(3,101325,false))
     @test envars_npt.r_cut == conf4.bc.box_height^2/4
 
+    nnvtens = NNVT([8,2])
+    @test sum(nnvtens.natoms) == 10
+    envars_nnvt = set_ensemble_variables(conf,nnvtens)
+
+    @test envars_nnvt.swap_indices[2] > nnvtens.natoms[1]
 
 end
 
@@ -88,7 +95,7 @@ end
     v3 = SVector(3., 6., 9.)
     @test distance2(v1,v3) == 56.0
     @test distance2(v1,v3,bc) == 36.0
-    
+
     conf2 = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf2)
     @test d2mat[1,3] == 36.0
@@ -125,7 +132,7 @@ end
 
     v4 = SVector(15., 5.0*3^0.5, 2.)
     @test distance2(v1,v4,bc) == 6.0
-    
+
     conf2 = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf2)
     @test d2mat[1,3] == 36.0
@@ -157,7 +164,7 @@ end
     @test mat[1,2]==-2.0
     @test mat[1,3]==7/3
     @test mat[2,3]==1/7
-    
+
     bc = CubicBC(10.0)
     conf = Config{3}([v1,v2,v3],bc)
     mat = get_tantheta_mat(conf,bc)
@@ -169,7 +176,7 @@ end
     bc = RhombicBC(5.0,5.0)
     conf = Config{3}([v1,v2,v3],bc)
     mat = get_tantheta_mat(conf,bc)
-    
+
     @test mat[1,2]==2.0
     @test mat[1,3]==-1.0
     @test mat[2,3]==0.5
@@ -210,7 +217,11 @@ end
     include("separated_v_test.jl")
 end
 
-@testset "Potentials" begin 
+@safetestset "RuNNer" begin
+    include("test_runner_forward.jl")
+end
+
+@testset "Potentials" begin
     include("test_potentials.jl")
 end
 

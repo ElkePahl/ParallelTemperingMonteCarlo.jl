@@ -1,4 +1,6 @@
-@testset "ELJPotentials" begin 
+using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
+
+@testset "ELJPotentials" begin
     c = [-2.,0.,1.]
     pot =  ELJPotential{3}(c)
     @test dimer_energy(pot,1.) == -1.0
@@ -27,7 +29,7 @@
     en,vars = initialise_energy(conf1,d2mat,vars,evars,pot)
     @test en ≈ en_tot
 
-    bc2 = CubicBC(4.) 
+    bc2 = CubicBC(4.)
     conf2 = Config{3}([v1,v2,v3],bc2)
 
 
@@ -45,7 +47,7 @@ end
     conf = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf)
     pot1 = EmbeddedAtomPotential(1.,1.,1.,1.,1.)
-    @test pot1.ean == 0.5 
+    @test pot1.ean == 0.5
     vars = set_variables(conf,d2mat,pot1)
     evars = set_ensemble_variables(conf,NVT(3))
     @test typeof(vars.component_vector) == Matrix{Float64}
@@ -61,4 +63,25 @@ end
     @test potlut.start_dist==0.1
     @test potlut.start_angle==0
     @test length(potlut.table)==potlut.l_angle*potlut.l_dist
+
+@testset "RuNNerPotentialTest" begin
+    include("potentialfile.jl")
+    @test isa(runnerpotential,AbstractMachineLearningPotential)
+    v1 = SVector(2.36, 2.36, 0.0)
+    v2 = SVector(6.99, 2.33, 0.0)
+    v3 = SVector(2.33, 6.99, 0.0)
+    v4 = SVector(-2.36, 2.36, 0.0)
+    v5 = SVector(-6.99, 2.33, 0.0)
+    v6 = SVector(-2.33, 6.99, 0.0)
+    bc = SphericalBC(radius=7.0)
+    conf = Config{6}([v1,v2,v3,v4,v5,v6],bc)
+    d2mat = get_distance2_mat(conf)
+    vars = set_variables(conf,d2mat,runnerpotential)
+    evars = set_ensemble_variables(conf,NNVT([4,2]))
+
+    @test vars.f_matrix[1,2] == cutoff_function(sqrt(d2mat[1,2]),runnerpotential.r_cut)
+    @test vars.f_matrix[2,2] == 1.
+    @test isa(vars.g_matrix,MMatrix)
+    E,vars = initialise_energy(conf,d2mat,vars,evars,runnerpotential)
+    @test E ≈-0.261652899
 end

@@ -1,0 +1,5 @@
+cycles: sample_rate: n_traj: n_atoms: n_adjust n_bins min_acc: max_acc t_i: t_f
+1.0e6 1.0 24.0 55.0 100.0 100.0 0.4 0.6 6.0 20.0
+ensemble n_atom_moves n_atom_swaps
+NVT 55 55 0
+ELJPotentialEven{6, Float64} -10.5097942564988 989.725135614556 -101383.865938807 3.91884612841668e6 -5.62340834334278e7 2.88738837441765e8
