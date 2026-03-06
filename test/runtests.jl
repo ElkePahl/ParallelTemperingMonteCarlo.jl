@@ -287,4 +287,8 @@ end
         include(joinpath(@__DIR__, "../scripts/pbc32-short.jl"))
         @test true
     end
+    @safetestset "cu38.jl" begin
+        include(joinpath(@__DIR__, "../scripts/cu38.jl"))
+        @test true
+    end
 end
