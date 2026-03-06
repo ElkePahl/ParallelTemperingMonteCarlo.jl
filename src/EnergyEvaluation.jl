@@ -29,7 +29,7 @@ export AbstractPotential, AbstractDimerPotential,
     ELJPotential, ELJPotentialEven,
     AbstractMachineLearningPotential
 export AbstractDimerPotentialB, ELJPotentialB, EmbeddedAtomPotential,
-    RuNNerPotential, RuNNerPotential2Atom, LookuptablePotential
+    RuNNerPotential, RuNNerPotential2Atom, LookupTablePotential
 export AbstractPotentialVariables, DimerPotentialVariables,
     ELJPotentialBVariables, LookupTableVariables
 export EmbeddedAtomVariables, NNPVariables, NNPVariables2a
@@ -181,11 +181,19 @@ end
 
 
 """
-    Look-up table potential
-    Dimer energies are taken from an external table from an address "link".
-    Long range part is approximated with c6*r^(-6)
+    struct LookupTablePotential <: AbstractDimerPotentialB
+
+Fields:
+- `table::Matrix{Float64}`: Table of values.
+- `start_dist::Float64`: First distance in list.
+- `start_angle::Float64`: First angle in list.
+- `l_dist::Int32`: Number of distances in the table.
+- `l_angle::Int32`: Number of angles in the table.
+- `d_dist::Float64`:
+- `d_angle::Float64`:
+- `c6coeff::Float64`:
 """
-struct LookuptablePotential <: AbstractDimerPotentialB
+struct LookupTablePotential <: AbstractDimerPotentialB
     table::Matrix{Float64}
     start_dist::Float64
     start_angle::Float64
@@ -196,6 +204,12 @@ struct LookuptablePotential <: AbstractDimerPotentialB
     c6coeff::Float64
 end
 
+"""
+    read_lookuptable(file)
+
+Read a lookup table from `file`. Return all information required to construct
+[`LookupTablePotential`](@ref).
+"""
 function read_lookuptable(link::String)
     open(link) do f
         line = readline(f)
@@ -225,11 +239,7 @@ function read_lookuptable(link::String)
     end
 end
 
-function LookuptablePotential(link::String)
-    table,start_dist,start_angle,l_dist,l_angle,d_dist,d_angle,c6coeff=read_lookuptable(link)
-    pot=LookuptablePotential(table,start_dist,start_angle,l_dist,l_angle,d_dist,d_angle,c6coeff)
-    return(pot)
-end
+LookupTablePotential(link::String) = LookupTablePotential(read_lookuptable(link)...)
 
 mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Array{T}
@@ -238,7 +248,7 @@ mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
     new_tan_vec::Vector{T}
 end
 
-function dimer_energy(pot::LookuptablePotential, r2, tan)
+function dimer_energy(pot::LookupTablePotential, r2, tan)
     #if (typeof(atan(abs(tan)))==Float64 && abs(tan) >=0 && abs(tan) <= 10^6) == false
         #println(tan, " ", atan(abs(tan)))
     #end
@@ -551,7 +561,7 @@ Needs squared distances matrix, see `get_distance2_mat` [`get_distance2_mat`](@r
 and potential information `pot` [`Abstract_Potential`](@ref)
 """
 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, pot::LookupTablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -566,7 +576,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::CubicBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::CubicBC, pot::LookupTablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -583,7 +593,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
 
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)   #no 0.5*energy_tot
 end
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RhombicBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RhombicBC, pot::LookupTablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -619,7 +629,7 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
     return dimer_energy_vec, energy_tot + lrc(NAtoms,r_cut,pot)  * 3/4 * bc.box_length/bc.box_height    #no 0.5*energy_tot
 end
 
-function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RectangularBC, pot::LookuptablePotential)
+function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RectangularBC, pot::LookupTablePotential)
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.
 
@@ -720,7 +730,7 @@ function dimer_energy_update!(
     new_dist2_vec,
     new_tan_vec,
     en_tot,
-    pot::LookuptablePotential,
+    pot::LookupTablePotential,
 )
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
 
@@ -734,7 +744,7 @@ function dimer_energy_update!(
     new_tan_vec,
     en_tot,
     r_cut,
-    pot::LookuptablePotential,
+    pot::LookupTablePotential,
 )
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
 
@@ -826,7 +836,7 @@ end
 """
     lrc(NAtoms::Int,r_cut::Real,pot::ELJPotentialEven{N}) where N
     lrc(NAtoms::Int,r_cut::Real,pot::ELJPotentialB{N}) where N
-    lrc(NAtoms,r_cut,pot::LookuptablePotential)
+    lrc(NAtoms,r_cut,pot::LookupTablePotential)
 The long range correction for the extended Lennard-Jones potential (even). `r_cut` is the cutoff distance.
 `lrc` is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
 Second method applies to the ELJ potential in extreme magnetic fields ELJB.
@@ -863,7 +873,7 @@ function lrc(NAtoms::Int,r_cut::Real,pot::ELJPotentialB{N}) where N
     end
     return e_lrc
 end
-function lrc(NAtoms,r_cut,pot::LookuptablePotential)
+function lrc(NAtoms,r_cut,pot::LookupTablePotential)
 
     if r_cut <= 10
         e_lrc=1.0
@@ -1347,7 +1357,7 @@ function energy_update!(
     dist2_mat::Matrix{Float64},
     new_dist2_vec::Vector{Float64},
     en_tot::Real,
-    pot::LookuptablePotential
+    pot::LookupTablePotential
 )
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
@@ -1374,7 +1384,7 @@ function energy_update!(
     dist2_mat::Matrix{Float64},
     new_dist2_vec::Vector{Float64},
     en_tot::Real,
-    pot::LookuptablePotential
+    pot::LookupTablePotential
 )
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
@@ -1539,7 +1549,7 @@ function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix{Float64},pot:
 
     return ELJPotentialBVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))
 end
-function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix{Float64},pot::LookuptablePotential) where {N,BC,T}
+function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix{Float64},pot::LookupTablePotential) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
     return LookupTableVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))

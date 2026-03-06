@@ -40,7 +40,7 @@ pot = ELJPotentialEven{6}(c)
 
 
 link = joinpath(@__DIR__, "lookup-tables", "LookupTable_Neon_B0.0_MP2.txt")
-potlut = LookuptablePotential(link)
+potlut = LookupTablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#

@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Random
 
-#demonstration of the new verison of the new code   
+#demonstration of the new verison of the new code
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
@@ -21,7 +21,7 @@ ti = 1600
 tf = 2100.
 n_traj = 64
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
@@ -54,7 +54,7 @@ potB = ELJPotentialB{6}(a,b,c1)
 
 
 link="/Users/tiantianyu/Downloads/look-up_table.txt"
-potlut=LookuptablePotential(link)
+potlut=LookupTablePotential(link)
 
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
@@ -446,7 +446,7 @@ pos_ne216_hcp_start = pos_ne216_hcp * AtoBohr * factor
 
 box_length = 18.79489824 * AtoBohr * factor
 box_height = 15.34597014 * AtoBohr * factor
-bc_ne216 = RhombicBC(box_length, box_height)  
+bc_ne216 = RhombicBC(box_length, box_height)
 
 #length(pos_ne150) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -481,7 +481,7 @@ for i=1:n_traj
     end
 
     box_length_xy = box_length*scale
-    bc_scale_xy = RhombicBC(box_length_xy, box_height) 
+    bc_scale_xy = RhombicBC(box_length_xy, box_height)
 
     start_config_scale=Config(pos_scale_xy, bc_scale_xy)
     mc_state_xy = MCState(temp.t_grid[i], temp.beta_grid[i],start_config_scale,ensemble,potlut)
@@ -491,7 +491,7 @@ for i=1:n_traj
     println(mc_state_xy.en_tot)
     println(mc_state_xy.dist2_mat[1,2])
     println()
-    
+
     push!(e_xy_scaled,mc_state_xy.en_tot)
     push!(h_xy_scaled,mc_state_xy.en_tot + pressure*2.2937122783969076e-13/AtoBohr^3*box_length_xy^2*box_height*3^0.5/2)
 end
@@ -507,7 +507,7 @@ for i=1:n_traj
     end
 
     box_height_z = box_height*scale
-    bc_scale_z = RhombicBC(box_length, box_height_z) 
+    bc_scale_z = RhombicBC(box_length, box_height_z)
 
     start_config_scale=Config(pos_scale_z, bc_scale_z)
     mc_state_z = MCState(temp.t_grid[i], temp.beta_grid[i],start_config_scale,ensemble,potlut)
@@ -531,10 +531,10 @@ for i=1:n_traj
     for j=1:n_atoms
         pos_scale_xyz[j] = [pos_ne216_fcc_start[j][1]*scale,pos_ne216_fcc_start[j][2]*scale,pos_ne216_fcc_start[j][3]*scale]
     end
-    
+
     box_length_xyz = box_length*scale
     box_height_xyz = box_height*scale
-    bc_scale_xyz = RhombicBC(box_length_xyz, box_height_xyz) 
+    bc_scale_xyz = RhombicBC(box_length_xyz, box_height_xyz)
 
     start_config_scale=Config(pos_scale_xyz, bc_scale_xyz)
     mc_state_xyz = MCState(temp.t_grid[i], temp.beta_grid[i],start_config_scale,ensemble,potlut)

@@ -39,7 +39,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 link = joinpath(@__DIR__, "lookup-tables", "LookupTable_Neon_B0.0_MP2.txt")
-pot = LookuptablePotential(link)
+pot = LookupTablePotential(link)
 
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#

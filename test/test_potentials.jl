@@ -58,7 +58,7 @@ end
 
 @testset "LookupTable" begin
     link=joinpath(@__DIR__, "../scripts/lookup-tables/look-up_table-2.txt")
-    potlut=LookuptablePotential(link)
+    potlut=LookupTablePotential(link)
     @test potlut.table[1][1]==282.19449125205114
     @test potlut.start_dist==0.1
     @test potlut.start_angle==0

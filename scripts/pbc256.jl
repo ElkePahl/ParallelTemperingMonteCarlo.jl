@@ -2,7 +2,7 @@ using ParallelTemperingMonteCarlo
 using Random
 using Plots
 
-#demonstration of the new verison of the new code   
+#demonstration of the new verison of the new code
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
@@ -22,7 +22,7 @@ ti = 1500.0
 tf =2000.0
 n_traj = 16
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
@@ -56,7 +56,7 @@ potB = ELJPotentialB{6}(a,b,c1)
 
 #link="/nesi/nobackup/uoa02731/diana/new_simulations/look-up_table.txt"
 link="/Users/tiantianyu/Downloads/look-up_table.txt"
-potlut=LookuptablePotential(link)
+potlut=LookupTablePotential(link)
 
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
@@ -513,7 +513,7 @@ pos_ne216_hcp_start = pos_ne216_hcp * AtoBohr * 0.85
 #binding sphere
 box_length = 18.479116809171362 * AtoBohr * 0.85
 box_height = 15.893996163552583 * AtoBohr* 0.85
-bc_ne216 = RhombicBC(box_length, box_height)   
+bc_ne216 = RhombicBC(box_length, box_height)
 
 #length(pos_ne216) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -537,5 +537,4 @@ mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 
 
 
-## 
-
+##

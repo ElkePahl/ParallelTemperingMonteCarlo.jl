@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Random
 
-#demonstration of the new verison of the new code   
+#demonstration of the new verison of the new code
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
@@ -21,7 +21,7 @@ ti = 1500
 tf = 2500
 n_traj = 24
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
@@ -49,7 +49,7 @@ pot = ELJPotentialEven{6}(c)
 
 
 link="/Users/tiantianyu/Downloads/look-up_table.txt"
-potlut=LookuptablePotential(link)
+potlut=LookupTablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
@@ -318,7 +318,7 @@ pos_ne250 = pos_ne108 * AtoBohr * 0.85
 
 #binding sphere
 box_length = 17.45 * AtoBohr * 0.85
-bc_ne250 = RectangularBC(box_length, box_length)   
+bc_ne250 = RectangularBC(box_length, box_length)
 
 length(pos_ne108) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -335,4 +335,4 @@ mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-## 
+##

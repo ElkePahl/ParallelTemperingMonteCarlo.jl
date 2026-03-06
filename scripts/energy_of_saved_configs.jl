@@ -8,7 +8,7 @@ pressure=101325
 ensemble = NPT(N,pressure*2.2937122783969076e-13/AtoBohr^3,true)
 
 link="/Users/tiantianyu/Downloads/look-up_table.txt"
-potlut=LookuptablePotential(link)
+potlut=LookupTablePotential(link)
 
 potential=potlut
 energy_temp=[]
@@ -20,7 +20,7 @@ folder="/Users/tiantianyu/216"
 function TempGrid(ti, tf,N)
     tgrid =[ti*(tf/ti)^((i-1)/(N-1)) for i in 1:N]
     return tgrid
-end 
+end
 
 N_traj=16
 T_min=45.0
@@ -40,22 +40,22 @@ for t=1:N_traj
             end
 	        totalProfiles = Array{Dict{String,Int}} # Initialise array to hold total CNA profiles
 	        atomicProfiles = Any[] # Initialise array to hold atomic CNA profiles
-	        line = readline(f) 
+	        line = readline(f)
             println("*")
             println(T[t])
             println(line)
             line = readline(f)
             println(line)
-            line = readline(f) 
+            line = readline(f)
             box_length = parse(Float64,line)
-            line = readline(f) 
+            line = readline(f)
             box_height = parse(Float64,line)
             println(box_length)
             println(box_height)
 
 
             for j=1:N              # Read the coordinates
-                line = readline(f) 
+                line = readline(f)
                 for (k,x) in enumerate((split(line, r" +"))[2:4]) # For each component of the coordinate
 		    	    configuration[j][k] = parse(Float64,x) # Store the component
 		        end
@@ -64,7 +64,7 @@ for t=1:N_traj
                 #print("]")
 
             end
-            
+
 
             bc=RhombicBC(box_length,box_height)
 
@@ -112,10 +112,10 @@ for t=1:N_traj
 
 
 
-            line = readline(f) 
+            line = readline(f)
         end
 
-        
+
     end
     push!(energy_list,energy_temp)
     energy_temp=[]
