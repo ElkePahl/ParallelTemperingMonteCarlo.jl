@@ -199,13 +199,17 @@ end
 function read_lookuptable(link::String)
     open(link) do f
         line = readline(f)
+        line = first(split(line, '!')) # remove comments
         l_dist,start_dist,d_dist=parse(Int32,split(line, ", ")[1]),parse(Float64,split(line, ", ")[2]),parse(Float64,split(line, ", ")[3])
+
         line=readline(f)
+        line = first(split(line, '!')) # remove comments
         l_angle,start_angle,d_angle=parse(Int32,split(line, ", ")[1]),parse(Float64,split(line, ", ")[2]),parse(Float64,split(line, ", ")[3])
         table = Matrix{Float64}(undef,l_angle,l_dist)
         for i=1:l_angle
             for j=1:l_dist
                 line = readline(f)
+                line = first(split(line, '!')) # remove comments
                 table[i,j]=parse(Float64,line)
             end
         end
@@ -659,38 +663,79 @@ end
 
 Final two methods are for use with a dimer potential in a magnetic field, where there is anisotropy in the coefficients.
 """
-function dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},new_dist2_vec::VorS,en_tot::Float64,pot::AbstractDimerPotential)
-    @views  delta_en = dimer_energy_atom(index,new_dist2_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:], pot)
+function dimer_energy_update!(
+    index,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
+    pot::AbstractDimerPotential,
+)
+    @views delta_en = dimer_energy_atom(index,new_dist2_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:], pot)
 
     return  delta_en + en_tot
 end
-function dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},new_dist2_vec::VorS,en_tot::Float64,r_cut::Real,pot::AbstractDimerPotential)
+function dimer_energy_update!(
+    index,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
+    r_cut,
+    pot::AbstractDimerPotential,
+)
     @views delta_en = dimer_energy_atom(index,new_dist2_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],r_cut, pot)
 
     return delta_en + en_tot
 end
-
-function dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},tanmat::Matrix{Float64},new_dist2_vec::VorS,new_tan_vec::VorS,en_tot::Float64,pot::AbstractDimerPotentialB)
-
+function dimer_energy_update!(
+    index,
+    dist2_mat,
+    tanmat,
+    new_dist2_vec,
+    new_tan_vec,
+    en_tot,
+    pot::AbstractDimerPotentialB,
+)
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
 
     return  delta_en + en_tot
 end
-function dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},tanmat::Matrix{Float64},new_dist2_vec::VorS,new_tan_vec::VorS,en_tot::Float64,r_cut::Real,pot::AbstractDimerPotentialB)
-
+function dimer_energy_update!(
+    index,
+    dist2_mat,
+    tanmat,
+    new_dist2_vec,
+    new_tan_vec,
+    en_tot,
+    r_cut,
+    pot::AbstractDimerPotentialB,
+)
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
 
     return  delta_en + en_tot
 end
-
-function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,pot::LookuptablePotential)
-
+function dimer_energy_update!(
+    index,
+    dist2_mat,
+    tanmat,
+    new_dist2_vec,
+    new_tan_vec,
+    en_tot,
+    pot::LookuptablePotential,
+)
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
 
     return  delta_en + en_tot
 end
-function dimer_energy_update!(index,dist2_mat,tanmat,new_dist2_vec,new_tan_vec,en_tot,r_cut,pot::LookuptablePotential)
-
+function dimer_energy_update!(
+    index,
+    dist2_mat,
+    tanmat,
+    new_dist2_vec,
+    new_tan_vec,
+    en_tot,
+    r_cut,
+    pot::LookuptablePotential,
+)
     delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
 
     return  delta_en + en_tot
@@ -1518,7 +1563,7 @@ function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix{Float64},pot:
 
     return ELJPotentialBVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))
 end
-function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix,pot::LookuptablePotential) where {N,BC,T}
+function set_variables(config::Config{N,BC,T},dist2_matrix::Matrix{Float64},pot::LookuptablePotential) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config,config.bc)
 
     return LookupTableVariables{T}(zeros(N),tan_matrix,tan_matrix,zeros(N))

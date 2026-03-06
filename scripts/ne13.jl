@@ -1,5 +1,4 @@
-include("../src/ParallelTemperingMonteCarlo.jl")
-using .ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo
 using Random
 
 #demonstration of the new verison of the new code
@@ -22,7 +21,7 @@ temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -49,7 +48,7 @@ b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
 c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
 potB = ELJPotentialB{6}(a,b,c1)
 
-link="/Users/tiantianyu/Downloads/look-up_table_he.txt"
+link= joinpath(@__DIR__, "lookup-tables", "LookupTable_Neon_B0.0_MP2.txt")
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#

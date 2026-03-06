@@ -56,10 +56,10 @@ function get_energy!(
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E},
+    mc_state::MCState{<:Any,N,<:Any,<:Any,E},
     pot::AbstractPotential,
     movetype::String
-) where {E<:NPTVariables}
+) where {N,E<:NPTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
             mc_state.ensemble_variables,
@@ -294,7 +294,17 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
     -   `save::Bool` or `Int` : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = false,restart=false,save=false,workingdirectory=pwd())
+function ptmc_run!(
+    mc_params::MCParams,
+    temp::TempGrid,
+    start_config,
+    potential::Ptype,
+    ensemble::Etype;
+    rdfsave=false,
+    restart=false,
+    save=false,
+    workingdirectory=pwd(),
+)
     cd(workingdirectory)
     #initialise the states and results etc
     if save != false

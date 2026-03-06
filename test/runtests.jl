@@ -273,3 +273,18 @@ end
 @safetestset "multihist" begin
     include("multihist_test.jl")
 end
+
+@testset "scripts run without errors" begin
+    @safetestset "ne13.jl" begin
+        include(joinpath(@__DIR__, "../scripts/ne13.jl"))
+        @test true
+    end
+    @safetestset "ne13_B.jl" begin
+        include(joinpath(@__DIR__, "../scripts/ne13_B.jl"))
+        @test true
+    end
+    @safetestset "pbc32-short.jl" begin
+        include(joinpath(@__DIR__, "../scripts/pbc32-short.jl"))
+        @test true
+    end
+end

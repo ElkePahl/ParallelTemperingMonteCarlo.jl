@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Random
 
-#demonstration of the new verison of the new code   
+#demonstration of the new verison of the new code
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
@@ -21,7 +21,7 @@ ti = 30
 tf = 50
 n_traj = 24
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
@@ -49,7 +49,7 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link="/Users/tiantianyu/Downloads/look-up_table.txt"
+link = joinpath(@__DIR__, "lookup-tables", "LookupTable_Neon_B0.0_MP2.txt")
 potlut=LookuptablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
@@ -102,7 +102,7 @@ pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
 box_length = 8.7674 * AtoBohr
-bc_ne32 = CubicBC(box_length)
+bc_ne32 = RectangularBC(box_length, box_length)
 
 length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
@@ -114,9 +114,3 @@ start_config = [start_config_1,start_config_2]
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
-
-#to check code in REPL
-#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
-#@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
-
-## 
