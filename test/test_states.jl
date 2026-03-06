@@ -1,4 +1,4 @@
-using Random 
+using Random
 
 @testset "States"  begin
     v1 = SVector(1., 2., 3.)
@@ -28,7 +28,7 @@ using Random
     trialpos = atom_displacement(state.config.pos[1] , state.max_displ[1] , state.config.bc)
 
     Random.seed!(1234)
-    generate_move!(state,"atommove")
+    generate_move!(state,"atommove",ensemble)
 
     @test trialpos == state.ensemble_variables.trial_move
     state = get_energy!(state,pot1,"atommove")
@@ -48,8 +48,8 @@ using Random
     @test state.config.pos == conf1.pos
 
 
-end 
-@testset "States V"  begin 
+end
+@testset "States V"  begin
 
     v1 = SVector(1., 2., 3.)
     v2 = SVector(2.,4.,6.)
@@ -60,7 +60,7 @@ end
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.,1.]
     pot1 = ELJPotentialEven{2}(c1)
-    ensemble = NPT(3,101325*3.398928944382626e-14)
+    ensemble = NPT(3,101325*3.398928944382626e-14,false)
 
     temp = TempGrid{2}(10,15)
 
@@ -79,7 +79,7 @@ end
     trialpos = atom_displacement(state.config.pos[1] , state.max_displ[1] , state.config.bc)
 
     Random.seed!(1234)
-    generate_move!(state,"atommove")
+    generate_move!(state,"atommove",ensemble)
 
     @test trialpos == state.ensemble_variables.trial_move
     state = get_energy!(state,pot1,"atommove")
@@ -100,6 +100,8 @@ end
 
 
 @testset "States NNVT" begin
+    include(joinpath(@__DIR__, "potentialfile.jl"))
+
     v1 = SVector(2.36, 2.36, 0.0)
     v2 = SVector(6.99, 2.33, 0.0)
     v3 = SVector(2.33, 6.99, 0.0)
@@ -112,9 +114,8 @@ end
     vars = set_variables(conf,d2mat,runnerpotential)
     nnvtens = NNVT([4,2])
     temp = TempGrid{2}(500,650)
-    include("potentialfile.jl")
 
- 
+
     state = MCState(temp.t_grid[1],temp.beta_grid[1],conf,nnvtens,runnerpotential)
     state2 = MCState(temp.t_grid[2],temp.beta_grid[2],conf,nnvtens,runnerpotential)
     refstate = MCState(temp.t_grid[1],temp.beta_grid[1],conf,nnvtens,runnerpotential)
@@ -126,7 +127,7 @@ end
 
     #test moves
     Random.seed!(123)
-    generate_move!(state,"atommove")
+    generate_move!(state,"atommove",nnvtens)
 
     Random.seed!(123)
     trialpos = atom_displacement(state.config.pos[1] , state.max_displ[1] , state.config.bc)
@@ -139,7 +140,7 @@ end
     @test  metropolis_condition("atommove",state,ensemble) == 1.
     MCRun.swap_config!(state,"atommove")
     @test state.ensemble_variables.trial_move == state.config.pos[1]
-    @test state.en_tot - state2.en_tot  ≈ delen 
+    @test state.en_tot - state2.en_tot  ≈ delen
     # test parallel_tempering_exchange
     exc_trajectories!(state,state2)
     @test state2.en_tot - state.en_tot  ≈ delen
@@ -153,7 +154,7 @@ end
     @test delen2 ≈ -0.0017084901948
 
     MCRun.acc_test!(state,nnvtens,"atomswap")
-    
+
     refmat = copy(refstate.dist2_mat[6,:] )
     refmat[6] = refstate.dist2_mat[6,3]
     refmat[3] = 0.

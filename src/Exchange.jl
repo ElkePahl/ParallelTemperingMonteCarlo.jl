@@ -54,6 +54,10 @@ Function returning the probability value associated with a trial move. Four meth
 """
 function metropolis_condition(delta_energy::Number, beta::Number)
     prob_val = exp(-delta_energy*beta)
+
+    #println("de = ",delta_energy)
+    #println("p = ",prob_val)
+
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -61,7 +65,6 @@ function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_chan
     delta_h = delta_energy + ensemble.pressure*(volume_changed-volume_unchanged)
     prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
     T = typeof(prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
@@ -140,7 +143,7 @@ function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCPara
     
 
     #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
-    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * get_volume(mc_states[n_exc].config.bc)),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
+    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * get_volume(mc_states[n_exc].config.bc)),  (mc_states[n_exc+1].en_tot + ensemble.pressure * get_volume(mc_states[n_exc+1].config.bc))) > rand()
     
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc+1].count_exc[2] += 1
@@ -163,7 +166,9 @@ Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when
 """
 function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,min_acc::Number,max_acc::Number)
     #atom moves
+
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves) 
+
     if acc_rate < min_acc
         mc_state.max_displ[1] *= 0.9
     elseif acc_rate > max_acc
@@ -172,14 +177,43 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
     mc_state.count_atom[2] = 0
     #volume moves
     #if v > 0
-    acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
-    #println("acc rate volume = ",acc_rate)
-    if acc_rate < min_acc
-        mc_state.max_displ[2] *= 0.9
-    elseif acc_rate > max_acc
-        mc_state.max_displ[2] *= 1.1
+    if ensemble.separated_volume==false
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
+        #println("acc rate volume = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[2] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[2] *= 1.1
+        end
+        mc_state.count_vol[2] = 0
+    else
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves *1/2)
+        #println("acc rate volume = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[2] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[2] *= 1.1
+        end
+        mc_state.count_vol[2] = 0
+
+        acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves *1/3)
+        #println("acc rate volume = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[3] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[3] *= 1.1
+        end
+        mc_state.count_vol_xy[2] = 0
+
+        acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves /6)
+        #println("acc rate volume z = ",acc_rate)
+        if acc_rate < min_acc
+            mc_state.max_displ[4] *= 0.9
+        elseif acc_rate > max_acc
+            mc_state.max_displ[4] *= 1.1
+        end
+        mc_state.count_vol_z[2] = 0
     end
-    mc_state.count_vol[2] = 0
     #end
 
 

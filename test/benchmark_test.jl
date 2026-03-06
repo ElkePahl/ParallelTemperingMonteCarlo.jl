@@ -1,5 +1,7 @@
 using Test
 
+#TODO this tests takes too long. Update it.
+#=
 call = :(include(joinpath(@__DIR__,"..","scripts","ne55.jl")))
 eval(call)
 
@@ -16,3 +18,4 @@ end
 @testset "memory_profile" begin
     @test profile[3] < benchmark_data[2] * (1+threshold)
 end
+=#

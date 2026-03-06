@@ -3,8 +3,8 @@
 
 This module defines types and functions for working with atomic configurations of N atoms.
 
-## Exported types  
--   [`Config`](@ref) 
+## Exported types
+-   [`Config`](@ref)
 
 ## Exported functions
 -   [`distance2`](@ref)
@@ -27,7 +27,7 @@ export get_centre,recentre!
 
 # See [`dist2`](@ref).
 # """
-# struct Point{T} #<: AbstractVector 
+# struct Point{T} #<: AbstractVector
 #     x::T
 #     y::T
 #     z::T
@@ -35,7 +35,7 @@ export get_centre,recentre!
 
 # Base.size(::Point) = Tuple(3)
 # Base.IndexStyle(::Point}) = IndexLinear()
-# Base.getindex(::Point, i::Int) = 
+# Base.getindex(::Point, i::Int) =
 
 
 # import Base: +
@@ -44,8 +44,8 @@ export get_centre,recentre!
 # (+)(p1::Point, v::Union{Tuple,AbstractVector}) = Point(p1.x+v[1], p1.y+v[2], p1.z+v[3])
 
 # """
-#     dist2(p1::Point,p2::Point) 
-    
+#     dist2(p1::Point,p2::Point)
+
 # Computes squared distance between two [`Point`](@ref)s.
 # """
 # dist2(p1::Point, p2::Point) = ((p1.x - p2.x)^2 + (p1.y - p2.y)^2 +(p1.z - p2.z)^2)
@@ -56,7 +56,7 @@ export get_centre,recentre!
 #     Config{N}(positions::Vector{Point}, boundary::AbstractBC)
 # Generate a configuration of `N` points.
 # """
-# struct Config{N, BC, T} 
+# struct Config{N, BC, T}
 #     pos::Vector{Point{T}}
 #     bc::BC
 # end
@@ -83,11 +83,11 @@ export get_centre,recentre!
     Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where BC <: AbstractBC
     Config(pos::PositionArray, bc::BC) where BC <: AbstractBC
 Generates a configuration of `N` atomic positions, each position saved as SVector of length 3.
--   Fieldnames: 
-    -   `pos`: vector of x,y, and z coordinates of every atom 
+-   Fieldnames:
+    -   `pos`: vector of x,y, and z coordinates of every atom
     -   `bc`: boundary condition
 """
-struct Config{N, BC, T} 
+struct Config{N, BC, T}
     pos::Vector{SVector{3,T}}
     bc::BC
 end
@@ -101,7 +101,7 @@ function Config(pos::Vector{SVector{3,T}}, bc::BC) where {T,BC<:AbstractBC}
     return Config{N,BC,T}(pos,bc)
 end
 
-#type stable constructor as N is passed along 
+#type stable constructor as N is passed along
 function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
     @boundscheck length(pos) == N || error("number of atoms and number of positions not the same")
     return Config{N,BC,T}(pos,bc)
@@ -137,15 +137,16 @@ function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
 
 end
 """
-    distance2(a::PositionVector,b::PositionVector) 
+    distance2(a::PositionVector,b::PositionVector)
     distance2(a::PositionVector,b::PositionVector,bc::SphericalBC)
     distance2(a::PositionVector,b::PositionVector,bc::CubicBC)
     distance2(a::PositionVector,b::PositionVector,bc::RhombicBC)
+    distance2(a::PositionVector,b::PositionVector,bc::RectangularBC)
 Method 1&2 -
 Finds the distance between two positions a and b.
 Method 3 -
 Finds the distance between two positions a and the nearest image of b in a cubic box.
-Method 4 - 
+Method 4 -
 Finds the distance between two positions a and the nearest image of b in a rhombic box.
 Minimum image convension in the z-direction is the same as the cubic box.
 In x and y-direction, first the box is transformed into a rectangular box, then MIC is done, finally the new coordinates are transformed back.
@@ -157,13 +158,19 @@ function distance2(a::PositionVector,b::PositionVector,bc::CubicBC)
     b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z=b[3]+bc.box_length*round((a[3]-b[3])/bc.box_length)
-    return distance2(a,[b_x,b_y,b_z])
+    return distance2(a,SVector(b_x,b_y,b_z))
 end
 function distance2(a::PositionVector,b::PositionVector,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
-    return distance2(a,[b_x,b_y,b_z])
+    return distance2(a,SVector(b_x,b_y,b_z))
+end
+function distance2(a,b,bc::RectangularBC)
+    b_x=b[1]+bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y=b[2]+bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
+    return distance2(a,SVector(b_x,b_y,b_z))
 end
 
 #distance matrix
@@ -190,26 +197,41 @@ end
     get_tan(a::PositionVector,b::PositionVector,bc::SphericalBC)
     get_tan(a::PositionVector,b::PositionVector,bc::CubicBC)
     get_tan(a::PositionVector,b::PositionVector,bc::RhombicBC)
+    get_tan(a::PositionVector,b::PositionVector,bc::RectangularBC)
 Method 1&2 :
 tan of the angle between the line connecting two points a and b, and the z-direction
 Method 3:
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a cubic boundary
-Method 4: 
+Method 4:
 tan of the angle between the line connecting two points a and the nearest image of b, and the z-direction in a rhombic boundary
 """
-get_tan(a::PositionVector,b::PositionVector)=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
-get_tan(a::PositionVector,b::PositionVector,bc::SphericalBC) = get_tan(a,b)
-function get_tan(a::PositionVector,b::PositionVector,bc::CubicBC)
+function get_tan(a,b)
+    tan=((a[1]-b[1])^2+(a[2]-b[2])^2)^0.5/(a[3]-b[3])
+    return abs(tan)
+end
+function get_tan(a,b,bc::SphericalBC)
+    return abs(get_tan(a, b))
+end
+function get_tan(a,b,bc::CubicBC)
     b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
     b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
     b_z = b[3] + bc.box_length*round((a[3]-b[3])/bc.box_length)
-    return ((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return abs(tan)
 end
-function get_tan(a::PositionVector,b::PositionVector,bc::RhombicBC)
+function get_tan(a,b,bc::RhombicBC)
     b_y=b[2]+(3^0.5/2*bc.box_length)*round((a[2]-b[2])/(3^0.5/2*bc.box_length))
     b_x=b[1]-b[2]/3^0.5 + bc.box_length*round(((a[1]-b[1])-1/3^0.5*(a[2]-b[2]))/bc.box_length) + 1/3^0.5*b_y
     b_z=b[3]+bc.box_height*round((a[3]-b[3])/bc.box_height)
-    return ((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return abs(tan)
+end
+function get_tan(a,b,bc::RectangularBC)
+    b_x = b[1] + bc.box_length*round((a[1]-b[1])/bc.box_length)
+    b_y = b[2] + bc.box_length*round((a[2]-b[2])/bc.box_length)
+    b_z = b[3] + bc.box_height*round((a[3]-b[3])/bc.box_height)
+    tan=((a[1]-b_x)^2+(a[2]-b_y)^2)^0.5/(a[3]-b_z)
+    return abs(tan)
 end
 
 """
@@ -217,6 +239,17 @@ end
 Builds the matrix of tan of angles between positions of configuration in a spherical boundary.
 """
 function get_tantheta_mat(conf::Config,bc::BC) where BC <: AbstractBC
+    N=length(conf.pos)
+    mat=zeros(N,N)
+    for i=1:N
+        for j=i+1:N
+            mat[i,j]=mat[j,i] = get_tan(conf.pos[i],conf.pos[j],bc)
+        end
+    end
+    return mat
+end
+
+function get_tantheta_mat(conf::Config,bc::RectangularBC)
     N=length(conf.pos)
     mat=zeros(N,N)
     for i=1:N
@@ -239,5 +272,10 @@ end
 function get_volume(bc::RhombicBC)
     return bc.box_length^2 * bc.box_height * 3^0.5/2
 end
+
+function get_volume(bc::RectangularBC)
+    return bc.box_length^2 * bc.box_height
+end
+
 
 end

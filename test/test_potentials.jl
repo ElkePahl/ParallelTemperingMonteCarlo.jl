@@ -1,6 +1,6 @@
 using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
 
-@testset "ELJPotentials" begin 
+@testset "ELJPotentials" begin
     c = [-2.,0.,1.]
     pot =  ELJPotential{3}(c)
     @test dimer_energy(pot,1.) == -1.0
@@ -29,11 +29,11 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     en,vars = initialise_energy(conf1,d2mat,vars,evars,pot)
     @test en ≈ en_tot
 
-    bc2 = CubicBC(4.) 
+    bc2 = CubicBC(4.)
     conf2 = Config{3}([v1,v2,v3],bc2)
 
 
-    evars1 = set_ensemble_variables(conf2,NPT(3,10))
+    evars1 = set_ensemble_variables(conf2,NPT(3,10,false))
     en_vec_pbc,en_tot_pbc = dimer_energy_config(d2mat,3,vars,4.,bc2,pot1)
     @test en_vec_pbc[2] == dimer_energy_atom(2,d2mat[2,:],4.,pot)
     en_pbc,vars_pbc = initialise_energy(conf2,d2mat,vars,evars1,pot1)
@@ -47,13 +47,22 @@ end
     conf = Config{3}([v1,v2,v3],bc)
     d2mat = get_distance2_mat(conf)
     pot1 = EmbeddedAtomPotential(1.,1.,1.,1.,1.)
-    @test pot1.ean == 0.5 
+    @test pot1.ean == 0.5
     vars = set_variables(conf,d2mat,pot1)
     evars = set_ensemble_variables(conf,NVT(3))
     @test typeof(vars.component_vector) == Matrix{Float64}
     @test vars.component_vector[:,1] == vars.component_vector[:,2]
     E,vars = initialise_energy(conf,d2mat,vars,evars,pot1)
     @test E ≈ -1.3495549581716526
+end
+
+@testset "LookupTable" begin
+    link=joinpath(@__DIR__, "../scripts/lookup-tables/look-up_table-2.txt")
+    potlut=LookupTablePotential(link)
+    @test potlut.table[1][1]==282.19449125205114
+    @test potlut.start_dist==0.1
+    @test potlut.start_angle==0
+    @test length(potlut.table)==potlut.l_angle*potlut.l_dist
 end
 
 @testset "RuNNerPotentialTest" begin
@@ -75,5 +84,5 @@ end
     @test vars.f_matrix[2,2] == 1.
     @test isa(vars.g_matrix,MMatrix)
     E,vars = initialise_energy(conf,d2mat,vars,evars,runnerpotential)
-    @test E ≈-0.261652899
+    @test E ≈ -0.261652899
 end

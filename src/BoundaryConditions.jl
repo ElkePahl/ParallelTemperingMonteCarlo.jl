@@ -1,17 +1,18 @@
-""" 
+"""
     module BoundaryConditions
 
 This module provides structs and methods for different kinds of boundary conditions.
-        
+
 """
 module BoundaryConditions
 using StaticArrays
 using ..CustomTypes
-export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC
+export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
+
 export check_boundary
-"""   
-    AbstractBC{T} 
-Encompasses possible boundary conditions; implemented: 
+"""
+    AbstractBC{T}
+Encompasses possible boundary conditions; implemented:
 -   [`SphericalBC`](@ref)
 -   [`PeriodicBC`](@ref)
 
@@ -37,6 +38,7 @@ Overarching type of boundary condition for simulating the infinite bulk
 -   Implemented types:
     -   [`CubicBC`](@ref)
     -   [`RhombicBC`](@ref)
+    -   [`RectangularBC`](@ref)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 """
@@ -59,6 +61,14 @@ struct RhombicBC{T} <: PeriodicBC{T}
     RhombicBC(; length::T, height::T) where T <: Number = new{T}(length, height)
     RhombicBC{T}(x::T, y::T) where T <: Number = new{T}(x, y)
     RhombicBC(x::T, y::T) where T <: Number = new{T}(x, y)
+end
+"""
+    RectangularBC{T}
+Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, box_length applies to all four sides.
+"""
+struct RectangularBC{T} <: PeriodicBC{T}
+    box_length::T
+    box_height::T
 end
 
 """
