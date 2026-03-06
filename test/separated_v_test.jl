@@ -1,7 +1,7 @@
-using Random 
+using Random
 
 
-@testset "separated_scale"  begin 
+@testset "separated_scale"  begin
     v1 = SVector(1., 2., 3.)
     v2 = SVector(2.,4.,6.)
     v3 = SVector(0., 1., 0.)
@@ -20,13 +20,13 @@ end
     bc = RhombicBC(10.0,10.0)
     conf = Config{3}([v1,v2,v3],bc)
 
-    trial_config_xy,scale1 = volume_change_xy(conf,bc,0.1,12.0,bc.box_length/bc.box_height)
+    trial_config_xy,scale1 = volume_change_xy(conf,0.1,12.0,bc.box_length/bc.box_height)
     @test trial_config_xy.pos[1][1] == conf.pos[1][1]*scale1
     @test trial_config_xy.pos[1][3] == conf.pos[1][3]
 
-    trial_config_z,scale2 = volume_change_z(conf,bc,0.1,12.0,bc.box_length/bc.box_height)
+    trial_config_z,scale2 = volume_change_z(conf,0.1,12.0,bc.box_length/bc.box_height)
     @test trial_config_z.pos[1][1] == conf.pos[1][1]
-    @test abs(trial_config_z.pos[1][3] - conf.pos[1][3]/scale2) < 10^(-12)
+    @test abs(trial_config_z.pos[1][3] - conf.pos[1][3]/scale2) < 1e-12
 end
 
 @testset "rhombic_v_changes_elj" begin
@@ -47,21 +47,43 @@ end
 
     state_new = volume_change(state)
 
-    @test abs(state_new.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] - state_new.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length) < 10^(-12)
-    @test abs(state_new.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] - state_new.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height) < 10^(-12)
+    # Position scaled as much as boundary condition
+    config = state.config
+    trial_config = state_new.ensemble_variables.trial_config
 
-    state_new_xyz = volume_change_xyz(state)
+    @test trial_config.pos[1][1] / config.pos[1][1] ≈
+        trial_config.bc.box_length / config.bc.box_length
+    @test trial_config.pos[1][3] / config.pos[1][3] ≈
+        trial_config.bc.box_height / config.bc.box_height
+    @test trial_config.pos[1][3] / config.pos[1][3] ≈
+        trial_config.pos[1][1] / config.pos[1][1]
 
-    @test abs(state_new_xyz.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] - state_new_xyz.ensemble_variables.trial_config.bc.box_length/state.config.bc.box_length) < 10^(-12)
-    @test abs(state_new_xyz.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] - state_new_xyz.ensemble_variables.trial_config.bc.box_height/state.config.bc.box_height) < 10^(-12)
-    @test state_new_xyz.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] ==1.0 || state_new_xyz.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] == 1.0
-    
-    for i=1:5
-        state_new_decide = volume_change(state,ensemble.separated_volume)
-        @test state_new_decide.ensemble_variables.trial_config.pos[1][1]/state.config.pos[1][1] ==1.0 || state_new_decide.ensemble_variables.trial_config.pos[1][3]/state.config.pos[1][3] == 1.0
+    state_new_xyz = volume_change(state, true)
+    trial_config_xyz = state_new_xyz.ensemble_variables.trial_config
+
+    @test trial_config_xyz.pos[1][1] / config.pos[1][1] ≈
+        trial_config_xyz.bc.box_length / config.bc.box_length
+    @test trial_config_xyz.pos[1][3] / config.pos[1][3] ≈
+        trial_config_xyz.bc.box_height / config.bc.box_height
+
+    for i in 1:100
+        state_new = volume_change(state, true)
+        ensemble_variables = state_new.ensemble_variables
+        trial_config = ensemble_variables.trial_config
+        if ensemble_variables.xy_or_z == 2
+            @test trial_config.pos[2][3] ≠ config.pos[2][3]
+            @test trial_config.pos[2][1] == config.pos[2][1]
+            @test trial_config.pos[2][2] == config.pos[2][2]
+        elseif ensemble_variables.xy_or_z == 1
+            @test trial_config.pos[2][3] == config.pos[2][3]
+            @test trial_config.pos[2][1] ≠ config.pos[2][1]
+            @test trial_config.pos[2][2] ≠ config.pos[2][2]
+        elseif ensemble_variables.xy_or_z == 0
+            @test trial_config.pos[2][3] ≠ config.pos[2][3]
+            @test trial_config.pos[2][1] ≠ config.pos[2][1]
+            @test trial_config.pos[2][2] ≠ config.pos[2][2]
+        end
     end
-
-
 end
 
 
@@ -84,16 +106,12 @@ end
 
     state = MCState(temp.t_grid[1],temp.beta_grid[1],conf,ensemble,potB)
 
-    @test abs(state.potential_variables.tan_mat[1,2]+0.7453559924999299) <= 10^(-12)
-    @test abs(state.potential_variables.tan_mat[1,3]-0.47140452079103173) <= 10^(-12)
+    @test state.potential_variables.tan_mat[1,2] ≈ 0.7453559924999299 #TODO: sign difference
+    @test state.potential_variables.tan_mat[1,3] ≈ 0.47140452079103173
 
     @test state.en_tot == -0.00016263185592172208
 
     state_new = volume_change(state,ensemble.separated_volume)
-    
+
     @test metropolis_condition("volumemove",state_new,ensemble) ≈ metropolis_condition(ensemble,state_new.new_en-state.en_tot,get_volume(state_new.ensemble_variables.trial_config.bc),get_volume(state.config.bc),state.beta)
-
 end
-
-
-

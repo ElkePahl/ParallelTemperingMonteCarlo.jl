@@ -37,63 +37,92 @@ Curry function designed to separate energy calculations into their respective en
         - NPT ensemble with r_cut
         - NNVT ensemble for multiple-species atoms
 """
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::Ptype,movetype::String) where {T,N,BC,P<:AbstractPotentialVariables,E<:NVTVariables}
-    if movetype == "atommove"
-
-        mc_state.potential_variables , mc_state.new_en = energy_update!(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
-
-        mc_state.potential_variables,mc_state.new_en = energy_update!(mc_state.ensemble_variables.trial_move,mc_state.ensemble_variables.index,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
-
-    end
-    return mc_state
-
-end
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NPTVariables}
+function get_energy!(
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E},
+    pot::AbstractPotential,
+    movetype::String,
+) where {E<:NVTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
-            mc_state.ensemble_variables.trial_move,
-            mc_state.ensemble_variables.index,
+            mc_state.ensemble_variables,
             mc_state.config,
             mc_state.potential_variables,
             mc_state.dist2_mat,
             mc_state.new_dist2_vec,
             mc_state.en_tot,
-            mc_state.ensemble_variables.r_cut,
+            pot,
+        )
+    end
+    return mc_state
+end
+function get_energy!(
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E},
+    pot::AbstractPotential,
+    movetype::String
+) where {E<:NPTVariables}
+    if movetype == "atommove"
+        mc_state.potential_variables, mc_state.new_en = energy_update!(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.new_dist2_vec,
+            mc_state.en_tot,
             pot,
         )
     else
-        mc_state.potential_variables.en_atom_vec, mc_state.new_en = dimer_energy_config(mc_state.ensemble_variables.new_dist2_mat, N, mc_state.potential_variables, mc_state.ensemble_variables.new_r_cut, mc_state.ensemble_variables.trial_config.bc, pot)
-        #println("new_en in get_energy! ",mc_state.new_en)
+        mc_state.potential_variables.en_atom_vec, mc_state.new_en = dimer_energy_config(
+            mc_state.ensemble_variables.new_dist2_mat,
+            N,
+            mc_state.potential_variables,
+            mc_state.ensemble_variables.new_r_cut,
+            mc_state.ensemble_variables.trial_config.bc,
+            pot,
+        )
     end
     return mc_state
 end
-
-function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NNVTVariables}
+function get_energy!(
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E},
+    pot::AbstractPotential,
+    movetype::String
+) where {E<:NNVTVariables}
     if movetype == "atommove"
-
-        mc_state.potential_variables , mc_state.new_en = energy_update!(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.new_dist2_vec,mc_state.en_tot,pot)
-
+        mc_state.potential_variables, mc_state.new_en = energy_update!(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.new_dist2_vec,
+            mc_state.en_tot,
+            pot,
+        )
     else
-
-        mc_state.potential_variables , mc_state.new_en = swap_energy_update(mc_state.ensemble_variables,mc_state.config,mc_state.potential_variables,mc_state.dist2_mat,mc_state.en_tot,pot)
-
+        mc_state.potential_variables, mc_state.new_en = swap_energy_update(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.en_tot,
+            pot,
+        )
     end
-
     return mc_state
-
 end
+
 """
     acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
 [`acc_test!`](@ref) function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the [`swap_config!`](@ref) function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String)
-    if metropolis_condition(movetype,mc_state,ensemble) >=rand()
-
-        swap_config!(mc_state,movetype)
+    if metropolis_condition(movetype, mc_state, ensemble) >= rand()
+        swap_config!(mc_state, movetype)
     else
-        for i in eachindex(mc_state.potential_variables.tan_mat)
-            mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
-        end
+        #TODO: why was this here?
+        # DimerPotentialVariables does not have the new_tan_mat or tan_mat fields.
+        #for i in eachindex(mc_state.potential_variables.tan_mat)
+        #    mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
+        #end
     end
 end
 """
@@ -122,7 +151,8 @@ end
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
 function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype,n_steps::Int) where {N,E}
-    Threads.@threads for state in mc_states
+    #Threads.@threads for state in mc_states
+    for state in mc_states
         for i_step in 1:n_steps
             state = mc_move!(state,move_strat,pot,ensemble)
         end
@@ -156,18 +186,8 @@ function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_par
     #println("cycle: ",idx)
     mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
 
-    #     if save == true
-#         if rem(i,1000) == 0
-#             save_states(mc_params,mc_states,i,save_dir)
-#             save_results(results,save_dir)
-#         end
-#     end
-
-    #println("mc_states[1].en_tot: ",mc_states[1].en_tot)
-    #println("mc_states[1].new_en: ",mc_states[1].new_en)
-    #println("dimer_energy_config true: ",dimer_energy_config(mc_states[1].dist2_mat, length(mc_states[1].config.pos), mc_states[1].potential_variables, mc_states[1].ensemble_variables.r_cut, mc_states[1].config.bc, potential)[2])
-    #println("_________________cycle done__________________")
-
+    #TODO: Implement saving configurations after n steps
+    #=
     if rem(idx,10000) == 0
         for i=1:length(mc_states)
             open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
@@ -184,6 +204,7 @@ function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_par
             end
         end
     end
+    =#
 
     if rem(idx,mc_params.mc_sample) == 0
         sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave,idx)

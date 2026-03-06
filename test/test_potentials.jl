@@ -57,12 +57,13 @@ end
 end
 
 @testset "LookupTable" begin
-    link="/home/runner/work/ParallelTemperingMonteCarlo.jl/ParallelTemperingMonteCarlo.jl/scripts/look-up_table-2.txt"
+    link=joinpath(@__DIR__, "../scripts/look-up_table-2.txt")
     potlut=LookuptablePotential(link)
     @test potlut.table[1][1]==282.19449125205114
     @test potlut.start_dist==0.1
     @test potlut.start_angle==0
     @test length(potlut.table)==potlut.l_angle*potlut.l_dist
+end
 
 @testset "RuNNerPotentialTest" begin
     include("potentialfile.jl")
@@ -83,5 +84,5 @@ end
     @test vars.f_matrix[2,2] == 1.
     @test isa(vars.g_matrix,MMatrix)
     E,vars = initialise_energy(conf,d2mat,vars,evars,runnerpotential)
-    @test E ≈-0.261652899
+    @test E ≈ -0.261652899
 end

@@ -96,162 +96,172 @@ function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC
     return mc_state
 end
 
+
 """
-    volume_change(conf::Config, bc::CubicBC, max_vchange::Number, max_length::Number)
-    volume_change(conf::Config, bc::RhombicBC, max_vchange::Number, max_length::Number)
-    volume_change(mc_state::MCState)
-Scale the whole configuration, including positions and the box length.
-Returns the trial configuration as a struct.
+    scale_xyz(::RhombicBC, α)
+    scale_xyz(::RectangularBC, α)
+    scale_xyz(::Vector{<:SVector}, α)
+    scale_xyz(::Config, α)
+
+Scale boundary condition, vector, or configuration in all three dimensions by factor `α`.
 """
-function volume_change(conf::Config, bc::CubicBC, max_vchange::Number, max_length::Number)
-    scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    if conf.bc.box_length >= max_length && scale > 1.
-        scale=1.
-    end
-    trial_config = Config(conf.pos * scale,CubicBC(conf.bc.box_length * scale))
-    return trial_config,scale
+scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
+scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
+scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
+scale_xyz(vector, α) = α * vector
+function scale_xyz(config::Config{N}, α) where {N}
+    return Config{N}(scale_xyz(config.pos, α), scale_xyz(config.bc, α))
 end
 
-function volume_change(conf::Config, bc::RhombicBC, max_vchange::Number, max_length::Number)
-    scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    if conf.bc.box_length >= max_length && scale > 1.
-        scale=1.
+"""
+    volume_change_xyz(conf::Config, bc, max_vchange::Real, max_length::Real)
+
+Scale the whole configuration, including positions and the box length by a random amount.
+Returns the trial configuration.
+"""
+function volume_change_xyz(conf::Config, max_vchange::Real, max_length::Real)
+    scale = exp((rand()-0.5) * max_vchange) ^ (1/3)
+    if conf.bc.box_length >= max_length && scale > 1.0
+        scale = 1.0
     end
 
-    trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
-    return trial_config,scale
+    trial_config = scale_xyz(conf, scale)
+    return trial_config, scale
 end
 
-function volume_change(conf::Config, bc::RectangularBC, max_vchange, max_length)
-    scale = exp((rand()-0.5)*max_vchange)^(1/3)
-    if conf.bc.box_length >= max_length && scale > 1.
-        scale=1.
-    end
+"""
+    scale_xy(::RhombicBC, α)
+    scale_xy(::RectangularBC, α)
+    scale_xy(::Vector{<:SVector}, α)
+    scale_xy(::Config, α)
 
-    trial_config = Config(conf.pos * scale,RectangularBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
-    return trial_config,scale
-end
-
-
-function scale_xy(pos::Vector,scale)
-    new_pos=Array{SVector}(undef,length(pos))
-    for i=1:length(pos)
-        #pos[i] = setindex(pos[i], pos[i][1]*scale, 1)
-        #pos[i] = setindex(pos[i], pos[i][2]*scale, 2)
-        new_pos[i]=SVector(pos[i][1]*scale,pos[i][2]*scale,pos[i][3])
+Scale boundary condition, vector, or configuration in all ``x`` and ``y`` dimensions by
+factor `α`.
+"""
+scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
+scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box_height)
+function scale_xy(pos, scale)
+    new_pos = map(pos) do p
+        SVector(p[1] * scale, p[2] * scale, p[3])
     end
     return new_pos
 end
-function scale_z(pos::Vector,scale)
-    new_pos=Array{SVector}(undef,length(pos))
-    for i=1:length(pos)
-        #pos[i] = setindex(pos[i], pos[i][3]*scale, 3)
-        new_pos[i]=SVector(pos[i][1],pos[i][2],pos[i][3]*scale)
+function scale_xy(config::Config{N}, scale) where {N}
+    return Config{N}(scale_xy(config.pos, scale), scale_xy(config.bc, scale))
+end
+
+"""
+    scale_z(::RhombicBC, α)
+    scale_z(::RectangularBC, α)
+    scale_z(::Vector{<:SVector}, α)
+    scale_z(::Config, α)
+
+Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
+"""
+scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
+scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
+function scale_z(pos, scale)
+    new_pos = map(pos) do p
+        SVector(p[1], p[2], p[3] * scale)
     end
     return new_pos
 end
+function scale_z(config::Config{N}, scale) where {N}
+    return Config{N}(scale_z(config.pos, scale), scale_z(config.bc, scale))
+end
 
-function volume_change_xy(conf::Config, bc::RhombicBC, max_vchange, max_length, lh_ratio)
-    scale = exp((rand()-0.5)*max_vchange)^(1/2)
-    if conf.bc.box_length/conf.bc.box_height >= lh_ratio*1.1 && scale > 1.
-        scale=1/scale
-    elseif conf.bc.box_length/conf.bc.box_height <= lh_ratio*0.909 && scale < 1.
-        scale=1/scale
+"""
+    volume_change_xy(conf::Config, bc, max_vchange::Real, max_length::Real, lh_ratio)
+
+Scale the whole configuration, including positions and the box length by a random amount in
+the ``x`` and ``y`` directions.
+
+Returns the trial configuration.
+"""
+function volume_change_xy(conf::Config, max_vchange, max_length, lh_ratio)
+    scale = exp((rand() - 0.5) * max_vchange) ^ (1/2)
+    if conf.bc.box_length / conf.bc.box_height >= lh_ratio * 1.1 && scale > 1.0
+        scale=1 / scale
+    elseif conf.bc.box_length / conf.bc.box_height <= lh_ratio * 0.909 && scale < 1.0
+        scale=1 / scale
     end
     if conf.bc.box_length>=max_length && scale > 1.
         scale=1/scale
     end
-    trial_config = Config(scale_xy(conf.pos,scale),RhombicBC(conf.bc.box_length * scale, conf.bc.box_height))
-    #trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
 
-    return trial_config,scale
-end
-function volume_change_z(conf::Config, bc::RhombicBC, max_vchange, max_height, lh_ratio)
-    scale = exp((rand()-0.5)*max_vchange)
-    if conf.bc.box_length/conf.bc.box_height <= lh_ratio*1.1 && scale > 1.
-        scale=1/scale
-    elseif conf.bc.box_length/conf.bc.box_height >= lh_ratio*0.909 && scale < 1.
-        scale=1/scale
-    end
-    if conf.bc.box_height>=max_height && scale > 1.
-        scale=1/scale
-    end
-
-    trial_config = Config(scale_z(conf.pos,scale),RhombicBC(conf.bc.box_length, conf.bc.box_height * scale))
-    #trial_config = Config(conf.pos * scale,RhombicBC(conf.bc.box_length * scale, conf.bc.box_height * scale))
-    return trial_config,1/scale
+    return scale_xy(conf, scale), scale
 end
 
-function volume_change_xy(conf::Config, bc::RectangularBC, max_vchange, max_length, lh_ratio)
-    scale = exp((rand()-0.5)*max_vchange)^(1/2)
-    if conf.bc.box_length/conf.bc.box_height >= lh_ratio*1.1 && scale > 1.
-        scale=1/scale
-    elseif conf.bc.box_length/conf.bc.box_height <= lh_ratio*0.909 && scale < 1.
-        scale=1/scale
-    end
-    if conf.bc.box_length>=max_length && scale > 1.
-        scale=1/scale
-    end
-    trial_config = Config(scale_xy(conf.pos,scale),RectangularBC(conf.bc.box_length * scale, conf.bc.box_height))
+"""
+    volume_change_z(conf::Config, max_vchange::Real, max_length::Real, lh_ratio)
 
-    return trial_config,scale
-end
-function volume_change_z(conf::Config, bc::RectangularBC, max_vchange, max_height, lh_ratio)
-    scale = exp((rand()-0.5)*max_vchange)
-    if conf.bc.box_length/conf.bc.box_height <= lh_ratio*1.1 && scale > 1.
-        scale=1/scale
-    elseif conf.bc.box_length/conf.bc.box_height >= lh_ratio*0.909 && scale < 1.
-        scale=1/scale
+Scale the whole configuration, including positions and the box length by a random amount in
+the ``z`` direction.
+
+Returns the trial configuration.
+"""
+function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
+    scale = exp((rand() - 0.5) * max_vchange)
+    if conf.bc.box_length / conf.bc.box_height <= lh_ratio*1.1 && scale > 1.0
+        scale = 1 / scale
+    elseif conf.bc.box_length / conf.bc.box_height >= lh_ratio*0.909 && scale < 1.0
+        scale = 1 / scale
     end
-    if conf.bc.box_height>=max_height && scale > 1.
-        scale=1/scale
+    if conf.bc.box_height >= max_height && scale > 1.0
+        scale = 1 / scale
     end
 
-    trial_config = Config(scale_z(conf.pos,scale),RectangularBC(conf.bc.box_length, conf.bc.box_height * scale))
-    return trial_config,1/scale
+    return scale_z(conf, scale), 1/scale
 end
 
-function mat_scale!(new_dist2_mat::Matrix{Float64}, dist2_mat::Matrix{Float64}, scale::Float64)
-    for i=1:32
-        for j=1:i
-            new_dist2_mat[i,j] = dist2_mat[i,j]*scale^2
-            new_dist2_mat[j,i] = new_dist2_mat[i,j]
-        end
-    end
-    return new_dist2_mat
-end
+"""
+    volume_change(mc_state::MCState, separated_volume=false)
 
-
+MC move that changes volume. If `separated_volume == true`, the volume is changed in the ``x``,``y`` directions or in the ``z`` direction separately.
+"""
 function volume_change(mc_state::MCState)
     #change volume
-    mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.config.bc, mc_state.max_displ[2], mc_state.max_boxlength)
+    mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
+        mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
+    )
     #change r_cut
     mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
 
 
     #get the new dist2 matrix
     mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
-    #mc_state.ensemble_variables.new_dist2_mat = mc_state.dist2_mat * scale^2
-    #mc_state.ensemble_variables.new_dist2_mat = mat_scale!(mc_state.ensemble_variables.new_dist2_mat, mc_state.dist2_mat, scale)
-
 
     return mc_state
 end
 
-function volume_change_xyz(mc_state::MCState)
+function volume_change_separated(mc_state::MCState)
     #change volume
-    ra=rand(1:6)
-    if ra==1  # Choose z-direction volume change
-        mc_state.ensemble_variables.xy_or_z=2        # Specify the type of volume moves chosen, z-direction
-        mc_state.ensemble_variables.trial_config, scale = volume_change_z(mc_state.config, mc_state.config.bc, mc_state.max_displ[4], mc_state.max_boxheight,mc_state.lh_ratio)
-    elseif ra<=3  # Choose z-direction volume change
-        mc_state.ensemble_variables.xy_or_z=1        # xy-direction
-        mc_state.ensemble_variables.trial_config, scale = volume_change_xy(mc_state.config, mc_state.config.bc, mc_state.max_displ[3], mc_state.max_boxlength,mc_state.lh_ratio)
+    ra = rand(1:6)
+    if ra == 1  # Choose z-direction volume change
+        mc_state.ensemble_variables.xy_or_z = 2
+        mc_state.ensemble_variables.trial_config, scale = volume_change_z(
+            mc_state.config,
+            mc_state.max_displ[4],
+            mc_state.max_boxheight,
+            mc_state.lh_ratio,
+        )
+    elseif ra <= 3  # Choose xy-direction volume change
+        mc_state.ensemble_variables.xy_or_z = 1
+        mc_state.ensemble_variables.trial_config, scale = volume_change_xy(
+            mc_state.config,
+            mc_state.max_displ[3],
+            mc_state.max_boxlength,
+            mc_state.lh_ratio,
+        )
     else   # Choose all-direction volume change
-        mc_state.ensemble_variables.xy_or_z=0
-        mc_state.ensemble_variables.trial_config, scale = volume_change(mc_state.config, mc_state.config.bc, mc_state.max_displ[2], mc_state.max_boxlength)
+        mc_state.ensemble_variables.xy_or_z = 0
+        mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
+            mc_state.config,
+            mc_state.max_displ[2],
+            mc_state.max_boxlength,
+        )
     end
-        #change r_cut
+    #change r_cut
     mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
 
     #get the new dist2 matrix
@@ -259,22 +269,17 @@ function volume_change_xyz(mc_state::MCState)
 
 
     if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
-        #for i in eachindex(mc_state.potential_variables.tan_mat)
-            #mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i] * scale
-        #end
         mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
     end
-    #println("new_tan_mat in v_change_xyz")
-    #println(mc_state.potential_variables.new_tan_mat[1,2])
     return mc_state
 end
 
-function volume_change(mc_state::MCState,separated_volume::Bool)
+function volume_change(mc_state::MCState, separated_volume::Bool)
    if separated_volume==false
-        mc_state=volume_change(mc_state)
-    else
-        mc_state=volume_change_xyz(mc_state)
-    end
+       mc_state=volume_change(mc_state)
+   else
+       mc_state=volume_change_separated(mc_state)
+   end
     return mc_state
 end
 
