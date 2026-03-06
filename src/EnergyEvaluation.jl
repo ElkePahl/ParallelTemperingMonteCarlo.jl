@@ -795,30 +795,6 @@ function dimer_energy(pot::ELJPotential{N}, r2::Real) where N
     return sum1
 end
 
-"""
-    ELJPotentialEven{N,T}
-Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
-as sum over c_i r^(-i), starting with i=6 up to i=N+6 with only even integers i
-field name: coeff : contains ELJ coefficients c_i from i=6 to i=N+6 in steps of 2, coefficient for every even power needed.
-"""
-struct ELJPotentialEven{N,T} <: AbstractDimerPotential
-    coeff::SVector{N,T}
-end
-
-function ELJPotentialEven{N}(c) where N
-    @boundscheck length(c) == N || error("number of ELJ coefficients does not match given length")
-    coeff = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotentialEven{N,T}(coeff)
-end
-
-function ELJPotentialEven(c)
-    N = length(c)
-    coeff = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotentialEven{N,T}(coeff)
-end
-
 function dimer_energy(pot::ELJPotentialEven{N}, r2::Real) where N
     r6inv = 1/(r2*r2*r2)
     sum1 = 0.
