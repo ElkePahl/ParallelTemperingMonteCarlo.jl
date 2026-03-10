@@ -215,25 +215,33 @@ function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
 end
 
 """
-    volume_change(mc_state::MCState, separated_volume=false)
+    volume_change_uniform(mc_state::MCState)
 
-MC move that changes volume. If `separated_volume == true`, the volume is changed in the ``x``,``y`` directions or in the ``z`` direction separately.
+Change the volume uniformly and update the `mc_state` accordingly.
 """
-function volume_change(mc_state::MCState)
-    #change volume
+function volume_change_uniform(mc_state::MCState)
     mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
-    #change r_cut
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
-
-
-    #get the new dist2 matrix
+    mc_state.ensemble_variables.new_r_cut = get_r_cut(
+        mc_state.ensemble_variables.trial_config.bc
+    )
     mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
 
     return mc_state
 end
 
+"""
+    volume_change_separated(mc_state::MCState)
+
+Change the volume
+- in the ``z``-direction with probability ``1/3``,
+- in the ``x``,``y``-directions with probability ``2/3`` or
+- unioformly with probability ``1/2``.
+
+Update the `mc_state` accordingly. If the potential used is [`ELJPotentialB`](@ref) or
+[`LookupTablePotential`](@ref), update the tangent matrix as well.
+"""
 function volume_change_separated(mc_state::MCState)
     #change volume
     ra = rand(1:6)
@@ -261,24 +269,36 @@ function volume_change_separated(mc_state::MCState)
             mc_state.max_boxlength,
         )
     end
-    #change r_cut
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(mc_state.ensemble_variables.trial_config.bc)
 
-    #get the new dist2 matrix
-    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(mc_state.ensemble_variables.trial_config)
+    mc_state.ensemble_variables.new_r_cut = get_r_cut(
+        mc_state.ensemble_variables.trial_config.bc,
+    )
+    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(
+        mc_state.ensemble_variables.trial_config,
+    )
 
-
-    if ra<=3 && (typeof(mc_state.potential_variables) == ELJPotentialBVariables{Float64} || typeof(mc_state.potential_variables) == LookupTableVariables{Float64})
-        mc_state.potential_variables.new_tan_mat=get_tantheta_mat(mc_state.ensemble_variables.trial_config,mc_state.ensemble_variables.trial_config.bc)
+    if ra<=3 && (
+        mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
+        mc_state.potential_variables isa LookupTableVariables{Float64}
+    )
+        mc_state.potential_variables.new_tan_mat = get_tantheta_mat(
+            mc_state.ensemble_variables.trial_config,
+            mc_state.ensemble_variables.trial_config.bc,
+        )
     end
     return mc_state
 end
 
-function volume_change(mc_state::MCState, separated_volume::Bool)
-   if separated_volume==false
-       mc_state=volume_change(mc_state)
-   else
+"""
+    volume_change(mc_state::MCState, separated_volume=false)
+
+MC move that changes volume. If `separated_volume == true`, the volume is changed in the ``x``,``y`` directions or in the ``z`` direction separately.
+"""
+function volume_change(mc_state::MCState, separated_volume=false)
+   if separated_volume
        mc_state=volume_change_separated(mc_state)
+   else
+       mc_state=volume_change_uniform(mc_state)
    end
     return mc_state
 end

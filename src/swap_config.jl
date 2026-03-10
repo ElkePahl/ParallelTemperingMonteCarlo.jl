@@ -35,24 +35,27 @@ function swap_atom_config!(mc_state::MCState{T,N,BC,P,E},i_atom::Int,trial_pos::
     swap_vars!(i_atom,mc_state.potential_variables)
 
 end
+
+# TODO: the first methods never get called!
 """
     swap_config_v!(mc_state::MCState, bc::CubicBC, trial_config::Config, new_dist2_mat::Matrix{N}, en_vec_new::VorS, new_en_tot::Number) where N <: Number
     swap_config_v!(mc_state::MCState, bc::RhombicBC, trial_config::Config, new_dist2_mat::Matrix{N}, en_vec_new::VorS, new_en_tot::Number) where N <: Number
+
 Swaps `mc_state`s and ensemble variables in case of accepted volume move for NPT ensemble.
 Implemented for [`CubicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
 """
-function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_dist2_mat::Matrix{N},en_vec_new::VorS,new_en_tot::Number) where N <: Number
-    mc_state.config = Config(trial_config.pos,CubicBC(trial_config.bc.box_length))
-    #mc_state.dist2_mat = copy(new_dist2_mat)
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
-    #mc_state.dist2_mat, new_dist2_mat = new_dist2_mat, mc_state.dist2_mat
-    #mc_state.potential_variables.en_atom_vec = copy(en_vec_new)
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
-    #mc_state.potential_variables.en_atom_vec, en_vec_new = en_vec_new, mc_state.potential_variables.en_atom_vec
+function swap_config_v!(
+    mc_state::MCState,
+    bc::CubicBC,
+    trial_config::Config,
+    new_dist2_mat,
+    en_vec_new,
+    new_en_tot,
+)
+    mc_state.config = Config(trial_config.pos, trial_config.bc)
+    mc_state.dist2_mat .= new_dist2_mat
+    mc_state.potential_variables.en_atom_vec .= en_vec_new
+
     mc_state.en_tot = new_en_tot
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
@@ -60,50 +63,19 @@ function swap_config_v!(mc_state::MCState,bc::CubicBC,trial_config::Config,new_d
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
-function swap_config_v!(mc_state::MCState,bc::RhombicBC,trial_config::Config,new_dist2_mat::Matrix{N},en_vec_new::VorS,new_en_tot::Number) where N <: Number
-    mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    #mc_state.dist2_mat = new_dist2_mat
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
+function swap_config_v!(
+    mc_state::MCState,
+    bc::RhombicBC,
+    trial_config::Config,
+    new_dist2_mat,
+    en_vec_new,
+    new_en_tot,
+)
+    mc_state.config = Config(trial_config.pos, trial_config.bc)
 
-    #mc_state.potential_variables.en_atom_vec = en_vec_new
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
-
-    mc_state.en_tot = new_en_tot
-    if mc_state.ensemble_variables.xy_or_z==0
-        mc_state.count_vol[1] += 1
-        mc_state.count_vol[2] += 1
-    elseif mc_state.ensemble_variables.xy_or_z==1
-        mc_state.count_vol_xy[1] += 1
-        mc_state.count_vol_xy[2] += 1
-    else
-        mc_state.count_vol_z[1] += 1
-        mc_state.count_vol_z[2] += 1
-    end
-
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
-end
-
-function swap_config_v!(mc_state::MCState,potential_variables::ELJPotentialBVariables,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
-    mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    #mc_state.dist2_mat = new_dist2_mat
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
-
-    #mc_state.potential_variables.en_atom_vec = en_vec_new
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
-
-    if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
-        for i in eachindex(mc_state.potential_variables.tan_mat)
-            mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
-        end
-    end
+    mc_state.dist2_mat .= new_dist2_mat
+    mc_state.potential_variables.en_atom_vec .= en_vec_new
+    mc_state.potential_variables.en_atom_vec .= en_vec_new
 
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z==0
@@ -120,47 +92,22 @@ function swap_config_v!(mc_state::MCState,potential_variables::ELJPotentialBVari
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
-function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariables,bc::RhombicBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
-    mc_state.config = Config(trial_config.pos,RhombicBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    #mc_state.dist2_mat = new_dist2_mat
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
+function swap_config_v!(
+    mc_state::MCState,
+    potential_variables::DimerPotentialVariables,
+    bc::RectangularBC,
+    trial_config::Config,
+    new_dist2_mat,
+    en_vec_new,
+    new_en_tot,
+)
+    mc_state.config = Config(
+        trial_config.pos,
+        RectangularBC(trial_config.bc.box_length, trial_config.bc.box_height),
+    )
+    mc_state.dist2_mat .= new_dist2_mat
 
-    #mc_state.potential_variables.en_atom_vec = en_vec_new
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
-
-    mc_state.potential_variables.tan_mat = get_tantheta_mat(trial_config,trial_config.bc)
-
-    mc_state.en_tot = new_en_tot
-
-    if mc_state.ensemble_variables.xy_or_z==0
-        mc_state.count_vol[1] += 1
-        mc_state.count_vol[2] += 1
-    elseif mc_state.ensemble_variables.xy_or_z==1
-        mc_state.count_vol_xy[1] += 1
-        mc_state.count_vol_xy[2] += 1
-    else
-        mc_state.count_vol_z[1] += 1
-        mc_state.count_vol_z[2] += 1
-    end
-
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
-end
-
-function swap_config_v!(mc_state::MCState,potential_variables::DimerPotentialVariables,bc::RectangularBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
-    mc_state.config = Config(trial_config.pos,RectangularBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    #mc_state.dist2_mat = new_dist2_mat
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
-
-    #mc_state.potential_variables.en_atom_vec = en_vec_new
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
+    mc_state.potential_variables.en_atom_vec .= en_vec_new
 
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z==0
@@ -177,63 +124,34 @@ function swap_config_v!(mc_state::MCState,potential_variables::DimerPotentialVar
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
-function swap_config_v!(mc_state::MCState,potential_variables::ELJPotentialBVariables,bc::RectangularBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
-    mc_state.config = Config(trial_config.pos,RectangularBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    #mc_state.dist2_mat = new_dist2_mat
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
+#TODO: potential_variables is passed as argument, but only mc_state.potential_variables is used.
+function swap_config_v!(
+    mc_state::MCState,
+    potential_variables::Union{ELJPotentialBVariables,LookupTableVariables},
+    bc::Union{RectangularBC,RhombicBC},
+    trial_config::Config,
+    new_dist2_mat,
+    en_vec_new,
+    new_en_tot,
+)
+    mc_state.config = Config(
+        trial_config.pos,
+        trial_config.bc,
+    )
+    # TODO: swap instead of copying
+    mc_state.dist2_mat .= new_dist2_mat
+    mc_state.potential_variables.en_atom_vec .= en_vec_new
 
-    #mc_state.potential_variables.en_atom_vec = en_vec_new
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
-
-    if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
-        for i in eachindex(mc_state.potential_variables.tan_mat)
-            mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
-        end
+    # if xy_or_z == 0, tangents don't change. TODO: replace 0, 1, 2 with an Enum.
+    if mc_state.ensemble_variables.xy_or_z ≥ 1
+        mc_state.potential_variables.tan_mat .= mc_state.potential_variables.new_tan_mat
     end
 
     mc_state.en_tot = new_en_tot
-    if mc_state.ensemble_variables.xy_or_z==0
+    if mc_state.ensemble_variables.xy_or_z == 0
         mc_state.count_vol[1] += 1
         mc_state.count_vol[2] += 1
-    elseif mc_state.ensemble_variables.xy_or_z==1
-        mc_state.count_vol_xy[1] += 1
-        mc_state.count_vol_xy[2] += 1
-    else
-        mc_state.count_vol_z[1] += 1
-        mc_state.count_vol_z[2] += 1
-    end
-
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
-end
-
-function swap_config_v!(mc_state::MCState,potential_variables::LookupTableVariables,bc::RectangularBC,trial_config::Config,new_dist2_mat,en_vec_new,new_en_tot)
-    mc_state.config = Config(trial_config.pos,RectangularBC(trial_config.bc.box_length, trial_config.bc.box_height))
-    #mc_state.dist2_mat = new_dist2_mat
-    for i in eachindex(mc_state.dist2_mat)
-        mc_state.dist2_mat[i] = new_dist2_mat[i]
-    end
-
-    #mc_state.potential_variables.en_atom_vec = en_vec_new
-    for i in eachindex(mc_state.potential_variables.en_atom_vec)
-        mc_state.potential_variables.en_atom_vec[i] = en_vec_new[i]
-    end
-
-    mc_state.potential_variables.tan_mat = get_tantheta_mat(trial_config,trial_config.bc)
-    #if mc_state.potential_variables.tan_mat[1,2]!=mc_state.potential_variables.new_tan_mat[1,2]
-        #for i in eachindex(mc_state.potential_variables.tan_mat)
-            #mc_state.potential_variables.tan_mat[i] = mc_state.potential_variables.new_tan_mat[i]
-        #end
-    #end
-
-    mc_state.en_tot = new_en_tot
-    if mc_state.ensemble_variables.xy_or_z==0
-        mc_state.count_vol[1] += 1
-        mc_state.count_vol[2] += 1
-    elseif mc_state.ensemble_variables.xy_or_z==1
+    elseif mc_state.ensemble_variables.xy_or_z == 1
         mc_state.count_vol_xy[1] += 1
         mc_state.count_vol_xy[2] += 1
     else
@@ -268,16 +186,13 @@ end
 
 
 function swap_vars!(i_atom::Int,potential_variables::ELJPotentialBVariables)
-
-    potential_variables.tan_mat[i_atom,:] = potential_variables.new_tan_vec
-    potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
-
+    potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
+    potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
 end
 
 function swap_vars!(i_atom,potential_variables::LookupTableVariables)
-    potential_variables.tan_mat[i_atom,:] = potential_variables.new_tan_vec
-    potential_variables.tan_mat[:,i_atom] = potential_variables.new_tan_vec
-
+    potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
+    potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
 end
 
 function swap_vars!(i_atom::Int,potential_variables::EmbeddedAtomVariables)

@@ -180,10 +180,11 @@ mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
 end
 
 
+#TODO: what are the fields?
 """
     struct LookupTablePotential <: AbstractDimerPotentialB
 
-Fields:
+# Fields:
 - `table::Matrix{Float64}`: Table of values.
 - `start_dist::Float64`: First distance in list.
 - `start_angle::Float64`: First angle in list.
@@ -192,6 +193,12 @@ Fields:
 - `d_dist::Float64`:
 - `d_angle::Float64`:
 - `c6coeff::Float64`:
+
+# Constructor
+
+    LookupTablePotential(file)
+
+Read lookup table potential from `file`.
 """
 struct LookupTablePotential <: AbstractDimerPotentialB
     table::Matrix{Float64}
@@ -241,6 +248,7 @@ end
 
 LookupTablePotential(link::String) = LookupTablePotential(read_lookuptable(link)...)
 
+#TODO: document me
 mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Array{T}
     tan_mat::Matrix{T}
@@ -249,15 +257,6 @@ mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
 end
 
 function dimer_energy(pot::LookupTablePotential, r2, tan)
-    #if (typeof(atan(abs(tan)))==Float64 && abs(tan) >=0 && abs(tan) <= 10^6) == false
-        #println(tan, " ", atan(abs(tan)))
-    #end
-    #if tan == NaN || tan == Inf #|| atan(abs(tan)) == NaN
-        #angle_index = 91
-    #else
-    #if tan != NaN && atan(abs(tan)) == NaN
-        #println(tan)
-    #end
     angle_index=1
     if abs(tan) >0.00872687153 && abs(tan) <= 114.592845357
         angle_index=round(Int32,atan(abs(tan))/pot.d_angle*180.0/pi+1.)
@@ -370,7 +369,6 @@ function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int, potential_va
             energy_tot += e_ij
         end
     end
-    #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end
 function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::DimerPotentialVariables, r_cut::Real, bc::CubicBC, pot::AbstractDimerPotential)
@@ -433,14 +431,12 @@ function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_var
 
     for i in 1:NAtoms
         for j=i+1:NAtoms
-            #e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
             e_ij=dimer_energy(pot,distmat[i,j],potential_variables.tan_mat[i,j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
             energy_tot += e_ij
         end
     end
-    #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end
 function dimer_energy_config(distmat::Matrix{Float64}, NAtoms::Int,potential_variables::ELJPotentialBVariables, r_cut::Real, bc::CubicBC, pot::AbstractDimerPotentialB)
@@ -573,7 +569,6 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
             energy_tot += e_ij
         end
     end
-    #energy_tot=sum(dimer_energy_vec)
     return dimer_energy_vec, energy_tot
 end
 function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::CubicBC, pot::LookupTablePotential)
@@ -595,8 +590,9 @@ function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVar
 end
 function dimer_energy_config(distmat, NAtoms,potential_variables::LookupTableVariables, r_cut, bc::RhombicBC, pot::LookupTablePotential)
     dimer_energy_vec = zeros(NAtoms)
-    energy_tot = 0.
+    energy_tot = 0.0
 
+    #TODO: look into this.
     if abs(potential_variables.new_tan_mat[1,2]-potential_variables.tan_mat[1,2])>=10^(-9)
         #println("new_tan_mat!=tan_mat, use new_tan_mat")
         #println("new: ",potential_variables.new_tan_mat[1,2])
@@ -682,7 +678,7 @@ function dimer_energy_update!(
 )
     @views delta_en = dimer_energy_atom(index,new_dist2_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:], pot)
 
-    return  delta_en + en_tot
+    return delta_en + en_tot
 end
 function dimer_energy_update!(
     index,
@@ -705,9 +701,9 @@ function dimer_energy_update!(
     en_tot,
     pot::AbstractDimerPotentialB,
 )
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
+    @views delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
 
-    return  delta_en + en_tot
+    return delta_en + en_tot
 end
 function dimer_energy_update!(
     index,
@@ -719,9 +715,9 @@ function dimer_energy_update!(
     r_cut,
     pot::AbstractDimerPotentialB,
 )
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
+    @views delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
 
-    return  delta_en + en_tot
+    return delta_en + en_tot
 end
 function dimer_energy_update!(
     index,
@@ -732,9 +728,9 @@ function dimer_energy_update!(
     en_tot,
     pot::LookupTablePotential,
 )
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
+    @views delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:], pot)
 
-    return  delta_en + en_tot
+    return delta_en + en_tot
 end
 function dimer_energy_update!(
     index,
@@ -746,9 +742,9 @@ function dimer_energy_update!(
     r_cut,
     pot::LookupTablePotential,
 )
-    delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
+    @views delta_en = dimer_energy_atom(index,new_dist2_vec,new_tan_vec,r_cut,pot) - dimer_energy_atom(index,dist2_mat[index,:],tanmat[index,:],r_cut, pot)
 
-    return  delta_en + en_tot
+    return delta_en + en_tot
 end
 #----------------------------------------------------------#
 #-----------------Specific Dimer Potentials----------------#
@@ -1350,6 +1346,7 @@ function energy_update!(
     return potential_variables, new_energy
 end
 
+# TODO: this guy never gets called because method is less specific. It does not use r_cut.
 function energy_update!(
     ensemble_variables,
     config::Config,
