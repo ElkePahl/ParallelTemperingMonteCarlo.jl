@@ -283,6 +283,10 @@ end
         include(joinpath(@__DIR__, "../scripts/ne13_B.jl"))
         @test true
     end
+    @safetestset "ne13-lookup.jl" begin
+        include(joinpath(@__DIR__, "../scripts/ne13-lookup.jl"))
+        @test true
+    end
     @safetestset "pbc32-short.jl" begin
         include(joinpath(@__DIR__, "../scripts/pbc32-short.jl"))
         @test true

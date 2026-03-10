@@ -1259,11 +1259,11 @@ This function is designed as a curry function. The generic [`get_energy!`](@ref 
 """
 function energy_update!(
     ensemblevariables::NVTVariables,
-    config::Config,
-    potential_variables::AbstractPotentialVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
     pot::AbstractDimerPotential,
 )
     new_energy = dimer_energy_update!(
@@ -1277,11 +1277,11 @@ function energy_update!(
 end
 function energy_update!(
     ensemblevariables::NPTVariables,
-    config::Config,
-    potential_variables::AbstractPotentialVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
     pot::AbstractDimerPotential,
 )
     new_energy = dimer_energy_update!(
@@ -1294,67 +1294,15 @@ function energy_update!(
     )
     return potential_variables, new_energy
 end
-function energy_update!(
-    ensemblevariables::NVTVariables,
-    config::Config,
-    potential_variables::ELJPotentialBVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
-    pot::AbstractDimerPotentialB
-)
-    potential_variables.new_tan_vec = [
-        get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos
-    ]
-    potential_variables.new_tan_vec[ensemblevariables.index] = 0
 
-    new_energy = dimer_energy_update!(
-        ensemblevariables.index,
-        dist2_mat,
-        potential_variables.tan_mat,
-        new_dist2_vec,
-        potential_variables.new_tan_vec,
-        en_tot,
-        pot,
-    )
-    return potential_variables, new_energy
-end
 function energy_update!(
-    ensemblevariables::NPTVariables,
-    config::Config,
-    potential_variables::ELJPotentialBVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
-    pot::AbstractDimerPotentialB,
-)
-    potential_variables.new_tan_vec = [
-        get_tan(ensemblevariables.trial_move,b,config.bc) for b in config.pos
-            ]
-    potential_variables.new_tan_vec[ensemblevariables.index] = 0
-
-    new_energy = dimer_energy_update!(
-        ensemblevariables.index,
-        dist2_mat,
-        potential_variables.tan_mat,
-        new_dist2_vec,
-        potential_variables.new_tan_vec,
-        en_tot,
-        ensemblevariables.r_cut,
-        pot,
-    )
-    return potential_variables, new_energy
-end
-
-# TODO: this guy never gets called because method is less specific. It does not use r_cut.
-function energy_update!(
-    ensemble_variables,
-    config::Config,
-    potential_variables::LookupTableVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
-    pot::LookupTablePotential
+    ensemble_variables::NVTVariables,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
+    pot::Union{AbstractDimerPotentialB,LookupTablePotential},
 )
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
@@ -1375,13 +1323,13 @@ function energy_update!(
 end
 
 function energy_update!(
-    ensemble_variables::AbstractEnsembleVariables,
-    config::Config,
-    potential_variables::LookupTableVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
-    pot::LookupTablePotential
+    ensemble_variables::NPTVariables,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
+    pot::Union{AbstractDimerPotentialB,LookupTablePotential},
 )
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
@@ -1404,11 +1352,11 @@ end
 
 function energy_update!(
     ensemblevariables::AbstractEnsembleVariables,
-    config::Config,
-    potential_variables::EmbeddedAtomVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
     pot::EmbeddedAtomPotential
 )
     potential_variables.new_component_vector = copy(potential_variables.component_vector)
@@ -1425,11 +1373,11 @@ end
 
 function energy_update!(
     ensemblevariables::AbstractEnsembleVariables,
-    config::Config,
-    potential_variables::NNPVariables,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
     pot::RuNNerPotential,
 )
 
@@ -1452,11 +1400,11 @@ function energy_update!(
 end
 function energy_update!(
     ensemblevariables::AbstractEnsembleVariables,
-    config::Config,
-    potential_variables::NNPVariables2a,
-    dist2_mat::Matrix{Float64},
-    new_dist2_vec::Vector{Float64},
-    en_tot::Real,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    en_tot,
     pot::RuNNerPotential2Atom,
 )
     potential_variables = get_new_state_vars!(

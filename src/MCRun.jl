@@ -306,7 +306,7 @@ function ptmc_run!(
 )
     cd(workingdirectory)
     #initialise the states and results etc
-    if save != false
+    if save ≢ false
         save_init(potential,ensemble,mc_params,temp)
     end
 
@@ -317,7 +317,7 @@ function ptmc_run!(
     #Equilibration
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
 
-    if save != false
+    if save ≢ false
         save_histparams(results)
     end
 
@@ -327,8 +327,7 @@ function ptmc_run!(
     for i = start_counter:mc_params.mc_cycles
 
         @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,potential)
-        if save == false
-        elseif rem(i,save) == 0
+        if save ≢ false && rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
         end
 

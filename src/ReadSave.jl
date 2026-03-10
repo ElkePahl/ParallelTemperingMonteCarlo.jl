@@ -18,53 +18,52 @@ export read_init,setresults,rebuild_states,read_config,build_states
 #---------------------------------------------------------------#
 #-----------------------Static Parameters-----------------------#
 #---------------------------------------------------------------#
-const SaveFile = Core.IO
 """
     writeparams(savefile,params,temp)
 Function to write the `mc_params` and `temp` data into a `savefile`. These are static parameters that define how the simulation is to proceed such as the number of cycles, trajectories and the temperatures to be covered.
 """
-function writeparams(savefile::SaveFile,params::MCParams,temp::TempGrid)
+function writeparams(savefile::IO,params::MCParams,temp::TempGrid)
     headersvec = ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "n_adjust" "n_bins" "min_acc:" "max_acc" "t_i:" "t_f"]
     paramsvec = [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(temp.t_grid) last(temp.t_grid)]
     writedlm(savefile, [headersvec, paramsvec], ' ' )
 end
 """
-    writeensemble(savefile::SaveFile, ensemble::NVT)
-    writeensemble(savefile::SaveFile, ensemble::NPT)
-    writeensemble(savefile::SaveFile, ensemble::NNVT)
+    writeensemble(savefile::IO, ensemble::NVT)
+    writeensemble(savefile::IO, ensemble::NPT)
+    writeensemble(savefile::IO, ensemble::NNVT)
 Function to write the `ensemble` data into a savefile including the move types. First method is for the NVT ensemble which does not include volume changes, second method is NPT ensemble and does inclue volume moves.
 """
-function writeensemble(savefile::SaveFile,ensemble::NVT)
+function writeensemble(savefile::IO,ensemble::NVT)
 
     headersvec = ["ensemble" "n_atom_moves" "n_atom_swaps" ]
     valuesvec = ["NVT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_atom_swaps]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
-function writeensemble(savefile::SaveFile,ensemble::NPT)
+function writeensemble(savefile::IO,ensemble::NPT)
 
     headersvec = ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure"]
     valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
-function writeensemble(savefile::SaveFile,ensemble::NNVT)
+function writeensemble(savefile::IO,ensemble::NNVT)
     headersvec = ["ensemble" "n_1" "n_2" "n_atom_moves" "n_atom_swaps"]
     valuesvec = ["NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 """
-    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractDimerPotential
-    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractDimerPotentialB
-    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: EmbeddedAtomPotential
-    writepotential(savefile::SaveFile, potential::Ptype) where Ptype <: AbstractMachineLearningPotential
+    writepotential(savefile::IO, potential::AbstractDimerPotential)
+    writepotential(savefile::IO, potential::AbstractDimerPotentialB)
+    writepotential(savefile::IO, potential::EmbeddedAtomPotential)
+    writepotential(savefile::IO, potential::AbstractMachineLearningPotential)
 Function to write potential surface information into `savefile`. implemented methods are the Embedded Atom Model, Extended Lennard-Jones and ELJ in Magnetic Field. This does not work for machine learning potentials.
 """
-function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: AbstractDimerPotential
+function writepotential(savefile::IO,potential::AbstractDimerPotential)
     coeff_vec = transpose([potential.coeff[i] for i in eachindex(potential.coeff)])
 
     write(savefile,"$(typeof(potential)) " )
     writedlm(savefile, coeff_vec, ' ')
 end
-function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: AbstractDimerPotentialB
+function writepotential(savefile::IO,potential::AbstractDimerPotentialB)
 
     coeff_vec_a = transpose([potential.coeff_a[i] for i in eachindex(potential.coeff_a)])
     coeff_vec_b = transpose([potential.coeff_b[i] for i in eachindex(potential.coeff_b)])
@@ -72,12 +71,16 @@ function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: Abst
     write(savefile,"ELJB $(length(coeff_vec_a)) \n")
     writedlm(savefile, [coeff_vec_a, coeff_vec_b, coeff_vec_c])
 end
-function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: EmbeddedAtomPotential
+function writepotential(savefile::IO,potential::EmbeddedAtomPotential)
     write(savefile,"EAM: $(potential.n) $(potential.m) $(potential.ean) $(potential.eCam) \n")
-end 
-function writepotential(savefile::SaveFile,potential::Ptype) where Ptype <: AbstractMachineLearningPotential
+end
+function writepotential(savefile::IO,potential::AbstractMachineLearningPotential)
     write(savefile,"runnerpotential \n")
 end
+function writepotential(savefile::IO,potential::LookupTablePotential)
+    write(savefile,"LookupTablePotential \n")
+end
+
 """
     save_init(potential,ensemble,params,temp)
 Function to write all static parameters into a single parameters file. If a params file does not exist, it is created in ./checkpoint as params.data. This contains the `mc_params` `ensemble` and `potential` data.
@@ -87,11 +90,11 @@ function save_init(potential::AbstractPotential,ensemble::AbstractEnsemble,param
     else
         mkpath("./checkpoint/")
         paramsfile = open("./checkpoint/params.data","w+")
-        
+
         writeparams(paramsfile,params,temp)
         writeensemble(paramsfile,ensemble)
         writepotential(paramsfile,potential)
-        
+
         close(paramsfile)
     end
 end
@@ -116,35 +119,35 @@ end
 #-----------------------Save Configurations-----------------------#
 #-----------------------------------------------------------------#
 """
-    checkpoint_config(savefile::SaveFile, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: SphericalBC, Ptype, Etype}
-    checkpoint_config(savefile::SaveFile, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: CubicBC, Ptype, Etype}
-    checkpoint_config(savefile::SaveFile, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: RhombicBC, Ptype, Etype}
+    checkpoint_config(savefile::IO, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: SphericalBC, Ptype, Etype}
+    checkpoint_config(savefile::IO, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: CubicBC, Ptype, Etype}
+    checkpoint_config(savefile::IO, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: RhombicBC, Ptype, Etype}
 Function writes a single config in the standard `xyz` format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and both types of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions `x,y,z` in order.
 """
-function checkpoint_config(savefile::SaveFile, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:SphericalBC,Ptype,Etype}
+function checkpoint_config(savefile::IO, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:SphericalBC,Ptype,Etype}
     writedlm(savefile,[N,"$BC r2: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
-    
+
     for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
-function checkpoint_config(savefile::SaveFile,state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:CubicBC,Ptype,Etype}
+function checkpoint_config(savefile::IO,state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:CubicBC,Ptype,Etype}
     writedlm(savefile,[N,"$BC box_length: $(state.config.bc.box_length) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
-    
+
     for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
-function checkpoint_config(savefile::SaveFile, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:RhombicBC,Ptype,Etype}
+function checkpoint_config(savefile::IO, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:RhombicBC,Ptype,Etype}
     writedlm(savefile,[N,"$BC box_dims: $(state.config.bc.box_length) $(state.config.bc.box_height) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
-    
+
     for row in state.config.pos
         write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
     end
 end
 """
     save_configs(mc_states::MCStateVector)
-Function to save the configuration of each state in a vector of `mc_states`. Writes each configuration according to [`checkpoint_config`](@ref) into a file `config.i` where `i` indicates the order of the states. 
+Function to save the configuration of each state in a vector of `mc_states`. Writes each configuration according to [`checkpoint_config`](@ref) into a file `config.i` where `i` indicates the order of the states.
 """
 function save_configs(mc_states::MCStateVector)
     for saveindex in eachindex(mc_states)
@@ -157,10 +160,10 @@ end
 """
     checkpoint(index::Int, mc_states::MCStateVector, results::Output, ensemble::AbstractEnsemble, rdfsave::Bool)
     checkpoint(index::Int, mc_states::MCStateVector, results::Output, ensemble::NPT, rdfsave::Bool)
-Function to save relevant information about the current state of the system at step `index`. Saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired. 
+Function to save relevant information about the current state of the system at step `index`. Saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired.
 """
 function checkpoint(index::Int,mc_states::MCStateVector,results::Output,ensemble::AbstractEnsemble,rdfsave::Bool)
-    
+
     indexfile = open("./checkpoint/index.txt","w+")
     writedlm(indexfile,index)
     close(indexfile)
@@ -168,13 +171,13 @@ function checkpoint(index::Int,mc_states::MCStateVector,results::Output,ensemble
     histfile = open("./checkpoint/histograms.data","w+")
     writedlm(histfile,results.en_histogram)
     close(histfile)
-    if rdfsave == true 
+    if rdfsave == true
         rdffile = open("./checkpoint/rdf.data","w+")
         writedlm(rdffile,results.rdf)
         close(rdffile)
     else
     end
-    
+
 end
 function checkpoint(index::Int,mc_states::MCStateVector,results::Output,ensemble::NPT, rdfsave::Bool)
     indexfile = open("./checkpoint/index.txt","w+")
@@ -187,18 +190,18 @@ function checkpoint(index::Int,mc_states::MCStateVector,results::Output,ensemble
     v_file = open("./checkpoint/volume_hist.data","w+")
     writedlm(v_file,results.ev_histogram)
     close(v_file)
-    if rdfsave == true 
+    if rdfsave == true
         rdffile = open("./checkpoint/rdf.data","w+")
         writedlm(rdffile,results.rdf)
         close(rdffile)
     else
-    end    
+    end
 end
 #--------------------------------------------------------------------#
 #-----------------------------Read Files-----------------------------#
 #--------------------------------------------------------------------#
 """
-    readensemble(ensemblevec)  
+    readensemble(ensemblevec)
 Function to convert delimited file contents `ensemblevec` and convert them into an ensemble.
 """
 function readensemble(ensemblevec)
@@ -262,7 +265,7 @@ function read_params(paramsvec,restart::Bool,eq_cycles::Float64)
 end
 """
     read_init()
-Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function. 
+Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function.
 """
 function read_init(restart::Bool, eq_cycles::Float64)
     readfile=open("./checkpoint/params.data","r+")
@@ -288,7 +291,7 @@ function read_checkpoint_config(xyzdata)
     N=xyzdata[1,1]
     if contains(xyzdata[2,1],"SphericalBC")#xyzdata[2,1] == "SphericalBC{Float64}"
         bc = SphericalBC(;radius=sqrt(xyzdata[2,3]))
-        
+
         max_displ = [xyzdata[2,4:6]]
         count_atom = xyzdata[2,7]
         count_vol=xyzdata[2,8]
@@ -369,7 +372,7 @@ function setresults(histparams,histdata,histv_data,r2data)
 end
 """
     rebuild_states(n_traj::Int, ensemble::AbstractEnsemble, temps::TempGrid, potential::AbstractPotential)
-Function to rebuild the `MCStates` vector and `results` struct from checkpoint information. The `ensemble` `temps` and `potential` along with `n_traj` are reconstructed elsewhere, but required to accurately recreate the states. 
+Function to rebuild the `MCStates` vector and `results` struct from checkpoint information. The `ensemble` `temps` and `potential` along with `n_traj` are reconstructed elsewhere, but required to accurately recreate the states.
 """
 function rebuild_states(n_traj::Int,ensemble::AbstractEnsemble,temps::TempGrid,potential::AbstractPotential)
     histinfofile=open("./checkpoint/hist_info.data","r+")
@@ -408,12 +411,12 @@ function rebuild_states(n_traj::Int,ensemble::AbstractEnsemble,temps::TempGrid,p
 end
 """
     build_states(mc_params::MCParams, ensemble::AbstractEnsemble, temp::TempGrid, potential::AbstractPotential)
-For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty [`Output`](@ref) struct named `results` and a vector of `mc_states` using either: one configuration stored in `config.data` OR a series of configurations stored in `config.i`. NB if `config.i` doesn't exist the default will be `config.1`. In this way states can be initialised with different starting configurations.  
+For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty [`Output`](@ref) struct named `results` and a vector of `mc_states` using either: one configuration stored in `config.data` OR a series of configurations stored in `config.i`. NB if `config.i` doesn't exist the default will be `config.1`. In this way states can be initialised with different starting configurations.
 """
 function build_states(mc_params::MCParams,ensemble::AbstractEnsemble,temp::TempGrid,potential::AbstractPotential)
     if ispath("./checkpoint/config.1")
     confvec=[]
-    for i in 1:mc_params.n_traj 
+    for i in 1:mc_params.n_traj
         if ispath("./checkpoint/config.$i")
             confinfo=readdlm("./checkpoint/config.$i")
         else
