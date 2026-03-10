@@ -346,6 +346,7 @@ function ptmc_run!(
     return mc_states,results
 end
 
+# This method is used to resume a saved computation
 function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
 
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
