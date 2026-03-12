@@ -166,25 +166,46 @@ Basic function utilised by the simulation. For each of the `n_steps` run a singl
 
 Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
 """
-function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,index::Int) where {N,E}
+function mc_cycle!(
+    mc_states::MCStateVector,
+    move_strat::MoveStrategy{N,E},
+    mc_params::MCParams,
+    pot::Ptype,
+    ensemble::Etype,
+    n_steps::Int,
+    index::Int,
+) where {N,E}
 
-    mc_states=  mc_step!(mc_states,move_strat,pot,ensemble,n_steps)
+    mc_states = mc_step!(mc_states, move_strat, pot, ensemble, n_steps)
 
     if rand() < 0.1
-        parallel_tempering_exchange!(mc_states,mc_params,ensemble)
+        parallel_tempering_exchange!(mc_states, mc_params, ensemble)
     end
-    if rem(index,mc_params.n_adjust) == 0
+    if rem(index, mc_params.n_adjust) == 0
         for state in mc_states
-            update_max_stepsize!(state,mc_params.n_adjust,ensemble,mc_params.min_acc,mc_params.max_acc)
+            update_max_stepsize!(
+                state,
+                mc_params.n_adjust,
+                ensemble,
+                mc_params.min_acc,
+                mc_params.max_acc,
+            )
         end
     end
     return mc_states
 end
-function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,results::Output,idx::Int,rdfsave::Bool,potential) where {N,E}
-
-    #println("cycle: ",idx)
-    mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,idx)
-
+function mc_cycle!(
+    mc_states::MCStateVector,
+    move_strat::MoveStrategy{N,E},
+    mc_params::MCParams,
+    pot::Ptype,
+    ensemble::Etype,
+    n_steps::Int,
+    results::Output,
+    idx::Int,
+    rdfsave::Bool,
+    potential,
+) where {N,E}
     #TODO: Implement saving configurations after n steps
     #=
     if rem(idx,10000) == 0
@@ -204,9 +225,10 @@ function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_par
         end
     end
     =#
+    mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, idx)
 
-    if rem(idx,mc_params.mc_sample) == 0
-        sampling_step!(mc_params,mc_states,ensemble,idx,results,rdfsave,idx)
+    if rem(idx, mc_params.mc_sample) == 0
+        sampling_step!(mc_params, mc_states, ensemble, idx, results, rdfsave, idx)
     end
 
     return mc_states
@@ -243,9 +265,12 @@ function equilibration_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{
     #set initial hamiltonian values and ebounds
 
     ebounds = [100. , -100.]
-    #begin equilibration
-    for i = 1:mc_params.eq_cycles
+    # Don't touch ebound for the first half of the run in case energies
+    # are very high at the beginning.
+    for i = 1:(mc_params.eq_cycles ÷ 2)
         mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,i)
+    end
+    for i = (mc_params.eq_cycles ÷ 2 + 1):mc_params.eq_cycles
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot,ebounds)
         end
@@ -306,45 +331,70 @@ function ptmc_run!(
     save=false,
     workingdirectory=pwd(),
 )
+    # Initialisation
     cd(workingdirectory)
-    #initialise the states and results etc
     if save ≢ false
         save_init(potential,ensemble,mc_params,temp)
     end
 
-    mc_states,move_strategy,results,n_steps,start_counter = initialisation(mc_params,temp,start_config,potential,ensemble)
+    mc_states,move_strategy,results,n_steps,start_counter = initialisation(
+        mc_params,
+        temp,
+        start_config,
+        potential,
+        ensemble,
+    )
 
-    println("params set")
-    println("correction 2")
-    #Equilibration
-    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
-
+    # Equilibration
+    mc_states,results = equilibration(
+        mc_states,
+        move_strategy,
+        mc_params,
+        potential,
+        ensemble,
+        n_steps,
+        results,
+        restart,
+    )
     if save ≢ false
         save_histparams(results)
     end
 
-    println("equilibration complete")
+    @info "equilibration complete"
 
-    #main loop
-    for i = start_counter:mc_params.mc_cycles
-
-        @inbounds mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,potential)
+    # Main loop
+    for i in start_counter:mc_params.mc_cycles
+        mc_cycle!(
+            mc_states,
+            move_strategy,
+            mc_params,
+            potential,
+            ensemble,
+            n_steps,
+            results,
+            i,
+            rdfsave,potential,
+        )
         if save ≢ false && rem(i,save) == 0
-            checkpoint(i,mc_states,results,ensemble,rdfsave)
+            checkpoint(i, mc_states, results, ensemble, rdfsave)
         end
 
-        if rem(i,100000)==0
-            println(i)
+        if rem(i, 100000) == 0 #TODO: this should be a progress bar
+            @info "$i"
             #results = finalise_results_convergence(i,mc_states,mc_params,results)
             #println(results.heat_cap)
         end
 
     end
-    println("MC loop done.")
+    @info "MC loop done."
+
+    if save ≢ false && rem(mc_params.mc_cycles, save) ≠ 0
+        # Save at the end if we didn't save in the last step.
+        checkpoint(i, mc_states, results, ensemble, rdfsave)
+    end
 
     #Finalisation of results
     results = finalise_results(mc_states,mc_params,results)
-    println("done")
     return mc_states,results
 end
 
@@ -352,27 +402,34 @@ end
 function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
 
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
-    println("params set")
 
     mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
-    println("equilibration complete")
+    @info "equilibration complete"
 
-    if save != false
+    if save ≢ false
         save_histparams(results)
     end
 
-    for i = start_counter:mc_params.mc_cycles
-        @inbounds  mc_cycle!(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,i,rdfsave,potential)
-
-        if save == false
-        elseif rem(i,save) == 0
+    for i in start_counter:mc_params.mc_cycles
+        mc_cycle!(
+            mc_states,
+            move_strategy,
+            mc_params,
+            potential,
+            ensemble,
+            n_steps,
+            results,
+            i,
+            rdfsave,
+            potential,
+        )
+        if save ≢ false && rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
         end
     end
-    println("MC loop done.")
+    @info "MC loop done."
 
     results = finalise_results(mc_states,mc_params,results)
-    println("done")
 
     return mc_states,results
 end

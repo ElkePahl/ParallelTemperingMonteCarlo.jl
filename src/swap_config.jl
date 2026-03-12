@@ -43,9 +43,11 @@ end
 
 Swaps `mc_state`s and ensemble variables in case of accepted volume move for NPT ensemble.
 Implemented for [`CubicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
-"""
+    """
+#=
 function swap_config_v!(
     mc_state::MCState,
+    _,
     bc::CubicBC,
     trial_config::Config,
     new_dist2_mat,
@@ -65,6 +67,7 @@ end
 
 function swap_config_v!(
     mc_state::MCState,
+    _,
     bc::RhombicBC,
     trial_config::Config,
     new_dist2_mat,
@@ -91,20 +94,18 @@ function swap_config_v!(
 
     mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
+=#
 
 function swap_config_v!(
     mc_state::MCState,
     potential_variables::DimerPotentialVariables,
-    bc::RectangularBC,
+    bc,
     trial_config::Config,
     new_dist2_mat,
     en_vec_new,
     new_en_tot,
 )
-    mc_state.config = Config(
-        trial_config.pos,
-        RectangularBC(trial_config.bc.box_length, trial_config.bc.box_height),
-    )
+    mc_state.config = Config(trial_config.pos, trial_config.bc)
     mc_state.dist2_mat .= new_dist2_mat
 
     mc_state.potential_variables.en_atom_vec .= en_vec_new
@@ -128,7 +129,7 @@ end
 function swap_config_v!(
     mc_state::MCState,
     potential_variables::Union{ELJPotentialBVariables,LookupTableVariables},
-    bc::Union{RectangularBC,RhombicBC},
+    bc,#::Union{RectangularBC,RhombicBC},
     trial_config::Config,
     new_dist2_mat,
     en_vec_new,

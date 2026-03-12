@@ -13,19 +13,18 @@ Random.seed!(1234)
 n_atoms = 32
 pressure = 101325
 #pressure = 50000000000
-#AtoBohr = 1.8897261259077824
-AtoBohr = 1.0
+AtoBohr = 1.8897261259077824
 
 # temperature grid
-ti = 30
-tf = 50
+ti = 10
+tf = 25
 n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 100000 #default 20% equilibration cycles on top
+mc_cycles = 1_00_000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -54,8 +53,7 @@ potlut=LookupTablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=true
-pressure_scale=3.398928944382626e-14#*1.8897259886^3
+separated_volume=false
 ensemble = NPT(n_atoms,pressure*2.2937122783969076e-13/AtoBohr^3,separated_volume)
 move_strat = MoveStrategy(ensemble)
 
@@ -102,15 +100,17 @@ pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
 box_length = 8.7674 * AtoBohr
-bc_ne32 = RectangularBC(box_length, box_length)
+bc_ne32 = CubicBC(box_length)
 
-length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
-
-start_config_1 = Config(pos_ne32, bc_ne32)
-start_config_2 = Config(pos_ne32, bc_ne32)
-start_config = [start_config_1,start_config_2]
+start_config = Config(pos_ne32, bc_ne32)
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble; save=1000)
+
+#energies,histogramdata,T,Z,Cv,dCv,S = postprocess();
+
+
+
+T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)

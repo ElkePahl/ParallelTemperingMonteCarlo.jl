@@ -40,9 +40,8 @@ function writeensemble(savefile::IO,ensemble::NVT)
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 function writeensemble(savefile::IO,ensemble::NPT)
-
-    headersvec = ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure"]
-    valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure]
+    headersvec = ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure" "separated_volume"]
+    valuesvec = ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure ensemble.separated_volume]
     writedlm(savefile, [headersvec, valuesvec], ' ' )
 end
 function writeensemble(savefile::IO,ensemble::NNVT)
@@ -86,8 +85,7 @@ end
 Function to write all static parameters into a single parameters file. If a params file does not exist, it is created in ./checkpoint as params.data. This contains the `mc_params` `ensemble` and `potential` data.
 """
 function save_init(potential::AbstractPotential,ensemble::AbstractEnsemble,params::MCParams,temp::TempGrid)
-    if ispath("./checkpoint/params.data") == true
-    else
+    if !ispath("./checkpoint/params.data")
         mkpath("./checkpoint/")
         paramsfile = open("./checkpoint/params.data","w+")
 
@@ -118,31 +116,23 @@ end
 #-----------------------------------------------------------------#
 #-----------------------Save Configurations-----------------------#
 #-----------------------------------------------------------------#
+bc_info(bc::SphericalBC) = "$(typeof(bc)) r2: $(bc.radius2)"
+bc_info(bc::CubicBC) = "$(typeof(bc)) box_length: $(bc.box_length)"
+bc_info(bc::Union{RectangularBC,RhombicBC}) = "$(typeof(bc)) box_dims: $(bc.box_length), $(bc.box_height)"
+
 """
-    checkpoint_config(savefile::IO, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: SphericalBC, Ptype, Etype}
-    checkpoint_config(savefile::IO, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: CubicBC, Ptype, Etype}
-    checkpoint_config(savefile::IO, state::MCState{T, N, BC, Ptype, Etype}) where {T, N, BC <: RhombicBC, Ptype, Etype}
-Function writes a single config in the standard `xyz` format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and both types of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions `x,y,z` in order.
+    checkpoint_config(filename, state::MCState)
+
+Write a single config in the standard `xyz` format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and both types of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions `x,y,z` in order.
 """
-function checkpoint_config(savefile::IO, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:SphericalBC,Ptype,Etype}
-    writedlm(savefile,[N,"$BC r2: $(state.config.bc.radius2) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
+function checkpoint_config(filename, state::MCState{<:Any,N}) where {N}
+    # TODO: why writedlm here, but write later?
+    open(filename, "w") do f
+        writedlm(f, [N,"$(bc_info(state.config.bc)) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
 
-    for row in state.config.pos
-        write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
-    end
-end
-function checkpoint_config(savefile::IO,state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:CubicBC,Ptype,Etype}
-    writedlm(savefile,[N,"$BC box_length: $(state.config.bc.box_length) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
-
-    for row in state.config.pos
-        write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
-    end
-end
-function checkpoint_config(savefile::IO, state::MCState{T,N,BC,Ptype,Etype}) where {T,N,BC<:RhombicBC,Ptype,Etype}
-    writedlm(savefile,[N,"$BC box_dims: $(state.config.bc.box_length) $(state.config.bc.box_height) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])"])
-
-    for row in state.config.pos
-        write(savefile, "1  $(row[1]) $(row[2]) $(row[3]) \n")
+        for row in state.config.pos
+            write(f, "1  $(row[1]) $(row[2]) $(row[3]) \n")
+        end
     end
 end
 """
@@ -151,10 +141,8 @@ Function to save the configuration of each state in a vector of `mc_states`. Wri
 """
 function save_configs(mc_states::MCStateVector)
     for saveindex in eachindex(mc_states)
-        checkpoint_file = open("./checkpoint/config.$saveindex","w")
+        checkpoint_file = "./checkpoint/config.$saveindex"
         checkpoint_config(checkpoint_file,mc_states[saveindex])
-        # checkpoint_config(checkpoint_file,mc_states[saveindex].config, mc_states[saveindex].max_displ, mc_states[saveindex].count_atom[1],mc_states[saveindex].count_volume[1])
-        close(checkpoint_file)
     end
 end
 """
@@ -208,7 +196,7 @@ function readensemble(ensemblevec)
     if ensemblevec[1] == "NVT"
         return NVT(ensemblevec[2],ensemblevec[3],ensemblevec[4])
     elseif contains(ensemblevec[1],"NPT")
-        return NPT(ensemblevec[2],ensemblevec[3],ensemblevec[4],ensemblevec[5],ensemblevec[6])
+        return NPT(ensemblevec[2],ensemblevec[3],ensemblevec[4],ensemblevec[5],ensemblevec[6],ensemblevec[7])
     elseif contains(ensemblevec[1],"NNVT")
         return NNVT(SVector{2}(ensemblevec[2],ensemblevec[3]) , ensemblevec[4] , ensemblevec[5])
     end

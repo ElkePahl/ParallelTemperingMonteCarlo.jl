@@ -58,14 +58,12 @@ returns the histogram index of a single mc_state energy and returns this value.
 """
 function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::CubicBC)
 
-    if (mc_state.en_tot - results.en_min)/delta_en_hist < -1000
-        println(mc_state.en_tot)
-        println(mc_state.config.pos)
-        println(mc_state.config.bc)
-    end
     hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
     hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
-    return find_hist_index(hist_index,results.n_bin)
+    hist_index_e = find_hist_index(hist_index_e,results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v,results.n_bin)
+
+    return hist_index_e, hist_index_v
 end
 function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
 
@@ -255,19 +253,23 @@ Self explanatory name, updates the energy histograms in `results` using the curr
 
 """
 function update_histograms!(mc_states::MCStateVector,results::Output,delta_en_hist::Number)
-     for i_traj in eachindex(mc_states)
-        @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
+    for i_traj in eachindex(mc_states)
+        histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
         results.en_histogram[i_traj][histindex] +=1
     end
-
 end
 
 function update_histograms!(mc_states::MCStateVector,results::Output,delta_en_hist::Number,delta_v_hist::Number)
-     for i_traj in eachindex(mc_states)
-        @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist,mc_states[i_traj].config.bc)
+    for i_traj in eachindex(mc_states)
+        histindex_e,histindex_v = find_hist_index(
+            mc_states[i_traj],
+            results,
+            delta_en_hist,
+            delta_v_hist,
+            mc_states[i_traj].config.bc,
+        )
         results.ev_histogram[i_traj][histindex_e,histindex_v] +=1
     end
-
 end
 
 rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
@@ -363,11 +365,7 @@ function finalise_results(mc_states::MCStateVector,mc_params::MCParams,results::
     results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
     results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
 
-    println(results.heat_cap)
-
     return results
-
-
 end
 
 function finalise_results_convergence(i_check,mc_states,mc_params,results)
