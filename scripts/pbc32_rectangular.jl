@@ -13,18 +13,19 @@ Random.seed!(1234)
 n_atoms = 32
 pressure = 101325
 #pressure = 50000000000
-AtoBohr = 1.8897261259077824
+#AtoBohr = 1.8897261259077824
+AtoBohr = 1.0
 
 # temperature grid
-ti = 10
-tf = 25
+ti = 30
+tf = 50
 n_traj = 24
 
 temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1_00_000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -48,14 +49,16 @@ c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56
 pot = ELJPotentialEven{6}(c)
 
 
-link = joinpath(@__DIR__, "lookup-tables", "LookupTable_Neon_B0.0_MP2.txt")
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
 potlut=LookupTablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
+separated_volume=true
+pressure_scale=3.398928944382626e-14#*1.8897259886^3
 ensemble = NPT(n_atoms,pressure*2.2937122783969076e-13/AtoBohr^3,separated_volume)
 move_strat = MoveStrategy(ensemble)
+lh = 0.92   #the initial length/height ratio
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
@@ -95,22 +98,34 @@ pos_ne32 =  [[ -4.3837,       -4.3837,       -4.3837],
  [2.1918,        0.0000,        2.1918],
  [0.0000,        2.1918,        2.1918]]
 
+ for i=1:n_atoms
+    pos_ne32[i][1] *=lh
+    pos_ne32[i][2] *=lh
+    pos_ne32[i][1] *=lh
+    pos_ne32[i][2] *=lh
+end
+
 
 pos_ne32 = pos_ne32 * AtoBohr
 
 #binding sphere
 box_length = 8.7674 * AtoBohr
-bc_ne32 = CubicBC(box_length)
+#bc_ne32 = CubicBC(box_length)
+bc_ne32 = RectangularBC(box_length*lh,box_length)
 
-start_config = Config(pos_ne32, bc_ne32)
+length(pos_ne32) == n_atoms || error("number of atoms and positions not the same - check starting config")
+
+start_config_1 = Config(pos_ne32, bc_ne32)
+start_config_2 = Config(pos_ne32, bc_ne32)
+start_config = [start_config_1,start_config_2]
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble; save=1000)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 
-#energies,histogramdata,T,Z,Cv,dCv,S = postprocess();
+#to check code in REPL
+#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+#@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-
-
-T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+##
