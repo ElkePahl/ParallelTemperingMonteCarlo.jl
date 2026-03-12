@@ -257,6 +257,8 @@ function equilibration_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{
     results = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
     return mc_states,results
 end
+
+#TODO: why is restart not functional?
 """
     equilibration(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output, restart::Bool) where {N, E}
 While initialisation sets `mc_states`, `params` etc. we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the [`equilibration_cycle!`](@ref) function that optionally removes the thermalisation from restart.

@@ -34,6 +34,7 @@ using Random
     state = get_energy!(state,pot1,"atommove")
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
     @test metropolis_condition("atommove",state,ensemble) == 1.0
+    @test_throws ErrorException metropolis_condition("evommota", state, ensemble)
 
     MCRun.swap_config!(state,"atommove")
     @test state.ensemble_variables.trial_move == state.config.pos[1]

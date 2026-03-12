@@ -121,14 +121,14 @@ mutable struct Output{T}
     count_stat_exc::Vector{T}
 end
 
-function Output{T}(n_bin::Int; en_min = 0) where T <: Number
-    en_min = 0.
-    en_max = 0.
-    v_min = 0.
-    v_max = 0.
-    delta_en_hist=0.
-    delta_v_hist=0.
-    delta_r2=0.
+function Output{T}(n_bin::Int) where T <: Number
+    en_min = 0.0
+    en_max = 0.0
+    v_min = 0.0
+    v_max = 0.0
+    delta_en_hist = 0.0
+    delta_v_hist = 0.0
+    delta_r2 = 0.0
     max_displ = T[]
     en_avg = T[]
     heat_cap = T[]
@@ -140,14 +140,21 @@ function Output{T}(n_bin::Int; en_min = 0) where T <: Number
     count_stat_vol = T[]
     count_stat_rot = T[]
     count_stat_exc = T[]
-    return Output{T}(n_bin, en_min, en_max, v_min, v_max,delta_en_hist,delta_v_hist,delta_r2 , max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, lh_histogram, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
+    return Output{T}(
+        n_bin, en_min, en_max, v_min, v_max, delta_en_hist, delta_v_hist, delta_r2,
+        max_displ, en_avg, heat_cap,
+        en_histogram, ev_histogram, rdf, lh_histogram,
+        count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc,
+    )
 end
 
+#= TODO: ok to delete? Not used anywhere
 function Output{T}(n_bin, en_min, en_max, v_min, v_max, max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, lh_histogram, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc) where T
     delta_en_hist = (en_max-en_min)/(n_bin-1)
     delta_v_hist = (v_max - v_min)/n_bin
     delta_r2 = 0.
     return Output{T}(n_bin, en_min, en_max, v_min, v_max,delta_en_hist,delta_v_hist,delta_r2 , max_displ, en_avg, heat_cap, en_histogram, ev_histogram, rdf, lh_histogram, count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc)
 end
+=#
 
 end

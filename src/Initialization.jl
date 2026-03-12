@@ -95,7 +95,7 @@ function initialisation(
             potential,
         )
     end
-    results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
+    results = Output{Float64}(mc_params.n_bin)
     n_steps = length(move_strategy)
     start_counter = 1
 

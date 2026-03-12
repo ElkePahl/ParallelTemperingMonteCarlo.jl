@@ -203,13 +203,21 @@ end
 end
 
 @testset "TemperatureGrid" begin
+    temp1 = TempGrid{31}(2, 16)
+    temp2 = TempGrid(2, 16, 31)
+    @test temp1.t_grid == temp2.t_grid
+    @test length(temp1.t_grid) == 31
+    @test extrema(temp1.t_grid) == (2, 16)
+
+    @test_throws ArgumentError TempGrid(2, 16, 256; tdistr=:test)
+
     n_traj = 32
     temp = TempGrid{n_traj}(2, 16)
     kB = 3.16681196E-6
     @test temp.t_grid[1] ≈ 2.0
     @test length(temp.t_grid) == n_traj
     @test length(temp.beta_grid) == n_traj
-    @test 1. /(temp.t_grid[1]*temp.beta_grid[1]) ≈ kB
+    @test 1. / (temp.t_grid[1] * temp.beta_grid[1]) ≈ kB
     temp1 = TempGrid{n_traj}(2, 16; tdistr = :equally_spaced)
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈ (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
 end
