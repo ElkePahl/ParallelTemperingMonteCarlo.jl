@@ -3,6 +3,7 @@
 # First, we load ParallelTemperingMonteCarlo and Plots:
 using Plots
 using ParallelTemperingMonteCarlo
+using LaTeXStrings
 # ## Setting up the Model
 # Firstly, we set the number of atoms:
 n_atoms = 13;
@@ -61,7 +62,7 @@ move_strat = MoveStrategy(ensemble)
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000);
 # ## Post-processing and Analyzing of Results
 # The raw heat capacity plot is obtained from:
-plot(temp.t_grid,results.heat_cap)
+plot(temp.t_grid,results.heat_cap, xlabel="T [K]", ylabel=L"\(C_v\) [A.U]", title="Raw Heat Capacity against Temperature")
 # and the energy histograms by:
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
@@ -69,10 +70,10 @@ plot(data)
 # and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
 energies,histogramdata,T,Z,Cv,dCv,S = postprocess();
 # Plot of heat capacity against temperature:
-plot(T,Cv,label="Cv")
+plot(T,Cv,label=nothing, xlabel="T [K]", ylabel=L"\(C_v\) [A.U]", title="Heat capacity against Temperature")
 # Plot of the heat capacity gradient against temperature:
-plot(T,dCv,label="dCv")
+plot(T,dCv,label=nothing, xlabel="T [K]", ylabel=L"\(\frac{dC_v}{dT}\) [A.U]", title="Heat capacity gradient against Temperature")
 # Plot of the partition function against temperature:
-plot(T,Z,label="Z")
+plot(T,Z,label=nothing, xlabel="T [K]", ylabel="Z [1]", title="Partition function against Temperature")
 # Plot of the entropy of the system against temperature:
-plot(T,S,label="S")
+plot(T,S,label=nothing, xlabel="T [K]", ylabel="S [A.U]", title="Entropy against Temperature")
