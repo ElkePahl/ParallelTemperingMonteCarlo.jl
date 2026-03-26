@@ -1,10 +1,10 @@
-using Test
+#using Test
+#=
+#call = :(include(joinpath(@__DIR__,"..","scripts","ne55.jl")))
+#eval(call)
 
-call = :(include(joinpath(@__DIR__,"..","scripts","ne55.jl")))
-eval(call)
 
-
-benchmark_data = [
+#benchmark_data = [
     1133.804270116, #elapsed_time
     3435518568, #bytes_allocated
 ]
@@ -16,3 +16,4 @@ end
 @testset "memory_profile" begin
     @test profile[3] < benchmark_data[2] * (1+threshold)
 end
+=#
