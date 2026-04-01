@@ -391,7 +391,7 @@ function ptmc_run!(
 
     if save ≢ false && rem(mc_params.mc_cycles, save) ≠ 0
         # Save at the end if we didn't save in the last step.
-        checkpoint(i, mc_states, results, ensemble, rdfsave)
+        checkpoint(mc_params.mc_cycles, mc_states, results, ensemble, rdfsave)
     end
 
     #Finalisation of results
