@@ -19,7 +19,7 @@ using ..Ensembles
 Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required.
 Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
-function update_energy_tot(mc_states::MCStateVector,ensemble::Etype) where Etype <: AbstractEnsemble
+function update_energy_tot(mc_states::MCStateVector,ensemble::AbstractEnsemble)
         for state in mc_states
             state.ham[1] += state.en_tot
             state.ham[2] += (state.en_tot*state.en_tot)
@@ -39,6 +39,7 @@ end
 Returns the histogram index of a single `mc_state` energy and returns this value.
 """
 function find_hist_index(hist_index::Number, n_bin::Int)
+    # TODO: something not right. The only way to get it to return n_bin+1 is to pass hist_index=n_bin
     if hist_index < 1
         return 1
     elseif hist_index > n_bin
@@ -58,7 +59,7 @@ returns the histogram index of a single mc_state energy and returns this value.
 """
 function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::CubicBC)
 
-    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
+    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist) + 1
     hist_index_v = floor(Int,(mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist ) +1
     hist_index_e = find_hist_index(hist_index_e,results.n_bin)
     hist_index_v = find_hist_index(hist_index_v,results.n_bin)
@@ -66,7 +67,6 @@ function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::CubicBC
     return hist_index_e, hist_index_v
 end
 function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
-
     hist_index_e = (mc_state.en_tot - results.en_min)/delta_en_hist +1
     hist_index_v = (mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist +1
 
@@ -77,59 +77,21 @@ function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number
 end
 
 function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::RectangularBC)
-
-    if (mc_state.en_tot - results.en_min)/delta_en_hist < -1000
-        println(mc_state.en_tot)
-        println(mc_state.config.pos)
-        println(mc_state.config.bc)
-    end
-    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
+    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist) + 1
     hist_index_v = floor(Int,(mc_state.config.bc.box_length^2*mc_state.config.bc.box_height - results.v_min)/delta_v_hist ) +1
 
-    if hist_index_e < 1
-        hist_index_e = 1
-    elseif hist_index_e > results.n_bin
-        hist_index_e = results.n_bin+2
-    else
-        hist_index_e += 1
-    end
-
-    if hist_index_v < 1
-        hist_index_v = 1
-    elseif hist_index_v > results.n_bin
-        hist_index_v = results.n_bin+2
-    else
-        hist_index_v += 1
-    end
+    hist_index_e = find_hist_index(hist_index_e,results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v,results.n_bin)
 
     return hist_index_e, hist_index_v
 end
 
 function find_hist_index(mc_state,results,delta_en_hist,delta_v_hist,bc::RhombicBC)
+    hist_index_e = floor(Int, (mc_state.en_tot - results.en_min) / delta_en_hist) + 1
+    hist_index_v = floor(Int, (mc_state.config.bc.box_length^2 * 3mc_state.config.bc.box_height^0.5 / 2 - results.v_min) / delta_v_hist ) + 1
 
-    if (mc_state.en_tot - results.en_min)/delta_en_hist < -1000
-        println(mc_state.en_tot)
-        println(mc_state.config.pos)
-        println(mc_state.config.bc)
-    end
-    hist_index_e = floor(Int,(mc_state.en_tot - results.en_min)/delta_en_hist ) +1
-    hist_index_v = floor(Int,(mc_state.config.bc.box_length^2*mc_state.config.bc.box_height*3^0.5/2 - results.v_min)/delta_v_hist ) +1
-
-    if hist_index_e < 1
-        hist_index_e = 1
-    elseif hist_index_e > results.n_bin
-        hist_index_e = results.n_bin+2
-    else
-        hist_index_e += 1
-    end
-
-    if hist_index_v < 1
-        hist_index_v = 1
-    elseif hist_index_v > results.n_bin
-        hist_index_v = results.n_bin+2
-    else
-        hist_index_v += 1
-    end
+    hist_index_e = find_hist_index(hist_index_e,results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v,results.n_bin)
 
     return hist_index_e, hist_index_v
 end

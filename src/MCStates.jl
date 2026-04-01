@@ -79,7 +79,7 @@ function max_height(bc::SphericalBC)
     return 30.
 end
 function max_height(bc::CubicBC)
-    return 30.
+    return bc.box_length*1.8
 end
 function max_height(bc::RhombicBC)
     return bc.box_height*1.8

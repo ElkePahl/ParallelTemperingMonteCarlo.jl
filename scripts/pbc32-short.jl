@@ -1,7 +1,3 @@
-###
-### This script is equivalent to pbc32.jl, but uses fewer MC cycles. It's meant to be used
-### during testing to check if it runs through successfully.
-###
 using ParallelTemperingMonteCarlo
 using Random
 
@@ -12,50 +8,44 @@ Random.seed!(1234)
 
 n_atoms = 32
 pressure = 101325
-AtoBohr = 1.0
+AtoBohr = 1.8897261259077824
 
 # temperature grid
-ti = 30
-tf = 50
+ti = 10
+tf = 25
 n_traj = 24
+temp = TempGrid{n_traj}(ti,tf)
 
-temp = TempGrid{n_traj}(ti, tf)
-
-mc_cycles = 1000
-mc_sample = 1
-
-displ_atom = 0.05 # Angstrom
+# MC simulation details
+mc_cycles = 10_000   # default 20% equilibration cycles on top
+mc_sample = 1        # sample every mc_sample MC cycles
+displ_atom = 0.05    # in Angstrom
 n_adjust = 100
-
-max_displ_atom = [0.1sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
-
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample, n_adjust)
+max_displ_atom = [0.1 * √(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
+#c = [-1.81754233e-01, -2.32682279e+02,  7.49842579e+03, -1.56977364e+04, -6.15601605e+05, 3.50732411e+06]
 c = [-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
+#c = [-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
 pot = ELJPotentialEven{6}(c)
 
-
-link = joinpath(@__DIR__, "lookup-tables", "LookupTable_Neon_B0.0_MP2.txt")
-potlut = LookupTablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume = true
-pressure_scale = 3.398928944382626e-14
-ensemble = NPT(n_atoms,pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
+separated_volume = false
+ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^2, separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
 #-------------------------------------------------------------#
-#starting configurations
-#icosahedral ground state of Ne13 (from Cambridge cluster database) in Angstrom
+# Face centred cubic structure.
 pos_ne32 =  [
-    [-4.3837,       -4.3837,       -4.3837],
+    [ -4.3837,      -4.3837,       -4.3837],
     [-2.1918,       -2.1918,       -4.3837],
     [-2.1918,       -4.3837,       -2.1918],
     [-4.3837,       -2.1918,       -2.1918],
@@ -89,16 +79,15 @@ pos_ne32 =  [
     [0.0000,         2.1918,        2.1918],
 ]
 
-pos_ne32 = pos_ne32 * AtoBohr
 
+positions = pos_ne32 * AtoBohr
 box_length = 8.7674 * AtoBohr
-bc_ne32 = RectangularBC(box_length, box_length)
+boundary_condition = CubicBC(box_length)
 
-start_config_1 = Config(pos_ne32, bc_ne32)
-start_config_2 = Config(pos_ne32, bc_ne32)
-start_configs = [start_config_1, start_config_2]
+start_config = Config(positions, boundary_condition)
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params, temp, start_configs, potlut, ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble; save=1000)
+T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)

@@ -121,7 +121,7 @@ function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String)
         #TODO: why was this here?
         # DimerPotentialVariables does not have the new_tan_mat or tan_mat fields.
         #for i in eachindex(mc_state.potential_variables.tan_mat)
-        #    mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
+        #   mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
         #end
     end
 end
@@ -280,6 +280,7 @@ function equilibration_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{
         reset_counters(state)
     end
     results = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
+
     return mc_states,results
 end
 
