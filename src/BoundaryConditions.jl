@@ -140,11 +140,8 @@ Tests if whole cluster lies in the binding sphere.
 - atomic positions
 - [`SphericalBC`](@ref)
 """
-
-# TO DO: check if this function is used at all? If so, make consistent with check_boundary
-
 test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) 
-    where T <: Number = sum(x->check_boundary(bc,x),pos) == 0
-end
+    where {T <: Number} = sum(x->check_boundary(bc,x),pos) == 0
+# TO DO: check if this function is used at all? If so, make consistent with check_boundary
 
 end
