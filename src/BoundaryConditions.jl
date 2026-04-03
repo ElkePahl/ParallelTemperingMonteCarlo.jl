@@ -80,11 +80,11 @@ end
     RectangularBC{T}
 
 Is subtype of [`PeriodicBC`](@ref) for systems with rectangular symmetry
-(orthogonal axes with length of box in $x,y$ direction differs from height of box in $z$-direction).
+(orthogonal axes with length of box in ``x,y`` direction differs from height of box in ``z``-direction).
 
 # Fields:
-- `box_length`: length of side of square in $x,y$ direction
-- `box_height`: height of the box in $z$ direction
+- `box_length`: length of side of square in ``x,y`` direction
+- `box_height`: height of the box in ``z`` direction
 """
 
 struct RectangularBC{T} <: PeriodicBC{T}
@@ -96,12 +96,12 @@ end
     RhombicBC{T}(; length::Number, height::Number)
 
 Is subtype of [`PeriodicBC`](@ref) for systems with rhombic symmetry
-(length of box in $x,y$ direction differs from height of box in $z$-direction).
-The projection of the box on the $xy$-plane is a rhombus with four equal sides. 
+(length of box in ``x,y`` direction differs from height of box in ``z``-direction).
+The projection of the box on the ``xy``-plane is a rhombus with four equal sides. 
 
 # Keywords
-- `length`: length of box in $x,y$ direction
-- `height`: height of the box in $z$ direction
+- `length`: length of box in ``x,y`` direction
+- `height`: height of the box in ``z`` direction
 
 # Fields:
 - `box_length`: length of side of the cubic box
