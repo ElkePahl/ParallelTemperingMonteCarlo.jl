@@ -125,7 +125,7 @@ Returns `true` if atom lies outside.
 
 # Arguments
 - [`SphericalBC`](@ref)
-- [`PositionVector`](@ref)
+- `pos`: position of moved atom
 
 """
 check_boundary(bc::SphericalBC,pos::PositionVector) = sum(x->x^2,pos) > bc.radius2
