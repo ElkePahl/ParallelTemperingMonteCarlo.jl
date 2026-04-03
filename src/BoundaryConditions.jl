@@ -18,11 +18,11 @@ export check_boundary
 Is abstract type for boundary conditions. 
 
 Implemented boundary conditions:
--   [`SphericalBC`](@ref)
--   [`PeriodicBC`](@ref) with subtypes:
-    -   [`CubicBC`](@ref)
-    -   [`RhombicBC`](@ref)
-    -   [`RectangularBC`](@ref)
+-   SphericalBC
+-   PeriodicBC` with subtypes:
+    -   `CubicBC`
+    -   `RhombicBC`
+    -   `RectangularBC`
 
 Needs methods implemented for
 -   [`atom_displacement`](@ref Main.ParallelTemperingMonteCarlo.MCMoves.atom_displacement)
@@ -52,9 +52,9 @@ end
 Is abstract type for periodic boundary conditions to simulate bulk systems.
 
 - Implemented types:
-    - [`CubicBC`](@ref)
-    - [`RhombicBC`](@ref)
-    - [`RectangularBC`](@ref)
+    - `CubicBC`
+    - `RhombicBC`
+    - `RectangularBC`
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
@@ -92,6 +92,7 @@ struct RectangularBC{T} <: PeriodicBC{T}
     box_height::T
 end
 
+# TODO  check how exactly implemented (height is length of side or projection on z-axis?)
 """
     RhombicBC{T}(; length::Number, height::Number)
 
@@ -107,8 +108,6 @@ The projection of the box on the ``xy``-plane is a rhombus with four equal sides
 - `box_length`: length of side of the cubic box
 - `box_height`: height of the box in ``z`` direction
 """
-
-# TODO  check how exactly implemented (height is length of side or projection on z-axis?)
 struct RhombicBC{T} <: PeriodicBC{T}
     box_length::T
     box_height::T
