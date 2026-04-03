@@ -145,5 +145,6 @@ Tests if whole cluster lies in the binding sphere.
 
 test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) 
     where T <: Number = sum(x->check_boundary(bc,x),pos) == 0
+end
 
 end
