@@ -34,11 +34,11 @@ abstract type AbstractBC{T} end
 
 Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@ref).
 
-Keyword argument:
--   radius of binding sphere
+# Keywords:
+- radius of binding sphere
 
-Field name: 
--   radius2: squared radius of binding sphere
+# Fields: 
+- radius2: squared radius of binding sphere
 
 """
 struct SphericalBC{T} <: AbstractBC{T}
@@ -51,15 +51,16 @@ end
 
 Is abstract type for periodic boundary conditions to simulate bulk systems.
 
--    Implemented types:
-    -    [`CubicBC`](@ref)
-    -    [`RhombicBC`](@ref)
-    -    [`RectangularBC`](@ref)
+- Implemented types:
+    - [`CubicBC`](@ref)
+    - [`RhombicBC`](@ref)
+    - [`RectangularBC`](@ref)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
 """
     CubicBC{T}(; side_length::Number)
+
 Is subtype of [`PeriodicBC`](@ref) for systems with cubic symmetry.
 
 Keyword argument:
@@ -79,11 +80,11 @@ end
     RectangularBC{T}
 
 Is subtype of [`PeriodicBC`](@ref) for systems with rectangular symmetry
-(orthogonal axes with length of box in $x/y$ direction differs from height of box in $z$-direction).
+(orthogonal axes with length of box in $x,y$ direction differs from height of box in $z$-direction).
 
-Field names:
--    `box_length`: length of side of square in $x/y$ direction
--    `box_height`: height of the box in $z$ direction
+# Fields:
+- `box_length`: length of side of square in $x,y$ direction
+- `box_height`: height of the box in $z$ direction
 """
 
 struct RectangularBC{T} <: PeriodicBC{T}
@@ -91,24 +92,23 @@ struct RectangularBC{T} <: PeriodicBC{T}
     box_height::T
 end
 
-
 """
     RhombicBC{T}(; length::Number, height::Number)
 
 Is subtype of [`PeriodicBC`](@ref) for systems with rhombic symmetry
-(length of box in $x/y$ direction differs from height of box in $z$-direction).
+(length of box in $x,y$ direction differs from height of box in $z$-direction).
 The projection of the box on the $xy$-plane is a rhombus with four equal sides. 
 
-Keyword arguments:
--    `length`: length of box in $x/y$ direction
--    `height`: height of the box in $z$ direction
+# Keywords
+- `length`: length of box in $x,y$ direction
+- `height`: height of the box in $z$ direction
 
-Field names:
--    `box_length`: length of side of the cubic box
--    `box_height`: height of the box in $z$ direction
+# Fields:
+- `box_length`: length of side of the cubic box
+- `box_height`: height of the box in $z$ direction
 """
 
-#TODO  check how exactly implemented (height is length of side or projection on z-axis?)
+# TODO  check how exactly implemented (height is length of side or projection on z-axis?)
 struct RhombicBC{T} <: PeriodicBC{T}
     box_length::T
     box_height::T
@@ -124,9 +124,9 @@ Checks if atom moved outside of spherical boundary
 (squared norm of position vector smaller than squared radius of binding sphere).
 Returns `true` if atom lies outside.
 
-Arguments:
--    -    [`SphericalBC`](@ref)
--    [`PositionVector`](@ref)
+# Arguments
+- [`SphericalBC`](@ref)
+- [`PositionVector`](@ref)
 
 """
 check_boundary(bc::SphericalBC,pos::PositionVector) = sum(x->x^2,pos) > bc.radius2
@@ -136,9 +136,9 @@ check_boundary(bc::SphericalBC,pos::PositionVector) = sum(x->x^2,pos) > bc.radiu
 
 Tests if whole cluster lies in the binding sphere.
 
-Arguments:
--    positions
--    [`SphericalBC`](@ref)
+# Arguments
+- atomic positions
+- [`SphericalBC`](@ref)
 """
 
 # TO DO: check if this function is used at all? If so, make consistent with check_boundary
