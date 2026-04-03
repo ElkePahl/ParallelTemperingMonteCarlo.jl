@@ -18,8 +18,8 @@ export check_boundary
 Is abstract type for boundary conditions. 
 
 Implemented boundary conditions:
--   SphericalBC
--   PeriodicBC` with subtypes:
+-   `SphericalBC`
+-   `PeriodicBC` with subtypes:
     -   `CubicBC`
     -   `RhombicBC`
     -   `RectangularBC`
