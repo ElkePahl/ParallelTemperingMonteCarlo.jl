@@ -105,7 +105,7 @@ The projection of the box on the ``xy``-plane is a rhombus with four equal sides
 
 # Fields:
 - `box_length`: length of side of the cubic box
-- `box_height`: height of the box in $z$ direction
+- `box_height`: height of the box in ``z`` direction
 """
 
 # TODO  check how exactly implemented (height is length of side or projection on z-axis?)
