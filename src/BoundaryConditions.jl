@@ -86,7 +86,6 @@ Is subtype of [`PeriodicBC`](@ref) for systems with rectangular symmetry
 - `box_length`: length of side of square in ``x,y`` direction
 - `box_height`: height of the box in ``z`` direction
 """
-
 struct RectangularBC{T} <: PeriodicBC{T}
     box_length::T
     box_height::T
