@@ -17,7 +17,7 @@ n_traj = 24
 temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
-mc_cycles = 1_000_000 # default 20% equilibration cycles on top
+mc_cycles = 10_000   # default 20% equilibration cycles on top
 mc_sample = 1        # sample every mc_sample MC cycles
 displ_atom = 0.05    # in Angstrom
 n_adjust = 100

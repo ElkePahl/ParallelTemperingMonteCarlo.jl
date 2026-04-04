@@ -1,19 +1,28 @@
-""" 
+"""
     module BoundaryConditions
 
-This module provides structs and methods for different kinds of boundary conditions.
-        
+Provides structs and methods for different boundary conditions.
+
 """
 module BoundaryConditions
+
 using StaticArrays
 using ..CustomTypes
-export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC
+
+export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
 export check_boundary
-"""   
-    AbstractBC{T} 
-Encompasses possible boundary conditions; implemented: 
--   [`SphericalBC`](@ref)
--   [`PeriodicBC`](@ref)
+
+"""
+    AbstractBC{T}
+
+Is abstract type for boundary conditions. 
+
+Implemented boundary conditions:
+-   `SphericalBC`
+-   `PeriodicBC` with subtypes:
+    -   `CubicBC`
+    -   `RhombicBC`
+    -   `RectangularBC`
 
 Needs methods implemented for
 -   [`atom_displacement`](@ref Main.ParallelTemperingMonteCarlo.MCMoves.atom_displacement)
@@ -22,9 +31,15 @@ abstract type AbstractBC{T} end
 
 """
     SphericalBC{T}(;radius::Number)
+
 Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@ref).
-Needs radius of binding sphere as keyword argument.
-Fieldname: `radius2`: squared radius of binding sphere
+
+# Keywords:
+- radius of binding sphere
+
+# Fields: 
+- radius2: squared radius of binding sphere
+
 """
 struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
@@ -33,15 +48,26 @@ end
 
 """
     PeriodicBC{T}
-Overarching type of boundary condition for simulating the infinite bulk
--   Implemented types:
-    -   [`CubicBC`](@ref)
-    -   [`RhombicBC`](@ref)
+
+Is abstract type for periodic boundary conditions to simulate bulk systems.
+
+- Implemented types:
+    - `CubicBC`
+    - `RhombicBC`
+    - `RectangularBC`
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
+
 """
     CubicBC{T}(; side_length::Number)
-Subtype of periodic boundary conditions where the `box_length` is isotropic.
+
+Is subtype of [`PeriodicBC`](@ref) for systems with cubic symmetry.
+
+Keyword argument:
+-    `side_length`: length of side of the cubic box
+
+Field name:
+-    `box_length`:  length of side of the cubic box
 """
 struct CubicBC{T} <: PeriodicBC{T}
     box_length::T
@@ -49,9 +75,37 @@ struct CubicBC{T} <: PeriodicBC{T}
     CubicBC{T}(x::T) where T <: Number = new{T}(x)
     CubicBC(x::T) where T <: Number = new{T}(x)
 end
+
+"""
+    RectangularBC{T}
+
+Is subtype of [`PeriodicBC`](@ref) for systems with rectangular symmetry
+(orthogonal axes with length of box in ``x,y`` direction differs from height of box in ``z``-direction).
+
+# Fields:
+- `box_length`: length of side of square in ``x,y`` direction
+- `box_height`: height of the box in ``z`` direction
+"""
+struct RectangularBC{T} <: PeriodicBC{T}
+    box_length::T
+    box_height::T
+end
+
+# TODO  check how exactly implemented (height is length of side or projection on z-axis?)
 """
     RhombicBC{T}(; length::Number, height::Number)
-Subtype of periodic boundary condition where the `box_length` and `box_height` are not the same. The projection of the box on the xy-plane is a rhombus, `box_length` applies to all four sides.
+
+Is subtype of [`PeriodicBC`](@ref) for systems with rhombic symmetry
+(length of box in ``x,y`` direction differs from height of box in ``z``-direction).
+The projection of the box on the ``xy``-plane is a rhombus with four equal sides. 
+
+# Keywords
+- `length`: length of box in ``x,y`` direction
+- `height`: height of the box in ``z`` direction
+
+# Fields:
+- `box_length`: length of side of the cubic box
+- `box_height`: height of the box in ``z`` direction
 """
 struct RhombicBC{T} <: PeriodicBC{T}
     box_length::T
@@ -64,16 +118,27 @@ end
 """
     check_boundary(bc::SpericalBC,pos::PositionVector) where T <: Number
 
-Returns `true` when atom outside of spherical boundary
-(squared norm of position vector < radius^2 of binding sphere).
+Checks if atom moved outside of spherical boundary
+(squared norm of position vector smaller than squared radius of binding sphere).
+Returns `true` if atom lies outside.
+
+# Arguments
+- [`SphericalBC`](@ref)
+- `pos`: position of moved atom
+
 """
 check_boundary(bc::SphericalBC,pos::PositionVector) = sum(x->x^2,pos) > bc.radius2
 
-
 """
     test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where T <: Number
+
 Tests if whole cluster lies in the binding sphere.
+
+# Arguments
+- atomic positions
+- [`SphericalBC`](@ref)
 """
-test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where T <: Number = sum(x->check_boundary(bc,x),pos) == 0
+test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where {T <: Number} = sum(x->check_boundary(bc,x),pos) == 0
+# TO DO: check if this function is used at all? If so, make consistent with check_boundary
 
 end

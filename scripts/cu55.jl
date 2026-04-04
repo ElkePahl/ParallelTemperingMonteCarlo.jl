@@ -1,7 +1,9 @@
 using ParallelTemperingMonteCarlo
 using Random, DelimitedFiles
 
-#demonstration of the new version of the new code   
+AtoBohr = 1.8897259886
+
+#demonstration of the new version of the new code
 script_folder = @__DIR__ # folder where this script is located
 data_path = joinpath(script_folder, "data") # path to data files, so "./data/"
 #-------------------------------------------------------#
@@ -15,11 +17,11 @@ ti = 400.
 tf = 1200.
 n_traj = 28
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1500  #default 20% equilibration cycles on top
+mc_cycles = 1000  #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -126,7 +128,7 @@ close(file)
 weights = vec(weights)
 nnp = NeuralNetworkPotential(num_nodes,activation_functions,weights)
 
-runnerpotential = RuNNerPotential(nnp,radsymmvec,angularsymmvec)
+runnerpotential = RuNNerPotential(nnp, radsymmvec, angularsymmvec, 28*AtoBohr)
 
 
 
@@ -200,8 +202,6 @@ ico_55 = [[0.0000006584,       -0.0000019175,        0.0000000505],
 copperconstant = 0.36258*nmtobohr
 pos_cu55 = copperconstant*ico_55
 
-AtoBohr = 1.8897259886
-
 length(pos_cu55) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
 
@@ -215,5 +215,5 @@ start_config = Config(pos_cu55, bc_cu55)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-states,results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000)
+states,results = ptmc_run!(mc_params,temp,start_config,runnerpotential,ensemble;save=1000)
 #rm("checkpoint",recursive=true)
