@@ -54,10 +54,6 @@ Function returning the probability value associated with a trial move. Four meth
 """
 function metropolis_condition(delta_energy::Number, beta::Number)
     prob_val = exp(-delta_energy*beta)
-
-    #println("de = ",delta_energy)
-    #println("p = ",prob_val)
-
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -179,7 +175,6 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
     #if v > 0
     if ensemble.separated_volume==false
         acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
-        #println("acc rate volume = ",acc_rate)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
         elseif acc_rate > max_acc
@@ -188,7 +183,6 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
         mc_state.count_vol[2] = 0
     else
         acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves *1/2)
-        #println("acc rate volume = ",acc_rate)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
         elseif acc_rate > max_acc
@@ -197,7 +191,6 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
         mc_state.count_vol[2] = 0
 
         acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves *1/3)
-        #println("acc rate volume = ",acc_rate)
         if acc_rate < min_acc
             mc_state.max_displ[3] *= 0.9
         elseif acc_rate > max_acc
@@ -206,7 +199,6 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
         mc_state.count_vol_xy[2] = 0
 
         acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves /6)
-        #println("acc rate volume z = ",acc_rate)
         if acc_rate < min_acc
             mc_state.max_displ[4] *= 0.9
         elseif acc_rate > max_acc
