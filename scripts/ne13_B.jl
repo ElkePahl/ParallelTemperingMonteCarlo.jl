@@ -14,11 +14,11 @@ ti = 9.
 tf = 16.
 n_traj = 16
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 200000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -36,7 +36,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 ensemble = NVT(n_atoms)
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(ensemble)  
+move_strat = MoveStrategy(ensemble)
 
 #c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 #pot = ELJPotentialEven{6}(c)
@@ -69,7 +69,7 @@ pos_ne13 = [[2.64403563493521, 0.7912322223900569, -0.565831477176502],
 
 length(pos_ne13) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-#boundary conditions 
+#boundary conditions
 bc_ne13 = SphericalBC(radius=5.32)   #5.32 Angstrom
 
 #starting configuration
@@ -82,15 +82,3 @@ start_config = Config(pos_ne13, bc_ne13)
 
 #construct array of MCState (for each temperature)
 mc_states, results = ptmc_run!(mc_params,temp,start_config,potB,ensemble)
-
-#to check code in REPL
-@profview ptmc_run!(mc_params,temp,start_config,potB,ensemble)
-#@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
-
-
-
-
-# plot(temp.t_grid,results.heat_cap)
-
-# data = [results.en_histogram[i] for i in 1:n_traj]
-# plot(data)

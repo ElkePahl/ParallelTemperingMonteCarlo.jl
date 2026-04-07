@@ -28,7 +28,7 @@ Basic function for establishing the structs and parameters required for the simu
 -   `potential`: the potential energy used for the simulation.
 -   `ensemble`: the ensemble used for the simulation, contains the move strat inherently.
 Inputs for method two are:
--   `restart`: A boolean determining whether the simulation is restarting or being read-in from a file. 
+-   `restart`: A boolean determining whether the simulation is restarting or being read-in from a file.
 -   `eq_cycles`: the proportion of n_cycles to be run in equilibration.
 
 Method one and two return the following structs:
@@ -36,7 +36,7 @@ Method one and two return the following structs:
 -   `move_strategy`: struct containing a vector of [`MoveType`](@ref)
 -   `results`: struct countaining the output such as Cv and histograms
 -   `start_counter`: where to begin the sims
--   `n_steps`: total moves per mc_cycle 
+-   `n_steps`: total moves per mc_cycle
 Method two also returns:
 -   `mc_params`: the static parameters determining the scope of the simulation
 -   `ensemble`: determines the ensemble and move_strategy followed by the simulation
@@ -47,21 +47,64 @@ Method two also returns:
 -   consider shuffling `mc_params` to include the `tempgrid` and cut down the number of inputs.
 
 """
-function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
+#function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
 
-    move_strategy = MoveStrategy(ensemble)
-    n_steps = length(move_strategy)
-    
-    mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
+    #move_strategy = MoveStrategy(ensemble)
+    #n_steps = length(move_strategy)
 
-    results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
-    start_counter=1
-    return mc_states,move_strategy,results,n_steps,start_counter
+    #mc_states = Array{MCState}(undef, mc_params.n_traj)
+    #for i in 1:mc_params.n_traj
+        #if rem(i,2) == 0
+            #mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[1],ensemble,potential)
+        #else
+            #mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[2],ensemble,potential)
+        #end
+    #end
+    #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
+
+    #println(mc_states[1].en_tot)
+
+    #results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
+    #start_counter=1
+    #return mc_states,move_strategy,results,n_steps,start_counter
+#end
+
+function initialisation(
+    mc_params::MCParams,
+    temp::TempGrid,
+    start_config::Config,
+    potential::AbstractPotential,
+    ensemble::AbstractEnsemble,
+)
+    return initialisation(mc_params, temp, (start_config,), potential, ensemble)
 end
-function initialisation(restart::Bool,eq_cycles::Number)
+function initialisation(
+    mc_params::MCParams,
+    temp::TempGrid,
+    start_config,
+    potential::AbstractPotential,
+    ensemble::AbstractEnsemble,
+)
+    move_strategy = MoveStrategy(ensemble)
+    mc_states = map(1:mc_params.n_traj) do i
+        MCState(
+            temp.t_grid[i],
+            temp.beta_grid[i],
+            start_config[mod1(i, length(start_config))],
+            ensemble,
+            potential,
+        )
+    end
+    results = Output{Float64}(mc_params.n_bin)
+    n_steps = length(move_strategy)
+    start_counter = 1
 
+    return mc_states, move_strategy, results, n_steps, start_counter
+end
+
+function initialisation(restart::Bool,eq_cycles)
     mc_params,temp,ensemble,potential = read_init(restart,eq_cycles)
-    
+
     if restart == true
         start_counter = Int(readdlm("./checkpoint/index.txt")[1])
         mc_states,results = rebuild_states(mc_params.n_traj,ensemble,temp,potential)
