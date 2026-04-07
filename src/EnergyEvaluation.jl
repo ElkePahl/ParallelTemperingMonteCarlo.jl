@@ -41,6 +41,8 @@ export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,in
 
 export swap_energy_update
 
+#TODO: work on documentation/ remove hard-coded value (r_cut) - meaning?
+
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
 #-------------------------------------------------------------#
