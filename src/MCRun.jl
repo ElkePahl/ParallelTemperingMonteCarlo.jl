@@ -26,13 +26,13 @@ using ..CustomTypes
 
 include("swap_config.jl")
 
-
+#TODO update energy documentation
 """
     get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
     get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
     get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NNVTVariables}
-Curry function designed to separate energy calculations into their respective ensembles and move types. Currently implemented for:
-
+Calculates energy for different ensembles and move types. 
+Currently implemented for:
         - NVT ensemble without r_cut
         - NPT ensemble with r_cut
         - NNVT ensemble for multiple-species atoms
@@ -112,7 +112,11 @@ end
 
 """
     acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
-[`acc_test!`](@ref) function now significantly contracted as a method of calculating the metropolis condition, comparing it to a random variable and if the condition is met using the [`swap_config!`](@ref) function to exchange the current `mc_state` with the internally defined new variables. `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
+
+Checks if metropolis condition is fulfilled, comparing it to a random variable in [0,1].
+If the condition is met, the new variables become the current `mc_state` using [`swap_config!`](@ref).
+`ensemble` and `movetype` dictate the exact calculation of the metropolis condition, 
+and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
 """
 function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String)
     if metropolis_condition(movetype, mc_state, ensemble) >= rand()
@@ -127,6 +131,7 @@ function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String)
 end
 """
     mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
+
 Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES.
 -   Calculates an index for the move
 -   Generates either a volume or atom move depending on `movestrat[index]`
@@ -148,6 +153,7 @@ end
 
 """
     mc_step!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, pot::Ptype, ensemble::Etype, n_steps::Int) where {N, E}
+
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
 function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype,n_steps::Int) where {N,E}
@@ -162,6 +168,7 @@ end
 """
     mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, index::Int) where {N, E}
     mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output, idx::Int, rdfsave::Bool) where {N, E}
+
 Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `pot`, `move_strat` and `ensemble`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
 
 Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
