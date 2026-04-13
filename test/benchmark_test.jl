@@ -1,7 +1,9 @@
-#using Test
+using Test
+
+#TODO this tests takes too long. Update it.
 #=
-#call = :(include(joinpath(@__DIR__,"..","scripts","ne55.jl")))
-#eval(call)
+call = :(include(joinpath(@__DIR__,"..","scripts","ne55.jl")))
+eval(call)
 
 
 #benchmark_data = [

@@ -36,11 +36,11 @@ function readfile(xdir::String; debug = false)
     de = (emax-emin)/(NBins-1)
     #Below we initialise the histogram array
     HistArray = Array{Float64}(undef,NTraj,NBins)
-    
+
     for i in 1:NTraj
         c = open("$(xdir)histE.$i", "r")
         hist = readdlm(c)
-        HistArray[i,:] = hist[1:NBins,2] 
+        HistArray[i,:] = hist[1:NBins,2]
     end
 
     if debug println("Files Read") end
@@ -72,7 +72,7 @@ function readfile(output::Output, Tvals::TempGrid )
 
     return HistArray, energyvector, Tvals.beta_grid, NTraj, output.n_bin , kB
 end
-""" 
+"""
     processhist!(HistArray::Matrix{N}, energyvector::VorS, NBins::Int, NTraj::Int) where N <: Number
 This function normalises the histograms, collates the bins into their total counts and then deletes any energy bin containing no counts -- this step is required to prevent `NaN` errors when doing the required calculations.
 
@@ -119,7 +119,7 @@ function initialise(xdir::String)
     HistArray,energyvector,nsum,NBins = processhist!(HistArray,energyvector,NBins,NTraj)
 
     return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
-    
+
 end
 function initialise(output::Output,Tvec::TempGrid)
 
@@ -158,9 +158,9 @@ function nancheck(X::Matrix)
     end
     return check
 end
-""" 
+"""
     bvector(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int; debug = false) where N <: Number
-Function to calculate the `b` vector relevant to solving the RHS of the multihistogram equation. 
+Function to calculate the `b` vector relevant to solving the RHS of the multihistogram equation.
 
 """
 function bvector(HistArray::Matrix{N},energyvector::VorS,beta::VorS,nsum::VorS,NTraj::Int,NBins::Int; debug = false) where N <: Number
@@ -190,7 +190,7 @@ function bvector(HistArray::Matrix{N},energyvector::VorS,beta::VorS,nsum::VorS,N
         rhvec[j] = sum(bmat[:,j])
     end
 #Now we have our two matrices, the ith element is a sum over the energies for bmat-nij*rhvec
-    for i in 1:NTraj 
+    for i in 1:NTraj
         B[i] = sum( bmat[i,:] .- HistArray[i,:] .*rhvec./nsum )
     end
     if debug println("B Vector Calculated") end
@@ -205,9 +205,9 @@ function amatrix(HistArray :: Matrix,nsum::VorS,NTraj::Int; debug = false)
 
     for i = 1:NTraj
         for ip = 1:NTraj
-            
+
             A[i,ip] = -sum(HistArray[i,:].*HistArray[ip,:]./nsum[:])
-            
+
             if i == ip
                 A[i,ip] += sum(HistArray[i,:])
             end
@@ -217,7 +217,7 @@ function amatrix(HistArray :: Matrix,nsum::VorS,NTraj::Int; debug = false)
 
     return A
 end
-""" 
+"""
     systemsolver(HistArray::Matrix, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int; debug = false)
 [`systemsolver`](@ref) is used to determine the solution Alpha to the linear equation `Ax = b` where `A` and `b` are the A matrix and b vector described above. This is fundamentally how the multihistogram method works.
 """
@@ -248,7 +248,7 @@ Having determined the vector solution to `Ax=b`, we input `alpha` and the "b-mat
 """
 function Entropycalc(alpha::Vector, bmat:: Matrix, HistArray::Matrix,nsum::VorS,NBins::Int)
     S_E = []
-    for j = 1:NBins 
+    for j = 1:NBins
         var = (sum(bmat[:,j] .- HistArray[:,j].*alpha))/nsum[j]
         push!(S_E,var)
     end
@@ -259,7 +259,7 @@ end
     analysis(energyvector::VorS, S_E::Vector, beta::VorS, kB::Float64, NPoints::Int; debug = false)
 NPoints determines how densely the points are populated.
 
-Analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value. 
+Analysis takes in the energy bin values, entropy per energy and inverse temperatures beta. It calculates the temperatures T, and then finds the partition function -- note that the boltzmann factors XP are self-scaling so they vary from 1 to 100, this is not necessary but prevents numerical errors in regions where the partition function would otherwise explode in value.
 
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
@@ -274,7 +274,7 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
    XP = Array{Float64}(undef,NPoints,NBins)
    nexp = 0
 
-   
+
    Z = Array{Float64}(undef,NPoints)
    U = Array{Float64}(undef,NPoints)
    U2 = Array{Float64}(undef,NPoints)
@@ -305,18 +305,18 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
        count=0  #this variable was included for bug testing and should be excluded from the main program
 
        #below we calculate the partition function
-       
+
        @label start
        XP[i,:] = exp.(y[i,:].-nexp)
        Z[i] = sum(XP[i,:] )
-       
+
        #this loop exists to make sure the scale of our partition function is sensible
        #the numbers are utterly arbitrary, they have been chosen so that they don't create a loop
-        
+
         if Z[i] < 1.
             count += 1
 
-            nexp -= 1.  
+            nexp -= 1.
             @goto start
         elseif Z[i] > 100.
 
@@ -327,7 +327,7 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
         end
         if debug println(count) end
        U[i] = sum(XP[i,:].*energyvector[:])/Z[i]
-       U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]       
+       U2[i] = sum(XP[i,:].*energyvector[:].*energyvector[:])/Z[i]
        r2[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        r3[i] = sum(XP[i,:].*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ).*(energyvector[:].-U[i] ) )/Z[i]
        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
@@ -336,14 +336,14 @@ function analysis(energyvector::VorS, S_E :: Vector, beta::VorS,kB::Float64, NPo
    end
 return Z,U,Cv,dCv,S_T,T
 end
-""" 
+"""
     run_multihistogram(HistArray::Matrix{N}, energyvector::VorS, beta::VorS, nsum::VorS, NTraj::Int, NBins::Int, kB::Float64, outdir::String, NPoints::Int; debug = false) where N <: Number
 This function completely determines the properties of a system given by the output of the initialise function and a specified directory to write to. It outputs four files with the following information:
--   `histograms.data` The top line are the corresponding energy values and the next `NTraj` lines are the raw histogram data. This file can be used to plot the histograms if needed. 
--   `Sol.X` containing the solution to the linear equation `Ax=B`, 
--   `S.data` containing the energy values and corresponding entropies 
+-   `histograms.data` The top line are the corresponding energy values and the next `NTraj` lines are the raw histogram data. This file can be used to plot the histograms if needed.
+-   `Sol.X` containing the solution to the linear equation `Ax=B`,
+-   `S.data` containing the energy values and corresponding entropies
 -   `analysis.NVT` containing the temperatures, partition function, heat capacity and its derivative. NB now includes the temperature dependent Entropy function.
-    
+
 """
 function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,nsum::VorS,NTraj::Int,NBins::Int,kB::Float64,outdir::String,NPoints::Int; debug = false) where N <: Number
 
@@ -381,7 +381,7 @@ function run_multihistogram(HistArray::Matrix{N},energyvector::VorS,beta::VorS,n
     close(cvfile)
     if debug println(T) end
     if debug println(C) end
-       
+
 end
 
 """
@@ -413,10 +413,10 @@ function postprocess(;xdir=pwd())
     multihistogram(results,temps)
 
     hists = readdlm("histograms.data")
-    analysis=readdlm("analysis.NVT")
+    analysis = readdlm("analysis.NVT")
     energies=hists[1,:]
     histogramdata= [hists[i+1,:] for i in 1:params.n_traj ]
-    
+
     T,Z,Cv,dCv,S=analysis[2:end,1],analysis[2:end,2],analysis[2:end,3],analysis[2:end,4],analysis[2:end,5]
 
     return energies,histogramdata,T,Z,Cv,dCv,S

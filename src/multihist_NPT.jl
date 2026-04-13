@@ -173,7 +173,7 @@ function multihistogram_NPT(ensemble::AbstractEnsemble, temp::TempGrid, results:
     println("temperature array: ",temp_result)
     println("heat capacity array: ",cp)
 
-    return cp
+    return temp_result,cp
 end
 
 

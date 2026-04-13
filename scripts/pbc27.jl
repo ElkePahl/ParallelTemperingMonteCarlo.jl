@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Random
 
-#demonstration of the new verison of the new code   
+#demonstration of the new verison of the new code
 
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
@@ -11,18 +11,18 @@ Random.seed!(1234)
 
 # number of atoms
 n_atoms = 27
-pressure = 101325
+pressure = 50000000000
 
 # temperature grid
-ti = 10.
-tf = 40.
-n_traj = 25
+ti = 1500.
+tf = 3000.
+n_traj = 24
 
-temp = TempGrid{n_traj}(ti,tf) 
+temp = TempGrid{n_traj}(ti,tf)
 
 # MC simulation details
 
-mc_cycles = 1000 #default 20% equilibration cycles on top
+mc_cycles = 10000 #default 20% equilibration cycles on top
 
 
 mc_sample = 1  #sample every mc_sample MC cycles
@@ -43,11 +43,23 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample = mc_sample, n_adjust
 c=[-10.5097942564988, 989.725135614556, -101383.865938807, 3918846.12841668, -56234083.4334278, 288738837.441765]
 pot = ELJPotentialEven{6}(c)
 
+a=[0.0005742,-0.4032,-0.2101,-0.0595,0.0606,0.1608]
+b=[-0.01336,-0.02005,-0.1051,-0.1268,-0.1405,-0.1751]
+c1=[-0.1132,-1.5012,35.6955,-268.7494,729.7605,-583.4203]
+potB = ELJPotentialB{6}(a,b,c1)
+
+
+link="/Users/tiantianyu/Downloads/look-up_table.txt"
+potlut=LookupTablePotential(link)
+
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-ensemble = NPT(n_atoms,pressure*3.398928944382626e-14)
+separated_volume=true
+pressure_scale=3.398928944382626e-14*1.8897259886^3
+ensemble = NPT(n_atoms,pressure*pressure_scale,separated_volume)
 move_strat = MoveStrategy(ensemble)
+
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
@@ -84,26 +96,29 @@ pos_ne27 = [[ 1.56624152,  0.90426996,  0.        ],
        [ 9.39744912,  5.42561978,  5.11532339]]
 
 #convert to Bohr
-AtoBohr = 1.8897259886 * 0.98
+#AtoBohr = 1.8897259886 * 0.98
+AtoBohr = 1.0
 pos_ne27 = pos_ne27 * AtoBohr
 
 
 #Box length
 box_length = 9.3974 * AtoBohr
 box_height = 7.673 * AtoBohr
-bc_ne27 = RhombicBC(box_length, box_height)   
+bc_ne27 = RhombicBC(box_length, box_height)
 
 length(pos_ne27) == n_atoms || error("number of atoms and positions not the same - check starting config")
 
-start_config = Config(pos_ne27, bc_ne27)
+start_config_1 = Config(pos_ne27, bc_ne27)
+start_config_2 = Config(pos_ne27, bc_ne27)
+start_config = [start_config_1,start_config_2]
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-#mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+mc_states, results = ptmc_run!(mc_params,temp,start_config,potlut,ensemble)
 
 #to check code in REPL
-@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
+#@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 #@benchmark ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-## 
+##
