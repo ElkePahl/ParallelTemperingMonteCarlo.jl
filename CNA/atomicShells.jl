@@ -21,16 +21,16 @@ Output:
 shells: (Vector{Int64}) Vector containing the shell number of each atom, same ordering as configuration.
 bondGraph: (SimpleGraph) Graph representation of the configuration.
 """
-function ShellLabelling(configuration,N,B,rCut,req)
-    core = innerCore(configuration,N,req) # Determine which atoms form the innermost core
-    bondGraph = adjacencyGraph(configuration,N,rCut,B,req) # Construct the graph representation of the cluster
-    shells = fill(N,N) # Initialise shell numbers
+function ShellLabelling(configuration, N, B, rCut, req)
+    core = innerCore(configuration, N, req) # Determine which atoms form the innermost core
+    bondGraph = adjacencyGraph(configuration, N, rCut, B, req) # Construct the graph representation of the cluster
+    shells = fill(N, N) # Initialise shell numbers
     for innerAtom in core # For each innermost atom
         # Update the shell number of each atom to be the shortest number of bonds from innerAtom if smaller than current shell number.
-        shells = min.(shells,(dijkstra_shortest_paths(bondGraph,innerAtom)).dists)
+        shells = min.(shells, (dijkstra_shortest_paths(bondGraph, innerAtom)).dists)
     end
 
-	return shells, bondGraph # Return the shell numbers
+    return shells, bondGraph # Return the shell numbers
 end
 
 """
@@ -47,11 +47,11 @@ Output:
 core: (Vector{Int64}) Vector containg the atom numbers which are part of the inner core.
 """
 
-function innerCore(configuration,N,req,coreSize=0.85)
-    CoM = centreOfMass(configuration,N) # Compute the CoM of the cluster
-    distances = radialDistances(configuration,N,CoM) # Compute the dsitances between all the atoms and the CoM
+function innerCore(configuration, N, req, coreSize=0.85)
+    CoM = centreOfMass(configuration, N) # Compute the CoM of the cluster
+    distances = radialDistances(configuration, N, CoM) # Compute the dsitances between all the atoms and the CoM
     # Return a vector of the atoms which are within 'coreSize' equilibrium bond lengths of the CoM.
-    return findall(x-> x<coreSize*req,distances)
+    return findall(x->x<coreSize*req, distances)
 end
 
 """
@@ -65,11 +65,11 @@ CoM: (Float64) Centre of mass of the points
 Outputs:
 radialDistances: (Vector{Float64}) The ith element of the array is the distance the ith atom in configuration is from the centre of mass
 """
-function radialDistances(configuration,N,CoM)
-    distances = Vector{Float64}(undef,N) # Preallocate the distances vector
+function radialDistances(configuration, N, CoM)
+    distances = Vector{Float64}(undef, N) # Preallocate the distances vector
     for i in 1:N # For each of the atoms in the cluster
-        diff = configuration[i,:]-CoM[:] # calculate the vector between it and the CoM
-		distances[i] = sqrt(sum(diff.*diff)) # Compute the length of the vector
+        diff = configuration[i, :]-CoM[:] # calculate the vector between it and the CoM
+        distances[i] = sqrt(sum(diff .* diff)) # Compute the length of the vector
     end
 
     return distances # Return the distacnes vector
@@ -85,9 +85,9 @@ N: (Int64) Number of points
 Output:
 CoM: (Vector{Float64}) 
 """
-function centreOfMass(configuration,N)
+function centreOfMass(configuration, N)
     # Initialise the CoM
-    CoM = zeros(Float64,3,1)
+    CoM = zeros(Float64, 3, 1)
     for i in 1:N # For each point
         CoM .+= configuration[i] # Add to CoM component wise
     end

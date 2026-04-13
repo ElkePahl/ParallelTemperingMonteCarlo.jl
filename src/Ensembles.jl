@@ -2,13 +2,14 @@ module Ensembles
 
 using ..Configurations
 using ..BoundaryConditions
-using StaticArrays,Random
+using StaticArrays, Random
 
-export AbstractEnsemble,NVT,NPT,NNVT
+export AbstractEnsemble, NVT, NPT, NNVT
 
-export AbstractEnsembleVariables,NVTVariables,NPTVariables,NNVTVariables,set_ensemble_variables
+export AbstractEnsembleVariables,
+    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables
 
-export MoveType,atommove,volumemove,atomswap
+export MoveType, atommove, volumemove, atomswap
 export MoveStrategy
 export get_r_cut
 
@@ -21,7 +22,7 @@ Abstract type for ensemble:
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
-const Etype = T where T <: AbstractEnsemble
+const Etype = T where {T<:AbstractEnsemble}
 export Etype
 
 """
@@ -45,7 +46,7 @@ struct NVT <: AbstractEnsemble
 end
 
 function NVT(n_atoms)
-    return NVT(n_atoms,n_atoms,0)
+    return NVT(n_atoms, n_atoms, 0)
 end
 
 """
@@ -56,9 +57,9 @@ NVT ensemble specific variables that change during MC run:
     -   `trial_move::SVector{3,T}`
 When trialing a new configuration we select an atom at `index` to move to position given by `trial_move`.
 """
-mutable struct  NVTVariables{T} <: AbstractEnsembleVariables
+mutable struct NVTVariables{T} <: AbstractEnsembleVariables
     index::Int64
-    trial_move:: SVector{3,T}
+    trial_move::SVector{3,T}
 end
 
 """
@@ -80,8 +81,8 @@ struct NPT <: AbstractEnsemble
     separated_volume::Bool
 end
 
-function NPT(n_atoms,pressure,separated_volume)
-    return NPT(n_atoms,n_atoms,1,0,pressure,separated_volume)
+function NPT(n_atoms, pressure, separated_volume)
+    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume)
 end
 
 """
@@ -119,7 +120,7 @@ function get_r_cut(bc::CubicBC)
 end
 
 function get_r_cut(bc::RhombicBC)
-    return min(bc.box_length^2*3/16,bc.box_height^2/4)
+    return min(bc.box_length^2*3/16, bc.box_height^2/4)
     #return bc.box_length^2*3/16
 end
 #---------------------------------------------------------------------#
@@ -140,17 +141,17 @@ struct NNVT <: AbstractEnsemble
     n_atom_moves::Int
     n_atom_swaps::Int
 end
-function NNVT(natomsvec;natomswaps = 1,natommoves=sum(natomsvec))
-    if isa(natomsvec,Vector)
+function NNVT(natomsvec; natomswaps=1, natommoves=sum(natomsvec))
+    if isa(natomsvec, Vector)
         natoms = SVector{2}(natomsvec)
-    elseif isa(natomsvec,SVector)
+    elseif isa(natomsvec, SVector)
         natoms = natomsvec
     end
-    return NNVT(natoms,natommoves,natomswaps)
+    return NNVT(natoms, natommoves, natomswaps)
 end
 
 function get_r_cut(bc::RectangularBC)
-    return min(bc.box_length^2/4,bc.box_height^2/4)
+    return min(bc.box_length^2/4, bc.box_height^2/4)
 end
 
 """
@@ -179,18 +180,26 @@ Initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT
 required to allow for neutral initialisation in defining the MCState [`Main.ParallelTemperingMonteCarlo.MCStates.MCState`](@ref) struct.
 """
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
-    return NVTVariables{T}(1,SVector{3}(zeros(3)))
+    return NVTVariables{T}(1, SVector{3}(zeros(3)))
 end
 
-function set_ensemble_variables(config::Config{N,BC,T},ensemble::NPT) where {N,BC,T}
+function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NPT) where {N,BC,T}
     if BC == SphericalBC
         error("SphericalBC cannot be used in an NPT ensemble.")
     end
-    return NPTVariables{T}(1,SVector{3}(zeros(3)),deepcopy(config),zeros(ensemble.n_atoms,ensemble.n_atoms),get_r_cut(config.bc),0.,0)
+    return NPTVariables{T}(
+        1,
+        SVector{3}(zeros(3)),
+        deepcopy(config),
+        zeros(ensemble.n_atoms, ensemble.n_atoms),
+        get_r_cut(config.bc),
+        0.0,
+        0,
+    )
 end
-function set_ensemble_variables(config::Config{N,BC,T},ensemble::NNVT) where{N,BC,T}
-    N1,N2 = ensemble.natoms[1],ensemble.natoms[2]
-    return NNVTVariables{T,N,N1,N2}(1,SVector{3}(zeros(3)),SVector{2}(1,N1+1))
+function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NNVT) where {N,BC,T}
+    N1, N2 = ensemble.natoms[1], ensemble.natoms[2]
+    return NNVTVariables{T,N,N1,N2}(1, SVector{3}(zeros(3)), SVector{2}(1, N1+1))
 end
 
 """
@@ -221,44 +230,50 @@ end
 function MoveStrategy(ensemble::NPT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,"atommove")
+        push!(movestrat, "atommove")
     end
     for m_index in 1:ensemble.n_volume_moves
-        push!(movestrat,"volumemove")
+        push!(movestrat, "volumemove")
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,"atomswap")
+        push!(movestrat, "atomswap")
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)}(ensemble,movestrat)
+    return MoveStrategy{
+        ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)
+    }(
+        ensemble, movestrat
+    )
 end
 
 function MoveStrategy(ensemble::NVT)
     movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,"atommove")
+        push!(movestrat, "atommove")
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,"atomswap")
+        push!(movestrat, "atomswap")
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(
+        ensemble, movestrat
+    )
 end
 
 function MoveStrategy(ensemble::NNVT)
-    movestrat= []
+    movestrat = []
     for m_index in 1:ensemble.n_atom_moves
-        push!(movestrat,"atommove")
+        push!(movestrat, "atommove")
     end
     for m_index in 1:ensemble.n_atom_swaps
-        push!(movestrat,"atomswap")
+        push!(movestrat, "atomswap")
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(ensemble,movestrat)
+    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(
+        ensemble, movestrat
+    )
 end
 
-
-Base.length(::MoveStrategy{N}) where N = N
-
+Base.length(::MoveStrategy{N}) where {N} = N
 
 end

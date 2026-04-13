@@ -18,44 +18,55 @@ EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 da
 L: (Int64) The number of configurations in the file.
 N: (Int64) The number of atoms in each configuration.
 """
-function vestaFile(configDir,fileName,configurations,classifications,capSymmetries,rCut,EBL,L,N)
-	oldFP = open("blueprint.vesta") # Obtain file pointer to reference .vesta file
-	lines = readlines(oldFP) # Get vector of lines of the reference file
-	for i in 1:L # For all configurations in the file
-		open("$configDir/visualisation/$(fileName)_$i.vesta","a") do newFP # Create new .vesta file
-			c = 1 # Initialise line counter
-			while c <= length(lines) # While have not reached eof
-				if (lines[c] == "STRUC") # If have reached structure section of the .vesta file
-					println(newFP,"STRUC") # write header to new file
-					for j in 1:N # For each atom in the configuration
-						# Add the atom's coordinate to the file (aswell as other required values for Vesta)
-						println(newFP,"  $j  1  $j  1.0000  $(configurations[i,j,1])  $(configurations[i,j,2])  $(configurations[i,j,3])    1")
-						 # Not why this line is neccessary in the Vesta file
-						println(newFP,"                    0.000000   0.000000   0.000000  0.00")
-					end
-					println(newFP,"  0 0 0 0 0 0 0") # Not why this line is neccessary in the Vesta file
-					println(newFP,"THERI 1") # Write header to new file
-					for j in 1:N # For each atom in the configuration
-						println(newFP,"  $j  $j  0.000000") # Not why this line is neccessary in the Vesta file
-					end
-					c+= 42 # Skip lines to get to next section in lines
-				elseif (lines[c] == "SBOND") # If have reached bond section of file
-					println(newFP,"SBOND") # Print section header
-					println(newFP,"  1     1     1    0.0000    $(round(rCut*EBL;digits=5))  0  1  1  0  1  0.250  2.000 127 127 127") # Write bond information
-					println(newFP,"  0 0 0 0")
-					println(newFP,"SITET") # Write header to new file
-					for j in 1:N # For each atom in the configuration
-						atomColour = colourAtom(j,classifications[i],capSymmetries[i]) # Colour the atom according to its identified symmetries
-						println(newFP,"  $j  $j  0.8000  $atomColour  76  76  76 204 0") # Add colour to file
-					end
-					c += 17 # Skip lines to get to next section in lines
-				else
-					println(newFP,lines[c]) # Print same line from reference file to new file
-					c+= 1 # Increment line counter
-				end
-			end
-		end
-	end
+function vestaFile(
+    configDir, fileName, configurations, classifications, capSymmetries, rCut, EBL, L, N
+)
+    oldFP = open("blueprint.vesta") # Obtain file pointer to reference .vesta file
+    lines = readlines(oldFP) # Get vector of lines of the reference file
+    for i in 1:L # For all configurations in the file
+        open("$configDir/visualisation/$(fileName)_$i.vesta", "a") do newFP # Create new .vesta file
+            c = 1 # Initialise line counter
+            while c <= length(lines) # While have not reached eof
+                if (lines[c] == "STRUC") # If have reached structure section of the .vesta file
+                    println(newFP, "STRUC") # write header to new file
+                    for j in 1:N # For each atom in the configuration
+                        # Add the atom's coordinate to the file (aswell as other required values for Vesta)
+                        println(
+                            newFP,
+                            "  $j  1  $j  1.0000  $(configurations[i,j,1])  $(configurations[i,j,2])  $(configurations[i,j,3])    1",
+                        )
+                        # Not why this line is neccessary in the Vesta file
+                        println(
+                            newFP,
+                            "                    0.000000   0.000000   0.000000  0.00",
+                        )
+                    end
+                    println(newFP, "  0 0 0 0 0 0 0") # Not why this line is neccessary in the Vesta file
+                    println(newFP, "THERI 1") # Write header to new file
+                    for j in 1:N # For each atom in the configuration
+                        println(newFP, "  $j  $j  0.000000") # Not why this line is neccessary in the Vesta file
+                    end
+                    c += 42 # Skip lines to get to next section in lines
+                elseif (lines[c] == "SBOND") # If have reached bond section of file
+                    println(newFP, "SBOND") # Print section header
+                    println(
+                        newFP,
+                        "  1     1     1    0.0000    $(round(rCut*EBL;digits=5))  0  1  1  0  1  0.250  2.000 127 127 127",
+                    ) # Write bond information
+                    println(newFP, "  0 0 0 0")
+                    println(newFP, "SITET") # Write header to new file
+                    for j in 1:N # For each atom in the configuration
+                        atomColour = colourAtom(j, classifications[i], capSymmetries[i]) # Colour the atom according to its identified symmetries
+                        println(newFP, "  $j  $j  0.8000  $atomColour  76  76  76 204 0") # Add colour to file
+                    end
+                    c += 17 # Skip lines to get to next section in lines
+                else
+                    println(newFP, lines[c]) # Print same line from reference file to new file
+                    c += 1 # Increment line counter
+                end
+            end
+        end
+    end
 end
 
 """
@@ -73,89 +84,89 @@ capSymmetries: Dict{Dict{Int64,Vector{Int64}},String} Dictionary mapping list of
 Outputs:
 colour: (String) String representation of the RGB values that make up the desired colour for the input atom.
 """
-function colourAtom(atomNum,classification,capSymmetries)
-	# Define colours in RGB format
-	colours = Dict{String,String}(
-		"dark red" => "153  0  0",
-		"dark orange" => "153  76  0",
-		"dark green" => "76  153  0",
-		"dark blue" => "0  0  153",
-		"dark purple" => "76  0  153",
-		"light red" => "255  102  102",
-		"light orange" => "255  178  102",
-		"light green" => "178  255  102",
-		"light blue" => "102  102  255",
-		"light purple" => "178  102  255",
-		"grey" => "76  76  76",
-		"red" => "255  0  0",
-		"orange" => "255  128  0",
-		"green" => "128  255  0",
-		"blue" => "0  0  255",
-		"purple" => "127  0  255",
-	)
-	for key in keys(classification) # For each list of atoms that have a symmetry
-		if atomNum in key # If this atom is in that list
-			symmetry = get!(classification,key,nothing) # Find what symmetry it has
-			if occursin("Core",symmetry) # If symmetry is a core symmetry
-				if occursin("ICO",symmetry) # If symmetry is icosahedral
-					return colours["dark red"]
-				elseif occursin("BCC",symmetry)
-					return colours["dark orange"]
-				elseif occursin("FCC",symmetry)
-					return colours["dark green"]
-				elseif occursin("HCP",symmetry)
-					return colours["dark blue"]
-				else # IF OTHER
-					return colours["dark purple"]
-				end
-			else # If not a coe symmetry
-				if occursin("ICO",symmetry)
-					return colours["red"]
-				elseif occursin("BCC",symmetry)
-					return colours["orange"]
-				elseif occursin("FCC",symmetry)
-					return colours["green"]
-				elseif occursin("HCP",symmetry)
-					return colours["blue"]
-				else # If OTHER
-					return colours["purple"]
-				end
-			end
-		end
-	end
+function colourAtom(atomNum, classification, capSymmetries)
+    # Define colours in RGB format
+    colours = Dict{String,String}(
+        "dark red" => "153  0  0",
+        "dark orange" => "153  76  0",
+        "dark green" => "76  153  0",
+        "dark blue" => "0  0  153",
+        "dark purple" => "76  0  153",
+        "light red" => "255  102  102",
+        "light orange" => "255  178  102",
+        "light green" => "178  255  102",
+        "light blue" => "102  102  255",
+        "light purple" => "178  102  255",
+        "grey" => "76  76  76",
+        "red" => "255  0  0",
+        "orange" => "255  128  0",
+        "green" => "128  255  0",
+        "blue" => "0  0  255",
+        "purple" => "127  0  255",
+    )
+    for key in keys(classification) # For each list of atoms that have a symmetry
+        if atomNum in key # If this atom is in that list
+            symmetry = get!(classification, key, nothing) # Find what symmetry it has
+            if occursin("Core", symmetry) # If symmetry is a core symmetry
+                if occursin("ICO", symmetry) # If symmetry is icosahedral
+                    return colours["dark red"]
+                elseif occursin("BCC", symmetry)
+                    return colours["dark orange"]
+                elseif occursin("FCC", symmetry)
+                    return colours["dark green"]
+                elseif occursin("HCP", symmetry)
+                    return colours["dark blue"]
+                else # IF OTHER
+                    return colours["dark purple"]
+                end
+            else # If not a coe symmetry
+                if occursin("ICO", symmetry)
+                    return colours["red"]
+                elseif occursin("BCC", symmetry)
+                    return colours["orange"]
+                elseif occursin("FCC", symmetry)
+                    return colours["green"]
+                elseif occursin("HCP", symmetry)
+                    return colours["blue"]
+                else # If OTHER
+                    return colours["purple"]
+                end
+            end
+        end
+    end
 
-	for dict in keys(capSymmetries) # For each cap symmetry
-		symmetry = get!(capSymmetries,dict,nothing) # Get symmetry type
-		for key in keys(dict) # For each capping atom
-			if atomNum == key # If this atom is the capping atom
-				if occursin("ICO",symmetry)
-					return colours["light red"]
-				elseif occursin("BCC",symmetry)
-					return colours["light orange"]
-				elseif occursin("FCC",symmetry)
-					return colours["light green"]
-				elseif occursin("HCP",symmetry)
-					return colours["light blue"]
-				else
-					return colours["light purple"]
-				end
-			elseif atomNum in get!(dict,key,nothing) # If atom is a capped atom
-				if occursin("ICO",symmetry)
-					return colours["red"]
-				elseif occursin("BCC",symmetry)
-					return colours["orange"]
-				elseif occursin("FCC",symmetry)
-					return colours["green"]
-				elseif occursin("HCP",symmetry)
-					return colours["blue"]
-				else
-					return colours["purple"]
-				end
-			end
-		end
-	end
+    for dict in keys(capSymmetries) # For each cap symmetry
+        symmetry = get!(capSymmetries, dict, nothing) # Get symmetry type
+        for key in keys(dict) # For each capping atom
+            if atomNum == key # If this atom is the capping atom
+                if occursin("ICO", symmetry)
+                    return colours["light red"]
+                elseif occursin("BCC", symmetry)
+                    return colours["light orange"]
+                elseif occursin("FCC", symmetry)
+                    return colours["light green"]
+                elseif occursin("HCP", symmetry)
+                    return colours["light blue"]
+                else
+                    return colours["light purple"]
+                end
+            elseif atomNum in get!(dict, key, nothing) # If atom is a capped atom
+                if occursin("ICO", symmetry)
+                    return colours["red"]
+                elseif occursin("BCC", symmetry)
+                    return colours["orange"]
+                elseif occursin("FCC", symmetry)
+                    return colours["green"]
+                elseif occursin("HCP", symmetry)
+                    return colours["blue"]
+                else
+                    return colours["purple"]
+                end
+            end
+        end
+    end
 
-	return colours["grey"] # IF atom does not have a symmetry, return grey
+    return colours["grey"] # IF atom does not have a symmetry, return grey
 end
 
 end

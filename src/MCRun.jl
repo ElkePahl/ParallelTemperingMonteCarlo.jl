@@ -1,13 +1,20 @@
 module MCRun
 
-
-export metropolis_condition, mc_step!, mc_cycle!,ptmc_cycle!, ptmc_run!,save_states,save_params,save_results,get_energy!
+export metropolis_condition,
+    mc_step!,
+    mc_cycle!,
+    ptmc_cycle!,
+    ptmc_run!,
+    save_states,
+    save_params,
+    save_results,
+    get_energy!
 export atom_move!
 export exc_acceptance, exc_trajectories!
-export acc_test!,check_e_bounds,reset_counters,equilibration_cycle!,equilibration
+export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
 
-using StaticArrays,DelimitedFiles
+using StaticArrays, DelimitedFiles
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -23,7 +30,6 @@ using ..MCSampling
 using ..Initialization
 using ..CustomTypes
 
-
 include("swap_config.jl")
 
 #TODO update energy documentation
@@ -38,9 +44,7 @@ Currently implemented for:
         - NNVT ensemble for multiple-species atoms
 """
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E},
-    pot::AbstractPotential,
-    movetype::String,
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
 ) where {E<:NVTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
@@ -56,9 +60,7 @@ function get_energy!(
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,N,<:Any,<:Any,E},
-    pot::AbstractPotential,
-    movetype::String
+    mc_state::MCState{<:Any,N,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
 ) where {N,E<:NPTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
@@ -83,9 +85,7 @@ function get_energy!(
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E},
-    pot::AbstractPotential,
-    movetype::String
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
 ) where {E<:NNVTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
@@ -118,7 +118,7 @@ If the condition is met, the new variables become the current `mc_state` using [
 `ensemble` and `movetype` dictate the exact calculation of the metropolis condition, 
 and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
 """
-function acc_test!(mc_state::MCState,ensemble::Etype,movetype::String)
+function acc_test!(mc_state::MCState, ensemble::Etype, movetype::String)
     if metropolis_condition(movetype, mc_state, ensemble) >= rand()
         swap_config!(mc_state, movetype)
     else
@@ -138,15 +138,25 @@ Basic move for one `mc_state` according to a `move_strat` dictating the types of
 -   Calculates energy based on the pot and new move
 -   Tests acc and swaps if relevant
 """
-function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where {N,E}
+function mc_move!(
+    mc_state::MCState, move_strat::MoveStrategy{N,E}, pot::Ptype, ensemble::Etype
+) where {N,E}
     mc_state.ensemble_variables.index = rand(1:N)
     #mc_state.ensemble_variables.index = N
 
-    mc_state = generate_move!(mc_state,move_strat.movestrat[mc_state.ensemble_variables.index],ensemble)
+    mc_state = generate_move!(
+        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index], ensemble
+    )
 
-    mc_state = get_energy!(mc_state,pot,move_strat.movestrat[mc_state.ensemble_variables.index])
+    mc_state = get_energy!(
+        mc_state, pot, move_strat.movestrat[mc_state.ensemble_variables.index]
+    )
 
-    acc_test!(mc_state,move_strat.ensemble,move_strat.movestrat[mc_state.ensemble_variables.index])
+    acc_test!(
+        mc_state,
+        move_strat.ensemble,
+        move_strat.movestrat[mc_state.ensemble_variables.index],
+    )
 
     return mc_state
 end
@@ -156,10 +166,16 @@ end
 
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
-function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype,n_steps::Int) where {N,E}
+function mc_step!(
+    mc_states::MCStateVector,
+    move_strat::MoveStrategy{N,E},
+    pot::Ptype,
+    ensemble::Etype,
+    n_steps::Int,
+) where {N,E}
     Threads.@threads for state in mc_states
         for i_step in 1:n_steps
-            state = mc_move!(state,move_strat,pot,ensemble)
+            state = mc_move!(state, move_strat, pot, ensemble)
         end
     end
     return mc_states
@@ -182,7 +198,6 @@ function mc_cycle!(
     n_steps::Int,
     index::Int,
 ) where {N,E}
-
     mc_states = mc_step!(mc_states, move_strat, pot, ensemble, n_steps)
 
     if rand() < 0.1
@@ -191,11 +206,7 @@ function mc_cycle!(
     if rem(index, mc_params.n_adjust) == 0
         for state in mc_states
             update_max_stepsize!(
-                state,
-                mc_params.n_adjust,
-                ensemble,
-                mc_params.min_acc,
-                mc_params.max_acc,
+                state, mc_params.n_adjust, ensemble, mc_params.min_acc, mc_params.max_acc
             )
         end
     end
@@ -244,7 +255,7 @@ end
     check_e_bounds(energy::Number, ebounds::VorS)
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
 """
-function check_e_bounds(energy::Number,ebounds::VorS)
+function check_e_bounds(energy::Number, ebounds::VorS)
     if energy < ebounds[1]
         ebounds[1]=energy
     elseif energy > ebounds[2]
@@ -257,38 +268,46 @@ end
 After equilibration this resets the count stats to zero
 """
 function reset_counters(state::MCState)
-    state.count_atom = [0,0]
-    state.count_vol = [0,0]
-    state.count_vol_xy = [0,0]
-    state.count_vol_z = [0,0]
-    state.count_exc = [0,0]
+    state.count_atom = [0, 0]
+    state.count_vol = [0, 0]
+    state.count_vol_xy = [0, 0]
+    state.count_vol_z = [0, 0]
+    state.count_exc = [0, 0]
 end
 
 """
     equilibration_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output) where {N, E}
 Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles defined in `mc_params` are completed without updating the results before initialising the `results` struct according to the maximum and minimum energy determined throughout the equilibration cycle.
 """
-function equilibration_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,results::Output) where {N,E}
+function equilibration_cycle!(
+    mc_states::MCStateVector,
+    move_strat::MoveStrategy{N,E},
+    mc_params::MCParams,
+    pot::Ptype,
+    ensemble::Etype,
+    n_steps::Int,
+    results::Output,
+) where {N,E}
     #set initial hamiltonian values and ebounds
 
-    ebounds = [100. , -100.]
+    ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
-    for i = 1:(mc_params.eq_cycles ÷ 2)
-        mc_states = mc_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,i)
+    for i in 1:(mc_params.eq_cycles ÷ 2)
+        mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, i)
     end
-    for i = (mc_params.eq_cycles ÷ 2 + 1):mc_params.eq_cycles
+    for i in (mc_params.eq_cycles ÷ 2 + 1):mc_params.eq_cycles
         for state in mc_states
-            ebounds = check_e_bounds(state.en_tot,ebounds)
+            ebounds = check_e_bounds(state.en_tot, ebounds)
         end
     end
     #post equilibration reset
     for state in mc_states
         reset_counters(state)
     end
-    results = initialise_histograms!(mc_params,results,ebounds,mc_states[1].config.bc)
+    results = initialise_histograms!(mc_params, results, ebounds, mc_states[1].config.bc)
 
-    return mc_states,results
+    return mc_states, results
 end
 
 #TODO: why is restart not functional?
@@ -298,18 +317,27 @@ While initialisation sets `mc_states`, `params` etc. we require something to the
 
 N.B. Restart is currently non-functional, do not try use it
 """
-function equilibration(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_params::MCParams,pot::Ptype,ensemble::Etype,n_steps::Int,results::Output,restart::Bool) where {N,E}
-
+function equilibration(
+    mc_states::MCStateVector,
+    move_strat::MoveStrategy{N,E},
+    mc_params::MCParams,
+    pot::Ptype,
+    ensemble::Etype,
+    n_steps::Int,
+    results::Output,
+    restart::Bool,
+) where {N,E}
     for state in mc_states
         push!(state.ham, 0)
         push!(state.ham, 0)
     end
 
     if restart == true
-        return mc_states,results
+        return mc_states, results
     else
-        return equilibration_cycle!(mc_states,move_strat,mc_params,pot,ensemble,n_steps,results)
-
+        return equilibration_cycle!(
+            mc_states, move_strat, mc_params, pot, ensemble, n_steps, results
+        )
     end
 end
 """
@@ -342,27 +370,16 @@ function ptmc_run!(
     # Initialisation
     cd(workingdirectory)
     if save ≢ false
-        save_init(potential,ensemble,mc_params,temp)
+        save_init(potential, ensemble, mc_params, temp)
     end
 
-    mc_states,move_strategy,results,n_steps,start_counter = initialisation(
-        mc_params,
-        temp,
-        start_config,
-        potential,
-        ensemble,
+    mc_states, move_strategy, results, n_steps, start_counter = initialisation(
+        mc_params, temp, start_config, potential, ensemble
     )
 
     # Equilibration
-    mc_states,results = equilibration(
-        mc_states,
-        move_strategy,
-        mc_params,
-        potential,
-        ensemble,
-        n_steps,
-        results,
-        restart,
+    mc_states, results = equilibration(
+        mc_states, move_strategy, mc_params, potential, ensemble, n_steps, results, restart
     )
     if save ≢ false
         save_histparams(results)
@@ -381,9 +398,10 @@ function ptmc_run!(
             n_steps,
             results,
             i,
-            rdfsave,potential,
+            rdfsave,
+            potential,
         )
-        if save ≢ false && rem(i,save) == 0
+        if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
         end
 
@@ -392,7 +410,6 @@ function ptmc_run!(
             #results = finalise_results_convergence(i,mc_states,mc_params,results)
             #println(results.heat_cap)
         end
-
     end
     @info "MC loop done."
 
@@ -402,16 +419,19 @@ function ptmc_run!(
     end
 
     #Finalisation of results
-    results = finalise_results(mc_states,mc_params,results)
-    return mc_states,results
+    results = finalise_results(mc_states, mc_params, results)
+    return mc_states, results
 end
 
 # This method is used to resume a saved computation
-function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
+function ptmc_run!(restart::Bool; rdfsave=false, save=1000, eq_cycles=0.2)
+    mc_params, ensemble, potential, mc_states, move_strategy, results, n_steps, start_counter = initialisation(
+        restart, eq_cycles
+    )
 
-    mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
-
-    mc_states,results = equilibration(mc_states,move_strategy,mc_params,potential,ensemble,n_steps,results,restart)
+    mc_states, results = equilibration(
+        mc_states, move_strategy, mc_params, potential, ensemble, n_steps, results, restart
+    )
     @info "equilibration complete"
 
     if save ≢ false
@@ -431,15 +451,15 @@ function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
             rdfsave,
             potential,
         )
-        if save ≢ false && rem(i,save) == 0
-            checkpoint(i,mc_states,results,ensemble,rdfsave)
+        if save ≢ false && rem(i, save) == 0
+            checkpoint(i, mc_states, results, ensemble, rdfsave)
         end
     end
     @info "MC loop done."
 
-    results = finalise_results(mc_states,mc_params,results)
+    results = finalise_results(mc_states, mc_params, results)
 
-    return mc_states,results
+    return mc_states, results
 end
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#

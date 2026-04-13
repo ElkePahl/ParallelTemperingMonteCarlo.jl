@@ -32,33 +32,71 @@ similarityMeasure: (String) The method of comparing configurations, either "atom
 similarityThreshold: (Float64) Similarity threshold above which two configurations are considered identical.
 EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 data for Neon2).
 """
-function compare(configDir::String; rCutRange::Vector{Float64} = round.(LinRange(4/3,2,10);digits = 3), similarityMeasure = "total", similarityThreshold = 0.95,EBL=3.1227)
-	rm("$configDir/comparison";force = true,recursive = true) # Delete comparision directory if exists from previous run
-	mkdir("$configDir/comparison") # Make comparision directory
-	M = length(rCutRange) # Number of rCut values to test
-	files = readdir(configDir) # Create list of all files/directories in the configuration directory
-	for file in files # For each file
-		isXYZ,fileName,fp,L,N,B = processFileName(configDir,file) # Extract information from filename
-		if isXYZ # If file is a .xyz file
-			# Compute CNA profiles of all configurations in file
-			energies,totalProfiles, atomicProfiles,_,_,_ = processFile(fp,L,N,B,true,EBL,rCutRange;M)
-			# Find most similar configurations for each configuration based on CNA profiles over all rCut values
-			similarConfigs, maxSims = compareConfigs(rCutRange,energies,totalProfiles, atomicProfiles, configDir,fileName, similarityMeasure,M,L,N)
-			if L == 1 # If only have one configuration in the file
-				continue # Don't need to do any comparisons
-			end
-			sortingArray = sortperm(maxSims[1,:],rev=true) # Sort configurations by maximum similarity values in decreasing order
-			# Sort arrays
-			maxSims, sortedEnergies, similarConfigs = maxSims[sortingArray], energies[sortingArray], similarConfigs[sortingArray]
-			# Write out configuration comparison results
-			writeComparison(configDir,fileName, sortingArray, sortedEnergies, maxSims, similarConfigs,L)
-			# Group configurations into distinguishable sets
-			uniqueConfigs,uniqueEnergies,uniqueSimilarities = groupConfigs(energies,sortingArray,maxSims, similarConfigs, similarityThreshold,M)
-			numUnique = length(uniqueSimilarities) # Compute how many distinguishable sets are in the file
-			uniqueStats = configStats(uniqueEnergies,numUnique) # Compute statistics on energies of each distinguishable set
-			writeUnique(configDir,fileName,numUnique,uniqueConfigs,uniqueSimilarities, uniqueStats) # Write out distinguishable sets file
-		end
-	end
+function compare(
+    configDir::String;
+    rCutRange::Vector{Float64}=round.(LinRange(4/3, 2, 10); digits=3),
+    similarityMeasure="total",
+    similarityThreshold=0.95,
+    EBL=3.1227,
+)
+    rm("$configDir/comparison"; force=true, recursive=true) # Delete comparision directory if exists from previous run
+    mkdir("$configDir/comparison") # Make comparision directory
+    M = length(rCutRange) # Number of rCut values to test
+    files = readdir(configDir) # Create list of all files/directories in the configuration directory
+    for file in files # For each file
+        isXYZ, fileName, fp, L, N, B = processFileName(configDir, file) # Extract information from filename
+        if isXYZ # If file is a .xyz file
+            # Compute CNA profiles of all configurations in file
+            energies, totalProfiles, atomicProfiles, _, _, _ = processFile(
+                fp, L, N, B, true, EBL, rCutRange; M
+            )
+            # Find most similar configurations for each configuration based on CNA profiles over all rCut values
+            similarConfigs, maxSims = compareConfigs(
+                rCutRange,
+                energies,
+                totalProfiles,
+                atomicProfiles,
+                configDir,
+                fileName,
+                similarityMeasure,
+                M,
+                L,
+                N,
+            )
+            if L == 1 # If only have one configuration in the file
+                continue # Don't need to do any comparisons
+            end
+            sortingArray = sortperm(maxSims[1, :]; rev=true) # Sort configurations by maximum similarity values in decreasing order
+            # Sort arrays
+            maxSims, sortedEnergies, similarConfigs = maxSims[sortingArray],
+            energies[sortingArray],
+            similarConfigs[sortingArray]
+            # Write out configuration comparison results
+            writeComparison(
+                configDir,
+                fileName,
+                sortingArray,
+                sortedEnergies,
+                maxSims,
+                similarConfigs,
+                L,
+            )
+            # Group configurations into distinguishable sets
+            uniqueConfigs, uniqueEnergies, uniqueSimilarities = groupConfigs(
+                energies, sortingArray, maxSims, similarConfigs, similarityThreshold, M
+            )
+            numUnique = length(uniqueSimilarities) # Compute how many distinguishable sets are in the file
+            uniqueStats = configStats(uniqueEnergies, numUnique) # Compute statistics on energies of each distinguishable set
+            writeUnique(
+                configDir,
+                fileName,
+                numUnique,
+                uniqueConfigs,
+                uniqueSimilarities,
+                uniqueStats,
+            ) # Write out distinguishable sets file
+        end
+    end
 end
 
 """
@@ -78,23 +116,37 @@ Keyword Arguments:
 rCut: (Float64) The cut-off radii used in the CNA analysis in units of EBL. Default is 4/3.
 EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 data for Neon2).
 """
-function classify(configDir::String; rCut = 4/3,EBL=3.1227)
-	rm("$configDir/classification";force = true,recursive = true) # Delete classification directory if exists from previous run
-	mkdir("$configDir/classification") # Create the classification directory
-	rm("$configDir/visualisation";force = true,recursive = true) # Delete visualisation directory if exists from previous run
-	mkdir("$configDir/visualisation") # Create the visualisation directory
-	files = readdir(configDir) # Create list of all files/directories in the configuration directory
-	for file in files # For each file
-		isXYZ,fileName,fp,L,N,B = processFileName(configDir,file) # Extract information from filename
-		if isXYZ # If file is a .xyz file
-			# Compute CNA profiles and atom shell numbers of all configurations in file
-			_,_, atomicProfiles,configurations, shells, bondGraphs = processFile(fp,L,N,B,false,EBL,[rCut])
-			# Identify symmetries of the clusters using CNA profiles
-			classifications, capSymmetries = findSymmetries(shells,atomicProfiles,bondGraphs,L)
-			writeClassification(configDir,fileName,classifications,capSymmetries,L) # Output found symmetries
-			vestaFile(configDir,fileName,configurations,classifications,capSymmetries,rCut,EBL,L,N) # Create colourised .vesta file
-		end
-	end
+function classify(configDir::String; rCut=4/3, EBL=3.1227)
+    rm("$configDir/classification"; force=true, recursive=true) # Delete classification directory if exists from previous run
+    mkdir("$configDir/classification") # Create the classification directory
+    rm("$configDir/visualisation"; force=true, recursive=true) # Delete visualisation directory if exists from previous run
+    mkdir("$configDir/visualisation") # Create the visualisation directory
+    files = readdir(configDir) # Create list of all files/directories in the configuration directory
+    for file in files # For each file
+        isXYZ, fileName, fp, L, N, B = processFileName(configDir, file) # Extract information from filename
+        if isXYZ # If file is a .xyz file
+            # Compute CNA profiles and atom shell numbers of all configurations in file
+            _, _, atomicProfiles, configurations, shells, bondGraphs = processFile(
+                fp, L, N, B, false, EBL, [rCut]
+            )
+            # Identify symmetries of the clusters using CNA profiles
+            classifications, capSymmetries = findSymmetries(
+                shells, atomicProfiles, bondGraphs, L
+            )
+            writeClassification(configDir, fileName, classifications, capSymmetries, L) # Output found symmetries
+            vestaFile(
+                configDir,
+                fileName,
+                configurations,
+                classifications,
+                capSymmetries,
+                rCut,
+                EBL,
+                L,
+                N,
+            ) # Create colourised .vesta file
+        end
+    end
 end
 
 end # End of module

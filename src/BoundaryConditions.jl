@@ -15,7 +15,7 @@ export check_boundary
 """
     AbstractBC{T}
 
-Is abstract type for boundary conditions. 
+Is abstract type for boundary conditions.
 
 Implemented boundary conditions:
 -   `SphericalBC`
@@ -30,20 +30,20 @@ Needs methods implemented for
 abstract type AbstractBC{T} end
 
 """
-    SphericalBC{T}(;radius::Number)
+    SphericalBC{T}(;radius::Real)
 
 Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@ref).
 
 # Keywords:
 - radius of binding sphere
 
-# Fields: 
+# Fields:
 - radius2: squared radius of binding sphere
 
 """
 struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
-    SphericalBC(; radius::T) where T <: Number = new{T}(radius*radius)
+    SphericalBC(; radius::T) where {T<:Real} = new{T}(radius*radius)
 end
 
 """
@@ -59,7 +59,7 @@ Is abstract type for periodic boundary conditions to simulate bulk systems.
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
 """
-    CubicBC{T}(; side_length::Number)
+    CubicBC{T}(; side_length::Real)
 
 Is subtype of [`PeriodicBC`](@ref) for systems with cubic symmetry.
 
@@ -71,9 +71,9 @@ Field name:
 """
 struct CubicBC{T} <: PeriodicBC{T}
     box_length::T
-    CubicBC(; side_length::T) where T <: Number = new{T}(side_length)
-    CubicBC{T}(x::T) where T <: Number = new{T}(x)
-    CubicBC(x::T) where T <: Number = new{T}(x)
+    CubicBC(; side_length::T) where {T<:Real} = new{T}(side_length)
+    CubicBC{T}(x::T) where {T<:Real} = new{T}(x)
+    CubicBC(x::T) where {T<:Real} = new{T}(x)
 end
 
 """
@@ -93,11 +93,11 @@ end
 
 # TODO  check how exactly implemented (height is length of side or projection on z-axis?)
 """
-    RhombicBC{T}(; length::Number, height::Number)
+    RhombicBC{T}(; length::Real, height::Real)
 
 Is subtype of [`PeriodicBC`](@ref) for systems with rhombic symmetry
 (length of box in ``x,y`` direction differs from height of box in ``z``-direction).
-The projection of the box on the ``xy``-plane is a rhombus with four equal sides. 
+The projection of the box on the ``xy``-plane is a rhombus with four equal sides.
 
 # Keywords
 - `length`: length of box in ``x,y`` direction
@@ -110,13 +110,13 @@ The projection of the box on the ``xy``-plane is a rhombus with four equal sides
 struct RhombicBC{T} <: PeriodicBC{T}
     box_length::T
     box_height::T
-    RhombicBC(; length::T, height::T) where T <: Number = new{T}(length, height)
-    RhombicBC{T}(x::T, y::T) where T <: Number = new{T}(x, y)
-    RhombicBC(x::T, y::T) where T <: Number = new{T}(x, y)
+    RhombicBC(; length::T, height::T) where {T<:Real} = new{T}(length, height)
+    RhombicBC{T}(x::T, y::T) where {T<:Real} = new{T}(x, y)
+    RhombicBC(x::T, y::T) where {T<:Real} = new{T}(x, y)
 end
 
 """
-    check_boundary(bc::SpericalBC,pos::PositionVector) where T <: Number
+    check_boundary(bc::SpericalBC,pos::PositionVector) where T <: Real
 
 Checks if atom moved outside of spherical boundary
 (squared norm of position vector smaller than squared radius of binding sphere).
@@ -127,10 +127,10 @@ Returns `true` if atom lies outside.
 - `pos`: position of moved atom
 
 """
-check_boundary(bc::SphericalBC,pos::PositionVector) = sum(x->x^2,pos) > bc.radius2
+check_boundary(bc::SphericalBC, pos::PositionVector) = sum(x->x^2, pos) > bc.radius2
 
 """
-    test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where T <: Number
+    test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where T <: Real
 
 Tests if whole cluster lies in the binding sphere.
 
@@ -138,7 +138,9 @@ Tests if whole cluster lies in the binding sphere.
 - atomic positions
 - [`SphericalBC`](@ref)
 """
-test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where {T <: Number} = sum(x->check_boundary(bc,x),pos) == 0
+function test_cluster_inside(pos::Vector{SVector{3,T}}, bc::SphericalBC) where {T<:Real}
+    sum(x->check_boundary(bc, x), pos) == 0
+end
 # TO DO: check if this function is used at all? If so, make consistent with check_boundary
 
 end
