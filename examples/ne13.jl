@@ -1,4 +1,6 @@
-# -------- Example 1: Melting a 13-Atoms Neon Cluster 
+# Example 1: Melting a 13-Atoms Neon Cluster 
+# ==========================================
+
 #= This is an example calculation for finding the melting temperature of a 
 13-atoms neon cluster using a parallel-tempering Monte Carlo simulation. =#
 # First, we load ParallelTemperingMonteCarlo and Plots:
@@ -7,8 +9,10 @@ using Plots
 using ParallelTemperingMonteCarlo
 using LaTeXStrings
 
-# -------- Setting up the Model
+# ## Setting up the Model
 
+# For testing purposes, we use a preset random seed
+Random.seed!(1234)
 # Firstly, we set the number of atoms:
 
 n_atoms = 13;
@@ -56,7 +60,7 @@ bc_ne13 = SphericalBC(radius=5.32*AtoBohr)
 
 start_config = Config(pos_ne13, bc_ne13)
 
-# -------- Setting up the Simulation Parameters
+# ## Setting up the Simulation Parameters
 
 #= We first set the temperature grid, which defines the range of temperatures we consider.
 This is done by defining the upper and lower temperature limits, 
@@ -100,7 +104,7 @@ Here, we do `n_atoms` atom displacements of randomy chosen atoms per Monte Carlo
 ensemble = NVT(n_atoms);
 move_strat = MoveStrategy(ensemble)
 
-# -------- Running the Simulation
+# ## Running the Simulation
 
 #= Finally, we run the simulation. 
 This method returns the current state and results of the simulation.
@@ -109,7 +113,7 @@ The data is stored in various local files created in the current working directo
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000,
 saveconfigs=save_frequency, configsname=file_name);
 
-# -------- Post-processing and Analyzing of Results
+# ## Post-processing and Analyzing of Results
 
 # The raw heat capacity plot is obtained from:
 
