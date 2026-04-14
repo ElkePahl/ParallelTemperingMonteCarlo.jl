@@ -8,6 +8,7 @@
 using Plots
 using ParallelTemperingMonteCarlo
 using LaTeXStrings
+using Random
 
 # ## Setting up the Model
 
