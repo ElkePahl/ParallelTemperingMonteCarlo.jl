@@ -22,7 +22,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -60,7 +60,7 @@ pos_ga12 = pos_ga12 * AtoBohr
 length(pos_ga12) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")
 
-bc_ga12 = SphericalBC(; radius=6*AtoBohr)   #5.32 Angstrom
+bc_ga12 = SphericalBC(; radius=6 * AtoBohr)   #5.32 Angstrom
 
 #starting configuration
 start_config = Config(pos_ga12, bc_ga12)

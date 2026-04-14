@@ -64,7 +64,7 @@ function compareConfigs(
                 # Update the most similar configurations to configA
                 if (similarity > maxSims[configA]) # If new similarity score is greater than previous highest
                     similarConfigs[configA] = Dict{Int64,Vector{Float64}}(
-                        configB=>Vector{Float64}([rCutRange[i]])
+                        configB => Vector{Float64}([rCutRange[i]])
                     ) # Create new vector, containing configB
                     maxSims[configA] = similarity # Update maximum similarity score
                 elseif (similarity == maxSims[configA]) # If the new similarity is the same as the previous highest
@@ -87,7 +87,7 @@ function compareConfigs(
                 # Same for configB
                 if (similarity > maxSims[configB]) # If new similarity score is greater than previous highest
                     similarConfigs[configB] = Dict{Int64,Vector{Float64}}(
-                        configA=>Vector{Float64}([rCutRange[i]])
+                        configA => Vector{Float64}([rCutRange[i]])
                     ) # Create new vector, containing configB
                     maxSims[configB] = similarity # Update maximum similarity score
                 elseif (similarity == maxSims[configB]) # If the new similarity is the same as the previous highest
@@ -132,7 +132,7 @@ function convertAtomicProfiles(atomicProfiles, i, L)
             # Increments atomic CNA profile frequency by 1
             push!(
                 atomicProfilesDict[j],
-                "$atomProfile" => get!(atomicProfilesDict[j], "$atomProfile", 0)+1,
+                "$atomProfile" => get!(atomicProfilesDict[j], "$atomProfile", 0) + 1,
             )
         end
     end
@@ -204,7 +204,7 @@ function JacardIndex(A, B)
     end
 
     union -= intersection # union = A + B - intersection
-    similarity = intersection/union # Comput the Jacard index
+    similarity = intersection / union # Comput the Jacard index
     return similarity # Return the Jacard Index
 end
 
@@ -249,7 +249,7 @@ function groupConfigs(
             if (maxSims[j] > similarityThreshold) # If the maximum similarity of the configuration exceeds a threshold
                 for key in keys(similarConfigs[j])
                     if (
-                        length(get!(similarConfigs[j], key, 0)) > rCutThreshold*M &&
+                        length(get!(similarConfigs[j], key, 0)) > rCutThreshold * M &&
                         !(key in classified)
                     )
                         # Get vector of configuration numbers of configurations that are similar

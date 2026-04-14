@@ -51,7 +51,7 @@ function innerCore(configuration, N, req, coreSize=0.85)
     CoM = centreOfMass(configuration, N) # Compute the CoM of the cluster
     distances = radialDistances(configuration, N, CoM) # Compute the dsitances between all the atoms and the CoM
     # Return a vector of the atoms which are within 'coreSize' equilibrium bond lengths of the CoM.
-    return findall(x->x<coreSize*req, distances)
+    return findall(x -> x < coreSize * req, distances)
 end
 
 """
@@ -68,7 +68,7 @@ radialDistances: (Vector{Float64}) The ith element of the array is the distance 
 function radialDistances(configuration, N, CoM)
     distances = Vector{Float64}(undef, N) # Preallocate the distances vector
     for i in 1:N # For each of the atoms in the cluster
-        diff = configuration[i, :]-CoM[:] # calculate the vector between it and the CoM
+        diff = configuration[i, :] - CoM[:] # calculate the vector between it and the CoM
         distances[i] = sqrt(sum(diff .* diff)) # Compute the length of the vector
     end
 

@@ -68,9 +68,9 @@ function CNA(configuration, N, rCut, B, EBL)
                 end
 
                 key = "($i,$j,$(Int(kMax)))" # Create triplet identifier key for dictionary
-                push!(totalProfile, key => get!(totalProfile, key, 0)+1) # Increments total CNA triplet frequency by 1
-                push!(atomicProfile[atom1], key => get!(atomicProfile[atom1], key, 0)+1) # Increments atom1 triplet frequency by 1
-                push!(atomicProfile[atom2], key => get!(atomicProfile[atom2], key, 0)+1) # Increments atom2 triplet frequency by 1
+                push!(totalProfile, key => get!(totalProfile, key, 0) + 1) # Increments total CNA triplet frequency by 1
+                push!(atomicProfile[atom1], key => get!(atomicProfile[atom1], key, 0) + 1) # Increments atom1 triplet frequency by 1
+                push!(atomicProfile[atom2], key => get!(atomicProfile[atom2], key, 0) + 1) # Increments atom2 triplet frequency by 1
             end
         end
     end
@@ -97,13 +97,13 @@ function adjacencyGraph(configuration, N, rCut, B, EBL)
     # For all pairs of atoms
     for j in 1:(N - 1)
         for i in (j + 1):N
-            diff = configuration[j, :]-configuration[i, :] # calculate vector between atoms
+            diff = configuration[j, :] - configuration[i, :] # calculate vector between atoms
             norm = sqrt(sum(diff .* diff)) # Compute length of bond
             if B # If strong magnetic field present
-                theta = acos(diff[3]/norm) # Compute angle bond makes with B field (z-axis) in radians
-                rCutScaled = EBL(theta)*rCut # Compute rCut is terms of equilibrium bond length in the theta direction
+                theta = acos(diff[3] / norm) # Compute angle bond makes with B field (z-axis) in radians
+                rCutScaled = EBL(theta) * rCut # Compute rCut is terms of equilibrium bond length in the theta direction
             else # If no magnetic field
-                rCutScaled = EBL*rCut # Use standard equilibrium Bond Length.
+                rCutScaled = EBL * rCut # Use standard equilibrium Bond Length.
             end
             # If the distance between atoms is less the cut-off radius
             if (norm < rCutScaled)
@@ -126,10 +126,11 @@ Output:
 EBL: (Float64) The equilibrium bond length at angle theta.
 """
 function EBL(theta)
-    if theta > pi/2 # If theta is greater than pi/2 radians
-        theta = pi-theta # Change theta to be within [0,pi/2] radians for interpolation purposes
+    if theta > pi / 2 # If theta is greater than pi/2 radians
+        theta = pi - theta # Change theta to be within [0,pi/2] radians for interpolation purposes
     end
-    return 0.188*cos(2*theta)+0.01073*cos(4*theta)-0.00269*cos(8*theta)+3.06621 # Return prefitted harmonic function
+    return 0.188 * cos(2 * theta) + 0.01073 * cos(4 * theta) - 0.00269 * cos(8 * theta) +
+           3.06621 # Return prefitted harmonic function
 end
 
 end # End of module

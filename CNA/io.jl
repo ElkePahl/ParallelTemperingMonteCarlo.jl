@@ -94,7 +94,7 @@ function processFile(fp, L, N, B, compare, EBL, rCutRange; M=1)
                 configuration[atomNum + 1, j] = parse(Float64, x) # Store the component
             end
             atomNum += 1 # Increment the number of atoms processed in the current configuration
-            if (atomNum==N) # If have processed all the atoms in the current configuration
+            if (atomNum == N) # If have processed all the atoms in the current configuration
                 coordinatesNext = false # Have finished reading in coordinates
                 skipLine = true # Either eof or another configuration
             end

@@ -98,14 +98,14 @@ hasCore: (Bool) Whether or not a core has been identified.
 classification: (Dict) Dictionary mapping a list of atoms to their symmetry.
 """
 function classifyCore(shells, atomicProfiles, bondGraph)
-    coreAtoms = findall(x -> x<=floor(0.2*(maximum(shells))), shells) # Determine which atoms may form a core
+    coreAtoms = findall(x -> x <= floor(0.2 * (maximum(shells))), shells) # Determine which atoms may form a core
     coreProfile = atomicProfiles[coreAtoms] # Obtain CNA profiles of the core atoms
     for profile in coreProfile # For each of the core atom CNA profiles
         if (profile != coreProfile[1]) # If the CNA profiles arn't all the same
             return false, Dict{Vector{Int64},String}() # Then core cannot be identified.
         end
     end
-    classification = Dict(coreAtoms => classifySymmetry(coreProfile[1])*"(Core)") # Construct core classification
+    classification = Dict(coreAtoms => classifySymmetry(coreProfile[1]) * "(Core)") # Construct core classification
 
     return true, classification # Found core and return classification
 end
@@ -126,18 +126,18 @@ function classifyCaps(shells, atomicProfiles, bondGraph)
     capSymmetries = Dict{Dict{Int64,Vector{Int64}},String}() # Initialise dictionary of cap symmetries
     maxShell = maximum(shells) # Find outer shell number
     outerShell = findall(x -> x == maxShell, shells) # Find outer shell atoms
-    secondOuterShell = findall(x -> x == maxShell-1, shells) # Find 2nd most outer shell atoms
+    secondOuterShell = findall(x -> x == maxShell - 1, shells) # Find 2nd most outer shell atoms
     if length(outerShell) < length(secondOuterShell) # If there are more atoms in the second outer shell than the outer shell
         for capAtom in outerShell # Each of the outer shell atoms are cap atoms
             cappedAtoms = neighbors(bondGraph, capAtom) # The cap atom caps all of its neighbours
             for cappedAtom in cappedAtoms # For each of the capped atoms
                 symmetry = classifySymmetry(atomicProfiles[cappedAtom]) # Identify the capped atom's symmetry
                 if symmetry != "OTHER" # If the symmetry is not OTHER
-                    push!(capSymmetries, Dict(capAtom=>cappedAtoms)=>symmetry) # Then the cap has a known symmetry
+                    push!(capSymmetries, Dict(capAtom => cappedAtoms) => symmetry) # Then the cap has a known symmetry
                     break
                 end
             end
-            push!(capSymmetries, Dict(capAtom=>cappedAtoms)=>"OTHER") # The cap has an OTHER symmetry
+            push!(capSymmetries, Dict(capAtom => cappedAtoms) => "OTHER") # The cap has an OTHER symmetry
         end
     end
 

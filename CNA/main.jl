@@ -34,7 +34,7 @@ EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 da
 """
 function compare(
     configDir::String;
-    rCutRange::Vector{Float64}=round.(LinRange(4/3, 2, 10); digits=3),
+    rCutRange::Vector{Float64}=round.(LinRange(4 / 3, 2, 10); digits=3),
     similarityMeasure="total",
     similarityThreshold=0.95,
     EBL=3.1227,
@@ -116,7 +116,7 @@ Keyword Arguments:
 rCut: (Float64) The cut-off radii used in the CNA analysis in units of EBL. Default is 4/3.
 EBL: (Float64) Equilibrium Bond Length. Default is 3.1227 Angstroms (from MP2 data for Neon2).
 """
-function classify(configDir::String; rCut=4/3, EBL=3.1227)
+function classify(configDir::String; rCut=4 / 3, EBL=3.1227)
     rm("$configDir/classification"; force=true, recursive=true) # Delete classification directory if exists from previous run
     mkdir("$configDir/classification") # Create the classification directory
     rm("$configDir/visualisation"; force=true, recursive=true) # Delete visualisation directory if exists from previous run
