@@ -4,7 +4,7 @@ using Random
     v1 = SVector(1.0, 2.0, 3.0)
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
-    bc = SphericalBC(radius=5.0)
+    bc = SphericalBC(; radius=5.0)
     conf1 = Config{3}([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.0, 1.0]
@@ -59,7 +59,7 @@ end
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.0, 1.0]
     pot1 = ELJPotentialEven{2}(c1)
-    ensemble = NPT(3, 101325*3.398928944382626e-14, false)
+    ensemble = NPT(3, 101325 * 3.398928944382626e-14, false)
 
     temp = TempGrid{2}(10, 15)
 
@@ -112,7 +112,7 @@ end
     v4 = SVector(-2.36, 2.36, 0.0)
     v5 = SVector(-6.99, 2.33, 0.0)
     v6 = SVector(-2.33, 6.99, 0.0)
-    bc = SphericalBC(radius=8.0)
+    bc = SphericalBC(; radius=8.0)
     conf = Config{6}([v1, v2, v3, v4, v5, v6], bc)
     d2mat = get_distance2_mat(conf)
     vars = set_variables(conf, d2mat, runnerpotential)

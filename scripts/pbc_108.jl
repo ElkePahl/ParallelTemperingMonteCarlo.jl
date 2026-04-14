@@ -7,7 +7,7 @@ using Random
 
 # number of atoms
 n_atoms = 108
-pressure=101325
+pressure = 101325
 
 # temperature grid
 ti = 15.0
@@ -27,7 +27,7 @@ displ_atom = 1.0 # Angstrom
 max_vchange = 0.02
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -36,14 +36,14 @@ move_strat = MoveStrategy(; atom_moves=n_atoms, vol_moves=1)
 #move_strat = MoveStrategy(atom_moves = n_atoms) 
 
 #ensemble
-ensemble = NPT(n_atoms, pressure*3.398928944382626e-14)
+ensemble = NPT(n_atoms, pressure * 3.398928944382626e-14)
 #ensemble = NVT(n_atoms)
 
 #ELJpotential for neon
 #c1=[-10.5097942564988, 0., 989.725135614556, 0., -101383.865938807, 0., 3918846.12841668, 0., -56234083.4334278, 0., 288738837.441765]
 #elj_ne1 = ELJPotential{11}(c1)
 
-c=[
+c = [
     -10.5097942564988,
     989.725135614556,
     -101383.865938807,
@@ -190,7 +190,7 @@ mc_states = [
 ]
 
 println(mc_states[1].en_tot)
-println(mc_states[1].en_tot+ensemble.pressure*mc_states[1].config.bc.box_length^3)
+println(mc_states[1].en_tot + ensemble.pressure * mc_states[1].config.bc.box_length^3)
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min=mc_states[1].en_tot)

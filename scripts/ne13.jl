@@ -29,14 +29,14 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
-c=[
+c = [
     -10.5097942564988,
     989.725135614556,
     -101383.865938807,
@@ -80,7 +80,7 @@ AtoBohr = 1.0
 pos_ne13 = pos_ne13 * AtoBohr
 
 #binding sphere
-bc_ne13 = SphericalBC(; radius=5.32*AtoBohr)
+bc_ne13 = SphericalBC(; radius=5.32 * AtoBohr)
 
 length(pos_ne13) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")

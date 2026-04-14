@@ -81,10 +81,10 @@ end
 
 function TempGrid{N}(ti::Number, tf::Number; tdistr=:geometric) where {N}
     if tdistr == :equally_spaced
-        delta = (tf-ti)/(N-1)
-        tgrid = [ti + (i-1)*delta for i in 1:N]
+        delta = (tf - ti) / (N - 1)
+        tgrid = [ti + (i - 1) * delta for i in 1:N]
     elseif tdistr == :geometric
-        tgrid = [ti*(tf/ti)^((i-1)/(N-1)) for i in 1:N]
+        tgrid = [ti * (tf / ti)^((i - 1) / (N - 1)) for i in 1:N]
     else
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end

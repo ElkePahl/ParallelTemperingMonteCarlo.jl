@@ -28,7 +28,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -41,8 +41,8 @@ nmtobohr = 18.8973
 #parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
 n = 8.482
 m = 4.692
-ϵ = evtohartree*0.0370
-a = 0.25*nmtobohr
+ϵ = evtohartree * 0.0370
+a = 0.25 * nmtobohr
 C = 27.561
 
 pot = EmbeddedAtomPotential(n, m, ϵ, C, a)
@@ -145,12 +145,12 @@ totalsymmvec = vcat(radsymmvec, angularsymmvec)
 num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
 file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
-weights=readdlm(file)
+weights = readdlm(file)
 close(file)
 weights = vec(weights)
 nnp = NeuralNetworkPotential(num_nodes, activation_functions, weights)
 
-runnerpotential = RuNNerPotential(nnp, radsymmvec, angularsymmvec, 28*AtoBohr)
+runnerpotential = RuNNerPotential(nnp, radsymmvec, angularsymmvec, 28 * AtoBohr)
 
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
@@ -220,8 +220,8 @@ ico_55 = [
 ]
 #convert to Bohr
 
-copperconstant = 0.36258*nmtobohr
-pos_cu55 = copperconstant*ico_55
+copperconstant = 0.36258 * nmtobohr
+pos_cu55 = copperconstant * ico_55
 
 length(pos_cu55) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")
@@ -230,7 +230,7 @@ length(pos_cu55) == n_atoms ||
 n_bin = 100
 
 #boundary conditions
-bc_cu55 = SphericalBC(; radius=14*AtoBohr)   #5.32 Angstrom
+bc_cu55 = SphericalBC(; radius=14 * AtoBohr)   #5.32 Angstrom
 start_config = Config(pos_cu55, bc_cu55)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)

@@ -51,7 +51,7 @@ Function returning the probability value associated with a trial move. Four meth
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
 """
 function metropolis_condition(delta_energy::Number, beta::Number)
-    prob_val = exp(-delta_energy*beta)
+    prob_val = exp(-delta_energy * beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -62,8 +62,10 @@ function metropolis_condition(
     volume_unchanged::Float64,
     beta::Float64,
 ) where {Etype<:NPT}
-    delta_h = delta_energy + ensemble.pressure*(volume_changed-volume_unchanged)
-    prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
+    delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged)
+    prob_val = exp(
+        -delta_h * beta + ensemble.n_atoms * log(volume_changed / volume_unchanged)
+    )
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
@@ -208,7 +210,7 @@ function update_max_stepsize!(
     mc_state.count_atom[2] = 0
     #volume moves
     #if v > 0
-    if ensemble.separated_volume==false
+    if ensemble.separated_volume == false
         acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
@@ -217,7 +219,7 @@ function update_max_stepsize!(
         end
         mc_state.count_vol[2] = 0
     else
-        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves * 1/2)
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves * 1 / 2)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
         elseif acc_rate > max_acc
@@ -225,7 +227,7 @@ function update_max_stepsize!(
         end
         mc_state.count_vol[2] = 0
 
-        acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves * 1/3)
+        acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves * 1 / 3)
         if acc_rate < min_acc
             mc_state.max_displ[3] *= 0.9
         elseif acc_rate > max_acc

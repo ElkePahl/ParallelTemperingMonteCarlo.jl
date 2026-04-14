@@ -8,7 +8,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     pot1 = ELJPotentialEven{2}(c1)
     @test dimer_energy(pot1, 1.0) == -1.0
     @test dimer_energy(pot1, 2.0) == dimer_energy(pot, 2.0)
-    c=[-1.0, 2.0, 3.0, -4.0, 5.0]
+    c = [-1.0, 2.0, 3.0, -4.0, 5.0]
     pot = ELJPotential{5}(c)
     @test dimer_energy(pot, 1.0) == sum(c)
 
@@ -17,7 +17,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     v1 = SVector(1.0, 2.0, 3.0)
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
-    bc = SphericalBC(radius=2.0)
+    bc = SphericalBC(; radius=2.0)
     conf1 = Config{3}([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf1)
 
@@ -42,7 +42,7 @@ end
     v1 = SVector(1.0, 2.0, 3.0)
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
-    bc = SphericalBC(radius=2.0)
+    bc = SphericalBC(; radius=2.0)
     conf = Config{3}([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf)
     pot1 = EmbeddedAtomPotential(1.0, 1.0, 1.0, 1.0, 1.0)
@@ -56,12 +56,12 @@ end
 end
 
 @testset "LookupTable" begin
-    link=joinpath(@__DIR__, "../scripts/lookup-tables/look-up_table-2.txt")
-    potlut=LookupTablePotential(link)
-    @test potlut.table[1][1]==282.19449125205114
-    @test potlut.start_dist==0.1
-    @test potlut.start_angle==0
-    @test length(potlut.table)==potlut.l_angle*potlut.l_dist
+    link = joinpath(@__DIR__, "../scripts/lookup-tables/look-up_table-2.txt")
+    potlut = LookupTablePotential(link)
+    @test potlut.table[1][1] == 282.19449125205114
+    @test potlut.start_dist == 0.1
+    @test potlut.start_angle == 0
+    @test length(potlut.table) == potlut.l_angle * potlut.l_dist
 end
 
 @testset "RuNNerPotentialTest" begin
@@ -73,7 +73,7 @@ end
     v4 = SVector(-2.36, 2.36, 0.0)
     v5 = SVector(-6.99, 2.33, 0.0)
     v6 = SVector(-2.33, 6.99, 0.0)
-    bc = SphericalBC(radius=7.0)
+    bc = SphericalBC(; radius=7.0)
     conf = Config{6}([v1, v2, v3, v4, v5, v6], bc)
     d2mat = get_distance2_mat(conf)
     vars = set_variables(conf, d2mat, runnerpotential)

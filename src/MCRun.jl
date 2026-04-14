@@ -257,7 +257,7 @@ Function to determine if an energy value is greater than or less than the min/ma
 """
 function check_e_bounds(energy::Number, ebounds::VorS)
     if energy < ebounds[1]
-        ebounds[1]=energy
+        ebounds[1] = energy
     elseif energy > ebounds[2]
         ebounds[2] = energy
     end
@@ -272,7 +272,7 @@ function reset_counters(state::MCState)
     state.count_vol = [0, 0]
     state.count_vol_xy = [0, 0]
     state.count_vol_z = [0, 0]
-    state.count_exc = [0, 0]
+    return state.count_exc = [0, 0]
 end
 
 """
@@ -296,7 +296,7 @@ function equilibration_cycle!(
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, i)
     end
-    for i in (mc_params.eq_cycles ÷ 2 + 1):mc_params.eq_cycles
+    for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
@@ -388,7 +388,7 @@ function ptmc_run!(
     @info "equilibration complete"
 
     # Main loop
-    for i in start_counter:mc_params.mc_cycles
+    for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
             move_strategy,
@@ -438,7 +438,7 @@ function ptmc_run!(restart::Bool; rdfsave=false, save=1000, eq_cycles=0.2)
         save_histparams(results)
     end
 
-    for i in start_counter:mc_params.mc_cycles
+    for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
             move_strategy,

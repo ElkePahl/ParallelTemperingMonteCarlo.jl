@@ -114,13 +114,13 @@ num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
 
 file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
-weights=readdlm(file)
+weights = readdlm(file)
 close(file)
 weights = vec(weights)
 nnpcu = NeuralNetworkPotential(num_nodes, activation_functions, weights)
 
-file2=open(joinpath(data_path, "weights.030.data"), "r+") #./data/weights.030.data
-weights2=readdlm(file2)
+file2 = open(joinpath(data_path, "weights.030.data"), "r+") #./data/weights.030.data
+weights2 = readdlm(file2)
 close(file2)
 weights2 = vec(weights2)
 nnpzn = NeuralNetworkPotential(num_nodes, activation_functions, weights2)

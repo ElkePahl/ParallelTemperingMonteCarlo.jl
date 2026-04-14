@@ -33,7 +33,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -41,7 +41,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-c=[
+c = [
     -10.5097942564988,
     989.725135614556,
     -101383.865938807,
@@ -52,19 +52,19 @@ c=[
 #c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069] #ar
 pot = ELJPotentialEven{6}(c)
 
-a=[0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608]
-b=[-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751]
-c1=[-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203]
+a = [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608]
+b = [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751]
+c1 = [-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203]
 potB = ELJPotentialB{6}(a, b, c1)
 
-link="/Users/tiantianyu/Downloads/look-up_table.txt"
-potlut=LookupTablePotential(link)
+link = "/Users/tiantianyu/Downloads/look-up_table.txt"
+potlut = LookupTablePotential(link)
 
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=true
-ensemble = NPT(n_atoms, pressure*2.2937122783969076e-13/AtoBohr^3, separated_volume)
+separated_volume = true
+ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
@@ -227,7 +227,7 @@ pos_ne150_fcc = [
     [18.79489824, 10.85123956, 12.78830846],
 ]
 
-pos_ne150_hcp=[
+pos_ne150_hcp = [
     [1.56624152, 0.90426996, 0.0],
     [4.69872456, 0.90426996, 0.0],
     [7.8312076, 0.90426996, 0.0],
@@ -446,7 +446,7 @@ pos_ne150_hcp=[
     [23.4936228, 15.37258938, 12.78830846],
 ]
 
-factor=1.0
+factor = 1.0
 
 pos_ne150_fcc_start = pos_ne150_fcc * AtoBohr * factor
 pos_ne150_hcp_start = pos_ne150_hcp * AtoBohr * factor
@@ -460,11 +460,11 @@ bc_ne150 = RhombicBC(box_length, box_height)
 
 start_config_1 = Config(pos_ne150_fcc_start, bc_ne150)
 start_config_2 = Config(pos_ne150_hcp_start, bc_ne150)
-start_config=[start_config_1, start_config_2]
+start_config = [start_config_1, start_config_2]
 
 mc_states = [
     MCState(temp.t_grid[i], temp.beta_grid[i], start_config[1], ensemble, pot) for
-    i in 1:mc_params.n_traj
+    i in 1:(mc_params.n_traj)
 ]
 
 for i in 1:n_traj
@@ -473,26 +473,26 @@ end
 
 #scale the system
 
-scale_a=[]
-e_xy_scaled=[]
-e_z_scaled=[]
+scale_a = []
+e_xy_scaled = []
+e_z_scaled = []
 
 for i in 1:n_traj
-    scale = 0.84+i/200
+    scale = 0.84 + i / 200
     #scale = 1.0
     pos_scale_xy = Vector{Vector{Float64}}(undef, n_atoms)
     for j in 1:n_atoms
         pos_scale_xy[j] = [
-            pos_ne150_fcc_start[j][1]*scale,
-            pos_ne150_fcc_start[j][2]*scale,
+            pos_ne150_fcc_start[j][1] * scale,
+            pos_ne150_fcc_start[j][2] * scale,
             pos_ne150_fcc_start[j][3],
         ]
     end
 
-    box_length_xy = box_length*scale
+    box_length_xy = box_length * scale
     bc_scale_xy = RhombicBC(box_length_xy, box_height)
 
-    start_config_scale=Config(pos_scale_xy, bc_scale_xy)
+    start_config_scale = Config(pos_scale_xy, bc_scale_xy)
     mc_state_xy = MCState(
         temp.t_grid[i], temp.beta_grid[i], start_config_scale, ensemble, pot
     )
@@ -507,21 +507,21 @@ for i in 1:n_traj
 end
 
 for i in 1:n_traj
-    scale = 0.84+i/200
+    scale = 0.84 + i / 200
     #scale = 1.0
     pos_scale_z = Vector{Vector{Float64}}(undef, n_atoms)
     for j in 1:n_atoms
         pos_scale_z[j] = [
             pos_ne150_fcc_start[j][1],
             pos_ne150_fcc_start[j][2],
-            pos_ne150_fcc_start[j][3]*scale,
+            pos_ne150_fcc_start[j][3] * scale,
         ]
     end
 
-    box_height_z = box_height*scale
+    box_height_z = box_height * scale
     bc_scale_z = RhombicBC(box_length, box_height_z)
 
-    start_config_scale=Config(pos_scale_z, bc_scale_z)
+    start_config_scale = Config(pos_scale_z, bc_scale_z)
     mc_state_z = MCState(
         temp.t_grid[i], temp.beta_grid[i], start_config_scale, ensemble, pot
     )

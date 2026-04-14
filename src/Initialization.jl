@@ -84,7 +84,7 @@ function initialisation(
     ensemble::AbstractEnsemble,
 )
     move_strategy = MoveStrategy(ensemble)
-    mc_states = map(1:mc_params.n_traj) do i
+    mc_states = map(1:(mc_params.n_traj)) do i
         MCState(
             temp.t_grid[i],
             temp.beta_grid[i],
@@ -108,7 +108,7 @@ function initialisation(restart::Bool, eq_cycles)
         mc_states, results = rebuild_states(mc_params.n_traj, ensemble, temp, potential)
     else
         mc_states, results = build_states(mc_params, ensemble, temp, potential)
-        start_counter=1
+        start_counter = 1
     end
 
     for state in mc_states

@@ -64,26 +64,26 @@ function max_length(bc::SphericalBC)
     return 30.0
 end
 function max_length(bc::CubicBC)
-    return bc.box_length*1.8
+    return bc.box_length * 1.8
 end
 function max_length(bc::RhombicBC)
-    return bc.box_length*1.8
+    return bc.box_length * 1.8
 end
 function max_length(bc::RectangularBC)
-    return bc.box_length*1.8
+    return bc.box_length * 1.8
 end
 
 function max_height(bc::SphericalBC)
     return 30.0
 end
 function max_height(bc::CubicBC)
-    return bc.box_length*1.8
+    return bc.box_length * 1.8
 end
 function max_height(bc::RhombicBC)
-    return bc.box_height*1.8
+    return bc.box_height * 1.8
 end
 function max_height(bc::RectangularBC)
-    return bc.box_height*1.8
+    return bc.box_height * 1.8
 end
 
 """
@@ -104,7 +104,7 @@ function MCState(
     max_displ=[0.1, 0.1, 0.1, 0.1],
     max_boxlength=max_length(config.bc),
     max_boxheight=max_height(config.bc),
-    lh_ratio=max_boxlength/max_boxheight,
+    lh_ratio=max_boxlength / max_boxheight,
     count_atom=[0, 0],
     count_vol=[0, 0],
     count_vol_xy=[0, 0],
@@ -112,7 +112,7 @@ function MCState(
     count_exc=[0, 0],
 ) where {T,N,BC} where {Z<:Number}
     ham = T[]
-    MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
+    return MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
         temp,
         beta,
         deepcopy(config),
@@ -143,11 +143,11 @@ function MCState(
     potential_variables = set_variables(config, dist2_mat, pot)
     ensemble_variables = set_ensemble_variables(config, ensemble)
 
-    en_tot, potential_variables=initialise_energy(
+    en_tot, potential_variables = initialise_energy(
         config, dist2_mat, potential_variables, ensemble_variables, pot
     )
 
-    MCState(
+    return MCState(
         temp,
         beta,
         config,

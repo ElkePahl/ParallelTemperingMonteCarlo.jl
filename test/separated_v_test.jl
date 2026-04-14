@@ -19,13 +19,15 @@ end
     bc = RhombicBC(10.0, 10.0)
     conf = Config{3}([v1, v2, v3], bc)
 
-    trial_config_xy, scale1 = volume_change_xy(conf, 0.1, 12.0, bc.box_length/bc.box_height)
-    @test trial_config_xy.pos[1][1] == conf.pos[1][1]*scale1
+    trial_config_xy, scale1 = volume_change_xy(
+        conf, 0.1, 12.0, bc.box_length / bc.box_height
+    )
+    @test trial_config_xy.pos[1][1] == conf.pos[1][1] * scale1
     @test trial_config_xy.pos[1][3] == conf.pos[1][3]
 
-    trial_config_z, scale2 = volume_change_z(conf, 0.1, 12.0, bc.box_length/bc.box_height)
+    trial_config_z, scale2 = volume_change_z(conf, 0.1, 12.0, bc.box_length / bc.box_height)
     @test trial_config_z.pos[1][1] == conf.pos[1][1]
-    @test abs(trial_config_z.pos[1][3] - conf.pos[1][3]/scale2) < 1e-12
+    @test abs(trial_config_z.pos[1][3] - conf.pos[1][3] / scale2) < 1e-12
 end
 
 @testset "rhombic_v_changes_elj" begin
@@ -38,7 +40,7 @@ end
     c1 = [-2.0, 1.0]
     pot1 = ELJPotentialEven{2}(c1)
 
-    ensemble = NPT(3, 101325*3.398928944382626e-14, true)
+    ensemble = NPT(3, 101325 * 3.398928944382626e-14, true)
 
     temp = TempGrid{2}(10, 15)
 
@@ -93,12 +95,12 @@ end
     conf = Config{3}([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf)
 
-    a=[0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608]
-    b=[-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751]
-    c1=[-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203]
+    a = [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608]
+    b = [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751]
+    c1 = [-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203]
     potB = ELJPotentialB{6}(a, b, c1)
 
-    ensemble = NPT(3, 101325*3.398928944382626e-14, true)
+    ensemble = NPT(3, 101325 * 3.398928944382626e-14, true)
 
     temp = TempGrid{2}(10, 15)
 
@@ -113,7 +115,7 @@ end
 
     @test metropolis_condition("volumemove", state_new, ensemble) ≈ metropolis_condition(
         ensemble,
-        state_new.new_en-state.en_tot,
+        state_new.new_en - state.en_tot,
         get_volume(state_new.ensemble_variables.trial_config.bc),
         get_volume(state.config.bc),
         state.beta,

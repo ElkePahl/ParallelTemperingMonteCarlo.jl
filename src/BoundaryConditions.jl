@@ -43,7 +43,7 @@ Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@re
 """
 struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
-    SphericalBC(; radius::T) where {T<:Real} = new{T}(radius*radius)
+    SphericalBC(; radius::T) where {T<:Real} = new{T}(radius * radius)
 end
 
 """
@@ -127,7 +127,7 @@ Returns `true` if atom lies outside.
 - `pos`: position of moved atom
 
 """
-check_boundary(bc::SphericalBC, pos::PositionVector) = sum(x->x^2, pos) > bc.radius2
+check_boundary(bc::SphericalBC, pos::PositionVector) = sum(x -> x^2, pos) > bc.radius2
 
 """
     test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where T <: Real
@@ -139,7 +139,7 @@ Tests if whole cluster lies in the binding sphere.
 - [`SphericalBC`](@ref)
 """
 function test_cluster_inside(pos::Vector{SVector{3,T}}, bc::SphericalBC) where {T<:Real}
-    sum(x->check_boundary(bc, x), pos) == 0
+    return sum(x -> check_boundary(bc, x), pos) == 0
 end
 # TO DO: check if this function is used at all? If so, make consistent with check_boundary
 

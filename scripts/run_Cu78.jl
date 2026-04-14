@@ -32,7 +32,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -152,7 +152,7 @@ length(pos_cu78) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_cu55 = SphericalBC(; radius=14*AtoBohr)   #5.32 Angstrom
+bc_cu55 = SphericalBC(; radius=14 * AtoBohr)   #5.32 Angstrom
 
 #starting configuration
 
@@ -166,14 +166,16 @@ evtohartree = 0.0367493
 #parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
 n = 8.482
 m = 4.692
-ϵ = evtohartree*0.0370
-a = 0.25*nmtobohr
+ϵ = evtohartree * 0.0370
+a = 0.25 * nmtobohr
 C = 27.561
 
 pot = EmbeddedAtomPotential(n, m, ϵ, C, a)
 # sutton chen potential as used by Doye et al for the cambridge cluster database energy landscape
 
-suttonchenpot = EmbeddedAtomPotential(9.0, 6.0, 0.0126*evtohartree, 39.432, 0.3612*nmtobohr)
+suttonchenpot = EmbeddedAtomPotential(
+    9.0, 6.0, 0.0126 * evtohartree, 39.432, 0.3612 * nmtobohr
+)
 #----------------------------------------------------------------------------#
 
 #-------------------------------------------#
@@ -271,12 +273,12 @@ totalsymmvec = vcat(radsymmvec, angularsymmvec)
 num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
 file = open("weights.029.data", "r+")
-weights=readdlm(file)
+weights = readdlm(file)
 close(file)
 weights = vec(weights)
 nnp = NeuralNetworkPotential(num_nodes, activation_functions, weights)
 
-runnerpotential = RuNNerPotential(nnp, totalsymmvec)#============================================================#
+runnerpotential = RuNNerPotential(nnp, totalsymmvec) #============================================================#
 #------------------------------------------------------------#
 
 #------------------------------------------------------------#

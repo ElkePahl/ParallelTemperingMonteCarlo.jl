@@ -25,7 +25,7 @@ mc_sample = 1
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -39,8 +39,8 @@ nmtobohr = 18.8973
 #parameters taken from L Vocadlo etal J Chem Phys V120N6 2004
 n = 8.482
 m = 4.692
-ϵ = evtohartree*0.0370
-a = 0.25*nmtobohr
+ϵ = evtohartree * 0.0370
+a = 0.25 * nmtobohr
 C = 27.561
 
 pot = EmbeddedAtomPotential(n, m, ϵ, C, a)
@@ -143,7 +143,7 @@ totalsymmvec = vcat(radsymmvec, angularsymmvec)
 num_nodes::Vector{Int32} = [88, 20, 20, 1]
 activation_functions::Vector{Int32} = [1, 2, 2, 1]
 file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
-weights=readdlm(file)
+weights = readdlm(file)
 close(file)
 weights = vec(weights)
 nnp = NeuralNetworkPotential(num_nodes, activation_functions, weights)
@@ -202,7 +202,7 @@ pos_cu38 = [
 n_bin = 100
 AtoBohr = 1.8897259886
 
-bc_cu38 = SphericalBC(; radius=6.0*AtoBohr)
+bc_cu38 = SphericalBC(; radius=6.0 * AtoBohr)
 start_config = Config(pos_cu38, bc_cu38)
 
 states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)

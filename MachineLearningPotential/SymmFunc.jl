@@ -65,11 +65,11 @@ function RadialType2a{T}(eta, r_cut, type_vector, G_vals_a::Vector, G_vals_b) wh
     G_norm1 = 1 / (G_vals_a[1][1] - G_vals_a[1][2])
     G_offset1 = -G_vals_a[1][2] * G_norm1
 
-    G_norm2 = 1/(G_vals_a[2][1] - G_vals_a[2][2])
-    G_offset2 = -G_vals_a[2][2]*G_norm2
+    G_norm2 = 1 / (G_vals_a[2][1] - G_vals_a[2][2])
+    G_offset2 = -G_vals_a[2][2] * G_norm2
 
-    G_norm3 = 1/(G_vals_b[1][1] - G_vals_b[1][2])
-    G_offset3 = -G_vals_b[1][2]*G_norm3
+    G_norm3 = 1 / (G_vals_b[1][1] - G_vals_b[1][2])
+    G_offset3 = -G_vals_b[1][2] * G_norm3
 
     G_norm4 = 1 / (G_vals_b[2][1] - G_vals_b[2][2])
     G_offset4 = -G_vals_b[2][2] * G_norm4
@@ -143,25 +143,25 @@ function AngularType3a{T}(
     G_offset1 = -G_valsa[1][2] * G_norm1
     tpz1 = 2.0^(1 - zeta) * G_norm1
 
-    G_norm2 = 1/(G_valsa[2][1] - G_valsa[2][2])
-    G_offset2 = -G_valsa[2][2]*G_norm2
-    tpz2 = 2.0^(1-zeta)*G_norm2
+    G_norm2 = 1 / (G_valsa[2][1] - G_valsa[2][2])
+    G_offset2 = -G_valsa[2][2] * G_norm2
+    tpz2 = 2.0^(1 - zeta) * G_norm2
 
-    G_norm3 = 1/(G_valsa[3][1] - G_valsa[3][2])
-    G_offset3 = -G_valsa[3][2]*G_norm3
-    tpz3 = 2.0^(1-zeta)*G_norm3
+    G_norm3 = 1 / (G_valsa[3][1] - G_valsa[3][2])
+    G_offset3 = -G_valsa[3][2] * G_norm3
+    tpz3 = 2.0^(1 - zeta) * G_norm3
 
-    G_norm4 = 1/(G_valsb[1][1] - G_valsb[1][2])
-    G_offset4 = -G_valsb[1][2]*G_norm4
-    tpz4 = 2.0^(1-zeta)*G_norm4
+    G_norm4 = 1 / (G_valsb[1][1] - G_valsb[1][2])
+    G_offset4 = -G_valsb[1][2] * G_norm4
+    tpz4 = 2.0^(1 - zeta) * G_norm4
 
-    G_norm5 = 1/(G_valsb[2][1] - G_valsb[2][2])
-    G_offset5 = -G_valsb[2][2]*G_norm5
-    tpz5 = 2.0^(1-zeta)*G_norm5
+    G_norm5 = 1 / (G_valsb[2][1] - G_valsb[2][2])
+    G_offset5 = -G_valsb[2][2] * G_norm5
+    tpz5 = 2.0^(1 - zeta) * G_norm5
 
-    G_norm6 = 1/(G_valsb[3][1] - G_valsb[3][2])
-    G_offset6 = -G_valsb[3][2]*G_norm6
-    tpz6 = 2.0^(1-zeta)*G_norm6
+    G_norm6 = 1 / (G_valsb[3][1] - G_valsb[3][2])
+    G_offset6 = -G_valsb[3][2] * G_norm6
+    tpz6 = 2.0^(1 - zeta) * G_norm6
 
     return AngularType3a(
         eta,
@@ -227,7 +227,7 @@ function calc_one_symm_val(r2_ij, fc_ij, g_norm, η)
 end
 
 function calc_one_symm_val(r2_ij, fc_ij, η)
-    ifelse(fc_ij!=0.0 && fc_ij!=1.0, fc_ij*exp(-η*r2_ij), 0.0)
+    return ifelse(fc_ij != 0.0 && fc_ij != 1.0, fc_ij * exp(-η * r2_ij), 0.0)
 end
 
 function calc_one_symm_val(
@@ -257,7 +257,7 @@ Accepts `positions` for consistency with angular calculation, `dist2_mat` and `f
 Second method is for the calculation of angular symmetry functions.
 """
 function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, symm_func::RadialType2)
-    N=length(g_vec)
+    N = length(g_vec)
     if symm_func.type_vec == Int(11)
         g_norm, η = symm_func.G_norm, symm_func.eta
         for atomindex in eachindex(g_vec)
@@ -283,7 +283,7 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, symm_func::AngularT
         for atomindex in eachindex(g_vec)
             for index2 in (atomindex + 1):N
                 for index3 in (index2 + 1):N
-                    g_vals=calc_one_symm_val(
+                    g_vals = calc_one_symm_val(
                         positions[atomindex],
                         positions[index2],
                         positions[index3],
@@ -317,7 +317,7 @@ end
 Methods for the calculation of a symmetry function vector for a diatomic RuNNer potential with n1 atoms of type 1 and n2 atoms of type 2. First method is for angular symmetry functions and populates two vectors of symmetry values, one for X-Cu the other for X-Zn. The second method is for angular symmetry functions and returns three vectors: X-CuCu, X-CuZn and X-ZnZn. 
 """
 function calc_symm_vals!(position, dist2_mat, f_mat, g_vec, n1, n2, η, g_norm, G_offset)
-    N = n1+n2
+    N = n1 + n2
     # CuCu populates row 1 for both i and j
     for atomindex in 1:n1
         for index2 in (atomindex + 1):n1
@@ -362,12 +362,12 @@ function calc_symm_vals!(position, dist2_mat, f_mat, g_vec, n1, n2, η, g_norm, 
 end
 
 function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ, tpz, G_offset)
-    N = n1+n2
+    N = n1 + n2
     #   CuCuCu row 1
     for atomindex in 1:n1
         for index2 in (atomindex + 1):n1
             for index3 in (index2 + 1):n1
-                g_vals=calc_one_symm_val(
+                g_vals = calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
                     positions[index3],
@@ -392,7 +392,7 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
     for atomindex in (n1 + 1):N
         for index2 in (atomindex + 1):N
             for index3 in (index2 + 1):N
-                g_vals=calc_one_symm_val(
+                g_vals = calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
                     positions[index3],
@@ -417,7 +417,7 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
     for atomindex in 1:n1
         for index2 in (atomindex + 1):n1
             for index3 in (n1 + 1):N
-                g_vals=calc_one_symm_val(
+                g_vals = calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
                     positions[index3],
@@ -442,7 +442,7 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
     for atomindex in 1:n1
         for index2 in (n1 + 1):N
             for index3 in (index2 + 1):N
-                g_vals=calc_one_symm_val(
+                g_vals = calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
                     positions[index3],
@@ -481,7 +481,7 @@ end
 Prepares the symmetry matrix `g_mat` by taking the dimensions of the `dist2_mat` containing the squared distance of each atom with its pair, and `total_symm_vec` with all of the symmetry functions. 
 """
 function init_symm_vecs(dist2_mat, total_symm_vec)
-    g_mat=zeros(length(total_symm_vec), size(dist2_mat)[1])
+    g_mat = zeros(length(total_symm_vec), size(dist2_mat)[1])
     return g_mat
 end
 """
@@ -494,7 +494,7 @@ Function to run over a vector of symmetry functions `total_symm_vec` and determi
 function total_symm_calc(
     positions, dist2_mat, f_mat, radsymmfunctions, angsymmfunctions, Nrad, Nang
 )
-    g_mat = zeros(Nrad+Nang, length(positions))
+    g_mat = zeros(Nrad + Nang, length(positions))
 
     for g_index in 1:Nrad
         g_mat[g_index, :] = calc_symm_vals!(
@@ -511,9 +511,9 @@ end
 function total_symm_calc(
     positions, dist2_mat, f_mat, radsymmfunctions, angsymmfunctions, nrad, nang, n1, n2
 )
-    g_mat = zeros(nrad*2 + nang*3, length(positions))
+    g_mat = zeros(nrad * 2 + nang * 3, length(positions))
     for g_index in 1:nrad
-        idx=(g_index-1)*2+1
+        idx = (g_index - 1) * 2 + 1
         g_mat[idx:(idx + 1), :] = calc_symm_vals!(
             positions,
             dist2_mat,
@@ -527,7 +527,7 @@ function total_symm_calc(
         )
     end
     for g_index in 1:nang
-        idx = nrad*2 + (g_index-1)*3 + 1
+        idx = nrad * 2 + (g_index - 1) * 3 + 1
 
         g_mat[idx:(idx + 2), :] = calc_symm_vals!(
             positions,

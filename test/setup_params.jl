@@ -1,7 +1,7 @@
 n_atom = 500
 get_nvt() = NVT(n_atom)
 get_npt() = NPT(n_atom, 101325)
-get_spherical_bc() = SphericalBC(radius=rand()*20 + 10)
+get_spherical_bc() = SphericalBC(; radius=rand() * 20 + 10)
 get_cubic_bc() = CubicBC(Float64(rand(5:20)))
 get_rhombic_bc() = RhombicBC(Float64(rand(5:20)), Float64(rand(5:20)))
 get_nvt_bc() = get_spherical_bc()
@@ -23,7 +23,7 @@ get_pot(; ensemble=get_nvt()) =
 get_ensemble() = rand([get_nvt(), get_npt()])
 function get_eljpot_even()
     (
-        c=[
+        c = [
             -10.5097942564988,
             989.725135614556,
             -101383.865938807,
@@ -36,7 +36,7 @@ function get_eljpot_even()
 end
 function initialise(;
     ensemble=get_ensemble(),
-    pot=get_pot(ensemble=ensemble),
+    pot=get_pot(; ensemble=ensemble),
     config=(
         if ensemble isa NVT
             get_config(get_nvt_bc())
@@ -49,47 +49,41 @@ function initialise(;
     ham=true,
     ebounds=[-100.0, 100.0],
 )
-    (
-        output=initialisation(mc_params, tempgrid, config, pot, ensemble);
-        if ham
-            for state in output[1]
-                push!(state.ham, 0.0)
-                push!(state.ham, 0.0)
-            end
-        end;
-        results=initialise_histograms!(mc_params, output[3], ebounds, config.bc);
-        output=(output[1], output[2], results, output[4], output[5]);
-        return output
-    )
+    (output = initialisation(mc_params, tempgrid, config, pot, ensemble);
+    if ham
+        for state in output[1]
+            push!(state.ham, 0.0)
+            push!(state.ham, 0.0)
+        end
+    end;
+    results = initialise_histograms!(mc_params, output[3], ebounds, config.bc);
+    output = (output[1], output[2], results, output[4], output[5]);
+    return output)
 end
-get_trial_pos(config::Config, index::Int) = config.pos[index] + (rand(3)*2 .- 1)*0.01
+get_trial_pos(config::Config, index::Int) = config.pos[index] + (rand(3) * 2 .- 1) * 0.01
 function get_new_d2_spherical_vec(d2mat_spherical::Matrix{Float64}, index::Int)
-    d2mat_spherical[index, :]*rand(0.95:0.01:1.05)
+    return d2mat_spherical[index, :] * rand(0.95:0.01:1.05)
 end
 get_mcstatevec(; kargs...) = initialise(; kargs...)[1]
 get_mcstate(; kargs...) = rand(get_mcstatevec(; kargs...))
 function get_eljpot_b()
-    (
-        a=[0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608];
-        b=[-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751];
-        c1=[-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203];
-        return ELJPotentialB{6}(a, b, c1)
-    )
+    (a = [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608];
+    b = [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751];
+    c1 = [-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203];
+    return ELJPotentialB{6}(a, b, c1))
 end
 function get_eam()
-    (
-        nmtobohr=18.8973;
-        evtohartree=0.0367493;
-        n=8.482;
-        m=4.692;
-        ϵ=evtohartree*0.0370;
-        a=0.25*nmtobohr;
-        C=27.561;
-        return EmbeddedAtomPotential(n, m, ϵ, C, a)
-    )
+    (nmtobohr = 18.8973;
+    evtohartree = 0.0367493;
+    n = 8.482;
+    m = 4.692;
+    ϵ = evtohartree * 0.0370;
+    a = 0.25 * nmtobohr;
+    C = 27.561;
+    return EmbeddedAtomPotential(n, m, ϵ, C, a))
 end
 function get_elj()
-    ELJPotential{11}([
+    return ELJPotential{11}([
         -10.5097942564988,
         0.0,
         989.725135614556,
@@ -177,7 +171,7 @@ function get_RuNNerPotential()
     num_nodes::Vector{Int32} = [88, 20, 20, 1]
     activation_functions::Vector{Int32} = [1, 2, 2, 1]
     file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
-    weights=readdlm(file)
+    weights = readdlm(file)
     close(file)
     weights = vec(weights)
     nnp = NeuralNetworkPotential(num_nodes, activation_functions, weights)
@@ -187,5 +181,5 @@ get_dimer_vars(config) = set_variables(config, get_distance2_mat(config), get_el
 get_eljb_vars(config) = set_variables(config, get_distance2_mat(config), get_eljpot_b())
 get_eam_vars(config) = set_variables(config, get_distance2_mat(config), get_eam())
 function get_RuNNer_vars(config)
-    set_variables(config, get_distance2_mat(config), get_RuNNerPotential())
+    return set_variables(config, get_distance2_mat(config), get_RuNNerPotential())
 end

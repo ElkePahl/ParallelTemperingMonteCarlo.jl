@@ -8,7 +8,7 @@ using LaTeXStrings
 # Firstly, we set the number of atoms:
 n_atoms = 13;
 # Next, we define the potential, here an extended Lennard Jones potential with coefficients for even powers of r, starting from powers of -6 to -16:
-c=[
+c = [
     -10.5097942564988,
     989.725135614556,
     -101383.865938807,
@@ -38,7 +38,7 @@ AtoBohr = 1.8897259886;
 pos_ne13 = pos_ne13 * AtoBohr
 # Finally, we have to choose appropriate boundary conditions, here spherical boundary conditions (solid boundary around the cluster), to suppress atom loss processes.  
 # Finding this radius is a non-trivial task, and has to be chosen and tested carefully. A radius chosen too small will exert artificial pressure on the cluster while a too large value leads to atoms being ejected.
-bc_ne13 = SphericalBC(; radius=5.32*AtoBohr)
+bc_ne13 = SphericalBC(; radius=5.32 * AtoBohr)
 # We package the initial configuration and boundary conditions into a `Config` struct:
 start_config = Config(pos_ne13, bc_ne13)
 # ## Setting up the Simulation Parameters
@@ -57,7 +57,7 @@ temp = TempGrid{n_traj}(ti, tf)
 mc_cycles = 100000;
 mc_sample = 1;
 displ_atom = 0.1;
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj];
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj];
 n_adjust = 100;
 # For neatness, all parameters are collected in a `MCParams` struct:
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)

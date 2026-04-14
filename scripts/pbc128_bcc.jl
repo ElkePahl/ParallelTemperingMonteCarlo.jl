@@ -33,7 +33,7 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.05 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
@@ -41,7 +41,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n
 #----------------------Potential------------------------------#
 #-------------------------------------------------------------#
 
-c=[
+c = [
     -10.5097942564988,
     989.725135614556,
     -101383.865938807,
@@ -52,14 +52,14 @@ c=[
 #c=[-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
 pot = ELJPotentialEven{6}(c)
 
-link="/Users/tiantianyu/Downloads/look-up_table.txt"
-potlut=LookupTablePotential(link)
+link = "/Users/tiantianyu/Downloads/look-up_table.txt"
+potlut = LookupTablePotential(link)
 #-------------------------------------------------------------#
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
-separated_volume=false
-pressure_scale=3.398928944382626e-14#*1.8897259886^3
-ensemble = NPT(n_atoms, pressure*2.2937122783969076e-13/AtoBohr^3, separated_volume)
+separated_volume = false
+pressure_scale = 3.398928944382626e-14#*1.8897259886^3
+ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#

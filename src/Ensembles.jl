@@ -116,11 +116,11 @@ finds the square of the cut-off radius `r_cut` that is implied by periodic bound
 implemented for [`CubicBC`](@ref), [`RhombicBC`](@ref) and [`RectangularBC`](@ref).
 """
 function get_r_cut(bc::CubicBC)
-    return bc.box_length^2/4
+    return bc.box_length^2 / 4
 end
 
 function get_r_cut(bc::RhombicBC)
-    return min(bc.box_length^2*3/16, bc.box_height^2/4)
+    return min(bc.box_length^2 * 3 / 16, bc.box_height^2 / 4)
     #return bc.box_length^2*3/16
 end
 #---------------------------------------------------------------------#
@@ -151,7 +151,7 @@ function NNVT(natomsvec; natomswaps=1, natommoves=sum(natomsvec))
 end
 
 function get_r_cut(bc::RectangularBC)
-    return min(bc.box_length^2/4, bc.box_height^2/4)
+    return min(bc.box_length^2 / 4, bc.box_height^2 / 4)
 end
 
 """
@@ -199,7 +199,7 @@ function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NPT) where {N,
 end
 function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NNVT) where {N,BC,T}
     N1, N2 = ensemble.natoms[1], ensemble.natoms[2]
-    return NNVTVariables{T,N,N1,N2}(1, SVector{3}(zeros(3)), SVector{2}(1, N1+1))
+    return NNVTVariables{T,N,N1,N2}(1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1))
 end
 
 """
@@ -229,18 +229,19 @@ end
 
 function MoveStrategy(ensemble::NPT)
     movestrat = []
-    for m_index in 1:ensemble.n_atom_moves
+    for m_index in 1:(ensemble.n_atom_moves)
         push!(movestrat, "atommove")
     end
-    for m_index in 1:ensemble.n_volume_moves
+    for m_index in 1:(ensemble.n_volume_moves)
         push!(movestrat, "volumemove")
     end
-    for m_index in 1:ensemble.n_atom_swaps
+    for m_index in 1:(ensemble.n_atom_swaps)
         push!(movestrat, "atomswap")
     end
 
     return MoveStrategy{
-        ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)
+        ensemble.n_atom_moves + ensemble.n_atom_swaps + ensemble.n_volume_moves,
+        typeof(ensemble),
     }(
         ensemble, movestrat
     )
@@ -248,28 +249,28 @@ end
 
 function MoveStrategy(ensemble::NVT)
     movestrat = []
-    for m_index in 1:ensemble.n_atom_moves
+    for m_index in 1:(ensemble.n_atom_moves)
         push!(movestrat, "atommove")
     end
-    for m_index in 1:ensemble.n_atom_swaps
+    for m_index in 1:(ensemble.n_atom_swaps)
         push!(movestrat, "atomswap")
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(
+    return MoveStrategy{ensemble.n_atom_moves + ensemble.n_atom_swaps,typeof(ensemble)}(
         ensemble, movestrat
     )
 end
 
 function MoveStrategy(ensemble::NNVT)
     movestrat = []
-    for m_index in 1:ensemble.n_atom_moves
+    for m_index in 1:(ensemble.n_atom_moves)
         push!(movestrat, "atommove")
     end
-    for m_index in 1:ensemble.n_atom_swaps
+    for m_index in 1:(ensemble.n_atom_swaps)
         push!(movestrat, "atomswap")
     end
 
-    return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(
+    return MoveStrategy{ensemble.n_atom_moves + ensemble.n_atom_swaps,typeof(ensemble)}(
         ensemble, movestrat
     )
 end

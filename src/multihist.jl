@@ -24,7 +24,7 @@ Method 2: `output::Output`, `Tvals::TempGrid` - designed to receive output data 
 """
 function readfile(xdir::String; debug=false)
     f = open("$(xdir)histE.data", "r+")
-    datafile=readdlm(f)
+    datafile = readdlm(f)
     kB = datafile[1]
     NTraj = datafile[2]
     T = copy(datafile[3, :])
@@ -32,7 +32,7 @@ function readfile(xdir::String; debug=false)
     emax = datafile[4, 2]
     NBins = datafile[4, 3]
     beta = 1 ./ (kB .* T)
-    de = (emax-emin)/(NBins-1)
+    de = (emax - emin) / (NBins - 1)
     #Below we initialise the histogram array
     HistArray = Array{Float64}(undef, NTraj, NBins)
 
@@ -45,7 +45,7 @@ function readfile(xdir::String; debug=false)
     if debug
         println("Files Read")
     end
-    energyvector = [(j-1)*de + emin for j in 1:NBins]
+    energyvector = [(j - 1) * de + emin for j in 1:NBins]
 
     return HistArray, energyvector, beta, NTraj, NBins, kB
 end
@@ -55,9 +55,9 @@ function readfile(output::Output, Tvals::TempGrid)
 
     NTraj = length(Tvals.beta_grid)
 
-    de = (output.en_max - output.en_min)/(output.n_bin - 1)
+    de = (output.en_max - output.en_min) / (output.n_bin - 1)
 
-    energyvector = [(j-1)*de + output.en_min for j in 1:output.n_bin]
+    energyvector = [(j - 1) * de + output.en_min for j in 1:(output.n_bin)]
 
     HistArray = Array{Float64}(undef, NTraj, output.n_bin)
     nbin_actual = length(output.en_histogram[1])
@@ -92,7 +92,7 @@ function processhist!(
     end
     #as it causes colossal headaches, we will now delete all rows
     #which have exactly 0 histogram counts. Trust me it's needed.
-    k=1
+    k = 1
     while k <= NBins
         if nsum[k] == 0
             deleteat!(nsum, k)
@@ -100,7 +100,7 @@ function processhist!(
             HistArray = HistArray[1:end, 1:end .!= k]
             NBins -= 1
         else
-            k=k+1
+            k = k + 1
         end
     end
     return HistArray, energyvector, nsum, NBins
@@ -178,7 +178,7 @@ function bvector(
     logmat = Array{Float64}(undef, NTraj, NBins)
     for i in 1:NTraj
         for j in 1:NBins
-            logmat[i, j] = log(HistArray[i, j]) + beta[i]*energyvector[j]
+            logmat[i, j] = log(HistArray[i, j]) + beta[i] * energyvector[j]
         end
     end
     bmat = Array{Float64}(undef, NTraj, NBins)
@@ -190,7 +190,7 @@ function bvector(
             if HistArray[i, j] == 0.0
                 bmat[i, j] = 0.0
             else
-                bmat[i, j] = HistArray[i, j]*logmat[i, j]
+                bmat[i, j] = HistArray[i, j] * logmat[i, j]
             end
         end
     end
@@ -274,7 +274,7 @@ Having determined the vector solution to `Ax=b`, we input `alpha` and the "b-mat
 function Entropycalc(alpha::Vector, bmat::Matrix, HistArray::Matrix, nsum::VorS, NBins::Int)
     S_E = []
     for j in 1:NBins
-        var = (sum(bmat[:, j] .- HistArray[:, j] .* alpha))/nsum[j]
+        var = (sum(bmat[:, j] .- HistArray[:, j] .* alpha)) / nsum[j]
         push!(S_E, var)
     end
 
@@ -292,9 +292,9 @@ function analysis(
     energyvector::VorS, S_E::Vector, beta::VorS, kB::Float64, NPoints::Int; debug=false
 )
     NBins = length(energyvector)
-    Tvec = 1 ./ (kB*beta)
-    dT = (last(Tvec) - first(Tvec))/NPoints
-    T = [(i-1)*dT + first(Tvec) for i in 1:NPoints]
+    Tvec = 1 ./ (kB * beta)
+    dT = (last(Tvec) - first(Tvec)) / NPoints
+    T = [(i - 1) * dT + first(Tvec) for i in 1:NPoints]
     #Initialise all relevant vectors
     y = Array{Float64}(undef, NPoints, NBins)
     XP = Array{Float64}(undef, NPoints, NBins)
@@ -312,7 +312,7 @@ function analysis(
 
     for i in 1:NPoints
         #y is a matrix of free energy
-        y[i, :] = S_E[:] .- energyvector[:] ./ (T[i]*kB)
+        y[i, :] = S_E[:] .- energyvector[:] ./ (T[i] * kB)
         #here we set the zero of free energy
 
         Stest = nancheck(S_E)
@@ -333,7 +333,7 @@ function analysis(
             end
         end
 
-        count=0  #this variable was included for bug testing and should be excluded from the main program
+        count = 0  #this variable was included for bug testing and should be excluded from the main program
 
         #below we calculate the partition function
 
@@ -358,17 +358,18 @@ function analysis(
         if debug
             println(count)
         end
-        U[i] = sum(XP[i, :] .* energyvector[:])/Z[i]
-        U2[i] = sum(XP[i, :] .* energyvector[:] .* energyvector[:])/Z[i]
-        r2[i] = sum(XP[i, :] .* (energyvector[:] .- U[i]) .* (energyvector[:] .- U[i]))/Z[i]
+        U[i] = sum(XP[i, :] .* energyvector[:]) / Z[i]
+        U2[i] = sum(XP[i, :] .* energyvector[:] .* energyvector[:]) / Z[i]
+        r2[i] =
+            sum(XP[i, :] .* (energyvector[:] .- U[i]) .* (energyvector[:] .- U[i])) / Z[i]
         r3[i] =
             sum(
                 XP[i, :] .* (energyvector[:] .- U[i]) .* (energyvector[:] .- U[i]) .*
                 (energyvector[:] .- U[i]),
-            )/Z[i]
-        Cv[i] = (U2[i] - U[i]*U[i])/kB/(T[i]^2)
-        S_T[i] = U[i]/T[i] + kB*log(Z[i])
-        dCv[i] = r3[i]/kB^2/T[i]^4 - 2*r2[i]/kB/T[i]^3
+            ) / Z[i]
+        Cv[i] = (U2[i] - U[i] * U[i]) / kB / (T[i]^2)
+        S_T[i] = U[i] / T[i] + kB * log(Z[i])
+        dCv[i] = r3[i] / kB^2 / T[i]^4 - 2 * r2[i] / kB / T[i]^3
     end
     return Z, U, Cv, dCv, S_T, T
 end
@@ -447,12 +448,14 @@ The output of this function are the four files defined in [`run_multihistogram`]
 """
 function multihistogram(xdir::String; NPoints=1000)
     HistArray, energyvector, beta, nsum, NTraj, NBins, kB = initialise(xdir)
-    run_multihistogram(HistArray, energyvector, beta, nsum, NTraj, NBins, kB, xdir, NPoints)
+    return run_multihistogram(
+        HistArray, energyvector, beta, nsum, NTraj, NBins, kB, xdir, NPoints
+    )
 end
 
 function multihistogram(output::Output, Tvec::TempGrid; outdir=pwd(), NPoints=1000)
     HistArray, energyvector, beta, nsum, NTraj, NBins, kB = initialise(output, Tvec)
-    run_multihistogram(
+    return run_multihistogram(
         HistArray, energyvector, beta, nsum, NTraj, NBins, kB, outdir, NPoints
     )
 end
@@ -471,10 +474,10 @@ function postprocess(; xdir=pwd())
 
     hists = readdlm("histograms.data")
     analysis = readdlm("analysis.NVT")
-    energies=hists[1, :]
-    histogramdata = [hists[i + 1, :] for i in 1:params.n_traj]
+    energies = hists[1, :]
+    histogramdata = [hists[i + 1, :] for i in 1:(params.n_traj)]
 
-    T, Z, Cv, dCv, S=analysis[2:end, 1],
+    T, Z, Cv, dCv, S = analysis[2:end, 1],
     analysis[2:end, 2], analysis[2:end, 3], analysis[2:end, 4],
     analysis[2:end, 5]
 

@@ -28,7 +28,7 @@ function writeparams(savefile::IO, params::MCParams, temp::TempGrid)
         [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(
             temp.t_grid
         ) last(temp.t_grid)]
-    writedlm(savefile, [headersvec, paramsvec], ' ')
+    return writedlm(savefile, [headersvec, paramsvec], ' ')
 end
 """
     writeensemble(savefile::IO, ensemble::NVT)
@@ -39,20 +39,20 @@ Function to write the `ensemble` data into a savefile including the move types. 
 function writeensemble(savefile::IO, ensemble::NVT)
     headersvec = ["ensemble" "n_atom_moves" "n_atom_swaps"]
     valuesvec = ["NVT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_atom_swaps]
-    writedlm(savefile, [headersvec, valuesvec], ' ')
+    return writedlm(savefile, [headersvec, valuesvec], ' ')
 end
 function writeensemble(savefile::IO, ensemble::NPT)
     headersvec =
         ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure" "separated_volume"]
     valuesvec =
         ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure ensemble.separated_volume]
-    writedlm(savefile, [headersvec, valuesvec], ' ')
+    return writedlm(savefile, [headersvec, valuesvec], ' ')
 end
 function writeensemble(savefile::IO, ensemble::NNVT)
     headersvec = ["ensemble" "n_1" "n_2" "n_atom_moves" "n_atom_swaps"]
     valuesvec =
         ["NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps]
-    writedlm(savefile, [headersvec, valuesvec], ' ')
+    return writedlm(savefile, [headersvec, valuesvec], ' ')
 end
 """
     writepotential(savefile::IO, potential::AbstractDimerPotential)
@@ -65,25 +65,25 @@ function writepotential(savefile::IO, potential::AbstractDimerPotential)
     coeff_vec = transpose([potential.coeff[i] for i in eachindex(potential.coeff)])
 
     write(savefile, "$(typeof(potential)) ")
-    writedlm(savefile, coeff_vec, ' ')
+    return writedlm(savefile, coeff_vec, ' ')
 end
 function writepotential(savefile::IO, potential::AbstractDimerPotentialB)
     coeff_vec_a = transpose([potential.coeff_a[i] for i in eachindex(potential.coeff_a)])
     coeff_vec_b = transpose([potential.coeff_b[i] for i in eachindex(potential.coeff_b)])
     coeff_vec_c = transpose([potential.coeff_c[i] for i in eachindex(potential.coeff_c)])
     write(savefile, "ELJB $(length(coeff_vec_a)) \n")
-    writedlm(savefile, [coeff_vec_a, coeff_vec_b, coeff_vec_c])
+    return writedlm(savefile, [coeff_vec_a, coeff_vec_b, coeff_vec_c])
 end
 function writepotential(savefile::IO, potential::EmbeddedAtomPotential)
-    write(
+    return write(
         savefile, "EAM: $(potential.n) $(potential.m) $(potential.ean) $(potential.eCam) \n"
     )
 end
 function writepotential(savefile::IO, potential::AbstractMachineLearningPotential)
-    write(savefile, "runnerpotential \n")
+    return write(savefile, "runnerpotential \n")
 end
 function writepotential(savefile::IO, potential::LookupTablePotential)
-    write(savefile, "LookupTablePotential \n")
+    return write(savefile, "LookupTablePotential \n")
 end
 
 """
@@ -122,7 +122,7 @@ function save_histparams(results::Output)
     infovec =
         [results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2]
     writedlm(resfile, [headersvec, infovec], ' ')
-    close(resfile)
+    return close(resfile)
     # end
 end
 #-----------------------------------------------------------------#
@@ -131,7 +131,7 @@ end
 bc_info(bc::SphericalBC) = "$(typeof(bc)) r2: $(bc.radius2)"
 bc_info(bc::CubicBC) = "$(typeof(bc)) box_length: $(bc.box_length)"
 function bc_info(bc::Union{RectangularBC,RhombicBC})
-    "$(typeof(bc)) box_dims: $(bc.box_length), $(bc.box_height)"
+    return "$(typeof(bc)) box_dims: $(bc.box_length), $(bc.box_height)"
 end
 
 """
@@ -246,11 +246,11 @@ Function to convert delimited file contents `potinfovec` into a potential. Imple
 """
 function readpotential(potinfovec)
     if contains(potinfovec[1, 1], "ELJPotentialEven")
-        len=parse(Int, potinfovec[1, 1][18])
+        len = parse(Int, potinfovec[1, 1][18])
         coeffs = Vector{typeof(potinfovec[1, 3])}(potinfovec[1, 3:(2 + len)])
         return ELJPotentialEven(coeffs)
     elseif contains(potinfovec[1, 1], "ELJPotential{")
-        len=parse(Int, potinfovec[1, 1][14])
+        len = parse(Int, potinfovec[1, 1][14])
         coeffs = Vector{typeof(potinfovec[1, 3])}(potinfovec[1, 3:(2 + len)])
         return ELJPotential(coeffs)
     elseif potinfovec[1, 1] == "EAM:"
@@ -305,7 +305,7 @@ function read_params(paramsvec, restart::Bool, eq_cycles::Float64)
     else
         parameters = MCParams(
             paramsvec[1],
-            Int(floor(eq_cycles*paramsvec[1])),
+            Int(floor(eq_cycles * paramsvec[1])),
             paramsvec[2],
             paramsvec[3],
             paramsvec[4],
@@ -323,17 +323,17 @@ end
 Function to reinitialise the fixed parameters of the MC simulation as saved by the [`save_init`](@ref) function.
 """
 function read_init(restart::Bool, eq_cycles::Float64)
-    readfile=open("./checkpoint/params.data", "r+")
-    data=readdlm(readfile)
+    readfile = open("./checkpoint/params.data", "r+")
+    data = readdlm(readfile)
     close(readfile)
 
-    paramsvec=data[2, :]
-    ensemblevec=data[4, :]
-    potinfovec=data[5:end, :]
+    paramsvec = data[2, :]
+    ensemblevec = data[4, :]
+    potinfovec = data[5:end, :]
 
     mc_params, temp = read_params(paramsvec, restart, eq_cycles)
     ensemble = readensemble(ensemblevec)
-    potential=readpotential(potinfovec)
+    potential = readpotential(potinfovec)
 
     return mc_params, temp, ensemble, potential
 end
@@ -343,27 +343,27 @@ end
 Function designed to take a single `xyz`-style checkpoint file and return the configuration and max displacement data associated with a saved `mc_state`. This is used to reconstruct an MC simulation from checkpoints.
 """
 function read_checkpoint_config(xyzdata)
-    N=xyzdata[1, 1]
+    N = xyzdata[1, 1]
     if contains(xyzdata[2, 1], "SphericalBC")#xyzdata[2,1] == "SphericalBC{Float64}"
         bc = SphericalBC(; radius=sqrt(xyzdata[2, 3]))
 
         max_displ = [xyzdata[2, 4:6]]
         count_atom = xyzdata[2, 7]
-        count_vol=xyzdata[2, 8]
+        count_vol = xyzdata[2, 8]
     elseif contains(xyzdata[2, 1], "CubicBC") # == "CubicBC{Float64}"
         bc = CubicBC(xyzdata[2, 3])
 
         max_displ = [xyzdata[2, 4:6]]
         count_atom = xyzdata[2, 7]
-        count_vol=xyzdata[2, 8]
+        count_vol = xyzdata[2, 8]
     elseif contains(xyzdata[2, 1], "RhombicBC")# == "RhombicBC"
         bc = RhombicBC(xyzdata[2, 3], xyzdata[2, 4])
         max_displ = [xyzdata[2, 5:7]]
         count_atom = xyzdata[2, 8]
-        count_vol=xyzdata[2, 9]
+        count_vol = xyzdata[2, 9]
     end
     configvectors = Vector{Vector{Float64}}([xyzdata[2 + i, 2:4] for i in 1:N])
-    config=Config(configvectors, bc)
+    config = Config(configvectors, bc)
 
     return config, max_displ, count_atom, count_vol
 end
@@ -372,7 +372,7 @@ end
 Designed to read in one `xyz`-style file with one configuration and return this for starting a simulation from files without restarting.
 """
 function read_config(xyzdata)
-    N=xyzdata[1, 1]
+    N = xyzdata[1, 1]
     if contains(xyzdata[2, 1], "SphericalBC")# xyzdata[2,1] == "SphericalBC{Float64}"
         bc = SphericalBC(; radius=sqrt(xyzdata[2, 3]))
 
@@ -384,7 +384,7 @@ function read_config(xyzdata)
     end
     configvectors = [xyzdata[2 + i, 2:4] for i in 1:N]
 
-    config=Config(configvectors, bc)
+    config = Config(configvectors, bc)
 
     return config
 end
@@ -395,10 +395,10 @@ Function to re-initialise the results struct on restarting a simulation.
 function setresults(histparams, histdata, histv_data, r2data)
     nbins = size(histdata)[2]
     trunbins = nbins - 2
-    results=Output{Float64}(trunbins)
-    results.en_min, results.en_max=histparams[1], histparams[2]
+    results = Output{Float64}(trunbins)
+    results.en_min, results.en_max = histparams[1], histparams[2]
     results.v_min, results.v_max = histparams[3], histparams[4]
-    results.delta_en_hist, results.delta_v_hist, results.delta_r2=histparams[5],
+    results.delta_en_hist, results.delta_v_hist, results.delta_r2 = histparams[5],
     histparams[6],
     histparams[7]
 
@@ -431,10 +431,10 @@ Function to rebuild the `MCStates` vector and `results` struct from checkpoint i
 function rebuild_states(
     n_traj::Int, ensemble::AbstractEnsemble, temps::TempGrid, potential::AbstractPotential
 )
-    histinfofile=open("./checkpoint/hist_info.data", "r+")
-    histsfile=open("./checkpoint/histograms.data", "r+")
+    histinfofile = open("./checkpoint/hist_info.data", "r+")
+    histsfile = open("./checkpoint/histograms.data", "r+")
     dataread = readdlm(histinfofile)
-    histiread=readdlm(histsfile)
+    histiread = readdlm(histsfile)
     close(histinfofile)
     close(histsfile)
     if isfile("./checkpoint/rdf.data") == true
@@ -455,7 +455,7 @@ function rebuild_states(
     mcstates = []
     for index in 1:n_traj
         configfile = open("./checkpoint/config.$index", "r+")
-        configinfo=readdlm(configfile)
+        configinfo = readdlm(configfile)
         close(configfile)
         conf, maxdisp, countatom, countvol = read_checkpoint_config(configinfo)
 
@@ -485,20 +485,20 @@ function build_states(
     potential::AbstractPotential,
 )
     if ispath("./checkpoint/config.1")
-        confvec=[]
-        for i in 1:mc_params.n_traj
+        confvec = []
+        for i in 1:(mc_params.n_traj)
             if ispath("./checkpoint/config.$i")
-                confinfo=readdlm("./checkpoint/config.$i")
+                confinfo = readdlm("./checkpoint/config.$i")
             else
-                confinfo=readdlm("./checkpoint/config.1")
+                confinfo = readdlm("./checkpoint/config.1")
             end
-            conf=read_config(confinfo)
+            conf = read_config(confinfo)
             push!(confvec, conf)
         end
 
         mc_states = [
             MCState(temp.t_grid[i], temp.beta_grid[i], confvec[i], ensemble, potential) for
-            i in 1:mc_params.n_traj
+            i in 1:(mc_params.n_traj)
         ]
         results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
 
@@ -507,7 +507,7 @@ function build_states(
         start_config = read_config(confinfo)
         mc_states = [
             MCState(temp.t_grid[i], temp.beta_grid[i], start_config, ensemble, potential)
-            for i in 1:mc_params.n_traj
+            for i in 1:(mc_params.n_traj)
         ]
         results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
     end

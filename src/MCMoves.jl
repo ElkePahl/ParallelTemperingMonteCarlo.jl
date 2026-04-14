@@ -32,9 +32,9 @@ The final method is a wrapper function which unpacks `mc_states`, which contains
 """
 function atom_displacement(pos::PositionVector, max_displacement::Number, bc::SphericalBC)
     delta_move = SVector(
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
     )
     trial_pos = pos + delta_move
     # count = 0
@@ -49,52 +49,50 @@ end
 
 function atom_displacement(pos::PositionVector, max_displacement::Number, bc::CubicBC)
     delta_move = SVector(
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
     )
     trial_pos = pos + delta_move
     trial_pos -=
-        bc.box_length*SVector(
-            round(trial_pos[1]/bc.box_length),
-            round(trial_pos[2]/bc.box_length),
-            round(trial_pos[3]/bc.box_length),
+        bc.box_length * SVector(
+            round(trial_pos[1] / bc.box_length),
+            round(trial_pos[2] / bc.box_length),
+            round(trial_pos[3] / bc.box_length),
         )
     return trial_pos
 end
 
 function atom_displacement(pos::PositionVector, max_displacement::Number, bc::RhombicBC)
     delta_move = SVector(
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
     )
     trial_pos = pos + delta_move
     trial_pos -= SVector(
-        bc.box_length*round(
-            (trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length
-        )+bc.box_length/2*round(
-            (trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)
-        ),
-        bc.box_length*3^0.5/2*round(
-            (trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)
-        ),
-        bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height),
+        bc.box_length *
+        round((trial_pos[1] - trial_pos[2] / 3^0.5 - bc.box_length / 2) / bc.box_length) +
+        bc.box_length / 2 *
+        round((trial_pos[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        bc.box_length * 3^0.5 / 2 *
+        round((trial_pos[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        bc.box_height * round((trial_pos[3] - bc.box_height / 2) / bc.box_height),
     )
     return trial_pos
 end
 
 function atom_displacement(pos, max_displacement, bc::RectangularBC)
     delta_move = SVector(
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
-        (rand()-0.5)*max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
     )
     trial_pos = pos + delta_move
     trial_pos -= SVector(
-        bc.box_length*round(trial_pos[1]/bc.box_length),
-        bc.box_length*round(trial_pos[2]/bc.box_length),
-        bc.box_height*round(trial_pos[3]/bc.box_height),
+        bc.box_length * round(trial_pos[1] / bc.box_length),
+        bc.box_length * round(trial_pos[2] / bc.box_length),
+        bc.box_height * round(trial_pos[3] / bc.box_height),
     )
     return trial_pos
 end
@@ -169,7 +167,7 @@ Scale the whole configuration, including positions and the box length by a rando
 Returns the trial configuration.
 """
 function volume_change_xyz(conf::Config, max_vchange::Real, max_length::Real)
-    scale = exp((rand()-0.5) * max_vchange) ^ (1/3)
+    scale = exp((rand() - 0.5) * max_vchange)^(1 / 3)
     if conf.bc.box_length >= max_length && scale > 1.0
         scale = 1.0
     end
@@ -228,14 +226,14 @@ the ``x`` and ``y`` directions.
 Returns the trial configuration.
 """
 function volume_change_xy(conf::Config, max_vchange, max_length, lh_ratio)
-    scale = exp((rand() - 0.5) * max_vchange) ^ (1/2)
+    scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
     if conf.bc.box_length / conf.bc.box_height >= lh_ratio * 1.1 && scale > 1.0
-        scale=1 / scale
+        scale = 1 / scale
     elseif conf.bc.box_length / conf.bc.box_height <= lh_ratio * 0.909 && scale < 1.0
-        scale=1 / scale
+        scale = 1 / scale
     end
-    if conf.bc.box_length>=max_length && scale > 1.0
-        scale=1/scale
+    if conf.bc.box_length >= max_length && scale > 1.0
+        scale = 1 / scale
     end
 
     return scale_xy(conf, scale), scale
@@ -251,16 +249,16 @@ Returns the trial configuration.
 """
 function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)
-    if conf.bc.box_length / conf.bc.box_height <= lh_ratio*1.1 && scale > 1.0
+    if conf.bc.box_length / conf.bc.box_height <= lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
-    elseif conf.bc.box_length / conf.bc.box_height >= lh_ratio*0.909 && scale < 1.0
+    elseif conf.bc.box_length / conf.bc.box_height >= lh_ratio * 0.909 && scale < 1.0
         scale = 1 / scale
     end
     if conf.bc.box_height >= max_height && scale > 1.0
         scale = 1 / scale
     end
 
-    return scale_z(conf, scale), 1/scale
+    return scale_z(conf, scale), 1 / scale
 end
 
 """
@@ -324,7 +322,7 @@ function volume_change_separated(mc_state::MCState)
         mc_state.ensemble_variables.trial_config
     )
 
-    if ra<=3 && (
+    if ra <= 3 && (
         mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
         mc_state.potential_variables isa LookupTableVariables{Float64}
     )
@@ -343,9 +341,9 @@ MC move that changes volume. If `separated_volume == true`, the volume is change
 """
 function volume_change(mc_state::MCState, separated_volume=false)
     if separated_volume
-        mc_state=volume_change_separated(mc_state)
+        mc_state = volume_change_separated(mc_state)
     else
-        mc_state=volume_change_uniform(mc_state)
+        mc_state = volume_change_uniform(mc_state)
     end
     return mc_state
 end

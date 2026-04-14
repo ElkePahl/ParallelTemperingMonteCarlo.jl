@@ -47,7 +47,7 @@ function swap_atom_config!(
     mc_state.count_atom[1] += 1
     mc_state.count_atom[2] += 1
 
-    swap_vars!(i_atom, mc_state.potential_variables)
+    return swap_vars!(i_atom, mc_state.potential_variables)
 end
 
 # TODO: the first methods never get called!
@@ -125,10 +125,10 @@ function swap_config_v!(
     mc_state.potential_variables.en_atom_vec .= en_vec_new
 
     mc_state.en_tot = new_en_tot
-    if mc_state.ensemble_variables.xy_or_z==0
+    if mc_state.ensemble_variables.xy_or_z == 0
         mc_state.count_vol[1] += 1
         mc_state.count_vol[2] += 1
-    elseif mc_state.ensemble_variables.xy_or_z==1
+    elseif mc_state.ensemble_variables.xy_or_z == 1
         mc_state.count_vol_xy[1] += 1
         mc_state.count_vol_xy[2] += 1
     else
@@ -136,7 +136,7 @@ function swap_config_v!(
         mc_state.count_vol_z[2] += 1
     end
 
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
+    return mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
 #TODO: potential_variables is passed as argument, but only mc_state.potential_variables is used.
@@ -171,7 +171,7 @@ function swap_config_v!(
         mc_state.count_vol_z[2] += 1
     end
 
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
+    return mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
 """
@@ -197,16 +197,16 @@ function swap_vars!(i_atom::Int, potential_variables::V) where {V<:DimerPotentia
 
 function swap_vars!(i_atom::Int, potential_variables::ELJPotentialBVariables)
     potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
-    potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
+    return potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
 end
 
 function swap_vars!(i_atom, potential_variables::LookupTableVariables)
     potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
-    potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
+    return potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
 end
 
 function swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
-    potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector,
+    return potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector,
     potential_variables.component_vector
 end
 
@@ -217,7 +217,7 @@ function swap_vars!(i_atom::Int, potential_variables::NNPVariables)
     potential_variables.g_matrix
 
     potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
-    potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    return potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
 end
 
 function swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
@@ -228,7 +228,7 @@ function swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
     potential_variables.g_matrix
 
     potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
-    potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    return potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
 end
 """
     swap_move_config!(mc_state::MCState,indices::VorS)
@@ -271,6 +271,6 @@ function swap_move_config!(mc_state::MCState, indices::VorS)
     #swap en_atom_vec and gmat
     mc_state.potential_variables.en_atom_vec, mc_state.potential_variables.new_en_atom = mc_state.potential_variables.new_en_atom,
     mc_state.potential_variables.en_atom_vec
-    mc_state.potential_variables.g_matrix, mc_state.potential_variables.new_g_matrix = mc_state.potential_variables.new_g_matrix,
+    return mc_state.potential_variables.g_matrix, mc_state.potential_variables.new_g_matrix = mc_state.potential_variables.new_g_matrix,
     mc_state.potential_variables.g_matrix
 end
