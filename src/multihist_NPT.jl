@@ -50,18 +50,18 @@ function free_energy_initialise(
     normalconst=Array{Float64}(undef, tempnumber_result)
     ncycles=Array{Float64}(undef, tempnumber)
 
-    for i = 1:tempnumber
+    for i in 1:tempnumber
         free_energy[i]=0
         new_free_energy[i]=0
         ncycles[i]=0
-        for m = 1:Ebins
-            for n = 1:Vbins
-                ncycles[i]=ncycles[i]+EVhistogram[i][m+1, n+1]
+        for m in 1:Ebins
+            for n in 1:Vbins
+                ncycles[i]=ncycles[i]+EVhistogram[i][m + 1, n + 1]
             end
         end
     end
 
-    for i = 1:tempnumber_result
+    for i in 1:tempnumber_result
         normalconst[i]=0
     end
     return free_energy, new_free_energy, normalconst, ncycles
@@ -87,12 +87,12 @@ function quasiprob(
     quasiprob=0
     denom=0
     offset=-10^6
-    for i = 1:tempnumber
+    for i in 1:tempnumber
         offset=max(offset, -beta[i]*(energy_t+p*volume)-free_energy[i])
     end
     offset=offset+log(10^3)
-    for i = 1:tempnumber
-        quasiprob=quasiprob+EVhistogram[i][m+1, n+1]
+    for i in 1:tempnumber
+        quasiprob=quasiprob+EVhistogram[i][m + 1, n + 1]
         denom=denom+ncycles[i]*exp(-beta[i]*(energy_t+p*volume)-free_energy[i]-offset)
     end
 
@@ -114,27 +114,30 @@ function multihistogram_NPT(
     results::Output,
     conv_threshold::Number,
     readfile::Bool;
-    debug = false,
+    debug=false,
 )
     if readfile==false
         tempnumber, tempnumber_result = temp_trajectories(temp)
-        p, k, temp_o, beta, Emin, Vmin, Ebins, Vbins, dEhist, dVhist, EVhistogram =
-            histogram_initialise(ensemble, temp, results)
+        p, k, temp_o, beta, Emin, Vmin, Ebins, Vbins, dEhist, dVhist, EVhistogram = histogram_initialise(
+            ensemble, temp, results
+        )
     end
-    temp_result, beta_result =
-        Temp_grid_result(temp_o[1], temp_o[tempnumber], tempnumber_result)
+    temp_result, beta_result = Temp_grid_result(
+        temp_o[1], temp_o[tempnumber], tempnumber_result
+    )
 
-    free_energy, new_free_energy, normalconst, ncycles =
-        free_energy_initialise(EVhistogram, Ebins, Vbins, tempnumber, tempnumber_result)
+    free_energy, new_free_energy, normalconst, ncycles = free_energy_initialise(
+        EVhistogram, Ebins, Vbins, tempnumber, tempnumber_result
+    )
 
-    for it = 1:1000
+    for it in 1:1000
         println("iteration=", it)
-        for i = 1:tempnumber
+        for i in 1:tempnumber
             local betat
             betat=beta[i]
             new_free_energy[i]=0
-            for m = 1:Ebins
-                for n = 1:Vbins
+            for m in 1:Ebins
+                for n in 1:Vbins
                     new_free_energy[i]=new_free_energy[i]+quasiprob(
                         betat,
                         m,
@@ -160,7 +163,7 @@ function multihistogram_NPT(
 
         local delta
         delta=0
-        for i = 1:tempnumber
+        for i in 1:tempnumber
             delta=delta+abs(new_free_energy[i]-free_energy[i])^2
             free_energy[i]=new_free_energy[i]
         end
@@ -173,10 +176,10 @@ function multihistogram_NPT(
         end
     end
 
-    for i = 1:tempnumber_result
+    for i in 1:tempnumber_result
         betat=beta_result[i]
-        for m = 1:Ebins
-            for n = 1:Vbins
+        for m in 1:Ebins
+            for n in 1:Vbins
                 normalconst[i]=normalconst[i]+quasiprob(
                     betat,
                     m,
@@ -197,7 +200,7 @@ function multihistogram_NPT(
     end
 
     cp=zeros(tempnumber_result)
-    for i = 1:tempnumber_result
+    for i in 1:tempnumber_result
         betat=beta_result[i]
         eenergy=0
         eenergy2=0
@@ -205,8 +208,8 @@ function multihistogram_NPT(
         evolume2=0
         eenthalpy=0
         eenthalpy2=0
-        for m = 1:Ebins
-            for n = 1:Vbins
+        for m in 1:Ebins
+            for n in 1:Vbins
                 energy_t=Emin+(m-0.5)*dEhist
                 volume=Vmin+(n-0.5)*dVhist
 

@@ -9,7 +9,7 @@ using StaticArrays, LinearAlgebra
     x = MoveStrategy(NVT(10))
     @test length(x.movestrat) == length(x)
 
-    bc = SphericalBC(radius = 2.0)
+    bc = SphericalBC(radius=2.0)
     v1 = SVector(1.0, 2.0, 3.0)
     conf = Config{3}([v1, v1, v1], bc)
 
@@ -46,19 +46,19 @@ using StaticArrays, LinearAlgebra
 end
 
 @testset "Config" begin
-    bc = SphericalBC(radius = 2.0)
+    bc = SphericalBC(radius=2.0)
     v1 = SVector(1.0, 2.0, 3.0)
     conf = Config{3}([v1, v1, v1], bc)
 
     @test conf.bc.radius2 == 4.0
     @test conf.pos[1] == v1
 
-    posarray = [SVector(rand(), rand(), rand()) for _ = 1:10]
+    posarray = [SVector(rand(), rand(), rand()) for _ in 1:10]
     config = @inferred Config{10}(posarray, bc)
     @test length(config.pos) == 10
     @test_throws ErrorException @inferred Config(posarray, bc)
 
-    posarray = [[rand(), rand(), rand()] for _ = 1:10]
+    posarray = [[rand(), rand(), rand()] for _ in 1:10]
     config = Config(posarray, bc)
     @test length(config) == 10
 
@@ -102,7 +102,7 @@ end
     @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_v)^(1/3)
     @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_v)^(1/3)
     @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <=
-          10^(-15)
+        10^(-15)
 
     displ = 0.1
     trial_pos = atom_displacement(v1, displ, bc)
@@ -138,9 +138,9 @@ end
     @test trial_config.bc.box_length/bc.box_length <= exp(0.5*max_v)^(1/3)
     @test trial_config.bc.box_length/bc.box_length >= exp(-0.5*max_v)^(1/3)
     @test abs(trial_config.bc.box_length/bc.box_length - trial_config.pos[1][1]/v1[1]) <=
-          10^(-15)
+        10^(-15)
     @test abs(
-        trial_config.bc.box_length/bc.box_length - trial_config.bc.box_height/bc.box_height,
+        trial_config.bc.box_length/bc.box_length - trial_config.bc.box_height/bc.box_height
     ) <= 10^(-15)
 
     v5 = SVector(7.5, 4.330127018922193, 5.0)
@@ -151,7 +151,7 @@ end
 
 @testset "Tangent" begin
     # TODO: tests broken because tan now returns absolute values
-    bc = SphericalBC(radius = 10.0)
+    bc = SphericalBC(radius=10.0)
     v1 = SVector(5.0, 0.0, 0.0)
     v2 = SVector(-3.0, 0.0, 4.0)
     v3 = SVector(-2.0, 0.0, -3.0)
@@ -190,7 +190,7 @@ end
 end
 
 @testset "BoundaryConditions" begin
-    bc = SphericalBC(radius = 1.0)
+    bc = SphericalBC(radius=1.0)
     @test bc.radius2 == 1.0
 
     @test check_boundary(bc, SVector(0, 0.5, 1.0))
@@ -204,7 +204,7 @@ end
     @test length(temp1.t_grid) == 31
     @test extrema(temp1.t_grid) == (2, 16)
 
-    @test_throws ArgumentError TempGrid(2, 16, 256; tdistr = :test)
+    @test_throws ArgumentError TempGrid(2, 16, 256; tdistr=:test)
 
     n_traj = 32
     temp = TempGrid{n_traj}(2, 16)
@@ -213,9 +213,9 @@ end
     @test length(temp.t_grid) == n_traj
     @test length(temp.beta_grid) == n_traj
     @test 1.0 / (temp.t_grid[1] * temp.beta_grid[1]) ≈ kB
-    temp1 = TempGrid{n_traj}(2, 16; tdistr = :equally_spaced)
+    temp1 = TempGrid{n_traj}(2, 16; tdistr=:equally_spaced)
     @test (temp1.t_grid[2] - temp1.t_grid[1]) ≈
-          (temp1.t_grid[n_traj] - temp1.t_grid[n_traj-1])
+        (temp1.t_grid[n_traj] - temp1.t_grid[n_traj - 1])
 end
 
 @testset "Separated_volume_change" begin

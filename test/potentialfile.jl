@@ -68,8 +68,8 @@ for symmindex in eachindex(eachrow(X))
         row[2],
         row[4],
         Int(row[1]),
-        [G_value_vec[(symmindex-1)*2+1], G_value_vec[(symmindex-1)*2+2]],
-        [G_value_vec_b[(symmindex-1)*2+1], G_value_vec_b[(symmindex-1)*2+2]],
+        [G_value_vec[(symmindex - 1) * 2 + 1], G_value_vec[(symmindex - 1) * 2 + 2]],
+        [G_value_vec_b[(symmindex - 1) * 2 + 1], G_value_vec_b[(symmindex - 1) * 2 + 2]],
     )
     push!(radsymmvec, radsymm)
 end
@@ -87,14 +87,14 @@ let n_index = 10
                 11.338,
                 2,
                 [
-                    G_value_vec[n_index+(j_index-1)*3+1],
-                    G_value_vec[n_index+(j_index-1)*3+2],
-                    G_value_vec[n_index+(j_index-1)*3+3],
+                    G_value_vec[n_index + (j_index - 1) * 3 + 1],
+                    G_value_vec[n_index + (j_index - 1) * 3 + 2],
+                    G_value_vec[n_index + (j_index - 1) * 3 + 3],
                 ],
                 [
-                    G_value_vec_b[n_index+(j_index-1)*3+1],
-                    G_value_vec_b[n_index+(j_index-1)*3+2],
-                    G_value_vec_b[n_index+(j_index-1)*3+3],
+                    G_value_vec_b[n_index + (j_index - 1) * 3 + 1],
+                    G_value_vec_b[n_index + (j_index - 1) * 3 + 2],
+                    G_value_vec_b[n_index + (j_index - 1) * 3 + 3],
                 ],
             )
 
@@ -124,6 +124,6 @@ weights2=readdlm(file2)
 close(file2)
 weights2 = vec(weights2)
 nnpzn = NeuralNetworkPotential(num_nodes, activation_functions, weights2)
-ensemble = NNVT([32, 6]; natomswaps = 2)
+ensemble = NNVT([32, 6]; natomswaps=2)
 
 runnerpotential = RuNNerPotential2Atom(nnpcu, nnpzn, radsymmvec, angularsymmvec, 4, 2)

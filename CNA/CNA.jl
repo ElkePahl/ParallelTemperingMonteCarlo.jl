@@ -23,8 +23,8 @@ function CNA(configuration, N, rCut, B, EBL)
     bondGraph = adjacencyGraph(configuration, N, rCut, B, EBL) # Compute graph representation of configuration.
     # Compute triplet identifiers for each pair of bonded atoms (neighbours)
     totalProfile = Dict{String,Int}() # Create Dictionary to store triplet frequencies
-    atomicProfile = [Dict{String,Int}() for i = 1:N] # Create vector of dictionaries to store triplet frequencies
-    for atom1 = 1:N # For all atoms
+    atomicProfile = [Dict{String,Int}() for i in 1:N] # Create vector of dictionaries to store triplet frequencies
+    for atom1 in 1:N # For all atoms
         # neighbourhood1: The subgraph which only contains the bonds between the neighbours of atom1
         # map1: map1[i] is the vertex number in bondgraph that vertex i in neighbourhood1 corresponds to
         neighbourhood1, map1 = induced_subgraph(bondGraph, neighbors(bondGraph, atom1))
@@ -32,8 +32,9 @@ function CNA(configuration, N, rCut, B, EBL)
             if atom2 > atom1 # Check not double counting bonds
                 # neighbourhood2: The subgraph which only contains the bonds between the neighbours of atom2
                 # map2: map2[i] is the vertex number in bondgraph that vertex i in neighbourhood2 corresponds to
-                neighbourhood2, map2 =
-                    induced_subgraph(bondGraph, neighbors(bondGraph, atom2))
+                neighbourhood2, map2 = induced_subgraph(
+                    bondGraph, neighbors(bondGraph, atom2)
+                )
                 commonNeighbourhood = bondGraph[intersect(map1, map2)] # Obtain the subgraph with the common neighbours of atom1 and atom2
                 i = size(commonNeighbourhood, 1) # Compute the number of common neighbours
                 bondsToProcess = Set(edges(commonNeighbourhood))
@@ -94,8 +95,8 @@ function adjacencyGraph(configuration, N, rCut, B, EBL)
     # Create graph representation of bonded atoms, where the atoms are vertices are the vertices and the edges are bonds
     bondGraph = SimpleGraph(N) # Constructs a SimpleGraph object with N atoms(vertices)
     # For all pairs of atoms
-    for j = 1:(N-1)
-        for i = (j+1):N
+    for j in 1:(N - 1)
+        for i in (j + 1):N
             diff = configuration[j, :] - configuration[i, :] # calculate vector between atoms
             norm = sqrt(sum(diff .* diff)) # Compute length of bond
             if B # If strong magnetic field present

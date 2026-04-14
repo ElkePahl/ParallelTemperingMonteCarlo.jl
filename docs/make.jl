@@ -85,21 +85,18 @@ THRESHOLD_IGNORE = String[]
 #Adding examples
 for fn in EXAMPLES_FILES
     fnmd_full = Literate.markdown(
-        joinpath(EXAMPLES_INPUT, fn),
-        EXAMPLES_OUTPUT;
-        documenter = true,
-        execute = true,
+        joinpath(EXAMPLES_INPUT, fn), EXAMPLES_OUTPUT; documenter=true, execute=true
     )
-    filepath = chop(fn; head = 0, tail = 2) * "md"
+    filepath = chop(fn; head=0, tail=2) * "md"
     push!(EXAMPLES_PAIRS, fn => filepath)
     push!(THRESHOLD_IGNORE, filepath)
 end
 push!(pages, "Examples" => EXAMPLES_PAIRS)
 
 makedocs(;
-    sitename = "$main_module",
-    pages = pages,
-    format = Documenter.HTMLWriter.HTML(; size_threshold_ignore = THRESHOLD_IGNORE),
+    sitename="$main_module",
+    pages=pages,
+    format=Documenter.HTMLWriter.HTML(; size_threshold_ignore=THRESHOLD_IGNORE),
 )
 repo = "github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git"
-deploydocs(; repo = repo, devbranch = "main")
+deploydocs(; repo=repo, devbranch="main")

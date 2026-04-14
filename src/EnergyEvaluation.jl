@@ -140,7 +140,7 @@ struct ELJPotentialEven{N,T} <: AbstractDimerPotential
 end
 function ELJPotentialEven{N}(c::VorS) where {N}
     @boundscheck length(c) == N ||
-                 error("number of ELJ coefficients does not match given length")
+        error("number of ELJ coefficients does not match given length")
     coeff = SVector{N}(c)
     T = eltype(c)
     return ELJPotentialEven{N,T}(coeff)
@@ -165,7 +165,7 @@ struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
 end
 function ELJPotentialB{N}(a::VorS, b::VorS, c::VorS) where {N}
     @boundscheck length(c) == N ||
-                 error("number of ELJ coefficients does not match given length")
+        error("number of ELJ coefficients does not match given length")
     coeff_a = SVector{N}(a)
     coeff_b = SVector{N}(b)
     coeff_c = SVector{N}(c)
@@ -232,22 +232,18 @@ function read_lookuptable(link::String)
     open(link) do f
         line = readline(f)
         line = first(split(line, '!')) # remove comments
-        l_dist,
-        start_dist,
-        d_dist=parse(Int32, split(line, ", ")[1]),
+        l_dist, start_dist, d_dist=parse(Int32, split(line, ", ")[1]),
         parse(Float64, split(line, ", ")[2]),
         parse(Float64, split(line, ", ")[3])
 
         line=readline(f)
         line = first(split(line, '!')) # remove comments
-        l_angle,
-        start_angle,
-        d_angle=parse(Int32, split(line, ", ")[1]),
+        l_angle, start_angle, d_angle=parse(Int32, split(line, ", ")[1]),
         parse(Float64, split(line, ", ")[2]),
         parse(Float64, split(line, ", ")[3])
         table = Matrix{Float64}(undef, l_angle, l_dist)
-        for i = 1:l_angle
-            for j = 1:l_dist
+        for i in 1:l_angle
+            for j in 1:l_dist
                 line = readline(f)
                 line = first(split(line, '!')) # remove comments
                 table[i, j]=parse(Float64, line)
@@ -255,7 +251,7 @@ function read_lookuptable(link::String)
         end
 
         avg_lr=0
-        for i = 1:l_angle
+        for i in 1:l_angle
             avg_lr+=table[i, 1000]
         end
         avg_lr /= l_angle
@@ -316,22 +312,22 @@ Final two methods relate to the use of magnetic field potentials such as the ELJ
 """
 function dimer_energy_atom(i::Int, d2vec::VorS, pot::AbstractDimerPotential)
     sum1 = 0.0
-    for j = 1:(i-1)
+    for j in 1:(i - 1)
         sum1 += dimer_energy(pot, d2vec[j])
     end
-    for j = (i+1):size(d2vec, 1)
+    for j in (i + 1):size(d2vec, 1)
         sum1 += dimer_energy(pot, d2vec[j])
     end
     return sum1
 end
 function dimer_energy_atom(i::Int, d2vec::VorS, r_cut::Real, pot::AbstractDimerPotential)
     sum1 = 0.0
-    for j = 1:(i-1)
+    for j in 1:(i - 1)
         if d2vec[j] <= r_cut
             sum1 += dimer_energy(pot, d2vec[j])
         end
     end
-    for j = (i+1):size(d2vec, 1)
+    for j in (i + 1):size(d2vec, 1)
         if d2vec[j] <= r_cut
             sum1 += dimer_energy(pot, d2vec[j])
         end
@@ -340,28 +336,24 @@ function dimer_energy_atom(i::Int, d2vec::VorS, r_cut::Real, pot::AbstractDimerP
 end
 function dimer_energy_atom(i::Int, d2vec::VorS, tanvec::VorS, pot::AbstractDimerPotentialB)
     sum1 = 0.0
-    for j = 1:(i-1)
+    for j in 1:(i - 1)
         sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
     end
-    for j = (i+1):size(d2vec, 1)
+    for j in (i + 1):size(d2vec, 1)
         sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
     end
     return sum1
 end
 function dimer_energy_atom(
-    i::Int,
-    d2vec::VorS,
-    tanvec::VorS,
-    r_cut::Real,
-    pot::AbstractDimerPotentialB,
+    i::Int, d2vec::VorS, tanvec::VorS, r_cut::Real, pot::AbstractDimerPotentialB
 )
     sum1 = 0.0
-    for j = 1:(i-1)
+    for j in 1:(i - 1)
         if d2vec[j] <= r_cut
             sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
         end
     end
-    for j = (i+1):size(d2vec, 1)
+    for j in (i + 1):size(d2vec, 1)
         if d2vec[j] <= r_cut
             sum1 += dimer_energy(pot, d2vec[j], tanvec[j])
         end
@@ -392,8 +384,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             e_ij=dimer_energy(pot, distmat[i, j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
@@ -413,8 +405,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             if distmat[i, j] <= r_cut
                 e_ij=dimer_energy(pot, distmat[i, j])
                 dimer_energy_vec[i] += e_ij
@@ -437,8 +429,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             if distmat[i, j] <= r_cut
                 e_ij=dimer_energy(pot, distmat[i, j])
                 dimer_energy_vec[i] += e_ij
@@ -462,8 +454,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             if distmat[i, j] <= r_cut
                 e_ij=dimer_energy(pot, distmat[i, j])
                 dimer_energy_vec[i] += e_ij
@@ -489,8 +481,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
@@ -510,8 +502,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             if distmat[i, j] <= r_cut
                 e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                 dimer_energy_vec[i] += e_ij
@@ -535,8 +527,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             if distmat[i, j] <= r_cut
                 e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                 dimer_energy_vec[i] += e_ij
@@ -564,13 +556,11 @@ function dimer_energy_config(
         potential_variables.new_tan_mat[1, 2]!=potential_variables.tan_mat[1, 2] &&
         potential_variables.new_tan_mat[3, 4]!=potential_variables.tan_mat[3, 4]
     )
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(
-                        pot,
-                        distmat[i, j],
-                        potential_variables.new_tan_mat[i, j],
+                        pot, distmat[i, j], potential_variables.new_tan_mat[i, j]
                     )
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
@@ -579,8 +569,8 @@ function dimer_energy_config(
             end
         end
     else
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                     dimer_energy_vec[i] += e_ij
@@ -610,13 +600,11 @@ function dimer_energy_config(
         potential_variables.new_tan_mat[1, 2]!=potential_variables.tan_mat[1, 2] &&
         potential_variables.new_tan_mat[3, 4]!=potential_variables.tan_mat[3, 4]
     )
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(
-                        pot,
-                        distmat[i, j],
-                        potential_variables.new_tan_mat[i, j],
+                        pot, distmat[i, j], potential_variables.new_tan_mat[i, j]
                     )
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
@@ -625,8 +613,8 @@ function dimer_energy_config(
             end
         end
     else
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                     dimer_energy_vec[i] += e_ij
@@ -663,16 +651,13 @@ and potential information `pot` [`Abstract_Potential`](@ref)
 """
 
 function dimer_energy_config(
-    distmat,
-    NAtoms,
-    potential_variables::LookupTableVariables,
-    pot::LookupTablePotential,
+    distmat, NAtoms, potential_variables::LookupTableVariables, pot::LookupTablePotential
 )
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
             dimer_energy_vec[i] += e_ij
             dimer_energy_vec[j] += e_ij
@@ -692,8 +677,8 @@ function dimer_energy_config(
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
 
-    for i = 1:NAtoms
-        for j = (i+1):NAtoms
+    for i in 1:NAtoms
+        for j in (i + 1):NAtoms
             if distmat[i, j] <= r_cut
                 e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                 dimer_energy_vec[i] += e_ij
@@ -721,13 +706,11 @@ function dimer_energy_config(
         #println("new_tan_mat!=tan_mat, use new_tan_mat")
         #println("new: ",potential_variables.new_tan_mat[1,2])
         #println("old: ",potential_variables.tan_mat[1,2])
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(
-                        pot,
-                        distmat[i, j],
-                        potential_variables.new_tan_mat[i, j],
+                        pot, distmat[i, j], potential_variables.new_tan_mat[i, j]
                     )
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
@@ -737,8 +720,8 @@ function dimer_energy_config(
         end
     else
         #println("new_tan_mat=tan_mat, use tan_mat")
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                     dimer_energy_vec[i] += e_ij
@@ -765,13 +748,11 @@ function dimer_energy_config(
     energy_tot = 0.0
 
     if abs(potential_variables.new_tan_mat[1, 2]-potential_variables.tan_mat[1, 2])>=10^(-9)
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(
-                        pot,
-                        distmat[i, j],
-                        potential_variables.new_tan_mat[i, j],
+                        pot, distmat[i, j], potential_variables.new_tan_mat[i, j]
                     )
                     dimer_energy_vec[i] += e_ij
                     dimer_energy_vec[j] += e_ij
@@ -780,8 +761,8 @@ function dimer_energy_config(
             end
         end
     else
-        for i = 1:NAtoms
-            for j = (i+1):NAtoms
+        for i in 1:NAtoms
+            for j in (i + 1):NAtoms
                 if distmat[i, j] <= r_cut
                     e_ij=dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
                     dimer_energy_vec[i] += e_ij
@@ -811,11 +792,7 @@ end
 Final two methods are for use with a dimer potential in a magnetic field, where there is anisotropy in the coefficients.
 """
 function dimer_energy_update!(
-    index,
-    dist2_mat,
-    new_dist2_vec,
-    en_tot,
-    pot::AbstractDimerPotential,
+    index, dist2_mat, new_dist2_vec, en_tot, pot::AbstractDimerPotential
 )
     @views delta_en =
         dimer_energy_atom(index, new_dist2_vec, pot) -
@@ -824,12 +801,7 @@ function dimer_energy_update!(
     return delta_en + en_tot
 end
 function dimer_energy_update!(
-    index,
-    dist2_mat,
-    new_dist2_vec,
-    en_tot,
-    r_cut,
-    pot::AbstractDimerPotential,
+    index, dist2_mat, new_dist2_vec, en_tot, r_cut, pot::AbstractDimerPotential
 )
     @views delta_en =
         dimer_energy_atom(index, new_dist2_vec, r_cut, pot) -
@@ -869,13 +841,7 @@ function dimer_energy_update!(
     return delta_en + en_tot
 end
 function dimer_energy_update!(
-    index,
-    dist2_mat,
-    tanmat,
-    new_dist2_vec,
-    new_tan_vec,
-    en_tot,
-    pot::LookupTablePotential,
+    index, dist2_mat, tanmat, new_dist2_vec, new_tan_vec, en_tot, pot::LookupTablePotential
 )
     @views delta_en =
         dimer_energy_atom(index, new_dist2_vec, new_tan_vec, pot) -
@@ -918,7 +884,7 @@ end
 
 function ELJPotential{N}(c::VorS) where {N}
     @boundscheck length(c) == N ||
-                 error("number of ELJ coefficients does not match given length")
+        error("number of ELJ coefficients does not match given length")
     coeff = SVector{N}(c)
     T = eltype(c)
     return ELJPotential{N,T}(coeff)
@@ -948,7 +914,7 @@ function dimer_energy(pot::ELJPotential{N}, r2::Real) where {N}
     r = sqrt(r2)
     r6inv = 1/(r2*r2*r2)
     sum1 = 0.0
-    for i = 1:N
+    for i in 1:N
         sum1 += pot.coeff[i] * r6inv
         r6inv /= r
     end
@@ -958,7 +924,7 @@ end
 function dimer_energy(pot::ELJPotentialEven{N}, r2::Real) where {N}
     r6inv = 1/(r2*r2*r2)
     sum1 = 0.0
-    for i = 1:N
+    for i in 1:N
         sum1 += pot.coeff[i] * r6inv
         r6inv /= r2
     end
@@ -971,7 +937,7 @@ function dimer_energy(pot::ELJPotentialB{N}, r2::Real, z_angle::Real) where {N}
         t4=2*t2^2-1
         sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1]*t2 + pot.coeff_b[1]*t4)
         r6inv/=r2
-        for i = 2:N
+        for i in 2:N
             sum1 += pot.coeff_c[i] * r6inv * (1 + pot.coeff_a[i]*t2 + pot.coeff_b[i]*t4)
             r6inv /= r2^0.5
         end
@@ -996,7 +962,7 @@ function lrc(NAtoms::Int, r_cut::Real, pot::ELJPotentialEven{N}) where {N}
         r_cut_sqrt=r_cut^0.5
         rc3 = r_cut*r_cut_sqrt
         e_lrc = 0.0
-        for i = 1:N
+        for i in 1:N
             e_lrc += pot.coeff[i] / rc3 / (2i+1)
             rc3 *= r_cut
         end
@@ -1012,7 +978,7 @@ function lrc(NAtoms::Int, r_cut::Real, pot::ELJPotentialB{N}) where {N}
         r_cut_sqrt=r_cut^0.5
         rc3 = r_cut*r_cut_sqrt
         e_lrc = 0.0
-        for i = 1:4
+        for i in 1:4
             e_lrc += coeff[i] / rc3 / (2i+1)
             rc3 *= r_cut
         end
@@ -1292,9 +1258,7 @@ Function designed to calculate the new per-atom energy according to the RuNNer f
 """
 function calc_new_runner_energy!(potential_variables::NNPVariables, pot::RuNNerPotential)
     potential_variables.new_en_atom = forward_pass(
-        potential_variables.new_g_matrix,
-        length(potential_variables.en_atom_vec),
-        pot.nnp,
+        potential_variables.new_g_matrix, length(potential_variables.en_atom_vec), pot.nnp
     )
     new_en = sum(potential_variables.new_en_atom)
     return potential_variables, new_en
@@ -1336,12 +1300,7 @@ function RuNNerPotential2Atom(nnp1, nnp2, radsymvec, angsymvec, n1, n2, boundary
     angvec = StructVector([asymm for asymm in angsymvec])
 
     return RuNNerPotential2Atom{nrad,nang,n1,n2}(
-        nnp1,
-        nnp2,
-        radvec,
-        angvec,
-        r_cut,
-        boundary*boundary,
+        nnp1, nnp2, radvec, angvec, r_cut, boundary*boundary
     )#,SVector{nrad*2+nang*3}(g_offsets),SVector{nrad*2+nang*3}(tpz) )
 end
 """
@@ -1386,8 +1345,9 @@ function get_new_state_vars!(
     new_dist2_vec,
     pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2},
 ) where {Nrad,Nang,N1,N2}
-    potential_variables.new_f_vec =
-        MVector{N1+N2}(cutoff_function.(sqrt.(new_dist2_vec), Ref(pot.r_cut)))
+    potential_variables.new_f_vec = MVector{N1+N2}(
+        cutoff_function.(sqrt.(new_dist2_vec), Ref(pot.r_cut))
+    )
 
     potential_variables.new_g_matrix = fill!(potential_variables.new_g_matrix, 0.0)
 
@@ -1446,14 +1406,15 @@ end
 Function to calculate the energy of a new configuration after an atom move. Accepts the potential_variables struct and runs a forward pass on the new_g_matrix. Returns the new energy.
 """
 function calc_new_runner_energy!(
-    potential_variables::NNPVariables2a{T,Na,Ng},
-    pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2},
+    potential_variables::NNPVariables2a{T,Na,Ng}, pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2}
 ) where {T,Na,Ng} where {Nrad,Nang,N1,N2}
-    potential_variables.new_en_atom[1:N1] =
-        forward_pass(potential_variables.new_g_matrix[:, 1:N1], N1, pot.nnp1)
+    potential_variables.new_en_atom[1:N1] = forward_pass(
+        potential_variables.new_g_matrix[:, 1:N1], N1, pot.nnp1
+    )
     if N2 != 0
-        potential_variables.new_en_atom[(N1+1):(N1+N2)] =
-            forward_pass(potential_variables.new_g_matrix[:, (N1+1):(N1+N2)], N2, pot.nnp2)
+        potential_variables.new_en_atom[(N1 + 1):(N1 + N2)] = forward_pass(
+            potential_variables.new_g_matrix[:, (N1 + 1):(N1 + N2)], N2, pot.nnp2
+        )
     end
 
     new_en = sum(potential_variables.new_en_atom)
@@ -1465,19 +1426,10 @@ end
 This is used as a replacement for the energy_update! function when swapping atoms. It does not function in quite the same way, but stands as a replacement. First calculates `get_new_state_vars!` and then `calc_new_runner_energy!` returning the new_energy.
 """
 function swap_energy_update(
-    ensemble_variables,
-    config,
-    potential_variables,
-    dist2_matrix,
-    en_tot,
-    pot,
+    ensemble_variables, config, potential_variables, dist2_matrix, en_tot, pot
 )
     potential_variables = get_new_state_vars!(
-        ensemble_variables.swap_indices,
-        config,
-        potential_variables,
-        dist2_matrix,
-        pot,
+        ensemble_variables.swap_indices, config, potential_variables, dist2_matrix, pot
     )
 
     potential_variables, new_en = calc_new_runner_energy!(potential_variables, pot)
@@ -1518,8 +1470,9 @@ function energy_update!(
     en_tot,
     pot::AbstractDimerPotential,
 )
-    new_energy =
-        dimer_energy_update!(ensemblevariables.index, dist2_mat, new_dist2_vec, en_tot, pot)
+    new_energy = dimer_energy_update!(
+        ensemblevariables.index, dist2_mat, new_dist2_vec, en_tot, pot
+    )
     return potential_variables, new_energy
 end
 function energy_update!(
@@ -1618,9 +1571,7 @@ function energy_update!(
     )
 
     new_energy = calc_energies_from_components(
-        potential_variables.new_component_vector,
-        pot.ean,
-        pot.eCam,
+        potential_variables.new_component_vector, pot.ean, pot.eCam
     )
     return potential_variables, new_energy
 end
@@ -1701,8 +1652,9 @@ function initialise_energy(
     ensemble_variables::NVTVariables,
     pot::AbstractDimerPotential,
 )
-    potential_variables.en_atom_vec, en_tot =
-        dimer_energy_config(dist2_mat, length(config), potential_variables, pot)
+    potential_variables.en_atom_vec, en_tot = dimer_energy_config(
+        dist2_mat, length(config), potential_variables, pot
+    )
 
     return en_tot, potential_variables
 end
@@ -1731,8 +1683,9 @@ function initialise_energy(
     ensemble_variables::NVTVariables,
     pot::AbstractDimerPotentialB,
 )
-    potential_variables.en_atom_vec, en_tot =
-        dimer_energy_config(dist2_mat, length(config), potential_variables, pot)
+    potential_variables.en_atom_vec, en_tot = dimer_energy_config(
+        dist2_mat, length(config), potential_variables, pot
+    )
     return en_tot, potential_variables
 end
 function initialise_energy(
@@ -1760,9 +1713,7 @@ function initialise_energy(
     pot::EmbeddedAtomPotential,
 )
     en_tot = calc_energies_from_components(
-        potential_variables.component_vector,
-        pot.ean,
-        pot.eCam,
+        potential_variables.component_vector, pot.ean, pot.eCam
     )
 
     return en_tot, potential_variables
@@ -1774,8 +1725,9 @@ function initialise_energy(
     ensemble_variables::AbstractEnsembleVariables,
     pot::RuNNerPotential,
 )
-    potential_variables.en_atom_vec =
-        forward_pass(potential_variables.g_matrix, length(config), pot.nnp)
+    potential_variables.en_atom_vec = forward_pass(
+        potential_variables.g_matrix, length(config), pot.nnp
+    )
     en_tot = sum(potential_variables.en_atom_vec)
     return en_tot, potential_variables
 end
@@ -1786,12 +1738,14 @@ function initialise_energy(
     ensemble_variables,
     pot::RuNNerPotential2Atom{Nrad,Nang,N1,N2},
 ) where {Nrad,Nang,N1,N2}
-    potential_variables.en_atom_vec[1:N1] =
-        forward_pass(potential_variables.g_matrix[:, 1:N1], N1, pot.nnp1)
+    potential_variables.en_atom_vec[1:N1] = forward_pass(
+        potential_variables.g_matrix[:, 1:N1], N1, pot.nnp1
+    )
 
     if N2 != 0
-        potential_variables.en_atom_vec[(N1+1):(N1+N2)] =
-            forward_pass(potential_variables.g_matrix[:, (N1+1):(N1+N2)], N2, pot.nnp2)
+        potential_variables.en_atom_vec[(N1 + 1):(N1 + N2)] = forward_pass(
+            potential_variables.g_matrix[:, (N1 + 1):(N1 + N2)], N2, pot.nnp2
+        )
     end
 
     en_tot = sum(potential_variables.en_atom_vec)
@@ -1807,50 +1761,37 @@ end
 Initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the [`MCState`](@ref Main.ParallelTemperingMonteCarlo.MCStates.MCState) function as this must be type-invariant with respect to the potential.
 """
 function set_variables(
-    config::Config{N,BC,T},
-    dist_2_mat::Matrix{Float64},
-    pot::AbstractDimerPotential,
+    config::Config{N,BC,T}, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential
 ) where {N,BC,T}
     return DimerPotentialVariables{T}(zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T},
-    dist2_matrix::Matrix{Float64},
-    pot::AbstractDimerPotentialB,
+    config::Config{N,BC,T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB
 ) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config, config.bc)
 
     return ELJPotentialBVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T},
-    dist2_matrix::Matrix{Float64},
-    pot::LookupTablePotential,
+    config::Config{N,BC,T}, dist2_matrix::Matrix{Float64}, pot::LookupTablePotential
 ) where {N,BC,T}
     tan_matrix = get_tantheta_mat(config, config.bc)
 
     return LookupTableVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T},
-    dist2_matrix::Matrix{Float64},
-    pot::EmbeddedAtomPotential,
+    config::Config{N,BC,T}, dist2_matrix::Matrix{Float64}, pot::EmbeddedAtomPotential
 ) where {N,BC,T}
     componentvec = zeros(N, 2)
-    for row_index = 1:N
+    for row_index in 1:N
         componentvec[row_index, :] = calc_components(
-            componentvec[row_index, :],
-            dist2_matrix[row_index, :],
-            pot.n,
-            pot.m,
+            componentvec[row_index, :], dist2_matrix[row_index, :], pot.n, pot.m
         )
     end
     return EmbeddedAtomVariables{T}(componentvec, zeros(N, 2))
 end
 function set_variables(
-    config::Config{N,BC,T},
-    dist2_mat::Matrix{Float64},
-    pot::RuNNerPotential{nrad,nang},
+    config::Config{N,BC,T}, dist2_mat::Matrix{Float64}, pot::RuNNerPotential{nrad,nang}
 ) where {N,BC,T} where {nrad,nang}
     f_matrix = cutoff_function.(sqrt.(dist2_mat), Ref(pot.r_cut))
     g_matrix = total_symm_calc(

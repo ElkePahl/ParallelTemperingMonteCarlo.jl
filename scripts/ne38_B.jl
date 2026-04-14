@@ -25,12 +25,12 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(; atom_moves = n_atoms)
+move_strat = MoveStrategy(; atom_moves=n_atoms)
 
 #ensemble
 ensemble = NVT(n_atoms)
@@ -94,7 +94,7 @@ length(pos_ne38) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions 
-bc_ne38 = SphericalBC(; radius = 6.6)
+bc_ne38 = SphericalBC(; radius=6.6)
 
 #starting configuration
 start_config = Config(pos_ne38, bc_ne38)
@@ -105,14 +105,16 @@ n_bin = 100
 #en_max = -0.001    #otherwise will be determined after run as min/max of sampled energies (ham vector)
 
 #construct array of MCState (for each temperature)
-mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i = 1:n_traj]
+mc_states = [
+    MCState(temp.t_grid[i], temp.beta_grid[i], start_config, pot) for i in 1:n_traj
+]
 
 println("initial total energy= ", mc_states[1].en_tot)
 
 #results = Output(n_bin, max_displ_vec)
-results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
+results = Output{Float64}(n_bin; en_min=mc_states[1].en_tot)
 
-@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save = true)
+@time ptmc_run!((mc_states, move_strat, mc_params, pot, ensemble, results); save=true)
 
 # plot(temp.t_grid,results.heat_cap)
 

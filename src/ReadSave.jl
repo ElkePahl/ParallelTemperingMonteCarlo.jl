@@ -26,7 +26,7 @@ function writeparams(savefile::IO, params::MCParams, temp::TempGrid)
         ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "n_adjust" "n_bins" "min_acc:" "max_acc" "t_i:" "t_f"]
     paramsvec =
         [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(
-            temp.t_grid,
+            temp.t_grid
         ) last(temp.t_grid)]
     writedlm(savefile, [headersvec, paramsvec], ' ')
 end
@@ -76,8 +76,7 @@ function writepotential(savefile::IO, potential::AbstractDimerPotentialB)
 end
 function writepotential(savefile::IO, potential::EmbeddedAtomPotential)
     write(
-        savefile,
-        "EAM: $(potential.n) $(potential.m) $(potential.ean) $(potential.eCam) \n",
+        savefile, "EAM: $(potential.n) $(potential.m) $(potential.ean) $(potential.eCam) \n"
     )
 end
 function writepotential(savefile::IO, potential::AbstractMachineLearningPotential)
@@ -193,11 +192,7 @@ function checkpoint(
     end
 end
 function checkpoint(
-    index::Int,
-    mc_states::MCStateVector,
-    results::Output,
-    ensemble::NPT,
-    rdfsave::Bool,
+    index::Int, mc_states::MCStateVector, results::Output, ensemble::NPT, rdfsave::Bool
 )
     indexfile = open("./checkpoint/index.txt", "w+")
     writedlm(indexfile, index)
@@ -237,9 +232,7 @@ function readensemble(ensemblevec)
         )
     elseif contains(ensemblevec[1], "NNVT")
         return NNVT(
-            SVector{2}(ensemblevec[2], ensemblevec[3]),
-            ensemblevec[4],
-            ensemblevec[5],
+            SVector{2}(ensemblevec[2], ensemblevec[3]), ensemblevec[4], ensemblevec[5]
         )
     end
 end
@@ -254,18 +247,15 @@ Function to convert delimited file contents `potinfovec` into a potential. Imple
 function readpotential(potinfovec)
     if contains(potinfovec[1, 1], "ELJPotentialEven")
         len=parse(Int, potinfovec[1, 1][18])
-        coeffs = Vector{typeof(potinfovec[1, 3])}(potinfovec[1, 3:(2+len)])
+        coeffs = Vector{typeof(potinfovec[1, 3])}(potinfovec[1, 3:(2 + len)])
         return ELJPotentialEven(coeffs)
     elseif contains(potinfovec[1, 1], "ELJPotential{")
         len=parse(Int, potinfovec[1, 1][14])
-        coeffs = Vector{typeof(potinfovec[1, 3])}(potinfovec[1, 3:(2+len)])
+        coeffs = Vector{typeof(potinfovec[1, 3])}(potinfovec[1, 3:(2 + len)])
         return ELJPotential(coeffs)
     elseif potinfovec[1, 1] == "EAM:"
         return EmbeddedAtomPotential(
-            potinfovec[1, 2],
-            potinfovec[1, 3],
-            potinfovec[1, 4],
-            potinfovec[1, 5],
+            potinfovec[1, 2], potinfovec[1, 3], potinfovec[1, 4], potinfovec[1, 5]
         )
     elseif potinfovec[1, 1] == "ELJB"
         len = potinfovec[1, 2]
@@ -355,7 +345,7 @@ Function designed to take a single `xyz`-style checkpoint file and return the co
 function read_checkpoint_config(xyzdata)
     N=xyzdata[1, 1]
     if contains(xyzdata[2, 1], "SphericalBC")#xyzdata[2,1] == "SphericalBC{Float64}"
-        bc = SphericalBC(; radius = sqrt(xyzdata[2, 3]))
+        bc = SphericalBC(; radius=sqrt(xyzdata[2, 3]))
 
         max_displ = [xyzdata[2, 4:6]]
         count_atom = xyzdata[2, 7]
@@ -372,7 +362,7 @@ function read_checkpoint_config(xyzdata)
         count_atom = xyzdata[2, 8]
         count_vol=xyzdata[2, 9]
     end
-    configvectors = Vector{Vector{Float64}}([xyzdata[2+i, 2:4] for i = 1:N])
+    configvectors = Vector{Vector{Float64}}([xyzdata[2 + i, 2:4] for i in 1:N])
     config=Config(configvectors, bc)
 
     return config, max_displ, count_atom, count_vol
@@ -384,7 +374,7 @@ Designed to read in one `xyz`-style file with one configuration and return this 
 function read_config(xyzdata)
     N=xyzdata[1, 1]
     if contains(xyzdata[2, 1], "SphericalBC")# xyzdata[2,1] == "SphericalBC{Float64}"
-        bc = SphericalBC(; radius = sqrt(xyzdata[2, 3]))
+        bc = SphericalBC(; radius=sqrt(xyzdata[2, 3]))
 
     elseif contains(xyzdata[2, 1], "CubicBC") # == "CubicBC{Float64}"
         bc = CubicBC(xyzdata[2, 3])
@@ -392,7 +382,7 @@ function read_config(xyzdata)
     elseif contains(xyzdata[2, 1], "RhombicBC")
         bc = RhombicBC(xyzdata[2, 3], xyzdata[2, 4])
     end
-    configvectors = [xyzdata[2+i, 2:4] for i = 1:N]
+    configvectors = [xyzdata[2 + i, 2:4] for i in 1:N]
 
     config=Config(configvectors, bc)
 
@@ -408,9 +398,9 @@ function setresults(histparams, histdata, histv_data, r2data)
     results=Output{Float64}(trunbins)
     results.en_min, results.en_max=histparams[1], histparams[2]
     results.v_min, results.v_max = histparams[3], histparams[4]
-    results.delta_en_hist,
-    results.delta_v_hist,
-    results.delta_r2=histparams[5], histparams[6], histparams[7]
+    results.delta_en_hist, results.delta_v_hist, results.delta_r2=histparams[5],
+    histparams[6],
+    histparams[7]
 
     for row in eachrow(histdata)
         hist_info = Vector{typeof(row[1])}(row)
@@ -420,8 +410,8 @@ function setresults(histparams, histdata, histv_data, r2data)
     if histv_data isa Matrix{Float64}
         for row in eachrow(histv_data)
             evmat = zeros(nbins, nbins)
-            for index = 1:nbins
-                evmat[:, index] = row[((index-1)*nbins+1):((index-1)*nbins+nbins)]
+            for index in 1:nbins
+                evmat[:, index] = row[((index - 1) * nbins + 1):((index - 1) * nbins + nbins)]
             end
             evmat = Int.(evmat)
             push!(results.ev_histogram, evmat)
@@ -439,10 +429,7 @@ end
 Function to rebuild the `MCStates` vector and `results` struct from checkpoint information. The `ensemble` `temps` and `potential` along with `n_traj` are reconstructed elsewhere, but required to accurately recreate the states.
 """
 function rebuild_states(
-    n_traj::Int,
-    ensemble::AbstractEnsemble,
-    temps::TempGrid,
-    potential::AbstractPotential,
+    n_traj::Int, ensemble::AbstractEnsemble, temps::TempGrid, potential::AbstractPotential
 )
     histinfofile=open("./checkpoint/hist_info.data", "r+")
     histsfile=open("./checkpoint/histograms.data", "r+")
@@ -466,7 +453,7 @@ function rebuild_states(
     end
     results = setresults(dataread[2, :], histiread, ev_info, rdfinfo)
     mcstates = []
-    for index = 1:n_traj
+    for index in 1:n_traj
         configfile = open("./checkpoint/config.$index", "r+")
         configinfo=readdlm(configfile)
         close(configfile)
@@ -478,9 +465,9 @@ function rebuild_states(
             conf,
             ensemble,
             potential;
-            max_displ = maxdisp[1],
-            count_atom = [countatom, 0],
-            count_vol = [countvol, 0],
+            max_displ=maxdisp[1],
+            count_atom=[countatom, 0],
+            count_vol=[countvol, 0],
         )
         push!(mcstates, state)
     end
@@ -499,7 +486,7 @@ function build_states(
 )
     if ispath("./checkpoint/config.1")
         confvec=[]
-        for i = 1:mc_params.n_traj
+        for i in 1:mc_params.n_traj
             if ispath("./checkpoint/config.$i")
                 confinfo=readdlm("./checkpoint/config.$i")
             else
@@ -510,18 +497,19 @@ function build_states(
         end
 
         mc_states = [
-            MCState(temp.t_grid[i], temp.beta_grid[i], confvec[i], ensemble, potential)
-            for i = 1:mc_params.n_traj
+            MCState(temp.t_grid[i], temp.beta_grid[i], confvec[i], ensemble, potential) for
+            i in 1:mc_params.n_traj
         ]
-        results = Output{Float64}(mc_params.n_bin; en_min = mc_states[1].en_tot)
+        results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
 
     elseif ispath("./checkpoint/config.data")
         confinfo = readdlm("./checkpoint/config.data")
         start_config = read_config(confinfo)
         mc_states = [
-            MCState(temp.t_grid[i], temp.beta_grid[i], start_config, ensemble, potential) for i = 1:mc_params.n_traj
+            MCState(temp.t_grid[i], temp.beta_grid[i], start_config, ensemble, potential)
+            for i in 1:mc_params.n_traj
         ]
-        results = Output{Float64}(mc_params.n_bin; en_min = mc_states[1].en_tot)
+        results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
     end
     return mc_states, results
 end

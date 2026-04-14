@@ -22,15 +22,18 @@ capSymmetries: Vector{Dict{Dict{Int64,Vector{Int64}},String}} Vector of dictiona
 function findSymmetries(shells, atomicProfiles, bondGraphs, L)
     classifications = Vector{Dict{Vector{Int64},String}}(undef, L) # Initialise vector of classifications
     capSymmetries = Vector{Dict{Dict{Int64,Vector{Int64}},String}}(undef, L) # Initialise vector of capSymmetries
-    for i = 1:L # For each of the configurations in the file
-        hasCore, classifications[i] =
-            classifyCore(shells[i], atomicProfiles[1, i, :], bondGraphs[i]) # Try classify cluster core
+    for i in 1:L # For each of the configurations in the file
+        hasCore, classifications[i] = classifyCore(
+            shells[i], atomicProfiles[1, i, :], bondGraphs[i]
+        ) # Try classify cluster core
         if (hasCore) # Check if cluster has identifiable core
-            capSymmetries[i] =
-                classifyCaps(shells[i], atomicProfiles[1, i, :], bondGraphs[i]) # Identify caps
+            capSymmetries[i] = classifyCaps(
+                shells[i], atomicProfiles[1, i, :], bondGraphs[i]
+            ) # Identify caps
         else
-            classifications[i] =
-                classifySymmetricComponents(atomicProfiles[1, i, :], bondGraphs[i]) # Classify symmetric components
+            classifications[i] = classifySymmetricComponents(
+                atomicProfiles[1, i, :], bondGraphs[i]
+            ) # Classify symmetric components
             capSymmetries[i] = Dict{Dict{Int64,Vector{Int64}},String}() # No caps identifiable
         end
     end
@@ -184,8 +187,7 @@ function classifySymmetricComponents(atomicProfiles, bondGraph)
         else # If atom's symmetry is OTHER
             # Add the atom's neighbours (that haven't already been processed) to search
             atomsToProcess = union(
-                atomsToProcess,
-                setdiff(Set(neighbors(bondGraph, atom)), atomsProcessed),
+                atomsToProcess, setdiff(Set(neighbors(bondGraph, atom)), atomsProcessed)
             )
         end
     end

@@ -50,8 +50,8 @@ function test_forward(num_atoms, batchsize)
 
     # Calculate the number of parameters in the defined NN.
     num_parameters::Int32 = 0
-    for i = 2:num_layers
-        num_parameters += num_nodes[i-1] * num_nodes[i]
+    for i in 2:num_layers
+        num_parameters += num_nodes[i - 1] * num_nodes[i]
         num_parameters += num_nodes[i]
     end
 
@@ -60,7 +60,7 @@ function test_forward(num_atoms, batchsize)
     input = ones(Float64, (num_nodes[1], batchsize))
 
     # Predict atomic energy for fictious `num_atoms` atoms.
-    for i = 1:num_atoms
+    for i in 1:num_atoms
         res = forward_pass(
             input,
             num_layers,
@@ -79,7 +79,7 @@ end
     num_atoms = 55 * 1e2
     batchsize::Int32 = 2
     num_repeats = 2
-    timings = [@elapsed test_forward(num_atoms, batchsize) for i = 1:num_repeats]
+    timings = [@elapsed test_forward(num_atoms, batchsize) for i in 1:num_repeats]
     @test length(timings) == num_repeats
 
     # Print average runtime. Disregard first run due to JIT compilation.
