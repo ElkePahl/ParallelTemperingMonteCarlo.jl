@@ -1,4 +1,5 @@
 using ParallelTemperingMonteCarlo
+using Test
 
 n_atoms = 13;
 
@@ -62,9 +63,7 @@ for temperature in 1:25
             line = line[4:end] # ignore atom label at start of line
             test = string(join(mc_states[temperature].config.pos[atom_count], " "), " ")
             # This puts the data from the simulation into the same format as that in storage
-            if test ≠ line
-                error("Test fail, saved data is not equal to stored data")
-            end
+            @test test == line
             atom_count+=1
         end
     end

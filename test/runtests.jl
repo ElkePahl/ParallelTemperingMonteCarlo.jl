@@ -5,9 +5,8 @@ using SafeTestsets
 using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
-@testset "Saveconfigs" begin
+@safetestset "Saveconfigs" begin
     include(joinpath(@__DIR__, "ne13_test.jl"))
-    @test true
 end
 
 @testset "Ensembles" begin
