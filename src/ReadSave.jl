@@ -13,7 +13,7 @@ using ..EnergyEvaluation
 using ..MCStates
 
 
-export save_init,save_histparams,checkpoint
+export save_init,save_histparams,checkpoint,save_configs
 export read_init,setresults,rebuild_states,read_config,build_states
 #---------------------------------------------------------------#
 #-----------------------Static Parameters-----------------------#
@@ -136,12 +136,16 @@ function checkpoint_config(filename, state::MCState{<:Any,N}) where {N}
     end
 end
 """
-    save_configs(mc_states::MCStateVector)
-Function to save the configuration of each state in a vector of `mc_states`. Writes each configuration according to [`checkpoint_config`](@ref) into a file `config.i` where `i` indicates the order of the states.
+    save_configs(mc_states::MCStateVector, filename::AbstractString="config")
+
+Function to save the configuration of each state in a vector of `mc_states`. 
+Writes each configuration according to [`checkpoint_config`](@ref) into a file `filename.i`
+where `i` indicates the order of the states.
+Default file name is "config". 
 """
-function save_configs(mc_states::MCStateVector)
+function save_configs(mc_states::MCStateVector, filename::AbstractString="config")
     for saveindex in eachindex(mc_states)
-        checkpoint_file = "./checkpoint/config.$saveindex"
+        checkpoint_file = string("./checkpoint/", filename, "T", saveindex, ".xyz")
         checkpoint_config(checkpoint_file,mc_states[saveindex])
     end
 end
@@ -386,7 +390,7 @@ function rebuild_states(n_traj::Int,ensemble::AbstractEnsemble,temps::TempGrid,p
     results = setresults(dataread[2,:],histiread,ev_info,rdfinfo)
     mcstates = []
     for index in 1:n_traj
-        configfile = open("./checkpoint/config.$index","r+")
+        configfile = open("./checkpoint/configT$index.xyz","r+")
         configinfo=readdlm(configfile)
         close(configfile)
         conf,maxdisp,countatom,countvol = read_checkpoint_config(configinfo)
@@ -402,13 +406,13 @@ end
 For use initialising states and outputs when NOT restarting, but beginning from files. Builds empty [`Output`](@ref) struct named `results` and a vector of `mc_states` using either: one configuration stored in `config.data` OR a series of configurations stored in `config.i`. NB if `config.i` doesn't exist the default will be `config.1`. In this way states can be initialised with different starting configurations.
 """
 function build_states(mc_params::MCParams,ensemble::AbstractEnsemble,temp::TempGrid,potential::AbstractPotential)
-    if ispath("./checkpoint/config.1")
+    if ispath("./checkpoint/configT1.xyz")
     confvec=[]
     for i in 1:mc_params.n_traj
-        if ispath("./checkpoint/config.$i")
-            confinfo=readdlm("./checkpoint/config.$i")
+        if ispath("./checkpoint/configT$i.xyz")
+            confinfo=readdlm("./checkpoint/configT$i.xyz")
         else
-            confinfo=readdlm("./checkpoint/config.1")
+            confinfo=readdlm("./checkpoint/configT1.xyz")
         end
         conf=read_config(confinfo)
         push!(confvec,conf)

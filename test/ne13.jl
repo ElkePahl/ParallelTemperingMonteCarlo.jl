@@ -107,7 +107,7 @@ This method returns the current state and results of the simulation.
 The data is stored in various local files created in the current working directory. =#
 
 mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000,
-saveconfigs=save_frequency, configsname=file_name);
+ saveconfigs=save_frequency, save_name=file_name);
 
 # -------- Post-processing and Analyzing of Results
 
