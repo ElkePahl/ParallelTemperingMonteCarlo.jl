@@ -141,7 +141,7 @@ struct NNVT <: AbstractEnsemble
     n_atom_moves::Int
     n_atom_swaps::Int
 end
-function NNVT(natomsvec; natomswaps=1, natommoves=sum(natomsvec))
+function NNVT(natomsvec; natomswaps = 1, natommoves = sum(natomsvec))
     if isa(natomsvec, Vector)
         natoms = SVector{2}(natomsvec)
     elseif isa(natomsvec, SVector)
@@ -229,48 +229,52 @@ end
 
 function MoveStrategy(ensemble::NPT)
     movestrat = []
-    for m_index in 1:ensemble.n_atom_moves
+    for m_index = 1:ensemble.n_atom_moves
         push!(movestrat, "atommove")
     end
-    for m_index in 1:ensemble.n_volume_moves
+    for m_index = 1:ensemble.n_volume_moves
         push!(movestrat, "volumemove")
     end
-    for m_index in 1:ensemble.n_atom_swaps
+    for m_index = 1:ensemble.n_atom_swaps
         push!(movestrat, "atomswap")
     end
 
     return MoveStrategy{
-        ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,typeof(ensemble)
+        ensemble.n_atom_moves+ensemble.n_atom_swaps+ensemble.n_volume_moves,
+        typeof(ensemble),
     }(
-        ensemble, movestrat
+        ensemble,
+        movestrat,
     )
 end
 
 function MoveStrategy(ensemble::NVT)
     movestrat = []
-    for m_index in 1:ensemble.n_atom_moves
+    for m_index = 1:ensemble.n_atom_moves
         push!(movestrat, "atommove")
     end
-    for m_index in 1:ensemble.n_atom_swaps
+    for m_index = 1:ensemble.n_atom_swaps
         push!(movestrat, "atomswap")
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(
-        ensemble, movestrat
+        ensemble,
+        movestrat,
     )
 end
 
 function MoveStrategy(ensemble::NNVT)
     movestrat = []
-    for m_index in 1:ensemble.n_atom_moves
+    for m_index = 1:ensemble.n_atom_moves
         push!(movestrat, "atommove")
     end
-    for m_index in 1:ensemble.n_atom_swaps
+    for m_index = 1:ensemble.n_atom_swaps
         push!(movestrat, "atomswap")
     end
 
     return MoveStrategy{ensemble.n_atom_moves+ensemble.n_atom_swaps,typeof(ensemble)}(
-        ensemble, movestrat
+        ensemble,
+        movestrat,
     )
 end
 

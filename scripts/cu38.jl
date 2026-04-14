@@ -25,9 +25,9 @@ mc_sample = 1
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -124,7 +124,12 @@ let n_index = 10
             n_index += 1
 
             symmfunc = AngularType3{Float64}(
-                element[1], element[2], element[3], 11.338, types, G_value_vec[n_index]
+                element[1],
+                element[2],
+                element[3],
+                11.338,
+                types,
+                G_value_vec[n_index],
             )
 
             push!(angularsymmvec, symmfunc)
@@ -202,7 +207,7 @@ pos_cu38 = [
 n_bin = 100
 AtoBohr = 1.8897259886
 
-bc_cu38 = SphericalBC(; radius=6.0*AtoBohr)
+bc_cu38 = SphericalBC(; radius = 6.0*AtoBohr)
 start_config = Config(pos_cu38, bc_cu38)
 
-states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
+states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save = 1000)

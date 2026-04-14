@@ -1,20 +1,20 @@
 n_atom = 500
 get_nvt() = NVT(n_atom)
 get_npt() = NPT(n_atom, 101325)
-get_spherical_bc() = SphericalBC(radius=rand()*20 + 10)
+get_spherical_bc() = SphericalBC(radius = rand()*20 + 10)
 get_cubic_bc() = CubicBC(Float64(rand(5:20)))
 get_rhombic_bc() = RhombicBC(Float64(rand(5:20)), Float64(rand(5:20)))
 get_nvt_bc() = get_spherical_bc()
 get_npt_bc() = rand([get_cubic_bc(), get_rhombic_bc()])
 get_pos() = rand(SVector{3,Float64}) * 10
-get_posvec() = [get_pos() for i in 1:n_atom]
+get_posvec() = [get_pos() for i = 1:n_atom]
 get_config(bc::AbstractBC) = Config(get_posvec(), bc)
 get_n_by_n() = rand(n_atom, n_atom)
 get_n_vec() = rand(n_atom)
-get_mc_params() = MCParams(rand(10:500), rand(10:500), n_atom; eq_percentage=rand())
-get_tempgrid(; n_traj=rand(10:500)) = TempGrid{n_traj}(rand(10:500), rand(10:500))
+get_mc_params() = MCParams(rand(10:500), rand(10:500), n_atom; eq_percentage = rand())
+get_tempgrid(; n_traj = rand(10:500)) = TempGrid{n_traj}(rand(10:500), rand(10:500))
 get_index() = rand(1:n_atom)
-get_pot(; ensemble=get_nvt()) =
+get_pot(; ensemble = get_nvt()) =
     if ensemble isa NVT
         rand([get_eljpot_even(), get_eljpot_b()]) #rand([get_eljpot_even(), get_eam(), get_eljpot_b()]) - EAM is currently problematic.
     else
@@ -23,7 +23,7 @@ get_pot(; ensemble=get_nvt()) =
 get_ensemble() = rand([get_nvt(), get_npt()])
 function get_eljpot_even()
     (
-        c=[
+        c = [
             -10.5097942564988,
             989.725135614556,
             -101383.865938807,
@@ -35,30 +35,30 @@ function get_eljpot_even()
     )
 end
 function initialise(;
-    ensemble=get_ensemble(),
-    pot=get_pot(ensemble=ensemble),
-    config=(
+    ensemble = get_ensemble(),
+    pot = get_pot(ensemble = ensemble),
+    config = (
         if ensemble isa NVT
             get_config(get_nvt_bc())
         else
             get_config(get_npt_bc())
         end
     ),
-    mc_params=get_mc_params(),
-    tempgrid=get_tempgrid(; n_traj=mc_params.n_traj),
-    ham=true,
-    ebounds=[-100.0, 100.0],
+    mc_params = get_mc_params(),
+    tempgrid = get_tempgrid(; n_traj = mc_params.n_traj),
+    ham = true,
+    ebounds = [-100.0, 100.0],
 )
     (
-        output=initialisation(mc_params, tempgrid, config, pot, ensemble);
+        output = initialisation(mc_params, tempgrid, config, pot, ensemble);
         if ham
             for state in output[1]
                 push!(state.ham, 0.0)
                 push!(state.ham, 0.0)
             end
         end;
-        results=initialise_histograms!(mc_params, output[3], ebounds, config.bc);
-        output=(output[1], output[2], results, output[4], output[5]);
+        results = initialise_histograms!(mc_params, output[3], ebounds, config.bc);
+        output = (output[1], output[2], results, output[4], output[5]);
         return output
     )
 end
@@ -70,21 +70,21 @@ get_mcstatevec(; kargs...) = initialise(; kargs...)[1]
 get_mcstate(; kargs...) = rand(get_mcstatevec(; kargs...))
 function get_eljpot_b()
     (
-        a=[0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608];
-        b=[-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751];
-        c1=[-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203];
+        a = [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608];
+        b = [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751];
+        c1 = [-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203];
         return ELJPotentialB{6}(a, b, c1)
     )
 end
 function get_eam()
     (
-        nmtobohr=18.8973;
-        evtohartree=0.0367493;
-        n=8.482;
-        m=4.692;
-        ϵ=evtohartree*0.0370;
-        a=0.25*nmtobohr;
-        C=27.561;
+        nmtobohr = 18.8973;
+        evtohartree = 0.0367493;
+        n = 8.482;
+        m = 4.692;
+        ϵ = evtohartree*0.0370;
+        a = 0.25*nmtobohr;
+        C = 27.561;
         return EmbeddedAtomPotential(n, m, ϵ, C, a)
     )
 end
@@ -158,9 +158,8 @@ function get_RuNNerPotential()
     end
     for symmindex in eachindex(eachrow(X))
         row = X[symmindex, :]
-        radsymm = RadialType2{Float64}(
-            row[3], row[5], [row[1], row[2]], G_value_vec[symmindex]
-        )
+        radsymm =
+            RadialType2{Float64}(row[3], row[5], [row[1], row[2]], G_value_vec[symmindex])
         push!(radsymmvec, radsymm)
     end
     let n_index = 10
@@ -168,7 +167,12 @@ function get_RuNNerPotential()
             for types in T
                 n_index += 1
                 symmfunc = AngularType3{Float64}(
-                    element[1], element[2], element[3], 11.338, types, G_value_vec[n_index]
+                    element[1],
+                    element[2],
+                    element[3],
+                    11.338,
+                    types,
+                    G_value_vec[n_index],
                 )
                 push!(angularsymmvec, symmfunc)
             end

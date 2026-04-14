@@ -22,7 +22,7 @@ Method 2: `output::Output`, `Tvals::TempGrid` - designed to receive output data 
 `beta` is an NTraj length vector of 1/(kBT)
 `NBins,NTraj,kB` are constant values required throughout
 """
-function readfile(xdir::String; debug=false)
+function readfile(xdir::String; debug = false)
     f = open("$(xdir)histE.data", "r+")
     datafile=readdlm(f)
     kB = datafile[1]
@@ -36,7 +36,7 @@ function readfile(xdir::String; debug=false)
     #Below we initialise the histogram array
     HistArray = Array{Float64}(undef, NTraj, NBins)
 
-    for i in 1:NTraj
+    for i = 1:NTraj
         c = open("$(xdir)histE.$i", "r")
         hist = readdlm(c)
         HistArray[i, :] = hist[1:NBins, 2]
@@ -45,7 +45,7 @@ function readfile(xdir::String; debug=false)
     if debug
         println("Files Read")
     end
-    energyvector = [(j-1)*de + emin for j in 1:NBins]
+    energyvector = [(j-1)*de + emin for j = 1:NBins]
 
     return HistArray, energyvector, beta, NTraj, NBins, kB
 end
@@ -57,15 +57,15 @@ function readfile(output::Output, Tvals::TempGrid)
 
     de = (output.en_max - output.en_min)/(output.n_bin - 1)
 
-    energyvector = [(j-1)*de + output.en_min for j in 1:output.n_bin]
+    energyvector = [(j-1)*de + output.en_min for j = 1:output.n_bin]
 
     HistArray = Array{Float64}(undef, NTraj, output.n_bin)
     nbin_actual = length(output.en_histogram[1])
-    for i in 1:NTraj
+    for i = 1:NTraj
         if nbin_actual == output.n_bin
             HistArray[i, :] = output.en_histogram[i]
         else
-            HistArray[i, :] = output.en_histogram[i][2:(end - 1)]
+            HistArray[i, :] = output.en_histogram[i][2:(end-1)]
         end
     end
 
@@ -80,14 +80,17 @@ This function normalises the histograms, collates the bins into their total coun
 
 """
 function processhist!(
-    HistArray::Matrix{N}, energyvector::VorS, NBins::Int, NTraj::Int
+    HistArray::Matrix{N},
+    energyvector::VorS,
+    NBins::Int,
+    NTraj::Int,
 ) where {N<:Number}
-    for i in 1:NTraj
+    for i = 1:NTraj
         #NB in Florent's original code this factor of NBins*i normalised everything
         HistArray[i, :] = HistArray[i, :] ./ (NBins)#*i)
     end
     nsum = zeros(NBins)
-    for j in 1:NBins
+    for j = 1:NBins
         nsum[j] = sum(HistArray[:, j])
     end
     #as it causes colossal headaches, we will now delete all rows
@@ -116,18 +119,16 @@ We read the files with `readfile`, process the file with `processhist!` and outp
 function initialise(xdir::String)
     HistArray, energyvector, beta, NTraj, NBins, kB = readfile(xdir::String)
 
-    HistArray, energyvector, nsum, NBins = processhist!(
-        HistArray, energyvector, NBins, NTraj
-    )
+    HistArray, energyvector, nsum, NBins =
+        processhist!(HistArray, energyvector, NBins, NTraj)
 
     return HistArray, energyvector, beta, nsum, NTraj, NBins, kB
 end
 function initialise(output::Output, Tvec::TempGrid)
     HistArray, energyvector, beta, NTraj, NBins, kB = readfile(output, Tvec)
 
-    HistArray, energyvector, nsum, NBins = processhist!(
-        HistArray, energyvector, NBins, NTraj
-    )
+    HistArray, energyvector, nsum, NBins =
+        processhist!(HistArray, energyvector, NBins, NTraj)
 
     return HistArray, energyvector, beta, nsum, NTraj, NBins, kB
 end
@@ -139,7 +140,7 @@ Function to ensure no vector or matrix contains `NaN` as this ruins the linear a
 function nancheck(X::Vector)
     N = length(X)
     check = 1
-    for i in 1:N
+    for i = 1:N
         if isnan(X[i]) == true
             check = 0
         end
@@ -150,8 +151,8 @@ function nancheck(X::Matrix)
     check = 1
     N1 = size(X)[1]
     N2 = size(X)[2]
-    for i in 1:N1
-        for j in 1:N2
+    for i = 1:N1
+        for j = 1:N2
             if isnan(X[i, j]) == true
                 check = 0
             end
@@ -171,13 +172,13 @@ function bvector(
     nsum::VorS,
     NTraj::Int,
     NBins::Int;
-    debug=false,
+    debug = false,
 ) where {N<:Number}
     #Below we find the matrix of values n_{ij}*(ln(n_{ij} + beta_iE_j)
     #which appears frequently
     logmat = Array{Float64}(undef, NTraj, NBins)
-    for i in 1:NTraj
-        for j in 1:NBins
+    for i = 1:NTraj
+        for j = 1:NBins
             logmat[i, j] = log(HistArray[i, j]) + beta[i]*energyvector[j]
         end
     end
@@ -185,8 +186,8 @@ function bvector(
     B = zeros(NTraj)
     rhvec = zeros(NBins)
     #The loop below guarantees we do not get values of NaN, as -inf*0.0 != -inf*false
-    for i in 1:NTraj
-        for j in 1:NBins
+    for i = 1:NTraj
+        for j = 1:NBins
             if HistArray[i, j] == 0.0
                 bmat[i, j] = 0.0
             else
@@ -195,11 +196,11 @@ function bvector(
         end
     end
     #the penultimate step is the vectors of length j to be summed in the rhterm
-    for j in 1:NBins
+    for j = 1:NBins
         rhvec[j] = sum(bmat[:, j])
     end
     #Now we have our two matrices, the ith element is a sum over the energies for bmat-nij*rhvec
-    for i in 1:NTraj
+    for i = 1:NTraj
         B[i] = sum(bmat[i, :] .- HistArray[i, :] .* rhvec ./ nsum)
     end
     if debug
@@ -211,11 +212,11 @@ end
     amatrix(HistArray::Matrix, nsum::VorS, NTraj::Int; debug = false)
 This function calculates the LHS of the multihistogram equation, the A matrix.
 """
-function amatrix(HistArray::Matrix, nsum::VorS, NTraj::Int; debug=false)
+function amatrix(HistArray::Matrix, nsum::VorS, NTraj::Int; debug = false)
     A = Array{Float64}(undef, NTraj, NTraj)
 
-    for i in 1:NTraj
-        for ip in 1:NTraj
+    for i = 1:NTraj
+        for ip = 1:NTraj
             A[i, ip] = -sum(HistArray[i, :] .* HistArray[ip, :] ./ nsum[:])
 
             if i == ip
@@ -240,7 +241,7 @@ function systemsolver(
     nsum::VorS,
     NTraj::Int,
     NBins::Int;
-    debug=false,
+    debug = false,
 )
     #solve the b vector
     b, bmat = bvector(HistArray, energyvector, beta, nsum, NTraj, NBins)
@@ -273,7 +274,7 @@ Having determined the vector solution to `Ax=b`, we input `alpha` and the "b-mat
 """
 function Entropycalc(alpha::Vector, bmat::Matrix, HistArray::Matrix, nsum::VorS, NBins::Int)
     S_E = []
-    for j in 1:NBins
+    for j = 1:NBins
         var = (sum(bmat[:, j] .- HistArray[:, j] .* alpha))/nsum[j]
         push!(S_E, var)
     end
@@ -289,12 +290,17 @@ Analysis takes in the energy bin values, entropy per energy and inverse temperat
 Output is the partition function, heat capacity and its first derivative as a function of temperature.
 """
 function analysis(
-    energyvector::VorS, S_E::Vector, beta::VorS, kB::Float64, NPoints::Int; debug=false
+    energyvector::VorS,
+    S_E::Vector,
+    beta::VorS,
+    kB::Float64,
+    NPoints::Int;
+    debug = false,
 )
     NBins = length(energyvector)
     Tvec = 1 ./ (kB*beta)
     dT = (last(Tvec) - first(Tvec))/NPoints
-    T = [(i-1)*dT + first(Tvec) for i in 1:NPoints]
+    T = [(i-1)*dT + first(Tvec) for i = 1:NPoints]
     #Initialise all relevant vectors
     y = Array{Float64}(undef, NPoints, NBins)
     XP = Array{Float64}(undef, NPoints, NBins)
@@ -310,7 +316,7 @@ function analysis(
     r3 = Array{Float64}(undef, NPoints)
     #below we begin the calculation of thermodynamic quantities
 
-    for i in 1:NPoints
+    for i = 1:NPoints
         #y is a matrix of free energy
         y[i, :] = S_E[:] .- energyvector[:] ./ (T[i]*kB)
         #here we set the zero of free energy
@@ -391,7 +397,7 @@ function run_multihistogram(
     kB::Float64,
     outdir::String,
     NPoints::Int;
-    debug=false,
+    debug = false,
 ) where {N<:Number}
 
     #HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
@@ -445,26 +451,33 @@ Function has two methods which vary only in how the initialise function is calle
 The output of this function are the four files defined in [`run_multihistogram`](@ref).
 
 """
-function multihistogram(xdir::String; NPoints=1000)
+function multihistogram(xdir::String; NPoints = 1000)
     HistArray, energyvector, beta, nsum, NTraj, NBins, kB = initialise(xdir)
     run_multihistogram(HistArray, energyvector, beta, nsum, NTraj, NBins, kB, xdir, NPoints)
 end
 
-function multihistogram(output::Output, Tvec::TempGrid; outdir=pwd(), NPoints=1000)
+function multihistogram(output::Output, Tvec::TempGrid; outdir = pwd(), NPoints = 1000)
     HistArray, energyvector, beta, nsum, NTraj, NBins, kB = initialise(output, Tvec)
     run_multihistogram(
-        HistArray, energyvector, beta, nsum, NTraj, NBins, kB, outdir, NPoints
+        HistArray,
+        energyvector,
+        beta,
+        nsum,
+        NTraj,
+        NBins,
+        kB,
+        outdir,
+        NPoints,
     )
 end
 
-function postprocess(; xdir=pwd())
+function postprocess(; xdir = pwd())
     if xdir != pwd()
         cd(xdir)
     end
 
-    params, ens, potential, states, movestrat, results, nstep, startcounter = initialisation(
-        true, 0.2
-    )
+    params, ens, potential, states, movestrat, results, nstep, startcounter =
+        initialisation(true, 0.2)
     temps = TempGrid{params.n_traj}(states[1].temp, states[params.n_traj].temp)
 
     multihistogram(results, temps)
@@ -472,10 +485,16 @@ function postprocess(; xdir=pwd())
     hists = readdlm("histograms.data")
     analysis = readdlm("analysis.NVT")
     energies=hists[1, :]
-    histogramdata = [hists[i + 1, :] for i in 1:params.n_traj]
+    histogramdata = [hists[i+1, :] for i = 1:params.n_traj]
 
-    T, Z, Cv, dCv, S=analysis[2:end, 1],
-    analysis[2:end, 2], analysis[2:end, 3], analysis[2:end, 4],
+    T,
+    Z,
+    Cv,
+    dCv,
+    S=analysis[2:end, 1],
+    analysis[2:end, 2],
+    analysis[2:end, 3],
+    analysis[2:end, 4],
     analysis[2:end, 5]
 
     return energies, histogramdata, T, Z, Cv, dCv, S

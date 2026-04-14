@@ -103,7 +103,7 @@ end
 #type stable constructor as N is passed along
 function Config{N}(pos::Vector{SVector{3,T}}, bc::BC) where {N,T,BC<:AbstractBC}
     @boundscheck length(pos) == N ||
-        error("number of atoms and number of positions not the same")
+                 error("number of atoms and number of positions not the same")
     return Config{N,BC,T}(pos, bc)
 end
 
@@ -135,7 +135,7 @@ Function to change the centre of mass of a configuration `conf` to [0,0,0] in Ca
 """
 function recentre!(conf::Config{N,BC,T}) where {N,BC,T}
     cofm = get_centre(conf.pos, N)
-    for index in 1:N
+    for index = 1:N
         conf.pos[index] = SVector{3}(conf.pos[index] .- cofm)
     end
 end
@@ -188,8 +188,8 @@ Builds the matrix of squared distances between positions of configuration.
 """
 function get_distance2_mat(conf::Config{N}) where {N}
     mat=zeros(N, N)
-    for i in 1:N
-        for j in (i + 1):N
+    for i = 1:N
+        for j = (i+1):N
             mat[i, j]=mat[j, i]=distance2(conf.pos[i], conf.pos[j], conf.bc)
         end
     end
@@ -247,8 +247,8 @@ Builds the matrix of tan of angles between positions of configuration in a spher
 function get_tantheta_mat(conf::Config, bc::BC) where {BC<:AbstractBC}
     N=length(conf.pos)
     mat=zeros(N, N)
-    for i in 1:N
-        for j in (i + 1):N
+    for i = 1:N
+        for j = (i+1):N
             mat[i, j]=mat[j, i] = get_tan(conf.pos[i], conf.pos[j], bc)
         end
     end
@@ -258,8 +258,8 @@ end
 function get_tantheta_mat(conf::Config, bc::RectangularBC)
     N=length(conf.pos)
     mat=zeros(N, N)
-    for i in 1:N
-        for j in (i + 1):N
+    for i = 1:N
+        for j = (i+1):N
             mat[i, j]=mat[j, i] = get_tan(conf.pos[i], conf.pos[j], bc)
         end
     end

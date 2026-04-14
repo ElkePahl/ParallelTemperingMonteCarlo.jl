@@ -133,11 +133,23 @@ function AngularType3a{T}(eta, lambda, zeta, r_cut, type_vec) where {T}
     tpz = 2.0^(1 - zeta)
 
     return AngularType3a(
-        eta, lambda, zeta, r_cut, type_vec, tpz, SVector{6}(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        eta,
+        lambda,
+        zeta,
+        r_cut,
+        type_vec,
+        tpz,
+        SVector{6}(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
     )
 end
 function AngularType3a{T}(
-    eta, lambda, zeta, r_cut, type_vector, G_valsa::Vector, G_valsb::Vector
+    eta,
+    lambda,
+    zeta,
+    r_cut,
+    type_vector,
+    G_valsa::Vector,
+    G_valsb::Vector,
 ) where {T}
     G_norm1 = 1 / (G_valsa[1][1] - G_valsa[1][2])
     G_offset1 = -G_valsa[1][2] * G_norm1
@@ -231,7 +243,18 @@ function calc_one_symm_val(r2_ij, fc_ij, η)
 end
 
 function calc_one_symm_val(
-    position1, position2, position3, r2_ij, r2_ik, r2_jk, f_ij, f_ik, f_jk, η, λ, ζ
+    position1,
+    position2,
+    position3,
+    r2_ij,
+    r2_ik,
+    r2_jk,
+    f_ij,
+    f_ik,
+    f_jk,
+    η,
+    λ,
+    ζ,
 )
     θ_vec = all_angular_measure(position1, position2, position3, r2_ij, r2_ik, r2_jk)
 
@@ -261,9 +284,12 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, symm_func::RadialTy
     if symm_func.type_vec == Int(11)
         g_norm, η = symm_func.G_norm, symm_func.eta
         for atomindex in eachindex(g_vec)
-            for index2 in (atomindex + 1):N
+            for index2 = (atomindex+1):N
                 g_val = calc_one_symm_val(
-                    dist2_mat[atomindex, index2], f_mat[atomindex, index2], g_norm, η
+                    dist2_mat[atomindex, index2],
+                    f_mat[atomindex, index2],
+                    g_norm,
+                    η,
                 )
                 g_vec[atomindex] += g_val
                 g_vec[index2] += g_val
@@ -281,8 +307,8 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, symm_func::AngularT
     if symm_func.type_vec == Int(111)
         η, λ, ζ = symm_func.eta, symm_func.lambda, symm_func.zeta
         for atomindex in eachindex(g_vec)
-            for index2 in (atomindex + 1):N
-                for index3 in (index2 + 1):N
+            for index2 = (atomindex+1):N
+                for index3 = (index2+1):N
                     g_vals=calc_one_symm_val(
                         positions[atomindex],
                         positions[index2],
@@ -319,33 +345,30 @@ Methods for the calculation of a symmetry function vector for a diatomic RuNNer 
 function calc_symm_vals!(position, dist2_mat, f_mat, g_vec, n1, n2, η, g_norm, G_offset)
     N = n1+n2
     # CuCu populates row 1 for both i and j
-    for atomindex in 1:n1
-        for index2 in (atomindex + 1):n1
-            g_val = calc_one_symm_val(
-                dist2_mat[atomindex, index2], f_mat[atomindex, index2], η
-            )
+    for atomindex = 1:n1
+        for index2 = (atomindex+1):n1
+            g_val =
+                calc_one_symm_val(dist2_mat[atomindex, index2], f_mat[atomindex, index2], η)
 
             g_vec[1, atomindex] += g_val
             g_vec[1, index2] += g_val
         end
     end
     #ZnZn populates row 2 for both i and j
-    for atomindex in (n1 + 1):N
-        for index2 in (atomindex + 1):N
-            g_val = calc_one_symm_val(
-                dist2_mat[atomindex, index2], f_mat[atomindex, index2], η
-            )
+    for atomindex = (n1+1):N
+        for index2 = (atomindex+1):N
+            g_val =
+                calc_one_symm_val(dist2_mat[atomindex, index2], f_mat[atomindex, index2], η)
 
             g_vec[2, atomindex] += g_val
             g_vec[2, index2] += g_val
         end
     end
     #CuZn is row 2 for i row 1 for Zn
-    for atomindex in 1:n1
-        for index2 in (n1 + 1):N
-            g_val = calc_one_symm_val(
-                dist2_mat[atomindex, index2], f_mat[atomindex, index2], η
-            )
+    for atomindex = 1:n1
+        for index2 = (n1+1):N
+            g_val =
+                calc_one_symm_val(dist2_mat[atomindex, index2], f_mat[atomindex, index2], η)
 
             g_vec[2, atomindex] += g_val
             g_vec[1, index2] += g_val
@@ -355,8 +378,8 @@ function calc_symm_vals!(position, dist2_mat, f_mat, g_vec, n1, n2, η, g_norm, 
     g_vec[1, 1:n1] = g_vec[1, 1:n1] .* g_norm[1] .+ G_offset[1]
     g_vec[2, 1:n1] = g_vec[2, 1:n1] .* g_norm[2] .+ G_offset[2]
 
-    g_vec[1, (1 + n1):N] = g_vec[1, (1 + n1):N] .* g_norm[3] .+ G_offset[3]
-    g_vec[2, (1 + n1):N] = g_vec[2, (1 + n1):N] .* g_norm[4] .+ G_offset[4]
+    g_vec[1, (1+n1):N] = g_vec[1, (1+n1):N] .* g_norm[3] .+ G_offset[3]
+    g_vec[2, (1+n1):N] = g_vec[2, (1+n1):N] .* g_norm[4] .+ G_offset[4]
 
     return g_vec
 end
@@ -364,9 +387,9 @@ end
 function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ, tpz, G_offset)
     N = n1+n2
     #   CuCuCu row 1
-    for atomindex in 1:n1
-        for index2 in (atomindex + 1):n1
-            for index3 in (index2 + 1):n1
+    for atomindex = 1:n1
+        for index2 = (atomindex+1):n1
+            for index3 = (index2+1):n1
                 g_vals=calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
@@ -389,9 +412,9 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
         end
     end
     #   ZnZnZn row 3
-    for atomindex in (n1 + 1):N
-        for index2 in (atomindex + 1):N
-            for index3 in (index2 + 1):N
+    for atomindex = (n1+1):N
+        for index2 = (atomindex+1):N
+            for index3 = (index2+1):N
                 g_vals=calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
@@ -414,9 +437,9 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
         end
     end
     #CuCuZn row 2 for Cu, row 1 for Zn
-    for atomindex in 1:n1
-        for index2 in (atomindex + 1):n1
-            for index3 in (n1 + 1):N
+    for atomindex = 1:n1
+        for index2 = (atomindex+1):n1
+            for index3 = (n1+1):N
                 g_vals=calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
@@ -439,9 +462,9 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
         end
     end
     # CuZnZn row 3 for Cu row 2 for Zn
-    for atomindex in 1:n1
-        for index2 in (n1 + 1):N
-            for index3 in (index2 + 1):N
+    for atomindex = 1:n1
+        for index2 = (n1+1):N
+            for index3 = (index2+1):N
                 g_vals=calc_one_symm_val(
                     positions[atomindex],
                     positions[index2],
@@ -467,9 +490,9 @@ function calc_symm_vals!(positions, dist2_mat, f_mat, g_vec, n1, n2, η, λ, ζ,
     g_vec[2, 1:n1] = g_vec[2, 1:n1] .* tpz[2] .+ G_offset[2]
     g_vec[3, 1:n1] = g_vec[3, 1:n1] .* tpz[3] .+ G_offset[3]
 
-    g_vec[1, (n1 + 1):N] = g_vec[1, (n1 + 1):N] .* tpz[4] .+ G_offset[4]
-    g_vec[2, (n1 + 1):N] = g_vec[2, (n1 + 1):N] .* tpz[5] .+ G_offset[5]
-    g_vec[3, (n1 + 1):N] = g_vec[3, (n1 + 1):N] .* tpz[6] .+ G_offset[6]
+    g_vec[1, (n1+1):N] = g_vec[1, (n1+1):N] .* tpz[4] .+ G_offset[4]
+    g_vec[2, (n1+1):N] = g_vec[2, (n1+1):N] .* tpz[5] .+ G_offset[5]
+    g_vec[3, (n1+1):N] = g_vec[3, (n1+1):N] .* tpz[6] .+ G_offset[6]
 
     return g_vec
 end
@@ -492,33 +515,55 @@ Function to run over a vector of symmetry functions `total_symm_vec` and determi
     Second method is the same, but for n1 atoms of type 1 and n2 atoms of type 2
 """
 function total_symm_calc(
-    positions, dist2_mat, f_mat, radsymmfunctions, angsymmfunctions, Nrad, Nang
+    positions,
+    dist2_mat,
+    f_mat,
+    radsymmfunctions,
+    angsymmfunctions,
+    Nrad,
+    Nang,
 )
     g_mat = zeros(Nrad+Nang, length(positions))
 
-    for g_index in 1:Nrad
+    for g_index = 1:Nrad
         g_mat[g_index, :] = calc_symm_vals!(
-            positions, dist2_mat, f_mat, g_mat[g_index, :], radsymmfunctions[g_index]
+            positions,
+            dist2_mat,
+            f_mat,
+            g_mat[g_index, :],
+            radsymmfunctions[g_index],
         )
     end
-    for g_index in (Nrad + 1):Nang
+    for g_index = (Nrad+1):Nang
         g_mat[g_index, :] = calc_symm_vals!(
-            positions, dist2_mat, f_mat, g_mat[g_index, :], angsymmfunctions[g_index - Nrad]
+            positions,
+            dist2_mat,
+            f_mat,
+            g_mat[g_index, :],
+            angsymmfunctions[g_index-Nrad],
         )
     end
     return g_mat
 end
 function total_symm_calc(
-    positions, dist2_mat, f_mat, radsymmfunctions, angsymmfunctions, nrad, nang, n1, n2
+    positions,
+    dist2_mat,
+    f_mat,
+    radsymmfunctions,
+    angsymmfunctions,
+    nrad,
+    nang,
+    n1,
+    n2,
 )
     g_mat = zeros(nrad*2 + nang*3, length(positions))
-    for g_index in 1:nrad
+    for g_index = 1:nrad
         idx=(g_index-1)*2+1
-        g_mat[idx:(idx + 1), :] = calc_symm_vals!(
+        g_mat[idx:(idx+1), :] = calc_symm_vals!(
             positions,
             dist2_mat,
             f_mat,
-            g_mat[idx:(idx + 1), :],
+            g_mat[idx:(idx+1), :],
             n1,
             n2,
             radsymmfunctions[g_index].eta,
@@ -526,14 +571,14 @@ function total_symm_calc(
             radsymmfunctions[g_index].G_offset,
         )
     end
-    for g_index in 1:nang
+    for g_index = 1:nang
         idx = nrad*2 + (g_index-1)*3 + 1
 
-        g_mat[idx:(idx + 2), :] = calc_symm_vals!(
+        g_mat[idx:(idx+2), :] = calc_symm_vals!(
             positions,
             dist2_mat,
             f_mat,
-            g_mat[idx:(idx + 2), :],
+            g_mat[idx:(idx+2), :],
             n1,
             n2,
             angsymmfunctions[g_index].eta,
@@ -554,7 +599,11 @@ function total_thr_symm_calc(positions, dist2_mat, f_mat, total_symm_vec)
 
     Threads.@threads for g_index in eachindex(total_symm_vec)
         g_mat[g_index, :] = calc_symm_vals!(
-            positions, dist2_mat, f_mat, g_mat[g_index, :], total_symm_vec[g_index]
+            positions,
+            dist2_mat,
+            f_mat,
+            g_mat[g_index, :],
+            total_symm_vec[g_index],
         )
     end
 

@@ -119,7 +119,12 @@ function initialisation(restart::Bool, eq_cycles)
     n_steps = length(move_strategy)
 
     return mc_params,
-    ensemble, potential, mc_states, move_strategy, results, n_steps,
+    ensemble,
+    potential,
+    mc_states,
+    move_strategy,
+    results,
+    n_steps,
     start_counter
 end
 

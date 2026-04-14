@@ -34,9 +34,9 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -543,7 +543,7 @@ multihistogram_NPT(ensemble, temp, results, 10^(-6), false)
 e_avg=[]
 v_avg=[]
 
-for i in 1:n_traj
+for i = 1:n_traj
     e_index=findmax(results.ev_histogram[i])[2][1]
     v_index=findmax(results.ev_histogram[i])[2][2]
 
@@ -557,7 +557,7 @@ end
 println(e_avg)
 println(v_avg)
 
-for i in 1:n_traj
+for i = 1:n_traj
     println(results.rdf[i])
 end
 

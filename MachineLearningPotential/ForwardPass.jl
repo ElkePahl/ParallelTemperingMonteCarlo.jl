@@ -34,7 +34,11 @@ Unpacks the `num_nodes` vector and `parameters` and assigns their lengths to the
 """
 function NeuralNetworkPotential(num_nodes::Vector, activation_functions::Vector, parameters)
     return NeuralNetworkPotential(
-        length(num_nodes), length(parameters), num_nodes, activation_functions, parameters
+        length(num_nodes),
+        length(parameters),
+        num_nodes,
+        activation_functions,
+        parameters,
     )
 end
 """
@@ -95,7 +99,10 @@ function forward_pass(input::AbstractArray, batchsize, nnparams::NeuralNetworkPo
     )
 end
 function forward_pass(
-    eatom, input::AbstractArray, batchsize, nnparams::NeuralNetworkPotential
+    eatom,
+    input::AbstractArray,
+    batchsize,
+    nnparams::NeuralNetworkPotential,
 )
     return forward_pass(
         eatom,

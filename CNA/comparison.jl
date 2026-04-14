@@ -42,15 +42,15 @@ function compareConfigs(
     # Initialise vector to contain most similar configurations for each configuration
     similarConfigs = Vector{Dict{Int64,Vector{Float64}}}(undef, L)
     maxSims = zeros(Float64, 1, L) # Initialise the maximum similarity score for each configuration
-    for i in 1:M # For all rCut values
+    for i = 1:M # For all rCut values
         writeProfiles(rCutRange, configDir, filename, energies, totalProfiles, i, L) # Write out the total CNA profiles
         if L == 1
             continue
         end
         atomicProfilesDict = convertAtomicProfiles(atomicProfiles, i, L) # Convert atomic CNA profile format
         # For each pair of configurations
-        for configA in 1:(L - 1)
-            for configB in (configA + 1):L
+        for configA = 1:(L-1)
+            for configB = (configA+1):L
                 # Compute the similarity for the cluster pair
                 similarity = similarityScore(
                     configA,
@@ -64,7 +64,7 @@ function compareConfigs(
                 # Update the most similar configurations to configA
                 if (similarity > maxSims[configA]) # If new similarity score is greater than previous highest
                     similarConfigs[configA] = Dict{Int64,Vector{Float64}}(
-                        configB => Vector{Float64}([rCutRange[i]])
+                        configB => Vector{Float64}([rCutRange[i]]),
                     ) # Create new vector, containing configB
                     maxSims[configA] = similarity # Update maximum similarity score
                 elseif (similarity == maxSims[configA]) # If the new similarity is the same as the previous highest
@@ -73,7 +73,8 @@ function compareConfigs(
                         push!(
                             similarConfigs[configA],
                             configB => push!(
-                                get!(similarConfigs[configA], configB, 0), rCutRange[i]
+                                get!(similarConfigs[configA], configB, 0),
+                                rCutRange[i],
                             ),
                         )
                     else
@@ -87,7 +88,7 @@ function compareConfigs(
                 # Same for configB
                 if (similarity > maxSims[configB]) # If new similarity score is greater than previous highest
                     similarConfigs[configB] = Dict{Int64,Vector{Float64}}(
-                        configA => Vector{Float64}([rCutRange[i]])
+                        configA => Vector{Float64}([rCutRange[i]]),
                     ) # Create new vector, containing configB
                     maxSims[configB] = similarity # Update maximum similarity score
                 elseif (similarity == maxSims[configB]) # If the new similarity is the same as the previous highest
@@ -95,7 +96,8 @@ function compareConfigs(
                         push!(
                             similarConfigs[configB],
                             configA => push!(
-                                get!(similarConfigs[configB], configA, 0), rCutRange[i]
+                                get!(similarConfigs[configB], configA, 0),
+                                rCutRange[i],
                             ),
                         )
                     else
@@ -125,8 +127,8 @@ atomicProfileDict: Vector{Dict{String,Int64}} ector of dictionaries, mapping ato
 """
 function convertAtomicProfiles(atomicProfiles, i, L)
     # Convert atomicProfiles into format better for computing similarity
-    atomicProfilesDict = [Dict{String,Int64}() for j in 1:L] # Initialise new format
-    for j in 1:L # For all configurations
+    atomicProfilesDict = [Dict{String,Int64}() for j = 1:L] # Initialise new format
+    for j = 1:L # For all configurations
         atomicProfile = atomicProfiles[i, j, :] # Get atom profile
         for atomProfile in atomicProfile # For each atom
             # Increments atomic CNA profile frequency by 1
@@ -156,7 +158,13 @@ Outputs:
 similarity: (Float64) The similarity score between the two configurations.
 """
 function similarityScore(
-    configA, configB, totalProfiles, atomicProfilesDict, similarityMeasure, N, i
+    configA,
+    configB,
+    totalProfiles,
+    atomicProfilesDict,
+    similarityMeasure,
+    N,
+    i,
 )
     similarity = 0.0 # Initialise similarity score
     if (similarityMeasure == "atomic") # If want to compare using atomic CNA profile
@@ -177,7 +185,7 @@ function similarityScore(
         throw(DomainError(similarityMeasure, "Invalid similarity measure")) # Throw an error
     end
 
-    return round(similarity; digits=3) # Return rounded similarity score
+    return round(similarity; digits = 3) # Return rounded similarity score
 end
 
 """
@@ -236,7 +244,7 @@ function groupConfigs(
     similarConfigs,
     similarityThreshold,
     M;
-    rCutThreshold=0.9,
+    rCutThreshold = 0.9,
 )
     # Initialise arrays
     uniqueConfigs = Vector{Vector{Int64}}()
@@ -279,7 +287,7 @@ uniqueEnergyStats: Array{Float64} 2D array of energy statistics. First row is th
 """
 function configStats(uniqueEnergies, numUnique)
     uniqueEnergyStats = Array{Float64}(undef, 2, numUnique) # Initialse array
-    for i in 1:numUnique # For each grouped set of configurations
+    for i = 1:numUnique # For each grouped set of configurations
         uniqueEnergyStats[1, i] = Statistics.mean(uniqueEnergies[i]) # Compute mean
         uniqueEnergyStats[2, i] = Statistics.std(uniqueEnergies[i]) # Compute standard deviation
     end

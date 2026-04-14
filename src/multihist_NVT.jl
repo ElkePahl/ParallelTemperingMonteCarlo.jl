@@ -34,23 +34,26 @@ function Temp_grid_result(ti::Number, tf::Number, tempnumber_result::Int)
 end
 const NVTHistogram = Vector{Vector{Float64}}
 function free_energy_initialise(
-    ENhistogram::NVTHistogram, Ebins::Int, tempnumber::Int, tempnumber_result::Int
+    ENhistogram::NVTHistogram,
+    Ebins::Int,
+    tempnumber::Int,
+    tempnumber_result::Int,
 )
     free_energy=Array{Float64}(undef, tempnumber)
     new_free_energy=Array{Float64}(undef, tempnumber)
     normalconst=Array{Float64}(undef, tempnumber_result)
     ncycles=Array{Float64}(undef, tempnumber)
 
-    for i in 1:tempnumber
+    for i = 1:tempnumber
         free_energy[i]=0
         new_free_energy[i]=0
         ncycles[i]=0
-        for m in 1:Ebins
-            ncycles[i]=ncycles[i]+ENhistogram[i][m + 1]
+        for m = 1:Ebins
+            ncycles[i]=ncycles[i]+ENhistogram[i][m+1]
         end
     end
 
-    for i in 1:tempnumber_result
+    for i = 1:tempnumber_result
         normalconst[i]=0
     end
     return free_energy, new_free_energy, normalconst, ncycles
@@ -71,12 +74,12 @@ function quasiprob(
     quasiprob=0
     denom=0
     offset=-10^6
-    for i in 1:tempnumber
+    for i = 1:tempnumber
         offset=max(offset, -beta[i]*energy_t-free_energy[i])
     end
     offset=offset+log(10^3)
-    for i in 1:tempnumber
-        quasiprob=quasiprob+ENhistogram[i][m + 1]
+    for i = 1:tempnumber
+        quasiprob=quasiprob+ENhistogram[i][m+1]
         denom=denom+ncycles[i]*exp(-beta[i]*energy_t-free_energy[i]-offset)
     end
 
@@ -98,29 +101,26 @@ function multihistogram_NVT(
     results::Output,
     conv_threshold::Number,
     readfile::Bool;
-    debug=false,
+    debug = false,
 )
     if readfile==false
         tempnumber, tempnumber_result = temp_trajectories(temp)
-        k, temp_o, beta, Emin, Ebins, dEhist, ENhistogram = histogram_initialise_en(
-            ensemble, temp, results
-        )
+        k, temp_o, beta, Emin, Ebins, dEhist, ENhistogram =
+            histogram_initialise_en(ensemble, temp, results)
     end
-    temp_result, beta_result = Temp_grid_result(
-        temp_o[1], temp_o[tempnumber], tempnumber_result
-    )
+    temp_result, beta_result =
+        Temp_grid_result(temp_o[1], temp_o[tempnumber], tempnumber_result)
 
-    free_energy, new_free_energy, normalconst, ncycles = free_energy_initialise(
-        ENhistogram, Ebins, tempnumber, tempnumber_result
-    )
+    free_energy, new_free_energy, normalconst, ncycles =
+        free_energy_initialise(ENhistogram, Ebins, tempnumber, tempnumber_result)
 
-    for it in 1:1000
+    for it = 1:1000
         println("iteration=", it)
-        for i in 1:tempnumber
+        for i = 1:tempnumber
             local betat
             betat=beta[i]
             new_free_energy[i]=0
-            for m in 1:Ebins
+            for m = 1:Ebins
                 new_free_energy[i]=new_free_energy[i]+quasiprob(
                     betat,
                     m,
@@ -141,7 +141,7 @@ function multihistogram_NVT(
 
         local delta
         delta=0
-        for i in 1:tempnumber
+        for i = 1:tempnumber
             delta=delta+abs(new_free_energy[i]-free_energy[i])^2
             free_energy[i]=new_free_energy[i]
         end
@@ -154,28 +154,52 @@ function multihistogram_NVT(
         end
     end
 
-    for i in 1:tempnumber_result
+    for i = 1:tempnumber_result
         betat=beta_result[i]
-        for m in 1:Ebins
+        for m = 1:Ebins
             normalconst[i]=normalconst[i]+quasiprob(
-                betat, m, ncycles, dEhist, Emin, tempnumber, ENhistogram, beta, free_energy
+                betat,
+                m,
+                ncycles,
+                dEhist,
+                Emin,
+                tempnumber,
+                ENhistogram,
+                beta,
+                free_energy,
             )
         end
     end
 
     cv=zeros(tempnumber_result)
-    for i in 1:tempnumber_result
+    for i = 1:tempnumber_result
         betat=beta_result[i]
         eenergy=0
         eenergy2=0
-        for m in 1:Ebins
+        for m = 1:Ebins
             energy_t=Emin+(m-0.5)*dEhist
 
             eenergy=eenergy+quasiprob(
-                betat, m, ncycles, dEhist, Emin, tempnumber, ENhistogram, beta, free_energy
+                betat,
+                m,
+                ncycles,
+                dEhist,
+                Emin,
+                tempnumber,
+                ENhistogram,
+                beta,
+                free_energy,
             )/normalconst[i]*energy_t
             eenergy2=eenergy2+quasiprob(
-                betat, m, ncycles, dEhist, Emin, tempnumber, ENhistogram, beta, free_energy
+                betat,
+                m,
+                ncycles,
+                dEhist,
+                Emin,
+                tempnumber,
+                ENhistogram,
+                beta,
+                free_energy,
             )/normalconst[i]*energy_t^2
         end
         println("temperature: ", temp_result[i])

@@ -35,12 +35,12 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
-move_strat = MoveStrategy(; atom_moves=n_atoms)
+move_strat = MoveStrategy(; atom_moves = n_atoms)
 
 #ensemble
 ensemble = NVT(n_atoms)
@@ -131,8 +131,8 @@ length(pos_cu55) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")
 
 #boundary conditions
-bc_cu55 = SphericalBC(; radius=14*AtoBohr)   #5.32 Angstrom
-bc_cu13 = SphericalBC(; radius=8*AtoBohr)
+bc_cu55 = SphericalBC(; radius = 14*AtoBohr)   #5.32 Angstrom
+bc_cu13 = SphericalBC(; radius = 8*AtoBohr)
 #starting configuration
 
 start_config = Config(pos_cu55, bc_cu55)
@@ -216,7 +216,12 @@ let n_index = 10
             n_index += 1
 
             symmfunc = AngularType3{Float64}(
-                element[1], element[2], element[3], 11.338, types, G_value_vec[n_index]
+                element[1],
+                element[2],
+                element[3],
+                11.338,
+                types,
+                G_value_vec[n_index],
             )
 
             push!(angularsymmvec, symmfunc)
@@ -251,18 +256,18 @@ mc_states = [
         temp.beta_grid[i],
         start_config,
         runnerpotential;
-        max_displ=[max_displ_atom[i], 0.01, 1.0],
-    ) for i in 1:n_traj
+        max_displ = [max_displ_atom[i], 0.01, 1.0],
+    ) for i = 1:n_traj
 ]
 
 #results = Output(n_bin, max_displ_vec)
-results = Output{Float64}(n_bin; en_min=mc_states[1].en_tot)
+results = Output{Float64}(n_bin; en_min = mc_states[1].en_tot)
 
 @time ptmc_run!((mc_states, move_strat, mc_params, runnerpotential, ensemble, results));
 
 # plot(temp.t_grid,results.heat_cap)
 
-data = [results.en_histogram[i] for i in 1:n_traj]
+data = [results.en_histogram[i] for i = 1:n_traj]
 # plot(data)
 # histplot = plot(data)
 # savefig(histplot,"histograms.png")

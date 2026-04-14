@@ -26,9 +26,9 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -182,10 +182,10 @@ length(pos_cu101) == n_atoms ||
 n_bin = 100
 
 #boundary conditions
-bc_cu101 = SphericalBC(; radius=12*AtoBohr)   #5.32 Angstrom
+bc_cu101 = SphericalBC(; radius = 12*AtoBohr)   #5.32 Angstrom
 start_config = Config(pos_cu101, bc_cu101)
 
 #@profview ptmc_run!(mc_params,temp,start_config,pot,ensemble)
 
-@time states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
+@time states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save = 1000)
 #rm("checkpoint",recursive=true)

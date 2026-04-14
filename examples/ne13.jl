@@ -38,7 +38,7 @@ AtoBohr = 1.8897259886;
 pos_ne13 = pos_ne13 * AtoBohr
 # Finally, we have to choose appropriate boundary conditions, here spherical boundary conditions (solid boundary around the cluster), to suppress atom loss processes.  
 # Finding this radius is a non-trivial task, and has to be chosen and tested carefully. A radius chosen too small will exert artificial pressure on the cluster while a too large value leads to atoms being ejected.
-bc_ne13 = SphericalBC(; radius=5.32*AtoBohr)
+bc_ne13 = SphericalBC(; radius = 5.32*AtoBohr)
 # We package the initial configuration and boundary conditions into a `Config` struct:
 start_config = Config(pos_ne13, bc_ne13)
 # ## Setting up the Simulation Parameters
@@ -57,10 +57,10 @@ temp = TempGrid{n_traj}(ti, tf)
 mc_cycles = 100000;
 mc_sample = 1;
 displ_atom = 0.1;
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj];
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj];
 n_adjust = 100;
 # For neatness, all parameters are collected in a `MCParams` struct:
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 # We then define the ensemble, here we are using the NVT ensemble (keeping N, the number of atoms, V, the volume, and T, the temperature constant).
 # This allows us to derive a MoveStrategy to feed into the PTMC simulation. Here, we do `n_atoms` atom displacements of randomy chosen atoms per Monte Carlo cycle.
 ensemble = NVT(n_atoms);
@@ -68,18 +68,18 @@ move_strat = MoveStrategy(ensemble)
 # ## Running the Simulation
 # Finally, we run the simulation. This method returns the current state and results of the simulation.
 # The data is stored in various local files created in the current working directory.
-mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000);
+mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save = 1000);
 # ## Post-processing and Analyzing of Results
 # The raw heat capacity plot is obtained from:
 plot(
     temp.t_grid,
     results.heat_cap;
-    xlabel="T [K]",
-    ylabel=L"\(C_v\) [A.U]",
-    title="Raw Heat Capacity against Temperature",
+    xlabel = "T [K]",
+    ylabel = L"\(C_v\) [A.U]",
+    title = "Raw Heat Capacity against Temperature",
 )
 # and the energy histograms by:
-data = [results.en_histogram[i] for i in 1:n_traj]
+data = [results.en_histogram[i] for i = 1:n_traj]
 plot(data)
 # For post-processing of the data we use the multihistogram method. This method accesses the stored data created from the `ptmc_run!` method 
 # and returns values for the energies, histogram data, temperature, partition function, heat capacity, heat capacity gradient, and entropy, which can be plotted as shown:
@@ -88,35 +88,35 @@ energies, histogramdata, T, Z, Cv, dCv, S = postprocess();
 plot(
     T,
     Cv;
-    label=nothing,
-    xlabel="T [K]",
-    ylabel=L"\(C_v\) [A.U]",
-    title="Heat capacity against Temperature",
+    label = nothing,
+    xlabel = "T [K]",
+    ylabel = L"\(C_v\) [A.U]",
+    title = "Heat capacity against Temperature",
 )
 # Plot of the heat capacity gradient against temperature:
 plot(
     T,
     dCv;
-    label=nothing,
-    xlabel="T [K]",
-    ylabel=L"\(\frac{dC_v}{dT}\) [A.U]",
-    title="Heat capacity gradient against Temperature",
+    label = nothing,
+    xlabel = "T [K]",
+    ylabel = L"\(\frac{dC_v}{dT}\) [A.U]",
+    title = "Heat capacity gradient against Temperature",
 )
 # Plot of the partition function against temperature:
 plot(
     T,
     Z;
-    label=nothing,
-    xlabel="T [K]",
-    ylabel="Z [1]",
-    title="Partition function against Temperature",
+    label = nothing,
+    xlabel = "T [K]",
+    ylabel = "Z [1]",
+    title = "Partition function against Temperature",
 )
 # Plot of the entropy of the system against temperature:
 plot(
     T,
     S;
-    label=nothing,
-    xlabel="T [K]",
-    ylabel="S [A.U]",
-    title="Entropy against Temperature",
+    label = nothing,
+    xlabel = "T [K]",
+    ylabel = "S [A.U]",
+    title = "Entropy against Temperature",
 )

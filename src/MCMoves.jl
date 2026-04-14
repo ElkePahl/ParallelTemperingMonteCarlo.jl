@@ -72,12 +72,12 @@ function atom_displacement(pos::PositionVector, max_displacement::Number, bc::Rh
     trial_pos = pos + delta_move
     trial_pos -= SVector(
         bc.box_length*round(
-            (trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length
+            (trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length,
         )+bc.box_length/2*round(
-            (trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)
+            (trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2),
         ),
         bc.box_length*3^0.5/2*round(
-            (trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)
+            (trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2),
         ),
         bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height),
     )
@@ -106,9 +106,8 @@ function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:PeriodicBC}
         mc_state.config.bc,
     )
     for (i, b) in enumerate(mc_state.config.pos)
-        mc_state.new_dist2_vec[i] = distance2(
-            mc_state.ensemble_variables.trial_move, b, mc_state.config.bc
-        )
+        mc_state.new_dist2_vec[i] =
+            distance2(mc_state.ensemble_variables.trial_move, b, mc_state.config.bc)
     end
     mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
     return mc_state
@@ -138,9 +137,8 @@ function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC
 
     # mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
     for (i, b) in enumerate(mc_state.config.pos)
-        mc_state.new_dist2_vec[i] = distance2(
-            mc_state.ensemble_variables.trial_move, b, mc_state.config.bc
-        )
+        mc_state.new_dist2_vec[i] =
+            distance2(mc_state.ensemble_variables.trial_move, b, mc_state.config.bc)
     end
     mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
     return mc_state
@@ -269,12 +267,10 @@ end
 Change the volume uniformly and update the `mc_state` accordingly.
 """
 function volume_change_uniform(mc_state::MCState)
-    mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
-        mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
-    )
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.bc
-    )
+    mc_state.ensemble_variables.trial_config, scale =
+        volume_change_xyz(mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength)
+    mc_state.ensemble_variables.new_r_cut =
+        get_r_cut(mc_state.ensemble_variables.trial_config.bc)
     mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
 
     return mc_state
@@ -313,16 +309,16 @@ function volume_change_separated(mc_state::MCState)
     else   # Choose all-direction volume change
         mc_state.ensemble_variables.xy_or_z = 0
         mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
-            mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
+            mc_state.config,
+            mc_state.max_displ[2],
+            mc_state.max_boxlength,
         )
     end
 
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.bc
-    )
-    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(
-        mc_state.ensemble_variables.trial_config
-    )
+    mc_state.ensemble_variables.new_r_cut =
+        get_r_cut(mc_state.ensemble_variables.trial_config.bc)
+    mc_state.ensemble_variables.new_dist2_mat =
+        get_distance2_mat(mc_state.ensemble_variables.trial_config)
 
     if ra<=3 && (
         mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
@@ -341,7 +337,7 @@ end
 
 MC move that changes volume. If `separated_volume == true`, the volume is changed in the ``x``,``y`` directions or in the ``z`` direction separately.
 """
-function volume_change(mc_state::MCState, separated_volume=false)
+function volume_change(mc_state::MCState, separated_volume = false)
     if separated_volume
         mc_state=volume_change_separated(mc_state)
     else
@@ -355,9 +351,9 @@ end
 Swaps two atoms in the configuration.
 """
 function swap_atoms(
-    mc_state::MCState{T,N,BC,PV,EV}
+    mc_state::MCState{T,N,BC,PV,EV},
 ) where {T,N,BC,PV,EV<:NNVTVariables{tee,n,N1,N2}} where {tee,n,N1,N2}
-    i1, i2 = rand(1:N1), rand((N1 + 1):N)
+    i1, i2 = rand(1:N1), rand((N1+1):N)
     mc_state.ensemble_variables.swap_indices = SVector{2}(i1, i2)
     return mc_state
 end

@@ -21,8 +21,8 @@ mc_cycles = 10_000   # default 20% equilibration cycles on top
 mc_sample = 1        # sample every mc_sample MC cycles
 displ_atom = 0.05    # in Angstrom
 n_adjust = 100
-max_displ_atom = [0.1 * √(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+max_displ_atom = [0.1 * √(displ_atom * temp.t_grid[i]) for i = 1:n_traj]
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -95,5 +95,5 @@ start_config = Config(positions, boundary_condition)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
-T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save = 1000)
+T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug = false)

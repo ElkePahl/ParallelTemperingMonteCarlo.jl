@@ -33,9 +33,9 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -464,10 +464,10 @@ start_config=[start_config_1, start_config_2]
 
 mc_states = [
     MCState(temp.t_grid[i], temp.beta_grid[i], start_config[1], ensemble, pot) for
-    i in 1:mc_params.n_traj
+    i = 1:mc_params.n_traj
 ]
 
-for i in 1:n_traj
+for i = 1:n_traj
     println(mc_states[i].en_tot)
 end
 
@@ -477,11 +477,11 @@ scale_a=[]
 e_xy_scaled=[]
 e_z_scaled=[]
 
-for i in 1:n_traj
+for i = 1:n_traj
     scale = 0.84+i/200
     #scale = 1.0
     pos_scale_xy = Vector{Vector{Float64}}(undef, n_atoms)
-    for j in 1:n_atoms
+    for j = 1:n_atoms
         pos_scale_xy[j] = [
             pos_ne150_fcc_start[j][1]*scale,
             pos_ne150_fcc_start[j][2]*scale,
@@ -493,9 +493,8 @@ for i in 1:n_traj
     bc_scale_xy = RhombicBC(box_length_xy, box_height)
 
     start_config_scale=Config(pos_scale_xy, bc_scale_xy)
-    mc_state_xy = MCState(
-        temp.t_grid[i], temp.beta_grid[i], start_config_scale, ensemble, pot
-    )
+    mc_state_xy =
+        MCState(temp.t_grid[i], temp.beta_grid[i], start_config_scale, ensemble, pot)
 
     println(scale)
     #println(start_config_scale.bc)
@@ -506,11 +505,11 @@ for i in 1:n_traj
     push!(e_xy_scaled, mc_state_xy.en_tot)
 end
 
-for i in 1:n_traj
+for i = 1:n_traj
     scale = 0.84+i/200
     #scale = 1.0
     pos_scale_z = Vector{Vector{Float64}}(undef, n_atoms)
-    for j in 1:n_atoms
+    for j = 1:n_atoms
         pos_scale_z[j] = [
             pos_ne150_fcc_start[j][1],
             pos_ne150_fcc_start[j][2],
@@ -522,9 +521,8 @@ for i in 1:n_traj
     bc_scale_z = RhombicBC(box_length, box_height_z)
 
     start_config_scale=Config(pos_scale_z, bc_scale_z)
-    mc_state_z = MCState(
-        temp.t_grid[i], temp.beta_grid[i], start_config_scale, ensemble, pot
-    )
+    mc_state_z =
+        MCState(temp.t_grid[i], temp.beta_grid[i], start_config_scale, ensemble, pot)
 
     println(scale)
     #println(start_config_scale.bc)

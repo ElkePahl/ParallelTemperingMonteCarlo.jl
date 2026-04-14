@@ -64,7 +64,7 @@ configurations: (Array{Float64}) 3D array containing the atom coordinates for ea
 shells: (Vector{Vector{Int64}}) A vector of shell numbers of each atom in each configuration. Empty if comparing.
 bondGraphs: Vector{SimpleGraph} A vector of graphical representation of each configuration. Empty if comparing.
 """
-function processFile(fp, L, N, B, compare, EBL, rCutRange; M=1)
+function processFile(fp, L, N, B, compare, EBL, rCutRange; M = 1)
     energies = Vector{Float64}() # Initialise list of configuration energies
     configurations = Array{Float64}(undef, (L, N, 3)) # Initialise 3D array for the atom coordinates for each configuration in the file.
     totalProfiles = Array{Dict{String,Int}}(undef, M, L) # Initialise array to hold total CNA profiles
@@ -84,14 +84,14 @@ function processFile(fp, L, N, B, compare, EBL, rCutRange; M=1)
             line = readline(fp) # Skip over number of atoms in the configuration as known from filename
             line = readline(fp) # Read blank line
             line = readline(fp) # Read next line
-            E = round(parse(Float64, line); digits=15) # Get the number of atoms in the configuration
+            E = round(parse(Float64, line); digits = 15) # Get the number of atoms in the configuration
             line = readline(fp) # Read blank line
             headerNext = false # Have completed reading the header
             coordinatesNext = true # Cooridinate information is on the next line		
         elseif (coordinatesNext) # If next line is coordinates
             line = readline(fp) # Read the next line
             for (j, x) in enumerate((split(line, r" +"))[2:4]) # For each component of the coordinate
-                configuration[atomNum + 1, j] = parse(Float64, x) # Store the component
+                configuration[atomNum+1, j] = parse(Float64, x) # Store the component
             end
             atomNum += 1 # Increment the number of atoms processed in the current configuration
             if (atomNum == N) # If have processed all the atoms in the current configuration
@@ -139,7 +139,7 @@ function writeClassification(configDir, filename, classifications, capSymmetries
     open("$configDir/classification/$(filename)_classification.txt", "a") do io # Open the output file corresponding to the input file
         # Write file headers
         println(io, "Config #    classification")
-        for j in 1:L # all the configurations in the file
+        for j = 1:L # all the configurations in the file
             # Print out the classifcations
             println(
                 io,
@@ -191,7 +191,7 @@ function writeProfiles(rCutRange, configDir, filename, energies, totalProfiles, 
     open("$configDir/comparison/rCut_$(rCutRange[i])/profile_$(filename).txt", "a") do io # Open the output file corresponding to the input file
         # Write file headers
         println(io, "Config #    Energy                 Total CNA Profile")
-        for j in 1:L # all the configurations in the file
+        for j = 1:L # all the configurations in the file
             # Print out the results
             println(
                 io,
@@ -216,7 +216,13 @@ Write out the configuration comparision results.
 	L: (Int64) The number of configurations in the file.
 """
 function writeComparison(
-    configDir, filename, sortingArray, sortedEnergies, maxSims, similarConfigs, L
+    configDir,
+    filename,
+    sortingArray,
+    sortedEnergies,
+    maxSims,
+    similarConfigs,
+    L,
 ) # Write comparison output file
     open("$configDir/comparison/comparison_$(filename).txt", "a") do io # Open the output file corresponding to the input file
         # Write file headers
@@ -224,7 +230,7 @@ function writeComparison(
             io,
             "Config #    Energy                 Similarity Score    $("Most similar to (Config #; rCut)")",
         )
-        for j in 1:L # all the configurations in the file
+        for j = 1:L # all the configurations in the file
             # Print out the results
             println(
                 io,
@@ -246,15 +252,21 @@ Write out the distinguisable configuration set results.
 	uniqueEnergyStats: Array{Float64} 2D array of energy statistics. First row is the mean, second row is standard deviation.
 """
 function writeUnique(
-    configDir, filename, numUnique, uniqueConfigs, uniqueSimilarities, uniqueEnergyStats
+    configDir,
+    filename,
+    numUnique,
+    uniqueConfigs,
+    uniqueSimilarities,
+    uniqueEnergyStats,
 )
     # Write unique configurations output file
     open("$configDir/comparison/unique_$(filename).txt", "a") do io # Open the output file corresponding to the input file
         # Write file headers
         println(
-            io, "Unique Config    Similarity Score     Energy Mean            Energy Std"
+            io,
+            "Unique Config    Similarity Score     Energy Mean            Energy Std",
         )
-        for j in 1:numUnique # all the configurations in the file
+        for j = 1:numUnique # all the configurations in the file
             # Print out the results
             println(
                 io,

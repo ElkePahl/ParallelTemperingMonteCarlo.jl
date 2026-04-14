@@ -33,9 +33,9 @@ mc_sample = 1  #sample every mc_sample MC cycles
 displ_atom = 0.1 # Angstrom
 n_adjust = 100
 
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj]
+max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i = 1:n_traj]
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample = mc_sample, n_adjust = n_adjust)
 
 #-------------------------------------------------------------#
 #----------------------Potential------------------------------#
@@ -380,7 +380,7 @@ pos_ne150_hcp=[
     [18.79489824, 12.65977949, 12.78830846],
 ]
 
-for i in 1:n_atoms
+for i = 1:n_atoms
     pos_ne150_fcc[i][1] *= 0.75
     pos_ne150_fcc[i][2] *= 0.75
     pos_ne150_hcp[i][1] *= 0.75

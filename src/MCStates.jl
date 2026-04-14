@@ -101,15 +101,15 @@ function MCState(
     en_tot::Number,
     potentialvariables::AbstractPotentialVariables,
     ensemble_variables::AbstractEnsembleVariables;
-    max_displ=[0.1, 0.1, 0.1, 0.1],
-    max_boxlength=max_length(config.bc),
-    max_boxheight=max_height(config.bc),
-    lh_ratio=max_boxlength/max_boxheight,
-    count_atom=[0, 0],
-    count_vol=[0, 0],
-    count_vol_xy=[0, 0],
-    count_vol_z=[0, 0],
-    count_exc=[0, 0],
+    max_displ = [0.1, 0.1, 0.1, 0.1],
+    max_boxlength = max_length(config.bc),
+    max_boxheight = max_height(config.bc),
+    lh_ratio = max_boxlength/max_boxheight,
+    count_atom = [0, 0],
+    count_vol = [0, 0],
+    count_vol_xy = [0, 0],
+    count_vol_z = [0, 0],
+    count_exc = [0, 0],
 ) where {T,N,BC} where {Z<:Number}
     ham = T[]
     MCState{T,N,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
@@ -135,7 +135,12 @@ function MCState(
     )
 end
 function MCState(
-    temp::Number, beta::Number, config::Config, ensemble::Etype, pot::Ptype; kwargs...
+    temp::Number,
+    beta::Number,
+    config::Config,
+    ensemble::Etype,
+    pot::Ptype;
+    kwargs...,
 )
     dist2_mat = get_distance2_mat(config)
     n_atoms = length(config)
@@ -143,8 +148,13 @@ function MCState(
     potential_variables = set_variables(config, dist2_mat, pot)
     ensemble_variables = set_ensemble_variables(config, ensemble)
 
-    en_tot, potential_variables=initialise_energy(
-        config, dist2_mat, potential_variables, ensemble_variables, pot
+    en_tot,
+    potential_variables=initialise_energy(
+        config,
+        dist2_mat,
+        potential_variables,
+        ensemble_variables,
+        pot,
     )
 
     MCState(

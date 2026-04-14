@@ -19,17 +19,25 @@ L: (Int64) The number of configurations in the file.
 N: (Int64) The number of atoms in each configuration.
 """
 function vestaFile(
-    configDir, fileName, configurations, classifications, capSymmetries, rCut, EBL, L, N
+    configDir,
+    fileName,
+    configurations,
+    classifications,
+    capSymmetries,
+    rCut,
+    EBL,
+    L,
+    N,
 )
     oldFP = open("blueprint.vesta") # Obtain file pointer to reference .vesta file
     lines = readlines(oldFP) # Get vector of lines of the reference file
-    for i in 1:L # For all configurations in the file
+    for i = 1:L # For all configurations in the file
         open("$configDir/visualisation/$(fileName)_$i.vesta", "a") do newFP # Create new .vesta file
             c = 1 # Initialise line counter
             while c <= length(lines) # While have not reached eof
                 if (lines[c] == "STRUC") # If have reached structure section of the .vesta file
                     println(newFP, "STRUC") # write header to new file
-                    for j in 1:N # For each atom in the configuration
+                    for j = 1:N # For each atom in the configuration
                         # Add the atom's coordinate to the file (aswell as other required values for Vesta)
                         println(
                             newFP,
@@ -43,7 +51,7 @@ function vestaFile(
                     end
                     println(newFP, "  0 0 0 0 0 0 0") # Not why this line is neccessary in the Vesta file
                     println(newFP, "THERI 1") # Write header to new file
-                    for j in 1:N # For each atom in the configuration
+                    for j = 1:N # For each atom in the configuration
                         println(newFP, "  $j  $j  0.000000") # Not why this line is neccessary in the Vesta file
                     end
                     c += 42 # Skip lines to get to next section in lines
@@ -55,7 +63,7 @@ function vestaFile(
                     ) # Write bond information
                     println(newFP, "  0 0 0 0")
                     println(newFP, "SITET") # Write header to new file
-                    for j in 1:N # For each atom in the configuration
+                    for j = 1:N # For each atom in the configuration
                         atomColour = colourAtom(j, classifications[i], capSymmetries[i]) # Colour the atom according to its identified symmetries
                         println(newFP, "  $j  $j  0.8000  $atomColour  76  76  76 204 0") # Add colour to file
                     end

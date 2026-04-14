@@ -48,17 +48,25 @@ function MCParams(
     cycles::Int,
     n_traj::Int,
     n_atoms::Int;
-    eq_percentage=0.2,
-    mc_sample=1,
-    n_adjust=100,
-    n_bin=100,
-    min_acc=0.4,
-    max_acc=0.6,
+    eq_percentage = 0.2,
+    mc_sample = 1,
+    n_adjust = 100,
+    n_bin = 100,
+    min_acc = 0.4,
+    max_acc = 0.6,
 )
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
     return MCParams(
-        mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust, n_bin, min_acc, max_acc
+        mc_cycles,
+        eq_cycles,
+        mc_sample,
+        n_traj,
+        n_atoms,
+        n_adjust,
+        n_bin,
+        min_acc,
+        max_acc,
     )
 end
 
@@ -79,12 +87,12 @@ struct TempGrid{N,T}
     beta_grid::SVector{N,T}
 end
 
-function TempGrid{N}(ti::Number, tf::Number; tdistr=:geometric) where {N}
+function TempGrid{N}(ti::Number, tf::Number; tdistr = :geometric) where {N}
     if tdistr == :equally_spaced
         delta = (tf-ti)/(N-1)
-        tgrid = [ti + (i-1)*delta for i in 1:N]
+        tgrid = [ti + (i-1)*delta for i = 1:N]
     elseif tdistr == :geometric
-        tgrid = [ti*(tf/ti)^((i-1)/(N-1)) for i in 1:N]
+        tgrid = [ti*(tf/ti)^((i-1)/(N-1)) for i = 1:N]
     else
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end
@@ -92,7 +100,7 @@ function TempGrid{N}(ti::Number, tf::Number; tdistr=:geometric) where {N}
     return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
 end
 
-TempGrid(ti::Number, tf::Number, N::Int; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
+TempGrid(ti::Number, tf::Number, N::Int; tdistr = :geometric) = TempGrid{N}(ti, tf; tdistr)
 
 """
     Output{T}(n_bin; en_min = 0) where T <: Number

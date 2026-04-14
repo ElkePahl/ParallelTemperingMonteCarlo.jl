@@ -4,7 +4,7 @@ using Random
     v1 = SVector(1.0, 2.0, 3.0)
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
-    bc = SphericalBC(radius=5.0)
+    bc = SphericalBC(radius = 5.0)
     conf1 = Config{3}([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.0, 1.0]
@@ -20,7 +20,7 @@ using Random
     @test typeof(state.potential_variables) == DimerPotentialVariables{Float64}
 
     @test state.en_tot ==
-        dimer_energy_config(state.dist2_mat, 3, state.potential_variables, pot1)[2]
+          dimer_energy_config(state.dist2_mat, 3, state.potential_variables, pot1)[2]
 
     state.ensemble_variables.index = 1
 
@@ -112,7 +112,7 @@ end
     v4 = SVector(-2.36, 2.36, 0.0)
     v5 = SVector(-6.99, 2.33, 0.0)
     v6 = SVector(-2.33, 6.99, 0.0)
-    bc = SphericalBC(radius=8.0)
+    bc = SphericalBC(radius = 8.0)
     conf = Config{6}([v1, v2, v3, v4, v5, v6], bc)
     d2mat = get_distance2_mat(conf)
     vars = set_variables(conf, d2mat, runnerpotential)

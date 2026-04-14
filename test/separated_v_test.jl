@@ -51,21 +51,21 @@ end
     trial_config = state_new.ensemble_variables.trial_config
 
     @test trial_config.pos[1][1] / config.pos[1][1] ≈
-        trial_config.bc.box_length / config.bc.box_length
+          trial_config.bc.box_length / config.bc.box_length
     @test trial_config.pos[1][3] / config.pos[1][3] ≈
-        trial_config.bc.box_height / config.bc.box_height
+          trial_config.bc.box_height / config.bc.box_height
     @test trial_config.pos[1][3] / config.pos[1][3] ≈
-        trial_config.pos[1][1] / config.pos[1][1]
+          trial_config.pos[1][1] / config.pos[1][1]
 
     state_new_xyz = volume_change(state, true)
     trial_config_xyz = state_new_xyz.ensemble_variables.trial_config
 
     @test trial_config_xyz.pos[1][1] / config.pos[1][1] ≈
-        trial_config_xyz.bc.box_length / config.bc.box_length
+          trial_config_xyz.bc.box_length / config.bc.box_length
     @test trial_config_xyz.pos[1][3] / config.pos[1][3] ≈
-        trial_config_xyz.bc.box_height / config.bc.box_height
+          trial_config_xyz.bc.box_height / config.bc.box_height
 
-    for i in 1:100
+    for i = 1:100
         state_new = volume_change(state, true)
         ensemble_variables = state_new.ensemble_variables
         trial_config = ensemble_variables.trial_config

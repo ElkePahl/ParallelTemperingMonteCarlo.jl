@@ -5,7 +5,7 @@ eval(call)
 
 using StatProfilerHTML, ProfileCanvas
 if mode == "release"
-    Profile.init(; n=500_000_000)
+    Profile.init(; n = 500_000_000)
 end
 @profilehtml eval(call)
 @profview_allocs eval(call)
