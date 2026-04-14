@@ -210,8 +210,8 @@ function equilibration(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc
     end
 end
 """
-    (ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential::Ptype, ensemble::Etype; rdfsave = false, restart = false, save = false, workingdirectory = pwd()) where Ptype <: AbstractPotential) where Etype <: AbstractEnsemble
-    ptmc_run!(restart::Bool; rdfsave = false, save = 1000, eq_cycles = 0.2)
+    (ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential::Ptype, ensemble::Etype; rdfsave = false, restart = false, save = false, workingdirectory = pwd(), saveconfigs=false, save_name="configuration") where Ptype <: AbstractPotential) where Etype <: AbstractEnsemble
+    ptmc_run!(restart::Bool; rdfsave = false, save = 1000, eq_cycles = 0.2, saveconfigs=false, save_name="configuration")
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs. 
 -   Second method:
@@ -223,9 +223,11 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
     -   `restart::Bool` : tells the simulation whether or not we are beginning from a partially complete simulation - set false for method one. 
     -   `acc::Vector` : sets the min and max acceptance rates used to adjust stepsize for the simulation - set [0.4 0.6] for a target of 40-60% acceptance 
     -   `save::Bool` or `Int` : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
+    -   `saveconfigs::Bool` or `Int` : tells the simulation whether to save configurations - set false for no save or integer expressing save frequency
+    -   `save_name::AbstractString` : tells the simulation what name to save configuration files under.
 
 """
-function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = false,restart=false,save=false,workingdirectory=pwd())
+function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype; rdfsave = false, restart=false,save=false,workingdirectory=pwd(), saveconfigs=false, save_name="configuration")
     cd(workingdirectory)
     #initialise the states and results etc
     if save != false
@@ -251,6 +253,10 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
         elseif rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
         end
+        if saveconfigs == false
+        elseif rem(i, saveconfigs) == 0
+            save_configs(mc_states, string(save_name, i))
+        end
     end
     println("MC loop done.")
 
@@ -260,7 +266,7 @@ function ptmc_run!(mc_params::MCParams,temp::TempGrid,start_config::Config,poten
     return mc_states,results
 end
 
-function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
+function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2, saveconfigs=false, save_name="configuration")
 
     mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter = initialisation(restart,eq_cycles)
     println("params set")
@@ -278,6 +284,10 @@ function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
         if save == false
         elseif rem(i,save) == 0
             checkpoint(i,mc_states,results,ensemble,rdfsave)
+        end
+        if saveconfigs == false
+        elseif rem(i, saveconfigs) == 0
+            save_configs(mc_states, string(save_name, i))
         end
     end
     println("MC loop done.")

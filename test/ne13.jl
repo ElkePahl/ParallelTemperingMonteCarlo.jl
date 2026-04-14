@@ -86,7 +86,7 @@ n_adjust = 100;
 # Next we include parameters that characterise how often the configuration is saved:
 save_configuration = true
 save_frequency = 20_000
-file_name = "Configurations"
+file_name = "Temporary"
 
 # For neatness, all parameters are collected in a `MCParams` struct:
 
