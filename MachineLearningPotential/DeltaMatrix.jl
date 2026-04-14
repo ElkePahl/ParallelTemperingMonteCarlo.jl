@@ -78,7 +78,7 @@ function calc_delta_symm_val!(
     η,
     g_norm,
 )
-    N = n1+n2
+    N = n1 + n2
 
     ind = ifelse(atomindex <= n1, 1, 2)
     #calculate i-Cu
@@ -137,7 +137,7 @@ function calc_delta_symm_val!(
     ζ,
     tpz,
 )
-    N = n1+n2
+    N = n1 + n2
 
     i_val = MVector{4,Int}(1, 2, 2, 1)
     if atomindex > n1
@@ -270,7 +270,7 @@ function calc_delta_matrix(
     n2,
 )
     for g_index in 1:nrad
-        idx=(g_index-1)*2+1
+        idx = (g_index - 1) * 2 + 1
 
         g_mat[idx:(idx + 1), :] = calc_delta_symm_val!(
             g_mat[idx:(idx + 1), :],
@@ -287,7 +287,7 @@ function calc_delta_matrix(
     end
 
     for g_index in 1:nang
-        idx = nrad*2 + (g_index-1)*3 + 1
+        idx = nrad * 2 + (g_index - 1) * 3 + 1
 
         g_mat[idx:(idx + 2), :] = calc_delta_symm_val!(
             g_mat[idx:(idx + 2), :],
@@ -322,7 +322,7 @@ function to calculate the changes to a symmetry vector g_vector assuming we have
 function calc_swap_symm_val(
     g_vector, atomindex1, atomindex2, dist2_mat, f_mat, n1, n2, η, g_norm
 )
-    N = n1+n2
+    N = n1 + n2
 
     for index in 1:n1
         if index != atomindex1
@@ -334,12 +334,12 @@ function calc_swap_symm_val(
                 dist2_mat[atomindex2, index], f_mat[atomindex2, index], η
             ) #the value of the current Zn which will live at index1
 
-            g_vector[1, index] += gval2-gval1
-            g_vector[2, index] += gval1-gval2
+            g_vector[1, index] += gval2 - gval1
+            g_vector[2, index] += gval1 - gval2
 
-            g_vector[1, atomindex1] += gval2-gval1
+            g_vector[1, atomindex1] += gval2 - gval1
 
-            g_vector[1, atomindex2] += gval1-gval2
+            g_vector[1, atomindex2] += gval1 - gval2
         end
     end
 
@@ -352,12 +352,12 @@ function calc_swap_symm_val(
                 dist2_mat[atomindex2, index], f_mat[atomindex2, index], η
             ) #the value of the old Zn which will live at index1
 
-            g_vector[1, index] += gval2-gval1
-            g_vector[2, index] += gval1-gval2
+            g_vector[1, index] += gval2 - gval1
+            g_vector[2, index] += gval1 - gval2
 
-            g_vector[2, atomindex1] += gval2-gval1
+            g_vector[2, atomindex1] += gval2 - gval1
 
-            g_vector[2, atomindex2] += gval1-gval2
+            g_vector[2, atomindex2] += gval1 - gval2
         end
     end
 
@@ -373,7 +373,7 @@ end
 function calc_swap_symm_val(
     g_vector, positions, atomindex1, atomindex2, dist2_mat, f_mat, n1, n2, η, λ, ζ, tpz
 )
-    N = n1+n2
+    N = n1 + n2
     for j_index in 1:n1
         if j_index != atomindex1
             for k_index in (j_index + 1):n1
@@ -595,7 +595,7 @@ function calc_swap_matrix(
     n2,
 )
     for g_index in 1:nrad
-        idx=(g_index-1)*2+1
+        idx = (g_index - 1) * 2 + 1
 
         g_mat[idx:(idx + 1), :] = calc_swap_symm_val(
             g_mat[idx:(idx + 1), :],
@@ -610,7 +610,7 @@ function calc_swap_matrix(
         )
     end
     for g_index in 1:nang
-        idx = nrad*2 + (g_index-1)*3 + 1
+        idx = nrad * 2 + (g_index - 1) * 3 + 1
 
         g_mat[idx:(idx + 2), :] = calc_swap_symm_val(
             g_mat[idx:(idx + 2), :],
@@ -638,7 +638,7 @@ Designed to update the radial symmetry function value `g_value`. Accepts the hyp
 """
 function adjust_symm_val!(g_value, r_sum, f_prod, η, g_norm)
     #adjusts radial type 2 symmetry function
-    g_value += exponential_part(η, r_sum, f_prod*g_norm)
+    g_value += exponential_part(η, r_sum, f_prod * g_norm)
     return g_value
 end
 """
@@ -662,8 +662,8 @@ end
 Functions for adjusting angular symmetry function value from `g_value` by calculating the exponential component `exp_old,exp_new`, theta components `θ_val_old,θ_val_new` from the angles `θ_old,θ_new` and the normalisaiton factor `tpz` These are used to subtract the old `g` value and add the new one. 
 """
 function adjust_angular_symm_val!(g_value, θ_new, θ_old, exp_new, exp_old, tpz)
-    g_value += exp_new*θ_new*tpz
-    g_value -= exp_old*θ_old*tpz
+    g_value += exp_new * θ_new * tpz
+    g_value -= exp_old * θ_old * tpz
 
     return g_value
 end
@@ -682,7 +682,7 @@ Call for the radial symmetry value designed to curry the input from `g_vector` a
 function calc_new_symmetry_value!(
     g_vector, indexi, indexj, dist2_mat, new_dist2_vector, f_matrix, new_f_vector, η, g_norm
 )
-    g_vector[indexi], g_vector[indexj] = adjust_radial_symm_val!(
+    return g_vector[indexi], g_vector[indexj] = adjust_radial_symm_val!(
         g_vector[indexi],
         g_vector[indexj],
         new_dist2_vector[indexj],
@@ -914,7 +914,7 @@ function total_symm!(
     end
     for g_index in 1:Nang
         #@views
-        truindex = g_index+Nrad
+        truindex = g_index + Nrad
         g_matrix[truindex, :] = angular_symmetry_calculation!(
             g_matrix[truindex, :],
             atomindex,
@@ -958,7 +958,7 @@ function total_thr_symm!(
     end
     Threads.@threads for g_index in 1:Nang
         #@views
-        truindex = g_index+Nrad
+        truindex = g_index + Nrad
         g_matrix[truindex, :] = angular_symmetry_calculation!(
             g_matrix[truindex, :],
             atomindex,

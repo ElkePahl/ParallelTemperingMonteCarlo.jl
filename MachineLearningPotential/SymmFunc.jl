@@ -38,8 +38,8 @@ function RadialType2{T}(eta, r_cut, type_vector) where {T}
     return RadialType2(eta, r_cut, type_vector, 0.0, 1.0)
 end
 function RadialType2{T}(eta, r_cut, type_vector, G_vals::Vector) where {T}
-    G_norm = 1/(G_vals[1] - G_vals[2])
-    G_offset = -G_vals[2]*G_norm
+    G_norm = 1 / (G_vals[1] - G_vals[2])
+    G_offset = -G_vals[2] * G_norm
     return RadialType2(eta, r_cut, type_vector, G_offset, G_norm)
 end
 #------------------------------------------------------------------------------#
@@ -62,8 +62,8 @@ function RadialType2a{T}(eta, r_cut, type_vector) where {T}
     return RadialType2a(eta, r_cut, type_vector, SVector{2}(0.0, 0.0), SVector{2}(1.0, 1.0))
 end
 function RadialType2a{T}(eta, r_cut, type_vector, G_vals_a::Vector, G_vals_b) where {T}
-    G_norm1 = 1/(G_vals_a[1][1] - G_vals_a[1][2])
-    G_offset1 = -G_vals_a[1][2]*G_norm1
+    G_norm1 = 1 / (G_vals_a[1][1] - G_vals_a[1][2])
+    G_offset1 = -G_vals_a[1][2] * G_norm1
 
     G_norm2 = 1/(G_vals_a[2][1] - G_vals_a[2][2])
     G_offset2 = -G_vals_a[2][2]*G_norm2
@@ -71,8 +71,8 @@ function RadialType2a{T}(eta, r_cut, type_vector, G_vals_a::Vector, G_vals_b) wh
     G_norm3 = 1/(G_vals_b[1][1] - G_vals_b[1][2])
     G_offset3 = -G_vals_b[1][2]*G_norm3
 
-    G_norm4 = 1/(G_vals_b[2][1] - G_vals_b[2][2])
-    G_offset4 = -G_vals_b[2][2]*G_norm4
+    G_norm4 = 1 / (G_vals_b[2][1] - G_vals_b[2][2])
+    G_offset4 = -G_vals_b[2][2] * G_norm4
 
     return RadialType2a(
         eta,
@@ -101,13 +101,13 @@ Functions to initialise the [`AngularType3`](@ref) structs based on various diff
 Second definition includes a vector containing `G_max` and `G_min` in a vector, it sets the offset and renormalises `tpz` to include `G_norm`. 
 """
 function AngularType3{T}(eta, lambda, zeta, r_cut, type_vec) where {T}
-    tpz = 2.0^(1-zeta)
+    tpz = 2.0^(1 - zeta)
     return AngularType3(eta, lambda, zeta, r_cut, type_vec, tpz, 0.0)
 end
 function AngularType3{T}(eta, lambda, zeta, r_cut, type_vector, G_vals::Vector) where {T}
-    G_norm = 1/(G_vals[1] - G_vals[2])
-    G_offset = -G_vals[2]*G_norm
-    tpz = 2.0^(1-zeta)*G_norm
+    G_norm = 1 / (G_vals[1] - G_vals[2])
+    G_offset = -G_vals[2] * G_norm
+    tpz = 2.0^(1 - zeta) * G_norm
     return AngularType3(eta, lambda, zeta, r_cut, type_vector, tpz, G_offset)
 end
 #-----------------------------------------------------------------------------#
@@ -130,7 +130,7 @@ Second definition includes a vector containing G_max and G_min in a vector, it s
 This version is for a diatomic potential where there are two sets of parameters one for each atom type. 
 """
 function AngularType3a{T}(eta, lambda, zeta, r_cut, type_vec) where {T}
-    tpz = 2.0^(1-zeta)
+    tpz = 2.0^(1 - zeta)
 
     return AngularType3a(
         eta, lambda, zeta, r_cut, type_vec, tpz, SVector{6}(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -139,9 +139,9 @@ end
 function AngularType3a{T}(
     eta, lambda, zeta, r_cut, type_vector, G_valsa::Vector, G_valsb::Vector
 ) where {T}
-    G_norm1 = 1/(G_valsa[1][1] - G_valsa[1][2])
-    G_offset1 = -G_valsa[1][2]*G_norm1
-    tpz1 = 2.0^(1-zeta)*G_norm1
+    G_norm1 = 1 / (G_valsa[1][1] - G_valsa[1][2])
+    G_offset1 = -G_valsa[1][2] * G_norm1
+    tpz1 = 2.0^(1 - zeta) * G_norm1
 
     G_norm2 = 1/(G_valsa[2][1] - G_valsa[2][2])
     G_offset2 = -G_valsa[2][2]*G_norm2
@@ -182,14 +182,14 @@ end
 Calculates the exponential portion of the symmetry function for the angular symmetry function. Preserves the values we can maintain throughout iterating over `theta`. Second method simply reduces the inputs to what is actually required. 
 """
 function exponential_part(η, r2_ij, r2_ik, r2_jk, f_ij, f_ik, f_jk)
-    exp(-η*(r2_ij+r2_ik+r2_jk)) * f_ij * f_ik * f_jk
+    return exp(-η * (r2_ij + r2_ik + r2_jk)) * f_ij * f_ik * f_jk
 end
-exponential_part(η, rsum, f_prod) = exp(-η*(rsum))*f_prod
+exponential_part(η, rsum, f_prod) = exp(-η * (rsum)) * f_prod
 """
     theta_part(θ,λ,ζ)
 Calculates the angular portion of a single symmetry function, this requires iteration over each of the three angles.
 """
-theta_part(θ, λ, ζ) = (1+λ*θ)^ζ
+theta_part(θ, λ, ζ) = (1 + λ * θ)^ζ
 """
     symmfunc_calc(θ_vec,r2_ij,r2_ik,r2_jk,f_ij,f_ik,f_jk,η,λ,ζ)
 Calculates the three `g_values` corresponding to the three atoms iterated over, builds the foundation of the total symm function as calculated below.
@@ -223,7 +223,7 @@ Returns a single symmetry function value from the double-sum. accepts `θ` the a
 The version with `position_i` calculates the angle between positions before calculating the symmetry functions according to the previous method.  
 """
 function calc_one_symm_val(r2_ij, fc_ij, g_norm, η)
-    ifelse(fc_ij!=0.0 && fc_ij!=1.0, fc_ij*exp(-η*r2_ij)*g_norm, 0.0)
+    return ifelse(fc_ij != 0.0 && fc_ij != 1.0, fc_ij * exp(-η * r2_ij) * g_norm, 0.0)
 end
 
 function calc_one_symm_val(r2_ij, fc_ij, η)
