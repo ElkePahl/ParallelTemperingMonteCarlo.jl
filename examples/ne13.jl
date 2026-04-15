@@ -21,8 +21,14 @@ n_atoms = 13;
 #= Next, we define the potential, here an extended Lennard Jones potential
 with coefficients for even powers of r, starting from powers of -6 to -16: =#
 
-c=[-10.5097942564988, 989.725135614556, -101383.865938807, 
-3918846.12841668, -56234083.4334278, 288738837.441765]
+c = [
+    -10.5097942564988,
+    989.725135614556,
+    -101383.865938807,
+    3918846.12841668,
+    -56234083.4334278,
+    288738837.441765,
+]
 
 pot = ELJPotentialEven{6}(c)
 
@@ -31,19 +37,21 @@ For Ne13 we choose the icosahedral ground state from the Cambridge cluster datab
 The atomic positions are given in Angstrom, which are then converted to Bohr radii
 as the program uses atomic units. =#
 
-pos_ne13 = [[2.825384495892464, 0.928562467914040, 0.505520149314310],
-[2.023342172678102,	-2.136126268595355, 0.666071287554958],
-[2.033761811732818,	-0.643989413759464, -2.133000349161121],
-[0.979777205108572,	2.312002562803556, -1.671909307631893],
-[0.962914279874254,	-0.102326586625353, 2.857083360096907],
-[0.317957619634043,	2.646768968413408, 1.412132053672896],
-[-2.825388342924982, -0.928563755928189, -0.505520471387560],
-[-0.317955944853142, -2.646769840660271, -1.412131825293682],
-[-0.979776174195320, -2.312003751825495, 1.671909138648006],
-[-0.962916072888105, 0.102326392265998,	-2.857083272537599],
-[-2.023340541398004, 2.136128558801072,	-0.666071089291685],
-[-2.033762834001679, 0.643989905095452, 2.132999911364582],
-[0.000002325340981,	0.000000762100600, 0.000000414930733]];
+pos_ne13 = [
+    [2.825384495892464, 0.928562467914040, 0.505520149314310],
+    [2.023342172678102, -2.136126268595355, 0.666071287554958],
+    [2.033761811732818, -0.643989413759464, -2.133000349161121],
+    [0.979777205108572, 2.312002562803556, -1.671909307631893],
+    [0.962914279874254, -0.102326586625353, 2.857083360096907],
+    [0.317957619634043, 2.646768968413408, 1.412132053672896],
+    [-2.825388342924982, -0.928563755928189, -0.505520471387560],
+    [-0.317955944853142, -2.646769840660271, -1.412131825293682],
+    [-0.979776174195320, -2.312003751825495, 1.671909138648006],
+    [-0.962916072888105, 0.102326392265998, -2.857083272537599],
+    [-2.023340541398004, 2.136128558801072, -0.666071089291685],
+    [-2.033762834001679, 0.643989905095452, 2.132999911364582],
+    [0.000002325340981, 0.000000762100600, 0.000000414930733],
+];
 
 AtoBohr = 1.8897259886;
 
@@ -55,7 +63,7 @@ pos_ne13 = pos_ne13 * AtoBohr
  A radius chosen too small will exert artificial pressure on the cluster
  while too large a value leads to atoms being ejected. =#
 
-bc_ne13 = SphericalBC(radius=5.32*AtoBohr) 
+bc_ne13 = SphericalBC(; radius=5.32 * AtoBohr)
 
 # We package the initial configuration and boundary conditions into a `Config` struct:
 
@@ -69,10 +77,10 @@ along with the number of temperatures (also called trajectories) we want to samp
 Note, that a geometrical distribution of temperatures is chosen to maximise overlaps
 in the energy histograms. =#
 
-ti = 4.;
-tf = 16.;
+ti = 4.0;
+tf = 16.0;
 n_traj = 25;
-temp = TempGrid{n_traj}(ti,tf)
+temp = TempGrid{n_traj}(ti, tf)
 
 #= Now we set the hyperparameters for this simulation:
 - `mc_cycles` is the number of Monte Carlo cycles we run, more cycles is more accurate
@@ -85,7 +93,7 @@ The maximum displacement is automatically adjusted, guaranteeing a 40-60% accept
 mc_cycles = 100_000;
 mc_sample = 1;
 displ_atom = 0.1;
-max_displ_atom = [0.1*sqrt(displ_atom*temp.t_grid[i]) for i in 1:n_traj];
+max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj];
 n_adjust = 100;
 
 # Next we include parameters that characterise how often the configuration is saved:
@@ -95,7 +103,7 @@ file_name = "Configurations"
 
 # For neatness, all parameters are collected in a `MCParams` struct:
 
-mc_params = MCParams(mc_cycles, n_traj, n_atoms, mc_sample=mc_sample, n_adjust=n_adjust)
+mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
 #= We then define the ensemble, here we are using the NVT ensemble
 (keeping N, the number of atoms, V, the volume, and T, the temperature constant).
@@ -111,15 +119,28 @@ move_strat = MoveStrategy(ensemble)
 This method returns the current state and results of the simulation.
 The data is stored in various local files created in the current working directory. =#
 
-mc_states, results = ptmc_run!(mc_params,temp,start_config,pot,ensemble;save=1000,
-saveconfigs=save_frequency, configsname=file_name);
+mc_states, results = ptmc_run!(
+    mc_params,
+    temp,
+    start_config,
+    pot,
+    ensemble;
+    save=1000,
+    saveconfigs=save_frequency,
+    configsname=file_name,
+);
 
 # ## Post-processing and Analyzing of Results
 
 # The raw heat capacity plot is obtained from:
 
-plot(temp.t_grid,results.heat_cap, xlabel="T [K]", ylabel=L"\(C_v\) [A.U]",
-title="Raw Heat Capacity against Temperature")
+plot(
+    temp.t_grid,
+    results.heat_cap;
+    xlabel="T [K]",
+    ylabel=L"\(C_v\) [A.U]",
+    title="Raw Heat Capacity against Temperature",
+)
 
 # and the energy histograms by:
 
@@ -131,23 +152,47 @@ This method accesses the stored data created from `ptmc_run!` and returns values
 the energies, histogram data, temperature, partition function, heat capacity, 
 heat capacity gradient, and entropy, which can be plotted as shown: =#
 
-energies,histogramdata,T,Z,Cv,dCv,S = postprocess();
+energies, histogramdata, T, Z, Cv, dCv, S = postprocess();
 
 # Plot of heat capacity against temperature:
 
-plot(T,Cv,label=nothing, xlabel="T [K]", ylabel=L"\(C_v\) [A.U]",
- title="Heat capacity against Temperature")
+plot(
+    T,
+    Cv;
+    label=nothing,
+    xlabel="T [K]",
+    ylabel=L"\(C_v\) [A.U]",
+    title="Heat capacity against Temperature",
+)
 
 # Plot of the heat capacity gradient against temperature:
 
-plot(T,dCv,label=nothing, xlabel="T [K]", ylabel=L"\(\frac{dC_v}{dT}\) [A.U]",
-title="Heat capacity gradient against Temperature")
+plot(
+    T,
+    dCv;
+    label=nothing,
+    xlabel="T [K]",
+    ylabel=L"\(\frac{dC_v}{dT}\) [A.U]",
+    title="Heat capacity gradient against Temperature",
+)
 
 # Plot of the partition function against temperature:
 
-plot(T,Z,label=nothing, xlabel="T [K]", ylabel="Z [1]",
-title="Partition function against Temperature")
+plot(
+    T,
+    Z;
+    label=nothing,
+    xlabel="T [K]",
+    ylabel="Z [1]",
+    title="Partition function against Temperature",
+)
 
 # Plot of the entropy of the system against temperature:
-plot(T,S,label=nothing, xlabel="T [K]", ylabel="S [A.U]",
-title="Entropy against Temperature")
+plot(
+    T,
+    S;
+    label=nothing,
+    xlabel="T [K]",
+    ylabel="S [A.U]",
+    title="Entropy against Temperature",
+)
