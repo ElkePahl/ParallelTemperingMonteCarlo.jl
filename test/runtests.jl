@@ -5,7 +5,9 @@ using SafeTestsets
 using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
-
+@safetestset "Saveconfigs" begin
+    include(joinpath(@__DIR__, "ne13_test.jl"))
+end
 
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))

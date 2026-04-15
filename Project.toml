@@ -13,8 +13,8 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [compat]
 DelimitedFiles = "1"
+LinearAlgebra = "1"
+Random = "1"
 Reexport = "1"
 StaticArrays = "1"
 StructArrays = "0.7"
-LinearAlgebra = "1"
-Random = "1"
