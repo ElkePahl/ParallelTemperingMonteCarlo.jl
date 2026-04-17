@@ -29,7 +29,7 @@ surface = sort([
     "MCRun",
     "Multihistogram",
     "Multihistogram_NPT",
-    "Multihistogram_NVT"
+    "Multihistogram_NVT",
 ])
 
 #Submodules of a submodule in the ParallelTemperingMonteCarlo module
@@ -39,8 +39,8 @@ submodules = [
         "Cutoff",
         "DeltaMatrix",
         "ForwardPass",
-        "SymmetryFunctions"
-    ]
+        "SymmetryFunctions",
+    ],
 ]
 main_module = "ParallelTemperingMonteCarlo"
 """
@@ -49,7 +49,10 @@ Generates the documentation markdown files for a (sub)module given the path of i
 function write_md(parent_module::String, module_name::String)
     fpath = joinpath(dirname(@__FILE__), "src", module_name * ".md")
     open(fpath, "w") do io
-        write(io, "# $module_name\n\n```@autodocs\nModules = [$parent_module.$module_name]\n```")
+        write(
+            io,
+            "# $module_name\n\n```@autodocs\nModules = [$parent_module.$module_name]\n```",
+        )
     end
 end
 
@@ -82,24 +85,18 @@ THRESHOLD_IGNORE = String[]
 #Adding examples
 for fn in EXAMPLES_FILES
     fnmd_full = Literate.markdown(
-        joinpath(EXAMPLES_INPUT, fn), EXAMPLES_OUTPUT;
-        documenter = true, execute = true
-        )
-    filepath = chop(fn; head = 0, tail = 2) * "md"
+        joinpath(EXAMPLES_INPUT, fn), EXAMPLES_OUTPUT; documenter=true, execute=true
+    )
+    filepath = chop(fn; head=0, tail=2) * "md"
     push!(EXAMPLES_PAIRS, fn => filepath)
     push!(THRESHOLD_IGNORE, filepath)
 end
 push!(pages, "Examples" => EXAMPLES_PAIRS)
 
-
-makedocs(sitename="$main_module",
-    pages = pages,
-    format = Documenter.HTMLWriter.HTML(
-        size_threshold_ignore = THRESHOLD_IGNORE,
-    )
+makedocs(;
+    sitename="$main_module",
+    pages=pages,
+    format=Documenter.HTMLWriter.HTML(; size_threshold_ignore=THRESHOLD_IGNORE),
 )
 repo = "github.com/ElkePahl/ParallelTemperingMonteCarlo.jl.git"
-deploydocs(
-    repo = repo,
-    devbranch = "main"
-)
+deploydocs(; repo=repo, devbranch="main")

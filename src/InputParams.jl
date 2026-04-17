@@ -44,10 +44,22 @@ struct MCParams
     max_acc::Float64
 end
 
-function MCParams(cycles::Int, n_traj::Int, n_atoms::Int; eq_percentage = 0.2, mc_sample = 1, n_adjust = 100, n_bin = 100, min_acc=0.4, max_acc=0.6)
+function MCParams(
+    cycles::Int,
+    n_traj::Int,
+    n_atoms::Int;
+    eq_percentage=0.2,
+    mc_sample=1,
+    n_adjust=100,
+    n_bin=100,
+    min_acc=0.4,
+    max_acc=0.6,
+)
     mc_cycles = Int(cycles)
     eq_cycles = round(Int, eq_percentage * mc_cycles)
-    return MCParams(mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust,n_bin,min_acc,max_acc)
+    return MCParams(
+        mc_cycles, eq_cycles, mc_sample, n_traj, n_atoms, n_adjust, n_bin, min_acc, max_acc
+    )
 end
 
 """
@@ -69,14 +81,14 @@ end
 
 function TempGrid{N}(ti::Number, tf::Number; tdistr=:geometric) where {N}
     if tdistr == :equally_spaced
-        delta = (tf-ti)/(N-1)
-        tgrid = [ti + (i-1)*delta for i in 1:N]
+        delta = (tf - ti) / (N - 1)
+        tgrid = [ti + (i - 1) * delta for i in 1:N]
     elseif tdistr == :geometric
-        tgrid =[ti*(tf/ti)^((i-1)/(N-1)) for i in 1:N]
+        tgrid = [ti * (tf / ti)^((i - 1) / (N - 1)) for i in 1:N]
     else
         throw(ArgumentError("chosen temperature distribution $tdistr does not exist"))
     end
-    betagrid = 1. ./ (kB .* tgrid)
+    betagrid = 1.0 ./ (kB .* tgrid)
     return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
 end
 
@@ -121,7 +133,7 @@ mutable struct Output{T}
     count_stat_exc::Vector{T}
 end
 
-function Output{T}(n_bin::Int) where T <: Number
+function Output{T}(n_bin::Int) where {T<:Number}
     en_min = 0.0
     en_max = 0.0
     v_min = 0.0
@@ -141,10 +153,25 @@ function Output{T}(n_bin::Int) where T <: Number
     count_stat_rot = T[]
     count_stat_exc = T[]
     return Output{T}(
-        n_bin, en_min, en_max, v_min, v_max, delta_en_hist, delta_v_hist, delta_r2,
-        max_displ, en_avg, heat_cap,
-        en_histogram, ev_histogram, rdf, lh_histogram,
-        count_stat_atom, count_stat_vol, count_stat_rot, count_stat_exc,
+        n_bin,
+        en_min,
+        en_max,
+        v_min,
+        v_max,
+        delta_en_hist,
+        delta_v_hist,
+        delta_r2,
+        max_displ,
+        en_avg,
+        heat_cap,
+        en_histogram,
+        ev_histogram,
+        rdf,
+        lh_histogram,
+        count_stat_atom,
+        count_stat_vol,
+        count_stat_rot,
+        count_stat_exc,
     )
 end
 

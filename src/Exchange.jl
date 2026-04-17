@@ -10,10 +10,9 @@ using ..InputParams
 using ..Configurations
 using ..EnergyEvaluation
 using ..Ensembles
-export metropolis_condition, exc_acceptance,exc_trajectories!
+export metropolis_condition, exc_acceptance, exc_trajectories!
 
-export parallel_tempering_exchange!,update_max_stepsize!
-
+export parallel_tempering_exchange!, update_max_stepsize!
 
 # """
 #     metropolis_condition(ensemble, delta_en, beta)
@@ -37,7 +36,6 @@ export parallel_tempering_exchange!,update_max_stepsize!
 #     return ifelse(prob_val > 1, T(1), prob_val)
 # end
 
-
 # function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
 #     delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)
 #     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
@@ -53,25 +51,41 @@ Function returning the probability value associated with a trial move. Four meth
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
 """
 function metropolis_condition(delta_energy::Number, beta::Number)
-    prob_val = exp(-delta_energy*beta)
+    prob_val = exp(-delta_energy * beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-function metropolis_condition(ensemble::Etype, delta_energy::Float64,volume_changed::Float64,volume_unchanged::Float64,beta::Float64) where Etype <: NPT
-    delta_h = delta_energy + ensemble.pressure*(volume_changed-volume_unchanged)
-    prob_val = exp(-delta_h*beta + ensemble.n_atoms*log(volume_changed/volume_unchanged))
+function metropolis_condition(
+    ensemble::Etype,
+    delta_energy::Float64,
+    volume_changed::Float64,
+    volume_unchanged::Float64,
+    beta::Float64,
+) where {Etype<:NPT}
+    delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged)
+    prob_val = exp(
+        -delta_h * beta + ensemble.n_atoms * log(volume_changed / volume_unchanged)
+    )
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-function metropolis_condition(movetype::String,mc_state::MCState,ensemble::Etype) where Etype <: AbstractEnsemble
+function metropolis_condition(
+    movetype::String, mc_state::MCState, ensemble::Etype
+) where {Etype<:AbstractEnsemble}
     if movetype == "atommove"
-        return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
+        return metropolis_condition((mc_state.new_en - mc_state.en_tot), mc_state.beta)
     elseif movetype == "volumemove"
         #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
-        return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),get_volume(mc_state.ensemble_variables.trial_config.bc),get_volume(mc_state.config.bc),mc_state.beta )
+        return metropolis_condition(
+            ensemble,
+            (mc_state.new_en - mc_state.en_tot),
+            get_volume(mc_state.ensemble_variables.trial_config.bc),
+            get_volume(mc_state.config.bc),
+            mc_state.beta,
+        )
     elseif movetype == "atomswap"
-        return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
-    else   
+        return metropolis_condition((mc_state.new_en - mc_state.en_tot), mc_state.beta)
+    else
         error("chosen move_type not implemented yet (see Exchange.jl)")
     end
 end
@@ -89,7 +103,7 @@ at inverse temperatures `beta_1` and `beta_2`.
 function exc_acceptance(beta_1::Number, beta_2::Number, en_1::Number, en_2::Number)
     delta_energy_acc = en_1 - en_2
     delta_beta = beta_1 - beta_2
-    exc_acc = min(1.0,exp(delta_beta * delta_energy_acc))
+    exc_acc = min(1.0, exp(delta_beta * delta_energy_acc))
     return exc_acc
 end
 
@@ -102,11 +116,12 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
     state_1.dist2_mat, state_2.dist2_mat = state_2.dist2_mat, state_1.dist2_mat
     state_1.en_tot, state_2.en_tot = state_2.en_tot, state_1.en_tot
-    state_1.ensemble_variables,state_2.ensemble_variables = state_2.ensemble_variables,state_1.ensemble_variables
-    state_1.potential_variables,state_2.potential_variables = state_2.potential_variables,state_1.potential_variables
+    state_1.ensemble_variables, state_2.ensemble_variables = state_2.ensemble_variables,
+    state_1.ensemble_variables
+    state_1.potential_variables, state_2.potential_variables = state_2.potential_variables,
+    state_1.potential_variables
     return state_1, state_2
-end 
-
+end
 
 """
     parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NVT) where T <: MCState
@@ -114,37 +129,57 @@ end
 These functions take a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
 The second method uses enthalpy instead of energy to determine acceptance. 
 """
-function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCParams,ensemble::AbstractEnsemble)
-    n_exc = rand(1:mc_params.n_traj-1)
+function parallel_tempering_exchange!(
+    mc_states::MCStateVector, mc_params::MCParams, ensemble::AbstractEnsemble
+)
+    n_exc = rand(1:(mc_params.n_traj - 1))
 
     mc_states[n_exc].count_exc[1] += 1
-    mc_states[n_exc+1].count_exc[1] += 1
+    mc_states[n_exc + 1].count_exc[1] += 1
 
-
-    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, mc_states[n_exc].en_tot,  mc_states[n_exc+1].en_tot) > rand()
+    if exc_acceptance(
+        mc_states[n_exc].beta,
+        mc_states[n_exc + 1].beta,
+        mc_states[n_exc].en_tot,
+        mc_states[n_exc + 1].en_tot,
+    ) > rand()
         mc_states[n_exc].count_exc[2] += 1
-        mc_states[n_exc+1].count_exc[2] += 1
+        mc_states[n_exc + 1].count_exc[2] += 1
 
-        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+        mc_states[n_exc], mc_states[n_exc + 1] = exc_trajectories!(
+            mc_states[n_exc], mc_states[n_exc + 1]
+        )
     end
 
     return mc_states
 end
-function parallel_tempering_exchange!(mc_states::MCStateVector,mc_params::MCParams,ensemble::NPT)
-    n_exc = rand(1:mc_params.n_traj-1)
+function parallel_tempering_exchange!(
+    mc_states::MCStateVector, mc_params::MCParams, ensemble::NPT
+)
+    n_exc = rand(1:(mc_params.n_traj - 1))
 
     mc_states[n_exc].count_exc[1] += 1
-    mc_states[n_exc+1].count_exc[1] += 1
-
-    
+    mc_states[n_exc + 1].count_exc[1] += 1
 
     #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
-    if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * get_volume(mc_states[n_exc].config.bc)),  (mc_states[n_exc+1].en_tot + ensemble.pressure * get_volume(mc_states[n_exc+1].config.bc))) > rand()
-    
+    if exc_acceptance(
+        mc_states[n_exc].beta,
+        mc_states[n_exc + 1].beta,
+        (
+            mc_states[n_exc].en_tot +
+            ensemble.pressure * get_volume(mc_states[n_exc].config.bc)
+        ),
+        (
+            mc_states[n_exc + 1].en_tot +
+            ensemble.pressure * get_volume(mc_states[n_exc + 1].config.bc)
+        ),
+    ) > rand()
         mc_states[n_exc].count_exc[2] += 1
-        mc_states[n_exc+1].count_exc[2] += 1
+        mc_states[n_exc + 1].count_exc[2] += 1
 
-        mc_states[n_exc], mc_states[n_exc+1] = exc_trajectories!(mc_states[n_exc], mc_states[n_exc+1])
+        mc_states[n_exc], mc_states[n_exc + 1] = exc_trajectories!(
+            mc_states[n_exc], mc_states[n_exc + 1]
+        )
     end
 
     return mc_states
@@ -160,10 +195,12 @@ Information on actual max. displacement and accepted moves between updates is co
 
 Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble.
 """
-function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,min_acc::Number,max_acc::Number)
+function update_max_stepsize!(
+    mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number
+)
     #atom moves
 
-    acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves) 
+    acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
 
     if acc_rate < min_acc
         mc_state.max_displ[1] *= 0.9
@@ -173,7 +210,7 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
     mc_state.count_atom[2] = 0
     #volume moves
     #if v > 0
-    if ensemble.separated_volume==false
+    if ensemble.separated_volume == false
         acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
@@ -182,7 +219,7 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
         end
         mc_state.count_vol[2] = 0
     else
-        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves *1/2)
+        acc_rate = mc_state.count_vol[2] / (n_update * ensemble.n_volume_moves * 1 / 2)
         if acc_rate < min_acc
             mc_state.max_displ[2] *= 0.9
         elseif acc_rate > max_acc
@@ -190,7 +227,7 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
         end
         mc_state.count_vol[2] = 0
 
-        acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves *1/3)
+        acc_rate = mc_state.count_vol_xy[2] / (n_update * ensemble.n_volume_moves * 1 / 3)
         if acc_rate < min_acc
             mc_state.max_displ[3] *= 0.9
         elseif acc_rate > max_acc
@@ -198,7 +235,7 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
         end
         mc_state.count_vol_xy[2] = 0
 
-        acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves /6)
+        acc_rate = mc_state.count_vol_z[2] / (n_update * ensemble.n_volume_moves / 6)
         if acc_rate < min_acc
             mc_state.max_displ[4] *= 0.9
         elseif acc_rate > max_acc
@@ -208,10 +245,11 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT,mi
     end
     #end
 
-
     return mc_state
 end
-function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::Etype ,min_acc::Number,max_acc::Number) where Etype <: AbstractEnsemble
+function update_max_stepsize!(
+    mc_state::MCState, n_update::Int, ensemble::Etype, min_acc::Number, max_acc::Number
+) where {Etype<:AbstractEnsemble}
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
     if acc_rate < min_acc
@@ -221,9 +259,7 @@ function update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::Etype 
     end
     mc_state.count_atom[2] = 0
 
-
     return mc_state
 end
-
 
 end

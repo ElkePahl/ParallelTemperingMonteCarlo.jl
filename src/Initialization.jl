@@ -1,10 +1,8 @@
 module Initialization
 
-
-using StaticArrays,DelimitedFiles,Random
+using StaticArrays, DelimitedFiles, Random
 
 export initialisation
-
 
 using ..MachineLearningPotential
 using ..MCStates
@@ -49,24 +47,24 @@ Method two also returns:
 """
 #function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
 
-    #move_strategy = MoveStrategy(ensemble)
-    #n_steps = length(move_strategy)
+#move_strategy = MoveStrategy(ensemble)
+#n_steps = length(move_strategy)
 
-    #mc_states = Array{MCState}(undef, mc_params.n_traj)
-    #for i in 1:mc_params.n_traj
-        #if rem(i,2) == 0
-            #mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[1],ensemble,potential)
-        #else
-            #mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[2],ensemble,potential)
-        #end
-    #end
-    #mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
+#mc_states = Array{MCState}(undef, mc_params.n_traj)
+#for i in 1:mc_params.n_traj
+#if rem(i,2) == 0
+#mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[1],ensemble,potential)
+#else
+#mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[2],ensemble,potential)
+#end
+#end
+#mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
 
-    #println(mc_states[1].en_tot)
+#println(mc_states[1].en_tot)
 
-    #results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
-    #start_counter=1
-    #return mc_states,move_strategy,results,n_steps,start_counter
+#results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
+#start_counter=1
+#return mc_states,move_strategy,results,n_steps,start_counter
 #end
 
 function initialisation(
@@ -86,7 +84,7 @@ function initialisation(
     ensemble::AbstractEnsemble,
 )
     move_strategy = MoveStrategy(ensemble)
-    mc_states = map(1:mc_params.n_traj) do i
+    mc_states = map(1:(mc_params.n_traj)) do i
         MCState(
             temp.t_grid[i],
             temp.beta_grid[i],
@@ -102,15 +100,15 @@ function initialisation(
     return mc_states, move_strategy, results, n_steps, start_counter
 end
 
-function initialisation(restart::Bool,eq_cycles)
-    mc_params,temp,ensemble,potential = read_init(restart,eq_cycles)
+function initialisation(restart::Bool, eq_cycles)
+    mc_params, temp, ensemble, potential = read_init(restart, eq_cycles)
 
     if restart == true
         start_counter = Int(readdlm("./checkpoint/index.txt")[1])
-        mc_states,results = rebuild_states(mc_params.n_traj,ensemble,temp,potential)
+        mc_states, results = rebuild_states(mc_params.n_traj, ensemble, temp, potential)
     else
-        mc_states,results = build_states(mc_params,ensemble,temp,potential)
-        start_counter=1
+        mc_states, results = build_states(mc_params, ensemble, temp, potential)
+        start_counter = 1
     end
 
     for state in mc_states
@@ -120,7 +118,9 @@ function initialisation(restart::Bool,eq_cycles)
     move_strategy = MoveStrategy(ensemble)
     n_steps = length(move_strategy)
 
-    return mc_params,ensemble,potential,mc_states,move_strategy,results,n_steps,start_counter
+    return mc_params,
+    ensemble, potential, mc_states, move_strategy, results, n_steps,
+    start_counter
 end
 
 end

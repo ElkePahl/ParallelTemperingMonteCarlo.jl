@@ -5,7 +5,6 @@ using Test
 call = :(include(joinpath(@__DIR__,"..","scripts","ne55.jl")))
 eval(call)
 
-
 #benchmark_data = [
     1133.804270116, #elapsed_time
     3435518568, #bytes_allocated

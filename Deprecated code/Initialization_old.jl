@@ -22,7 +22,7 @@
 # """
 #     init_sim(pot ;dir=pwd())
 # Function designed to take an input file named by kwarg `file` and open and initalise the states and parameters required for the simulation. 
-    
+
 #     ---This is not exactly the same as the restart as the params etc are distributed in separate files by the checkpoint function to prevent duplication and slowdown throughout the simulation. 
 # """
 # function init_sim(pot ,file,eq_percentage)
@@ -41,7 +41,6 @@
 
 #     length(start_config.pos) == mc_params.n_atoms || error("number of atoms and positions not the same - check starting config")
 
-    
 #     mc_states = [MCState(temps.t_grid[i], temps.beta_grid[i], start_config, pot) for i in 1:mc_params.n_traj]
 
 #     results = Output{Float64}(simdata[3,2]; en_min = mc_states[1].en_tot)
@@ -49,7 +48,6 @@
 #     return mc_states,move_strat,mc_params,pot,ensemble,results
 
 # end
-
 
 # """
 #     function restart_ptmc(potential, directory)
@@ -62,7 +60,6 @@
 #     filecontents=readdlm(readfile)
 
 #     step,configdata = read_input(filecontents)
-
 
 #     close(readfile)
 #     paramfile =  open("$(directory)/params.data")
@@ -96,7 +93,6 @@
 #     println("Total number of moves per MC cycle: ", n_steps)
 #     println()
 
-
 #     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 
 # end
@@ -109,7 +105,5 @@
 
 #     return mc_states,mc_params,move_strat,pot,ensemble,results,start_counter,n_steps,a,v,r
 # end
-
-
 
 # end

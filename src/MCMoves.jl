@@ -1,8 +1,7 @@
 module MCMoves
 
-
-export atom_displacement,volume_change
-export scale_xy,scale_z,volume_change_xy,volume_change_z,volume_change_xyz
+export atom_displacement, volume_change
+export scale_xy, scale_z, volume_change_xy, volume_change_z, volume_change_xyz
 export generate_move!
 
 using StaticArrays
@@ -32,7 +31,11 @@ Implemented for:
 The final method is a wrapper function which unpacks `mc_states`, which contains all the necessary arguments for the two methods above. When we have correctly implemented `move_strat` this wrapper will be expanded to include other methods.
 """
 function atom_displacement(pos::PositionVector, max_displacement::Number, bc::SphericalBC)
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    delta_move = SVector(
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+    )
     trial_pos = pos + delta_move
     # count = 0
     # while check_boundary(bc, trial_pos)         #displace the atom until it's inside the binding sphere
@@ -45,44 +48,87 @@ function atom_displacement(pos::PositionVector, max_displacement::Number, bc::Sp
 end
 
 function atom_displacement(pos::PositionVector, max_displacement::Number, bc::CubicBC)
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    delta_move = SVector(
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+    )
     trial_pos = pos + delta_move
-    trial_pos -= bc.box_length*SVector(round(trial_pos[1]/bc.box_length), round(trial_pos[2]/bc.box_length), round(trial_pos[3]/bc.box_length))
+    trial_pos -=
+        bc.box_length * SVector(
+            round(trial_pos[1] / bc.box_length),
+            round(trial_pos[2] / bc.box_length),
+            round(trial_pos[3] / bc.box_length),
+        )
     return trial_pos
 end
 
 function atom_displacement(pos::PositionVector, max_displacement::Number, bc::RhombicBC)
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    delta_move = SVector(
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+    )
     trial_pos = pos + delta_move
-    trial_pos -= SVector(bc.box_length*round((trial_pos[1]-trial_pos[2]/3^0.5-bc.box_length/2)/bc.box_length)+bc.box_length/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_length*3^0.5/2*round((trial_pos[2]-bc.box_length*3^0.5/4)/(bc.box_length*3^0.5/2)), bc.box_height*round((trial_pos[3]-bc.box_height/2)/bc.box_height))
+    trial_pos -= SVector(
+        bc.box_length *
+        round((trial_pos[1] - trial_pos[2] / 3^0.5 - bc.box_length / 2) / bc.box_length) +
+        bc.box_length / 2 *
+        round((trial_pos[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        bc.box_length * 3^0.5 / 2 *
+        round((trial_pos[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        bc.box_height * round((trial_pos[3] - bc.box_height / 2) / bc.box_height),
+    )
     return trial_pos
 end
 
 function atom_displacement(pos, max_displacement, bc::RectangularBC)
-    delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
+    delta_move = SVector(
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+        (rand() - 0.5) * max_displacement,
+    )
     trial_pos = pos + delta_move
-    trial_pos -= SVector(bc.box_length*round(trial_pos[1]/bc.box_length), bc.box_length*round(trial_pos[2]/bc.box_length), bc.box_height*round(trial_pos[3]/bc.box_height))
+    trial_pos -= SVector(
+        bc.box_length * round(trial_pos[1] / bc.box_length),
+        bc.box_length * round(trial_pos[2] / bc.box_length),
+        bc.box_height * round(trial_pos[3] / bc.box_height),
+    )
     return trial_pos
 end
 
 function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:PeriodicBC}
-    mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+    mc_state.ensemble_variables.trial_move = atom_displacement(
+        mc_state.config.pos[mc_state.ensemble_variables.index],
+        mc_state.max_displ[1],
+        mc_state.config.bc,
+    )
     for (i, b) in enumerate(mc_state.config.pos)
-        mc_state.new_dist2_vec[i] = distance2(mc_state.ensemble_variables.trial_move,b,mc_state.config.bc)
+        mc_state.new_dist2_vec[i] = distance2(
+            mc_state.ensemble_variables.trial_move, b, mc_state.config.bc
+        )
     end
-    mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.
+    mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
     return mc_state
 end
 
 function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC}
-    count = 0.
-    trial_pos = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+    count = 0.0
+    trial_pos = atom_displacement(
+        mc_state.config.pos[mc_state.ensemble_variables.index],
+        mc_state.max_displ[1],
+        mc_state.config.bc,
+    )
     while check_boundary(mc_state.config.bc, trial_pos)
         count += 1
         if count == 50
             recentre!(mc_state.config)
         else
-            trial_pos = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
+            trial_pos = atom_displacement(
+                mc_state.config.pos[mc_state.ensemble_variables.index],
+                mc_state.max_displ[1],
+                mc_state.config.bc,
+            )
             count == 100 && error("Error: too many moves out of binding sphere")
         end
     end
@@ -90,12 +136,13 @@ function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC
 
     # mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
     for (i, b) in enumerate(mc_state.config.pos)
-        mc_state.new_dist2_vec[i] = distance2(mc_state.ensemble_variables.trial_move,b,mc_state.config.bc)
+        mc_state.new_dist2_vec[i] = distance2(
+            mc_state.ensemble_variables.trial_move, b, mc_state.config.bc
+        )
     end
-    mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.
+    mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
     return mc_state
 end
-
 
 """
     scale_xyz(::RhombicBC, α)
@@ -120,7 +167,7 @@ Scale the whole configuration, including positions and the box length by a rando
 Returns the trial configuration.
 """
 function volume_change_xyz(conf::Config, max_vchange::Real, max_length::Real)
-    scale = exp((rand()-0.5) * max_vchange) ^ (1/3)
+    scale = exp((rand() - 0.5) * max_vchange)^(1 / 3)
     if conf.bc.box_length >= max_length && scale > 1.0
         scale = 1.0
     end
@@ -179,14 +226,14 @@ the ``x`` and ``y`` directions.
 Returns the trial configuration.
 """
 function volume_change_xy(conf::Config, max_vchange, max_length, lh_ratio)
-    scale = exp((rand() - 0.5) * max_vchange) ^ (1/2)
+    scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
     if conf.bc.box_length / conf.bc.box_height >= lh_ratio * 1.1 && scale > 1.0
-        scale=1 / scale
+        scale = 1 / scale
     elseif conf.bc.box_length / conf.bc.box_height <= lh_ratio * 0.909 && scale < 1.0
-        scale=1 / scale
+        scale = 1 / scale
     end
-    if conf.bc.box_length>=max_length && scale > 1.
-        scale=1/scale
+    if conf.bc.box_length >= max_length && scale > 1.0
+        scale = 1 / scale
     end
 
     return scale_xy(conf, scale), scale
@@ -202,16 +249,16 @@ Returns the trial configuration.
 """
 function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)
-    if conf.bc.box_length / conf.bc.box_height <= lh_ratio*1.1 && scale > 1.0
+    if conf.bc.box_length / conf.bc.box_height <= lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
-    elseif conf.bc.box_length / conf.bc.box_height >= lh_ratio*0.909 && scale < 1.0
+    elseif conf.bc.box_length / conf.bc.box_height >= lh_ratio * 0.909 && scale < 1.0
         scale = 1 / scale
     end
     if conf.bc.box_height >= max_height && scale > 1.0
         scale = 1 / scale
     end
 
-    return scale_z(conf, scale), 1/scale
+    return scale_z(conf, scale), 1 / scale
 end
 
 """
@@ -264,20 +311,18 @@ function volume_change_separated(mc_state::MCState)
     else   # Choose all-direction volume change
         mc_state.ensemble_variables.xy_or_z = 0
         mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
-            mc_state.config,
-            mc_state.max_displ[2],
-            mc_state.max_boxlength,
+            mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
         )
     end
 
     mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.bc,
+        mc_state.ensemble_variables.trial_config.bc
     )
     mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(
-        mc_state.ensemble_variables.trial_config,
+        mc_state.ensemble_variables.trial_config
     )
 
-    if ra<=3 && (
+    if ra <= 3 && (
         mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
         mc_state.potential_variables isa LookupTableVariables{Float64}
     )
@@ -295,11 +340,11 @@ end
 MC move that changes volume. If `separated_volume == true`, the volume is changed in the ``x``,``y`` directions or in the ``z`` direction separately.
 """
 function volume_change(mc_state::MCState, separated_volume=false)
-   if separated_volume
-       mc_state=volume_change_separated(mc_state)
-   else
-       mc_state=volume_change_uniform(mc_state)
-   end
+    if separated_volume
+        mc_state = volume_change_separated(mc_state)
+    else
+        mc_state = volume_change_uniform(mc_state)
+    end
     return mc_state
 end
 
@@ -307,10 +352,12 @@ end
     (swap_atoms(mc_state::MCState{T, N, BC, PV, EV}) where {T, N, BC, PV, EV <: NNVTVariables{tee, n, N1, N2}}) where {tee, n, N1, N2}
 Swaps two atoms in the configuration.
 """
-function swap_atoms(mc_state::MCState{T,N,BC,PV,EV}) where {T,N,BC,PV,EV<:NNVTVariables{tee,n,N1,N2}} where {tee,n,N1,N2}
-    i1,i2 = rand(1:N1),rand(N1+1:N)
-    mc_state.ensemble_variables.swap_indices = SVector{2}(i1,i2)
-   return mc_state
+function swap_atoms(
+    mc_state::MCState{T,N,BC,PV,EV}
+) where {T,N,BC,PV,EV<:NNVTVariables{tee,n,N1,N2}} where {tee,n,N1,N2}
+    i1, i2 = rand(1:N1), rand((N1 + 1):N)
+    mc_state.ensemble_variables.swap_indices = SVector{2}(i1, i2)
+    return mc_state
 end
 
 """
@@ -318,16 +365,14 @@ end
 [`generate_move!`](@ref) is the currying function that takes `mc_state` and a `movetype`
 and generates the variables required inside of the `ensemblevariables` struct within `mc_state`.
 """
-function generate_move!(mc_state::MCState,movetype::String,ensemble)
+function generate_move!(mc_state::MCState, movetype::String, ensemble)
     if movetype == "atommove"
         return atom_displacement(mc_state)
     elseif movetype == "atomswap"
         return swap_atoms(mc_state)
     else
-        return volume_change(mc_state,ensemble.separated_volume)
+        return volume_change(mc_state, ensemble.separated_volume)
     end
 end
-
-
 
 end

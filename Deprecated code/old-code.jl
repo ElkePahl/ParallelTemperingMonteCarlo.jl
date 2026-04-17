@@ -23,7 +23,7 @@
 #     #move randomly selected atom (obeying the boundary conditions)
 
 #     # trial_pos = atom_displacement(mc_state.config.pos[i_atom], mc_state.max_displ[1], mc_state.config.bc)
-    
+
 #     trial_pos = atom_displacement(mc_state,i_atom)
 #     #find new distances of moved atom 
 
@@ -131,7 +131,6 @@
 #         end
 #     end
 
-
 #     if rand() < 0.1 #attempt to exchange trajectories
 #         n_exc = rand(1:mc_params.n_traj-1)
 #         mc_states[n_exc].count_exc[1] += 1
@@ -144,10 +143,8 @@
 #         end
 #     end
 
-
 #     return mc_states
 # end
-
 
 # """
 
@@ -185,7 +182,7 @@
 #             push!(en_min,minimum(mc_states[i_traj].ham))
 #             push!(en_max,maximum(mc_states[i_traj].ham))
 #         end
-    
+
 #         global_en_min = minimum(en_min)
 #         global_en_max = maximum(en_max)
 #     else
@@ -201,15 +198,12 @@
 #         RDF = zeros(results.n_bin*5)
 #         push!(results.rdf,RDF)
 #     end
-    
 
 #     delta_en_hist = (global_en_max - global_en_min) / (results.n_bin - 1)
-
 
 #     results.en_min = global_en_min
 #     results.en_max = global_en_max
 
-  
 #         return  delta_en_hist
 # end
 # """
@@ -233,7 +227,7 @@
 # function updatehistogram!(mc_params,mc_states,results,delta_en_hist ; fullham=true)
 
 #     for update_traj_index in 1:mc_params.n_traj
-        
+
 #         if fullham == true #this is done at the end of the cycle
 
 #             hist = zeros(results.n_bin)#EnHist(results.n_bin, global_en_min, global_en_max)

@@ -42,11 +42,4 @@ include("multihist_NVT.jl")
 @reexport using .Multihistogram_NPT
 @reexport using .Multihistogram_NVT
 
- 
-
-
-
-
-
-
-end 
+end
