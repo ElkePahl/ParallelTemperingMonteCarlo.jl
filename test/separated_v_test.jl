@@ -17,17 +17,17 @@ end
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = RhombicBC(10.0, 10.0)
-    conf = Config{3}([v1, v2, v3], bc)
+    conf = Config([v1, v2, v3], bc)
 
     trial_config_xy, scale1 = volume_change_xy(
         conf, 0.1, 12.0, bc.box_length / bc.box_height
     )
-    @test trial_config_xy.pos[1][1] == conf.pos[1][1] * scale1
-    @test trial_config_xy.pos[1][3] == conf.pos[1][3]
+    @test trial_config_xy[1][1] == conf[1][1] * scale1
+    @test trial_config_xy[1][3] == conf[1][3]
 
     trial_config_z, scale2 = volume_change_z(conf, 0.1, 12.0, bc.box_length / bc.box_height)
-    @test trial_config_z.pos[1][1] == conf.pos[1][1]
-    @test abs(trial_config_z.pos[1][3] - conf.pos[1][3] / scale2) < 1e-12
+    @test trial_config_z[1][1] == conf[1][1]
+    @test abs(trial_config_z[1][3] - conf[1][3] / scale2) < 1e-12
 end
 
 @testset "rhombic_v_changes_elj" begin
@@ -35,7 +35,7 @@ end
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = RhombicBC(10.0, 10.0)
-    conf = Config{3}([v1, v2, v3], bc)
+    conf = Config([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf)
     c1 = [-2.0, 1.0]
     pot1 = ELJPotentialEven{2}(c1)
@@ -52,37 +52,37 @@ end
     config = state.config
     trial_config = state_new.ensemble_variables.trial_config
 
-    @test trial_config.pos[1][1] / config.pos[1][1] ≈
-        trial_config.bc.box_length / config.bc.box_length
-    @test trial_config.pos[1][3] / config.pos[1][3] ≈
-        trial_config.bc.box_height / config.bc.box_height
-    @test trial_config.pos[1][3] / config.pos[1][3] ≈
-        trial_config.pos[1][1] / config.pos[1][1]
+    @test trial_config[1][1] / config[1][1] ≈
+        trial_config.boundary_condition.box_length / config.boundary_condition.box_length
+    @test trial_config[1][3] / config[1][3] ≈
+        trial_config.boundary_condition.box_height / config.boundary_condition.box_height
+    @test trial_config[1][3] / config[1][3] ≈
+        trial_config[1][1] / config[1][1]
 
     state_new_xyz = volume_change(state, true)
     trial_config_xyz = state_new_xyz.ensemble_variables.trial_config
 
-    @test trial_config_xyz.pos[1][1] / config.pos[1][1] ≈
-        trial_config_xyz.bc.box_length / config.bc.box_length
-    @test trial_config_xyz.pos[1][3] / config.pos[1][3] ≈
-        trial_config_xyz.bc.box_height / config.bc.box_height
+    @test trial_config_xyz[1][1] / config[1][1] ≈
+        trial_config_xyz.boundary_condition.box_length / config.boundary_condition.box_length
+    @test trial_config_xyz[1][3] / config[1][3] ≈
+        trial_config_xyz.boundary_condition.box_height / config.boundary_condition.box_height
 
     for i in 1:100
         state_new = volume_change(state, true)
         ensemble_variables = state_new.ensemble_variables
         trial_config = ensemble_variables.trial_config
         if ensemble_variables.xy_or_z == 2
-            @test trial_config.pos[2][3] ≠ config.pos[2][3]
-            @test trial_config.pos[2][1] == config.pos[2][1]
-            @test trial_config.pos[2][2] == config.pos[2][2]
+            @test trial_config[2][3] ≠ config[2][3]
+            @test trial_config[2][1] == config[2][1]
+            @test trial_config[2][2] == config[2][2]
         elseif ensemble_variables.xy_or_z == 1
-            @test trial_config.pos[2][3] == config.pos[2][3]
-            @test trial_config.pos[2][1] ≠ config.pos[2][1]
-            @test trial_config.pos[2][2] ≠ config.pos[2][2]
+            @test trial_config[2][3] == config[2][3]
+            @test trial_config[2][1] ≠ config[2][1]
+            @test trial_config[2][2] ≠ config[2][2]
         elseif ensemble_variables.xy_or_z == 0
-            @test trial_config.pos[2][3] ≠ config.pos[2][3]
-            @test trial_config.pos[2][1] ≠ config.pos[2][1]
-            @test trial_config.pos[2][2] ≠ config.pos[2][2]
+            @test trial_config[2][3] ≠ config[2][3]
+            @test trial_config[2][1] ≠ config[2][1]
+            @test trial_config[2][2] ≠ config[2][2]
         end
     end
 end
@@ -92,7 +92,7 @@ end
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = RhombicBC(10.0, 10.0)
-    conf = Config{3}([v1, v2, v3], bc)
+    conf = Config([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf)
 
     a = [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608]
@@ -116,8 +116,8 @@ end
     @test metropolis_condition("volumemove", state_new, ensemble) ≈ metropolis_condition(
         ensemble,
         state_new.new_en - state.en_tot,
-        get_volume(state_new.ensemble_variables.trial_config.bc),
-        get_volume(state.config.bc),
+        get_volume(state_new.ensemble_variables.trial_config.boundary_condition),
+        get_volume(state.config.boundary_condition),
         state.beta,
     )
 end

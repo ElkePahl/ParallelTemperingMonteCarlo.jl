@@ -156,6 +156,7 @@ end
 
 """
     NNVTVariables <: AbstractEnsembleVariables
+
 NNVT - specific ensembles for moves made during an NNVT run.
 Fields include:
     - index: Used for standard atom moves
@@ -173,18 +174,19 @@ end
 #------------------------global functions-----------------------------#
 #---------------------------------------------------------------------#
 """
-    set_ensemble_variables(config::Config{N, BC, T}, ensemble::NVT) where {N, BC, T}
-    set_ensemble_variables(config::Config{N, BC, T}, ensemble::NPT) where {N, BC, T}
-    set_ensemble_variables(config::Config{N, BC, T}, ensemble::NNVT) where {N, BC, T}
+    set_ensemble_variables(config::Config, ensemble::NVT)
+    set_ensemble_variables(config::Config, ensemble::NPT)
+    set_ensemble_variables(config::Config, ensemble::NNVT)
+
 Initialises the instance of EnsembleVariables (with ensemble being `NVT` or `NPT`);
 required to allow for neutral initialisation in defining the MCState [`Main.ParallelTemperingMonteCarlo.MCStates.MCState`](@ref) struct.
 """
-function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NVT) where {N,BC,T}
+function set_ensemble_variables(config::Config{T}, ensemble::NVT) where {T}
     return NVTVariables{T}(1, SVector{3}(zeros(3)))
 end
 
-function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NPT) where {N,BC,T}
-    if BC == SphericalBC
+function set_ensemble_variables(config::Config{T}, ensemble::NPT) where {T}
+    if config.boundary_condition isa SphericalBC
         error("SphericalBC cannot be used in an NPT ensemble.")
     end
     return NPTVariables{T}(
@@ -192,18 +194,19 @@ function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NPT) where {N,
         SVector{3}(zeros(3)),
         deepcopy(config),
         zeros(ensemble.n_atoms, ensemble.n_atoms),
-        get_r_cut(config.bc),
+        get_r_cut(config.boundary_condition),
         0.0,
         0,
     )
 end
-function set_ensemble_variables(config::Config{N,BC,T}, ensemble::NNVT) where {N,BC,T}
+function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
     N1, N2 = ensemble.natoms[1], ensemble.natoms[2]
-    return NNVTVariables{T,N,N1,N2}(1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1))
+    return NNVTVariables{T,length(config),N1,N2}(1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1))
 end
 
 """
     MoveType
+
 Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) struct. Basic types are:
     -   `atommove::MoveType`: basic move of a single atom
     -   `volumemove::MoveType`: NPT ensemble requires volume changes to maintain pressure as constant
@@ -213,6 +216,7 @@ Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) stru
 
 """
     MoveStrategy{N,Etype}
+
 A struct to define the types of moves performed per MC cycle.
 -   Field names:
     -   `ensemble::Etype`: type of ensemble (NVT, NPT)

@@ -33,7 +33,7 @@ mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n
 
 #moves - allowed at present: atom, volume and rotation moves (volume,rotation not yet implemented)
 move_strat = MoveStrategy(; atom_moves=n_atoms, vol_moves=1)
-#move_strat = MoveStrategy(atom_moves = n_atoms) 
+#move_strat = MoveStrategy(atom_moves = n_atoms)
 
 #ensemble
 ensemble = NPT(n_atoms, pressure * 3.398928944382626e-14)
@@ -173,7 +173,7 @@ pos_ne108 = pos_ne108 * AtoBohr
 length(pos_ne108) == n_atoms ||
     error("number of atoms and positions not the same - check starting config")
 
-#boundary conditions 
+#boundary conditions
 bc_ne108 = PeriodicBC(13.16 * AtoBohr)
 
 #starting configuration
@@ -190,7 +190,7 @@ mc_states = [
 ]
 
 println(mc_states[1].en_tot)
-println(mc_states[1].en_tot + ensemble.pressure * mc_states[1].config.bc.box_length^3)
+println(mc_states[1].en_tot + ensemble.pressure * mc_states[1].config.boundary_condition.box_length^3)
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min=mc_states[1].en_tot)

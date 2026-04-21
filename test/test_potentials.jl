@@ -18,7 +18,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = SphericalBC(; radius=2.0)
-    conf1 = Config{3}([v1, v2, v3], bc)
+    conf1 = Config([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf1)
 
     vars = set_variables(conf1, d2mat, pot)
@@ -30,7 +30,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     @test en ≈ en_tot
 
     bc2 = CubicBC(4.0)
-    conf2 = Config{3}([v1, v2, v3], bc2)
+    conf2 = Config([v1, v2, v3], bc2)
 
     evars1 = set_ensemble_variables(conf2, NPT(3, 10, false))
     en_vec_pbc, en_tot_pbc = dimer_energy_config(d2mat, 3, vars, 4.0, bc2, pot1)
@@ -43,7 +43,7 @@ end
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = SphericalBC(; radius=2.0)
-    conf = Config{3}([v1, v2, v3], bc)
+    conf = Config([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf)
     pot1 = EmbeddedAtomPotential(1.0, 1.0, 1.0, 1.0, 1.0)
     @test pot1.ean == 0.5
@@ -74,7 +74,7 @@ end
     v5 = SVector(-6.99, 2.33, 0.0)
     v6 = SVector(-2.33, 6.99, 0.0)
     bc = SphericalBC(; radius=7.0)
-    conf = Config{6}([v1, v2, v3, v4, v5, v6], bc)
+    conf = Config([v1, v2, v3, v4, v5, v6], bc)
     d2mat = get_distance2_mat(conf)
     vars = set_variables(conf, d2mat, runnerpotential)
     evars = set_ensemble_variables(conf, NNVT([4, 2]))

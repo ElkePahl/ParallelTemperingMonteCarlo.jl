@@ -498,7 +498,7 @@ for i in 1:n_traj
     )
 
     println(scale)
-    #println(start_config_scale.bc)
+    #println(start_config_scale.boundary_condition)
     println(mc_state_xy.en_tot)
     println()
 
@@ -527,7 +527,7 @@ for i in 1:n_traj
     )
 
     println(scale)
-    #println(start_config_scale.bc)
+    #println(start_config_scale.boundary_condition)
     println(mc_state_z.en_tot)
     println()
 

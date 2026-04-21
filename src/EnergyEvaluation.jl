@@ -1248,7 +1248,7 @@ function get_new_state_vars!(
     potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
     potential_variables.new_g_matrix = total_thr_symm!(
         potential_variables.new_g_matrix,
-        config.pos,
+        config,
         trial_pos,
         dist2_mat,
         new_dist2_vec,
@@ -1363,7 +1363,7 @@ function get_new_state_vars!(
 
     potential_variables.new_g_matrix = calc_delta_matrix(
         potential_variables.new_g_matrix,
-        config.pos,
+        config,
         trial_pos,
         atomindex,
         dist2_mat,
@@ -1394,7 +1394,7 @@ function get_new_state_vars!(
 
     potential_variables.new_g_matrix = calc_swap_matrix(
         potential_variables.new_g_matrix,
-        config.pos,
+        config,
         indices[1],
         indices[2],
         dist2_mat,
@@ -1517,7 +1517,7 @@ function energy_update!(
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos, b, config.bc) for b in config.pos]
+    potential_variables.new_tan_vec = [get_tan(trial_pos, b, config.boundary_condition) for b in config]
     potential_variables.new_tan_vec[index] = 0
 
     new_energy = dimer_energy_update!(
@@ -1544,7 +1544,7 @@ function energy_update!(
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos, b, config.bc) for b in config.pos]
+    potential_variables.new_tan_vec = [get_tan(trial_pos, b, config.boundary_condition) for b in config]
     potential_variables.new_tan_vec[index] = 0
 
     new_energy = dimer_energy_update!(
@@ -1680,7 +1680,7 @@ function initialise_energy(
         length(config),
         potential_variables,
         ensemble_variables.r_cut,
-        config.bc,
+        config.boundary_condition,
         pot,
     )
 
@@ -1710,7 +1710,7 @@ function initialise_energy(
         length(config),
         potential_variables,
         ensemble_variables.r_cut,
-        config.bc,
+        config.boundary_condition,
         pot,
     )
     return en_tot, potential_variables
@@ -1763,35 +1763,40 @@ function initialise_energy(
     return en_tot, potential_variables
 end
 """
-    set_variables(config::Config{N, BC, T}, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential) where {N, BC, T}
-    set_variables(config::Config{N, BC, T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB) where {N, BC, T}
-    set_variables(config::Config{N, BC, T}, dist2_matrix::Matrix{Float64}, pot::EmbeddedAtomPotential) where {N, BC, T}
-    (set_variables(config::Config{N, BC, T}, dist2_mat::Matrix{Float64}, pot::RuNNerPotential{nrad, nang}) where {N, BC, T}) where {nrad, nang}
-    (set_variables(config::Config{N, BC, T}, dist2_mat, pot::RuNNerPotential2Atom{nrad, nang, n1, n2}) where {N, BC, T}) where {nrad, nang, n1, n2}
+    set_variables(config::Config, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential)
+    set_variables(config::Config, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB)
+    set_variables(config::Config, dist2_matrix::Matrix{Float64}, pot::EmbeddedAtomPotential)
+    (set_variables(config::Config, dist2_mat::Matrix{Float64}, pot::RuNNerPotential)
+    (set_variables(config::Config, dist2_mat, pot::RuNNerPotential2Atom)
+
 Initialises the PotentialVariable struct for the various potentials. Defined in this way to generalise the [`MCState`](@ref Main.ParallelTemperingMonteCarlo.MCStates.MCState) function as this must be type-invariant with respect to the potential.
 """
 function set_variables(
-    config::Config{N,BC,T}, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential
-) where {N,BC,T}
+    config::Config{T}, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential
+) where {T}
+    N = length(config)
     return DimerPotentialVariables{T}(zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB
-) where {N,BC,T}
-    tan_matrix = get_tantheta_mat(config, config.bc)
+    config::Config{T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB
+) where {T}
+    N = length(config)
+    tan_matrix = get_tantheta_mat(config, config.boundary_condition)
 
     return ELJPotentialBVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T}, dist2_matrix::Matrix{Float64}, pot::LookupTablePotential
-) where {N,BC,T}
-    tan_matrix = get_tantheta_mat(config, config.bc)
+    config::Config{T}, dist2_matrix::Matrix{Float64}, pot::LookupTablePotential
+) where {T}
+    N = length(config)
+    tan_matrix = get_tantheta_mat(config, config.boundary_condition)
 
     return LookupTableVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T}, dist2_matrix::Matrix{Float64}, pot::EmbeddedAtomPotential
-) where {N,BC,T}
+    config::Config{T}, dist2_matrix::Matrix{Float64}, pot::EmbeddedAtomPotential
+) where {T}
+    N = length(config)
     componentvec = zeros(N, 2)
     for row_index in 1:N
         componentvec[row_index, :] = calc_components(
@@ -1801,11 +1806,12 @@ function set_variables(
     return EmbeddedAtomVariables{T}(componentvec, zeros(N, 2))
 end
 function set_variables(
-    config::Config{N,BC,T}, dist2_mat::Matrix{Float64}, pot::RuNNerPotential{nrad,nang}
-) where {N,BC,T} where {nrad,nang}
+    config::Config{T}, dist2_mat::Matrix{Float64}, pot::RuNNerPotential{nrad,nang}
+) where {T,nrad,nang}
+    N = length(config)
     f_matrix = cutoff_function.(sqrt.(dist2_mat), Ref(pot.r_cut))
     g_matrix = total_symm_calc(
-        config.pos,
+        config,
         dist2_mat,
         f_matrix,
         pot.radsymfunctions,
@@ -1817,18 +1823,20 @@ function set_variables(
     return NNPVariables{T}(zeros(N), zeros(N), g_matrix, f_matrix, copy(g_matrix), zeros(N))
 end
 function set_variables(
-    config::Config{N,BC,T},
+    config::Config{T},
     dist2_mat::Matrix{Float64},
     pot::RuNNerPotential2Atom{nrad,nang,n1,n2},
-) where {N,BC,T} where {nrad,nang,n1,n2}
+) where {T,nrad,nang,n1,n2}
+    N = length(config)
     if n1 + n2 != N
+        # ??? TODO: how severe is the problem? throw an error with propper message?
         println("problem")
     end
     Ng = nrad * 2 + nang * 3
 
     f_matrix = MMatrix{N,N}(cutoff_function.(sqrt.(dist2_mat), Ref(pot.r_cut)))
     g_temp_matrix = total_symm_calc(
-        config.pos,
+        config,
         dist2_mat,
         f_matrix,
         pot.radsymfunctions,

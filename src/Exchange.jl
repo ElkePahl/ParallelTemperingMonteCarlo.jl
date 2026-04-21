@@ -16,12 +16,12 @@ export parallel_tempering_exchange!, update_max_stepsize!
 
 # """
 #     metropolis_condition(ensemble, delta_en, beta)
-# Returns probability to accept a MC move at inverse temperature `beta` 
-# for energy difference `delta_en` between new and old configuration 
-# for given ensemble; implemented: 
+# Returns probability to accept a MC move at inverse temperature `beta`
+# for energy difference `delta_en` between new and old configuration
+# for given ensemble; implemented:
 #     - `NVT`: canonical ensemble
 #     - `NPT`: NPT ensemble
-# Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable, 
+# Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable,
 # Boltzmann probability otherwise
 # """
 # function metropolis_condition(::NVT, delta_energy, beta)
@@ -75,12 +75,12 @@ function metropolis_condition(
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot), mc_state.beta)
     elseif movetype == "volumemove"
-        #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_state.config.bc.box_length^3,mc_state.beta )
+        #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.boundary_condition.box_length^3,mc_state.config.boundary_condition.box_length^3,mc_state.beta )
         return metropolis_condition(
             ensemble,
             (mc_state.new_en - mc_state.en_tot),
-            get_volume(mc_state.ensemble_variables.trial_config.bc),
-            get_volume(mc_state.config.bc),
+            get_volume(mc_state.ensemble_variables.trial_config.boundary_condition),
+            get_volume(mc_state.config.boundary_condition),
             mc_state.beta,
         )
     elseif movetype == "atomswap"
@@ -93,12 +93,12 @@ end
 #     return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
 # end
 # function metropolis_condition(::volumemove,mc_state,ensemble)
-#     return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.bc.box_length^3,mc_states.config.bc.box_length^3,mc_state.beta )
+#     return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.boundary_condition.box_length^3,mc_states.config.boundary_condition.box_length^3,mc_state.beta )
 # end
 """
     exc_acceptance(beta_1::Number, beta_2::Number, en_1::Number, en_2::Number)
-Returns probability to exchange configurations of two trajectories with energies `en_1` and `en_2` 
-at inverse temperatures `beta_1` and `beta_2`. 
+Returns probability to exchange configurations of two trajectories with energies `en_1` and `en_2`
+at inverse temperatures `beta_1` and `beta_2`.
 """
 function exc_acceptance(beta_1::Number, beta_2::Number, en_1::Number, en_2::Number)
     delta_energy_acc = en_1 - en_2
@@ -110,7 +110,7 @@ end
 """
     exc_trajectories!(state_1::MCState, state_2::MCState)
 Exchanges configurations and distance and energy information between two trajectories;
-information contained in `state_1` and `state_2`, see [`MCState`](@ref)   
+information contained in `state_1` and `state_2`, see [`MCState`](@ref)
 """
 function exc_trajectories!(state_1::MCState, state_2::MCState)
     state_1.config, state_2.config = state_2.config, state_1.config
@@ -126,8 +126,8 @@ end
 """
     parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NVT) where T <: MCState
     parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NPT) where T <: MCState
-These functions take a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method. 
-The second method uses enthalpy instead of energy to determine acceptance. 
+These functions take a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
+The second method uses enthalpy instead of energy to determine acceptance.
 """
 function parallel_tempering_exchange!(
     mc_states::MCStateVector, mc_params::MCParams, ensemble::AbstractEnsemble
@@ -161,17 +161,17 @@ function parallel_tempering_exchange!(
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc + 1].count_exc[1] += 1
 
-    #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.bc.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.bc.box_length^3)) > rand()
+    #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.boundary_condition.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.boundary_condition.box_length^3)) > rand()
     if exc_acceptance(
         mc_states[n_exc].beta,
         mc_states[n_exc + 1].beta,
         (
             mc_states[n_exc].en_tot +
-            ensemble.pressure * get_volume(mc_states[n_exc].config.bc)
+            ensemble.pressure * get_volume(mc_states[n_exc].config.boundary_condition)
         ),
         (
             mc_states[n_exc + 1].en_tot +
-            ensemble.pressure * get_volume(mc_states[n_exc + 1].config.bc)
+            ensemble.pressure * get_volume(mc_states[n_exc + 1].config.boundary_condition)
         ),
     ) > rand()
         mc_states[n_exc].count_exc[2] += 1
@@ -189,9 +189,9 @@ end
     update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number)
     update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::Etype, min_acc::Number, max_acc::Number) where Etype <: AbstractEnsemble
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
-if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles; 
+if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles;
 each cycle consists of `a` atom, `v` volume moves.
-Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).  
+Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).
 
 Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble.
 """
