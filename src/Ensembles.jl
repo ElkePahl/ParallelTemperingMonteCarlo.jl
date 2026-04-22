@@ -201,7 +201,9 @@ function set_ensemble_variables(config::Config{T}, ensemble::NPT) where {T}
 end
 function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
     N1, N2 = ensemble.natoms[1], ensemble.natoms[2]
-    return NNVTVariables{T,length(config),N1,N2}(1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1))
+    return NNVTVariables{T,length(config),N1,N2}(
+        1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1)
+    )
 end
 
 """

@@ -305,7 +305,9 @@ function equilibration_cycle!(
     for state in mc_states
         reset_counters(state)
     end
-    results = initialise_histograms!(mc_params, results, ebounds, mc_states[1].config.boundary_condition)
+    results = initialise_histograms!(
+        mc_params, results, ebounds, mc_states[1].config.boundary_condition
+    )
 
     return mc_states, results
 end

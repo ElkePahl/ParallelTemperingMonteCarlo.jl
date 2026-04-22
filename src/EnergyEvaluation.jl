@@ -1517,7 +1517,9 @@ function energy_update!(
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos, b, config.boundary_condition) for b in config]
+    potential_variables.new_tan_vec .= (
+        get_tan(trial_pos, b, config.boundary_condition) for b in config
+    )
     potential_variables.new_tan_vec[index] = 0
 
     new_energy = dimer_energy_update!(
@@ -1544,7 +1546,9 @@ function energy_update!(
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
 
-    potential_variables.new_tan_vec = [get_tan(trial_pos, b, config.boundary_condition) for b in config]
+    potential_variables.new_tan_vec .= (
+        get_tan(trial_pos, b, config.boundary_condition) for b in config
+    )
     potential_variables.new_tan_vec[index] = 0
 
     new_energy = dimer_energy_update!(
@@ -1781,7 +1785,7 @@ function set_variables(
     config::Config{T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB
 ) where {T}
     N = length(config)
-    tan_matrix = get_tantheta_mat(config, config.boundary_condition)
+    tan_matrix = get_tantheta_mat(config)
 
     return ELJPotentialBVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
@@ -1789,7 +1793,7 @@ function set_variables(
     config::Config{T}, dist2_matrix::Matrix{Float64}, pot::LookupTablePotential
 ) where {T}
     N = length(config)
-    tan_matrix = get_tantheta_mat(config, config.boundary_condition)
+    tan_matrix = get_tantheta_mat(config)
 
     return LookupTableVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
@@ -1811,13 +1815,7 @@ function set_variables(
     N = length(config)
     f_matrix = cutoff_function.(sqrt.(dist2_mat), Ref(pot.r_cut))
     g_matrix = total_symm_calc(
-        config,
-        dist2_mat,
-        f_matrix,
-        pot.radsymfunctions,
-        pot.angsymfunctions,
-        nrad,
-        nang,
+        config, dist2_mat, f_matrix, pot.radsymfunctions, pot.angsymfunctions, nrad, nang
     )
 
     return NNPVariables{T}(zeros(N), zeros(N), g_matrix, f_matrix, copy(g_matrix), zeros(N))

@@ -194,7 +194,9 @@ function scale_xy(pos, scale)
     return new_pos
 end
 function scale_xy(config::Config, scale)
-    return Config(scale_xy(config.positions, scale), scale_xy(config.boundary_condition, scale))
+    return Config(
+        scale_xy(config.positions, scale), scale_xy(config.boundary_condition, scale)
+    )
 end
 
 """
@@ -214,7 +216,9 @@ function scale_z(pos, scale)
     return new_pos
 end
 function scale_z(config::Config, scale)
-    return Config(scale_z(config.positions, scale), scale_z(config.boundary_condition, scale))
+    return Config(
+        scale_z(config.positions, scale), scale_z(config.boundary_condition, scale)
+    )
 end
 
 """
@@ -227,9 +231,11 @@ Returns the trial configuration.
 """
 function volume_change_xy(conf::Config, max_vchange, max_length, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
-    if conf.boundary_condition.box_length / conf.boundary_condition.box_height >= lh_ratio * 1.1 && scale > 1.0
+    if conf.boundary_condition.box_length / conf.boundary_condition.box_height >=
+       lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
-    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height <= lh_ratio * 0.909 && scale < 1.0
+    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
+           lh_ratio * 0.909 && scale < 1.0
         scale = 1 / scale
     end
     if conf.boundary_condition.box_length >= max_length && scale > 1.0
@@ -249,9 +255,11 @@ Returns the trial configuration.
 """
 function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)
-    if conf.boundary_condition.box_length / conf.boundary_condition.box_height <= lh_ratio * 1.1 && scale > 1.0
+    if conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
+       lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
-    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height >= lh_ratio * 0.909 && scale < 1.0
+    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height >=
+           lh_ratio * 0.909 && scale < 1.0
         scale = 1 / scale
     end
     if conf.boundary_condition.box_height >= max_height && scale > 1.0
@@ -318,17 +326,17 @@ function volume_change_separated(mc_state::MCState)
     mc_state.ensemble_variables.new_r_cut = get_r_cut(
         mc_state.ensemble_variables.trial_config.boundary_condition
     )
-    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(
-        mc_state.ensemble_variables.trial_config
+    get_distance2_mat!(
+        mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
 
     if ra <= 3 && (
         mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
         mc_state.potential_variables isa LookupTableVariables{Float64}
     )
-        mc_state.potential_variables.new_tan_mat = get_tantheta_mat(
+        get_tantheta_mat!(
+            mc_state.potential_variables.new_tan_mat,
             mc_state.ensemble_variables.trial_config,
-            mc_state.ensemble_variables.trial_config.boundary_condition,
         )
     end
     return mc_state

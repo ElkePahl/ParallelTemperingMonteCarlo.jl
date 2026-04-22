@@ -26,7 +26,9 @@ using Random
 
     Random.seed!(1234)
 
-    trialpos = atom_displacement(state.config[1], state.max_displ[1], state.config.boundary_condition)
+    trialpos = atom_displacement(
+        state.config[1], state.max_displ[1], state.config.boundary_condition
+    )
 
     Random.seed!(1234)
     generate_move!(state, "atommove", ensemble)
@@ -81,7 +83,9 @@ end
     state.ensemble_variables.index = 1
     Random.seed!(1234)
 
-    trialpos = atom_displacement(state.config[1], state.max_displ[1], state.config.boundary_condition)
+    trialpos = atom_displacement(
+        state.config[1], state.max_displ[1], state.config.boundary_condition
+    )
 
     Random.seed!(1234)
     generate_move!(state, "atommove", ensemble)
@@ -145,7 +149,9 @@ end
     generate_move!(state, "atommove", nnvtens)
 
     Random.seed!(123)
-    trialpos = atom_displacement(state.config[1], state.max_displ[1], state.config.boundary_condition)
+    trialpos = atom_displacement(
+        state.config[1], state.max_displ[1], state.config.boundary_condition
+    )
 
     @test trialpos == state.ensemble_variables.trial_move
     state = get_energy!(state, runnerpotential, "atommove")

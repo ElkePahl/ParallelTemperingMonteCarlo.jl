@@ -190,7 +190,10 @@ mc_states = [
 ]
 
 println(mc_states[1].en_tot)
-println(mc_states[1].en_tot + ensemble.pressure * mc_states[1].config.boundary_condition.box_length^3)
+println(
+    mc_states[1].en_tot +
+    ensemble.pressure * mc_states[1].config.boundary_condition.box_length^3,
+)
 
 #results = Output(n_bin, max_displ_vec)
 results = Output{Float64}(n_bin; en_min=mc_states[1].en_tot)

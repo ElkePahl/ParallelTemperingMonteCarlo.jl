@@ -9,6 +9,10 @@ using StaticArrays, LinearAlgebra
     include(joinpath(@__DIR__, "ne13_test.jl"))
 end
 
+@safetestset "Configurations" begin
+    include(joinpath(@__DIR__, "configurations.jl"))
+end
+
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))
     @test length(x.movestrat) == length(x)
@@ -102,10 +106,13 @@ end
 
     max_v = 0.1
     trial_config, scale = volume_change_xyz(conf2, max_v, 50)
-    @test trial_config.boundary_condition.box_length / bc.box_length <= exp(0.5 * max_v)^(1 / 3)
-    @test trial_config.boundary_condition.box_length / bc.box_length >= exp(-0.5 * max_v)^(1 / 3)
+    @test trial_config.boundary_condition.box_length / bc.box_length <=
+        exp(0.5 * max_v)^(1 / 3)
+    @test trial_config.boundary_condition.box_length / bc.box_length >=
+        exp(-0.5 * max_v)^(1 / 3)
     @test abs(
-        trial_config.boundary_condition.box_length / bc.box_length - trial_config[1][1] / v1[1]
+        trial_config.boundary_condition.box_length / bc.box_length -
+        trial_config[1][1] / v1[1],
     ) <= 10^(-15)
 
     displ = 0.1
@@ -139,10 +146,13 @@ end
 
     max_v = 0.1
     trial_config, scale = volume_change_xyz(conf2, max_v, 50)
-    @test trial_config.boundary_condition.box_length / bc.box_length <= exp(0.5 * max_v)^(1 / 3)
-    @test trial_config.boundary_condition.box_length / bc.box_length >= exp(-0.5 * max_v)^(1 / 3)
+    @test trial_config.boundary_condition.box_length / bc.box_length <=
+        exp(0.5 * max_v)^(1 / 3)
+    @test trial_config.boundary_condition.box_length / bc.box_length >=
+        exp(-0.5 * max_v)^(1 / 3)
     @test abs(
-        trial_config.boundary_condition.box_length / bc.box_length - trial_config[1][1] / v1[1]
+        trial_config.boundary_condition.box_length / bc.box_length -
+        trial_config[1][1] / v1[1],
     ) <= 10^(-15)
     @test abs(
         trial_config.boundary_condition.box_length / bc.box_length -
@@ -162,7 +172,7 @@ end
     v2 = SVector(-3.0, 0.0, 4.0)
     v3 = SVector(-2.0, 0.0, -3.0)
     conf = Config([v1, v2, v3], bc)
-    mat = get_tantheta_mat(conf, bc)
+    mat = get_tantheta_mat(conf)
 
     @test_broken mat[1, 2] == -2.0
     @test mat[1, 3] == 7 / 3
@@ -170,7 +180,7 @@ end
 
     bc = CubicBC(10.0)
     conf = Config([v1, v2, v3], bc)
-    mat = get_tantheta_mat(conf, bc)
+    mat = get_tantheta_mat(conf)
 
     @test_broken mat[1, 2] == -1 / 2
     @test mat[1, 3] == 1.0
@@ -178,7 +188,7 @@ end
 
     bc = RhombicBC(5.0, 5.0)
     conf = Config([v1, v2, v3], bc)
-    mat = get_tantheta_mat(conf, bc)
+    mat = get_tantheta_mat(conf)
 
     @test mat[1, 2] == 2.0
     @test_broken mat[1, 3] == -1.0

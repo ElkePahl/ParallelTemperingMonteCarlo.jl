@@ -56,16 +56,17 @@ end
         trial_config.boundary_condition.box_length / config.boundary_condition.box_length
     @test trial_config[1][3] / config[1][3] ≈
         trial_config.boundary_condition.box_height / config.boundary_condition.box_height
-    @test trial_config[1][3] / config[1][3] ≈
-        trial_config[1][1] / config[1][1]
+    @test trial_config[1][3] / config[1][3] ≈ trial_config[1][1] / config[1][1]
 
     state_new_xyz = volume_change(state, true)
     trial_config_xyz = state_new_xyz.ensemble_variables.trial_config
 
     @test trial_config_xyz[1][1] / config[1][1] ≈
-        trial_config_xyz.boundary_condition.box_length / config.boundary_condition.box_length
+        trial_config_xyz.boundary_condition.box_length /
+          config.boundary_condition.box_length
     @test trial_config_xyz[1][3] / config[1][3] ≈
-        trial_config_xyz.boundary_condition.box_height / config.boundary_condition.box_height
+        trial_config_xyz.boundary_condition.box_height /
+          config.boundary_condition.box_height
 
     for i in 1:100
         state_new = volume_change(state, true)
