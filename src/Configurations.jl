@@ -18,7 +18,13 @@ using ..BoundaryConditions
 using ..CustomTypes
 
 export Config
-export distance2, get_distance2_mat, get_tan, get_tantheta_mat, get_volume
+export distance2,
+    get_distance2_mat,
+    get_distance2_mat!,
+    get_tan,
+    get_tantheta_mat,
+    get_tantheta_mat!,
+    get_volume
 export get_centre, recentre!
 
 """
@@ -50,7 +56,7 @@ function Base.setindex!(config::Config{T}, val, key) where {T}
     return config.positions[key] = SVector{3,T}(val[1], val[2], val[3])
 end
 function Base.summary(io::IO, config::Config)
-    print(io, length(config), "-element Config with ", config.boundary_condition)
+    return print(io, length(config), "-element Config with ", config.boundary_condition)
 end
 
 """
@@ -126,14 +132,33 @@ end
 
 Builds the matrix of squared distances between positions of configuration.
 """
-function get_distance2_mat(conf::Config)
-    mat = zeros(length(conf), length(conf))
-    for i in 1:length(conf)
-        for j in (i + 1):length(conf)
-            mat[i, j] = mat[j, i] = distance2(conf[i], conf[j], conf.boundary_condition)
-        end
-    end
+function get_distance2_mat(config::Config)
+    mat = zeros(length(config), length(config))
+    get_distance2_mat!(mat, config)
     return mat
+end
+
+"""
+    get_distance2_mat(conf::Config)
+
+In-place version of [`get_distance2_mat`](@ref).
+"""
+function get_distance2_mat!(dest, config::Config)
+    @boundscheck if size(dest) ≠ (length(config), length(config))
+        throw(
+            DimensionMismatch(
+                "invalid dimension of destination $(size(dest)) for" *
+                " a Config of length $(length(config))",
+            ),
+        )
+    end
+    @inbounds for i in 1:length(config), j in (i + 1):length(config)
+        dest[i, j] = dest[j, i] = distance2(config[i], config[j], config.boundary_condition)
+    end
+    @inbounds for i in eachindex(config)
+        dest[i, i] = 0
+    end
+    return dest
 end
 
 """
@@ -154,7 +179,7 @@ function get_tan(a, b)
     return abs(tan)
 end
 function get_tan(a, b, bc::SphericalBC)
-    return abs(get_tan(a, b))
+    return get_tan(a, b)
 end
 function get_tan(a, b, bc::CubicBC)
     b_x = b[1] + bc.box_length * round((a[1] - b[1]) / bc.box_length)
@@ -184,30 +209,34 @@ function get_tan(a, b, bc::RectangularBC)
 end
 
 """
-    get_tantheta_mat(conf::Config,bc::BC) where BC <: AbstractBC
-Builds the matrix of tan of angles between positions of configuration in a spherical boundary.
+    get_tantheta_mat(conf::Config)
+
+Builds the matrix of tan of angles between positions of configuration.
 """
-function get_tantheta_mat(conf::Config, bc::BC) where {BC<:AbstractBC}
-    N = length(conf)
-    mat = zeros(N, N)
-    for i in 1:N
-        for j in (i + 1):N
-            mat[i, j] = mat[j, i] = get_tan(conf[i], conf[j], bc)
-        end
-    end
+function get_tantheta_mat(config::Config)
+    mat = zeros(length(config), length(config))
+    get_tantheta_mat!(mat, config)
     return mat
 end
 
-function get_tantheta_mat(conf::Config, bc::RectangularBC)
-    N = length(conf)
-    mat = zeros(N, N)
-    for i in 1:N
-        for j in (i + 1):N
-            mat[i, j] = mat[j, i] = get_tan(conf[i], conf[j], bc)
-        end
+function get_tantheta_mat!(dest, config::Config)
+    @boundscheck if size(dest) ≠ (length(config), length(config))
+        throw(
+            DimensionMismatch(
+                "invalid dimension of destination $(size(dest)) for" *
+                " a Config of length $(length(config))",
+            ),
+        )
     end
-    return mat
+    @inbounds for i in 1:length(config), j in (i + 1):length(config)
+        dest[i, j] = dest[j, i] = get_tan(config[i], config[j], config.boundary_condition)
+    end
+    @inbounds for i in eachindex(config)
+        dest[i, i] = 0
+    end
+    return dest
 end
+
 """
     get_volume(bc::CubicBC)
     get_volume(bc::RhombicBC)

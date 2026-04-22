@@ -9,6 +9,10 @@ using StaticArrays, LinearAlgebra
     include(joinpath(@__DIR__, "ne13_test.jl"))
 end
 
+@safetestset "Configurations" begin
+    include(joinpath(@__DIR__, "configurations.jl"))
+end
+
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))
     @test length(x.movestrat) == length(x)
@@ -162,7 +166,7 @@ end
     v2 = SVector(-3.0, 0.0, 4.0)
     v3 = SVector(-2.0, 0.0, -3.0)
     conf = Config([v1, v2, v3], bc)
-    mat = get_tantheta_mat(conf, bc)
+    mat = get_tantheta_mat(conf)
 
     @test_broken mat[1, 2] == -2.0
     @test mat[1, 3] == 7 / 3
@@ -170,7 +174,7 @@ end
 
     bc = CubicBC(10.0)
     conf = Config([v1, v2, v3], bc)
-    mat = get_tantheta_mat(conf, bc)
+    mat = get_tantheta_mat(conf)
 
     @test_broken mat[1, 2] == -1 / 2
     @test mat[1, 3] == 1.0
@@ -178,7 +182,7 @@ end
 
     bc = RhombicBC(5.0, 5.0)
     conf = Config([v1, v2, v3], bc)
-    mat = get_tantheta_mat(conf, bc)
+    mat = get_tantheta_mat(conf)
 
     @test mat[1, 2] == 2.0
     @test_broken mat[1, 3] == -1.0

@@ -34,9 +34,13 @@ function update_energy_tot(mc_states::MCStateVector, ensemble::AbstractEnsemble)
 end
 function update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
     for state in mc_states
-        state.ham[1] += state.en_tot + ensemble.pressure * get_volume(state.config.boundary_condition)
+        state.ham[1] +=
+            state.en_tot + ensemble.pressure * get_volume(state.config.boundary_condition)
         state.ham[2] +=
-            (state.en_tot + ensemble.pressure * get_volume(state.config.boundary_condition)) *
+            (
+                state.en_tot +
+                ensemble.pressure * get_volume(state.config.boundary_condition)
+            ) *
             (state.en_tot + ensemble.pressure * get_volume(state.config.boundary_condition))
     end
 end
@@ -68,7 +72,11 @@ returns the histogram index of a single mc_state energy and returns this value.
 function find_hist_index(mc_state, results, delta_en_hist, delta_v_hist, bc::CubicBC)
     hist_index_e = floor(Int, (mc_state.en_tot - results.en_min) / delta_en_hist) + 1
     hist_index_v =
-        floor(Int, (mc_state.config.boundary_condition.box_length^3 - results.v_min) / delta_v_hist) + 1
+        floor(
+            Int,
+            (mc_state.config.boundary_condition.box_length^3 - results.v_min) /
+            delta_v_hist,
+        ) + 1
     hist_index_e = find_hist_index(hist_index_e, results.n_bin)
     hist_index_v = find_hist_index(hist_index_v, results.n_bin)
 
@@ -78,7 +86,8 @@ function find_hist_index(
     mc_state::MCState, results::Output, delta_en_hist::Number, delta_v_hist::Number
 )
     hist_index_e = (mc_state.en_tot - results.en_min) / delta_en_hist + 1
-    hist_index_v = (mc_state.config.boundary_condition.box_length^3 - results.v_min) / delta_v_hist + 1
+    hist_index_v =
+        (mc_state.config.boundary_condition.box_length^3 - results.v_min) / delta_v_hist + 1
 
     hist_index_e = find_hist_index(hist_index_e, results.n_bin)
     hist_index_v = find_hist_index(hist_index_v, results.n_bin)
@@ -92,8 +101,8 @@ function find_hist_index(mc_state, results, delta_en_hist, delta_v_hist, bc::Rec
         floor(
             Int,
             (
-                mc_state.config.boundary_condition.box_length^2 * mc_state.config.boundary_condition.box_height -
-                results.v_min
+                mc_state.config.boundary_condition.box_length^2 *
+                mc_state.config.boundary_condition.box_height - results.v_min
             ) / delta_v_hist,
         ) + 1
 
@@ -109,8 +118,8 @@ function find_hist_index(mc_state, results, delta_en_hist, delta_v_hist, bc::Rho
         floor(
             Int,
             (
-                mc_state.config.boundary_condition.box_length^2 * 3mc_state.config.boundary_condition.box_height^0.5 / 2 -
-                results.v_min
+                mc_state.config.boundary_condition.box_length^2 *
+                3mc_state.config.boundary_condition.box_height^0.5 / 2 - results.v_min
             ) / delta_v_hist,
         ) + 1
 
@@ -275,7 +284,8 @@ rdf_index(r2val, delta_r2) = floor(Int, (r2val / delta_r2))
 function update_lh_histograms!(mc_states, results)
     for i_traj in eachindex(mc_states)
         lh_ratio =
-            mc_states[i_traj].config.boundary_condition.box_length / mc_states[i_traj].config.boundary_condition.box_height
+            mc_states[i_traj].config.boundary_condition.box_length /
+            mc_states[i_traj].config.boundary_condition.box_height
         if lh_ratio >= 0.5 && lh_ratio < 1.5
             lh_index = floor(Int, (lh_ratio - 0.5) * 100) + 1
         end

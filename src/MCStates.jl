@@ -161,46 +161,4 @@ function MCState(
     )
 end
 
-# function MCState(temp, beta, config::Config, pot::AbstractDimerPotential; kwargs...)
-#     dist2_mat = get_distance2_mat(config)
-#     n_atoms = length(config)
-#     # tan_mat = zeros(n_atoms,n_atoms)
-#     if typeof(config.boundary_condition) == PeriodicBC{Float64}
-#         en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, config.boundary_condition.box_length^2/4, pot)
-#     else
-#         en_atom_vec, en_tot = dimer_energy_config(dist2_mat, n_atoms, pot)
-#     end
-#     MCState(temp, beta, config, dist2_mat, tan_mat, en_atom_vec, en_tot; kwargs...)
-# end
-
-# function MCState(temp, beta, config::Config, pot::AbstractDimerPotentialB; kwargs...)
-#     dist2_mat = get_distance2_mat(config)
-#     tan_mat = get_tantheta_mat(config,config.boundary_condition)
-#     n_atoms = length(config)
-#     if typeof(config.boundary_condition) == PeriodicBC{Float64}
-#         en_atom_vec, en_tot = dimer_energy_config(dist2_mat, tan_mat, n_atoms, config.boundary_condition.box_length^2/4, pot)
-#     else
-#         en_atom_vec, en_tot = dimer_energy_config(dist2_mat, tan_mat, n_atoms, pot)
-#     end
-#     MCState(temp, beta, config, dist2_mat, tan_mat, en_atom_vec, en_tot; kwargs...)
-# end
-
-# function MCState(temp,beta, config::Config, pot::AbstractMachineLearningPotential;kwargs...)
-#     dist2_mat = get_distance2_mat(config)
-#     n_atoms = length(config)
-#     en_atom_vec = zeros(n_atoms)
-#     en_tot = 0.
-
-#     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-
-# end
-# function MCState(temp,beta, config::Config, pot::DFTPotential;kwargs...)
-#     dist2_mat = get_distance2_mat(config)
-#     n_atoms = length(config)
-#     en_atom_vec = zeros(n_atoms)
-#     en_tot = getenergy_DFT(config, pot)
-
-#     MCState(temp, beta, config, dist2_mat, en_atom_vec, en_tot; kwargs...)
-# end
-
 end
