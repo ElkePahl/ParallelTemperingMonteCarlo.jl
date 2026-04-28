@@ -34,17 +34,18 @@ include("swap_config.jl")
 
 #TODO update energy documentation
 """
-    get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NVTVariables}
-    get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:PotentialVariables,E<:NPTVariables}
-    get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) where PType <: AbstractPotential where {T,N,BC,P<:AbstractPotentialVariables,E<:NNVTVariables}
-Calculates energy for different ensembles and move types. 
+    get_energy!(mc_state::MCState, pot, movetype::String)
+    get_energy!(mc_state::MCState, pot, movetype::String)
+    get_energy!(mc_state::MCState, pot, movetype::String)
+
+Calculates energy for different ensembles and move types.
 Currently implemented for:
         - NVT ensemble without r_cut
         - NPT ensemble with r_cut
         - NNVT ensemble for multiple-species atoms
 """
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
+    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
 ) where {E<:NVTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
@@ -60,8 +61,8 @@ function get_energy!(
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,N,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
-) where {N,E<:NPTVariables}
+    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
+) where {E<:NPTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
             mc_state.ensemble_variables,
@@ -75,17 +76,17 @@ function get_energy!(
     else
         mc_state.potential_variables.en_atom_vec, mc_state.new_en = dimer_energy_config(
             mc_state.ensemble_variables.new_dist2_mat,
-            N,
+            length(mc_state.config),
             mc_state.potential_variables,
             mc_state.ensemble_variables.new_r_cut,
-            mc_state.ensemble_variables.trial_config.bc,
+            mc_state.ensemble_variables.trial_config.boundary_condition,
             pot,
         )
     end
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
+    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
 ) where {E<:NNVTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
@@ -115,7 +116,7 @@ end
 
 Checks if metropolis condition is fulfilled, comparing it to a random variable in [0,1].
 If the condition is met, the new variables become the current `mc_state` using [`swap_config!`](@ref).
-`ensemble` and `movetype` dictate the exact calculation of the metropolis condition, 
+`ensemble` and `movetype` dictate the exact calculation of the metropolis condition,
 and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
 """
 function acc_test!(mc_state::MCState, ensemble::Etype, movetype::String)
@@ -142,7 +143,6 @@ function mc_move!(
     mc_state::MCState, move_strat::MoveStrategy{N,E}, pot::Ptype, ensemble::Etype
 ) where {N,E}
     mc_state.ensemble_variables.index = rand(1:N)
-    #mc_state.ensemble_variables.index = N
 
     mc_state = generate_move!(
         mc_state, move_strat.movestrat[mc_state.ensemble_variables.index], ensemble
@@ -228,15 +228,15 @@ function mc_cycle!(
     #=
     if rem(idx,10000) == 0
         for i=1:length(mc_states)
-            open("$(length(mc_states[1].config.pos))/configuration_$(mc_states[i].temp).txt","a") do io
-                println(io, length(mc_states[1].config.pos))
+            open("$(length(mc_states[1].config))/configuration_$(mc_states[i].temp).txt","a") do io
+                println(io, length(mc_states[1].config))
                 #println(io,mc_states[i].en_tot)
                 #println(io,mc_states[i].new_en)
-                #println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.bc, potential)[2])
-                println(io,mc_states[i].config.bc.box_length)
-                println(io,mc_states[i].config.bc.box_height)
-                for j=1:length(mc_states[1].config.pos)
-                    println(io, "Ne ", mc_states[i].config.pos[j][1]," ",mc_states[i].config.pos[j][2]," ",mc_states[i].config.pos[j][3])
+                #println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.boundary_condition, potential)[2])
+                println(io,mc_states[i].config.boundary_condition.box_length)
+                println(io,mc_states[i].config.boundary_condition.box_height)
+                for j=1:length(mc_states[1].config)
+                    println(io, "Ne ", mc_states[i].config[j][1]," ",mc_states[i].config[j][2]," ",mc_states[i].config[j][3])
                 end
                 println(io," ")
             end
@@ -305,7 +305,9 @@ function equilibration_cycle!(
     for state in mc_states
         reset_counters(state)
     end
-    results = initialise_histograms!(mc_params, results, ebounds, mc_states[1].config.bc)
+    results = initialise_histograms!(
+        mc_params, results, ebounds, mc_states[1].config.boundary_condition
+    )
 
     return mc_states, results
 end

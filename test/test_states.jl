@@ -5,7 +5,7 @@ using Random
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = SphericalBC(; radius=5.0)
-    conf1 = Config{3}([v1, v2, v3], bc)
+    conf1 = Config([v1, v2, v3], bc)
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.0, 1.0]
     pot1 = ELJPotentialEven{2}(c1)
@@ -26,7 +26,9 @@ using Random
 
     Random.seed!(1234)
 
-    trialpos = atom_displacement(state.config.pos[1], state.max_displ[1], state.config.bc)
+    trialpos = atom_displacement(
+        state.config[1], state.max_displ[1], state.config.boundary_condition
+    )
 
     Random.seed!(1234)
     generate_move!(state, "atommove", ensemble)
@@ -38,7 +40,7 @@ using Random
     @test_throws ErrorException metropolis_condition("evommota", state, ensemble)
 
     MCRun.swap_config!(state, "atommove")
-    @test state.ensemble_variables.trial_move == state.config.pos[1]
+    @test state.ensemble_variables.trial_move == state.config[1]
     @test state.new_dist2_vec == state.dist2_mat[1, :]
 
     @test state2.en_tot - state.en_tot ≈ 4.99895252855e-5
@@ -47,14 +49,14 @@ using Random
     @test state.max_displ[1] < 0.1
     exc_trajectories!(state, state2)
     @test state2.en_tot - state.en_tot ≈ -4.99895252855e-5
-    @test state.config.pos == conf1.pos
+    @test state.config == conf1
 end
 @testset "States V" begin
     v1 = SVector(1.0, 2.0, 3.0)
     v2 = SVector(2.0, 4.0, 6.0)
     v3 = SVector(0.0, 1.0, 0.0)
     bc = CubicBC(10.0)
-    conf1 = Config{3}([v1, v2, v3], bc)
+    conf1 = Config([v1, v2, v3], bc)
 
     d2mat = get_distance2_mat(conf1)
     c1 = [-2.0, 1.0]
@@ -74,14 +76,16 @@ end
         3,
         state.potential_variables,
         state.ensemble_variables.r_cut,
-        state.config.bc,
+        state.config.boundary_condition,
         pot1,
     )[2]
 
     state.ensemble_variables.index = 1
     Random.seed!(1234)
 
-    trialpos = atom_displacement(state.config.pos[1], state.max_displ[1], state.config.bc)
+    trialpos = atom_displacement(
+        state.config[1], state.max_displ[1], state.config.boundary_condition
+    )
 
     Random.seed!(1234)
     generate_move!(state, "atommove", ensemble)
@@ -92,7 +96,7 @@ end
     @test metropolis_condition("atommove", state, ensemble) == 1.0
 
     MCRun.swap_config!(state, "atommove")
-    @test state.ensemble_variables.trial_move == state.config.pos[1]
+    @test state.ensemble_variables.trial_move == state.config[1]
     @test state.new_dist2_vec == state.dist2_mat[1, :]
     @test state2.en_tot - state.en_tot ≈ 4.99895252855e-5
 
@@ -100,7 +104,7 @@ end
     @test state.max_displ[1] < 0.1
     exc_trajectories!(state, state2)
     @test state2.en_tot - state.en_tot ≈ -4.99895252855e-5
-    @test state.config.pos == conf1.pos
+    @test state.config == conf1
 end
 
 @testset "States NNVT" begin
@@ -113,7 +117,7 @@ end
     v5 = SVector(-6.99, 2.33, 0.0)
     v6 = SVector(-2.33, 6.99, 0.0)
     bc = SphericalBC(; radius=8.0)
-    conf = Config{6}([v1, v2, v3, v4, v5, v6], bc)
+    conf = Config([v1, v2, v3, v4, v5, v6], bc)
     d2mat = get_distance2_mat(conf)
     vars = set_variables(conf, d2mat, runnerpotential)
     nnvtens = NNVT([4, 2])
@@ -127,7 +131,7 @@ end
     @test isa(state.potential_variables, NNPVariables2a)
     testgmat = MMatrix{88,6}(
         total_symm_calc(
-            state.config.pos,
+            state.config,
             d2mat,
             state.potential_variables.f_matrix,
             runnerpotential.radsymfunctions,
@@ -145,7 +149,9 @@ end
     generate_move!(state, "atommove", nnvtens)
 
     Random.seed!(123)
-    trialpos = atom_displacement(state.config.pos[1], state.max_displ[1], state.config.bc)
+    trialpos = atom_displacement(
+        state.config[1], state.max_displ[1], state.config.boundary_condition
+    )
 
     @test trialpos == state.ensemble_variables.trial_move
     state = get_energy!(state, runnerpotential, "atommove")
@@ -154,12 +160,12 @@ end
     #test exc after atom move
     @test metropolis_condition("atommove", state, ensemble) == 1.0
     MCRun.swap_config!(state, "atommove")
-    @test state.ensemble_variables.trial_move == state.config.pos[1]
+    @test state.ensemble_variables.trial_move == state.config[1]
     @test state.en_tot - state2.en_tot ≈ delen
     # test parallel_tempering_exchange
     exc_trajectories!(state, state2)
     @test state2.en_tot - state.en_tot ≈ delen
-    @test state.config.pos == conf.pos
+    @test state.config == conf
     #test atomswap
     Random.seed!(123)
     MCMoves.swap_atoms(state)
@@ -176,6 +182,6 @@ end
 
     @test refmat == state.dist2_mat[3, :]
     @test state.en_tot - refstate.en_tot == delen2
-    @test state.config.pos[3] == refstate.config.pos[6]
-    @test state.config.pos[6] == refstate.config.pos[3]
+    @test state.config[3] == refstate.config[6]
+    @test state.config[6] == refstate.config[3]
 end

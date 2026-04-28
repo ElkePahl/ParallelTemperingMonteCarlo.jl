@@ -139,18 +139,19 @@ end
 
 Write a single config in the standard `xyz` format. `N` atoms, the comment line contains the boundary condition information (implemented for Spherical BC and both types of Periodic BC) as well as `max_displ` information determining the stepsize used at the current step of the monte carlo simulation. The comment row is followed by 1 as a placeholder for the atom type to be implemented in future and the positions `x,y,z` in order.
 """
-function checkpoint_config(filename, state::MCState{<:Any,N}) where {N}
+function checkpoint_config(filename, state::MCState)
+    N = length(state.config)
     # TODO: why writedlm here, but write later?
     open(filename, "w") do f
         writedlm(
             f,
             [
                 N,
-                "$(bc_info(state.config.bc)) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])",
+                "$(bc_info(state.config.boundary_condition)) $(state.max_displ[1]) $(state.max_displ[2]) $(state.max_displ[3]) $(state.count_atom[1]) $(state.count_vol[1])",
             ],
         )
 
-        for row in state.config.pos
+        for row in state.config
             write(f, "1  $(row[1]) $(row[2]) $(row[3]) \n")
         end
     end
@@ -158,10 +159,10 @@ end
 """
     save_configs(mc_states::MCStateVector, filename::AbstractString="config")
 
-Function to save the configuration of each state in a vector of `mc_states`. 
+Function to save the configuration of each state in a vector of `mc_states`.
 Writes each configuration according to [`checkpoint_config`](@ref) into a file `filename.i`
 where `i` indicates the order of the states.
-Default file name is "config". 
+Default file name is "config".
 """
 function save_configs(mc_states::MCStateVector, filename::AbstractString="config")
     for saveindex in eachindex(mc_states)

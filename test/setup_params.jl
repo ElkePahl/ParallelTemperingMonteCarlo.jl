@@ -49,18 +49,22 @@ function initialise(;
     ham=true,
     ebounds=[-100.0, 100.0],
 )
-    (output = initialisation(mc_params, tempgrid, config, pot, ensemble);
-    if ham
-        for state in output[1]
-            push!(state.ham, 0.0)
-            push!(state.ham, 0.0)
-        end
-    end;
-    results = initialise_histograms!(mc_params, output[3], ebounds, config.bc);
-    output = (output[1], output[2], results, output[4], output[5]);
-    return output)
+    (
+        output = initialisation(mc_params, tempgrid, config, pot, ensemble);
+        if ham
+            for state in output[1]
+                push!(state.ham, 0.0)
+                push!(state.ham, 0.0)
+            end
+        end;
+        results = initialise_histograms!(
+            mc_params, output[3], ebounds, config.boundary_condition
+        );
+        output = (output[1], output[2], results, output[4], output[5]);
+        return output
+    )
 end
-get_trial_pos(config::Config, index::Int) = config.pos[index] + (rand(3) * 2 .- 1) * 0.01
+get_trial_pos(config::Config, index::Int) = config[index] + (rand(3) * 2 .- 1) * 0.01
 function get_new_d2_spherical_vec(d2mat_spherical::Matrix{Float64}, index::Int)
     return d2mat_spherical[index, :] * rand(0.95:0.01:1.05)
 end

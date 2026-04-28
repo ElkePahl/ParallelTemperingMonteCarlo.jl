@@ -30,7 +30,7 @@ Implemented for:
 
 The final method is a wrapper function which unpacks `mc_states`, which contains all the necessary arguments for the two methods above. When we have correctly implemented `move_strat` this wrapper will be expanded to include other methods.
 """
-function atom_displacement(pos::PositionVector, max_displacement::Number, bc::SphericalBC)
+function atom_displacement(pos, max_displacement, bc::SphericalBC)
     delta_move = SVector(
         (rand() - 0.5) * max_displacement,
         (rand() - 0.5) * max_displacement,
@@ -47,7 +47,7 @@ function atom_displacement(pos::PositionVector, max_displacement::Number, bc::Sp
     return trial_pos
 end
 
-function atom_displacement(pos::PositionVector, max_displacement::Number, bc::CubicBC)
+function atom_displacement(pos, max_displacement, bc::CubicBC)
     delta_move = SVector(
         (rand() - 0.5) * max_displacement,
         (rand() - 0.5) * max_displacement,
@@ -63,7 +63,7 @@ function atom_displacement(pos::PositionVector, max_displacement::Number, bc::Cu
     return trial_pos
 end
 
-function atom_displacement(pos::PositionVector, max_displacement::Number, bc::RhombicBC)
+function atom_displacement(pos, max_displacement, bc::RhombicBC)
     delta_move = SVector(
         (rand() - 0.5) * max_displacement,
         (rand() - 0.5) * max_displacement,
@@ -97,47 +97,47 @@ function atom_displacement(pos, max_displacement, bc::RectangularBC)
     return trial_pos
 end
 
-function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:PeriodicBC}
+function atom_displacement(mc_state::MCState{<:Any,<:PeriodicBC})
     mc_state.ensemble_variables.trial_move = atom_displacement(
-        mc_state.config.pos[mc_state.ensemble_variables.index],
+        mc_state.config[mc_state.ensemble_variables.index],
         mc_state.max_displ[1],
-        mc_state.config.bc,
+        mc_state.config.boundary_condition,
     )
-    for (i, b) in enumerate(mc_state.config.pos)
+    for (i, b) in enumerate(mc_state.config)
         mc_state.new_dist2_vec[i] = distance2(
-            mc_state.ensemble_variables.trial_move, b, mc_state.config.bc
+            mc_state.ensemble_variables.trial_move, b, mc_state.config.boundary_condition
         )
     end
     mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
     return mc_state
 end
 
-function atom_displacement(mc_state::MCState{T,N,BC}) where {T,N,BC<:SphericalBC}
+function atom_displacement(mc_state::MCState{<:Any,<:SphericalBC})
     count = 0.0
     trial_pos = atom_displacement(
-        mc_state.config.pos[mc_state.ensemble_variables.index],
+        mc_state.config[mc_state.ensemble_variables.index],
         mc_state.max_displ[1],
-        mc_state.config.bc,
+        mc_state.config.boundary_condition,
     )
-    while check_boundary(mc_state.config.bc, trial_pos)
+    while check_boundary(mc_state.config.boundary_condition, trial_pos)
         count += 1
         if count == 50
             recentre!(mc_state.config)
         else
             trial_pos = atom_displacement(
-                mc_state.config.pos[mc_state.ensemble_variables.index],
+                mc_state.config[mc_state.ensemble_variables.index],
                 mc_state.max_displ[1],
-                mc_state.config.bc,
+                mc_state.config.boundary_condition,
             )
             count == 100 && error("Error: too many moves out of binding sphere")
         end
     end
     mc_state.ensemble_variables.trial_move = trial_pos
 
-    # mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config.pos[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.bc)
-    for (i, b) in enumerate(mc_state.config.pos)
+    # mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.boundary_condition)
+    for (i, b) in enumerate(mc_state.config)
         mc_state.new_dist2_vec[i] = distance2(
-            mc_state.ensemble_variables.trial_move, b, mc_state.config.bc
+            mc_state.ensemble_variables.trial_move, b, mc_state.config.boundary_condition
         )
     end
     mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
@@ -156,8 +156,8 @@ scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
 scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
 scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
 scale_xyz(vector, α) = α * vector
-function scale_xyz(config::Config{N}, α) where {N}
-    return Config{N}(scale_xyz(config.pos, α), scale_xyz(config.bc, α))
+function scale_xyz(config::Config, α)
+    return Config(scale_xyz(config.positions, α), scale_xyz(config.boundary_condition, α))
 end
 
 """
@@ -168,7 +168,7 @@ Returns the trial configuration.
 """
 function volume_change_xyz(conf::Config, max_vchange::Real, max_length::Real)
     scale = exp((rand() - 0.5) * max_vchange)^(1 / 3)
-    if conf.bc.box_length >= max_length && scale > 1.0
+    if conf.boundary_condition.box_length >= max_length && scale > 1.0
         scale = 1.0
     end
 
@@ -193,8 +193,10 @@ function scale_xy(pos, scale)
     end
     return new_pos
 end
-function scale_xy(config::Config{N}, scale) where {N}
-    return Config{N}(scale_xy(config.pos, scale), scale_xy(config.bc, scale))
+function scale_xy(config::Config, scale)
+    return Config(
+        scale_xy(config.positions, scale), scale_xy(config.boundary_condition, scale)
+    )
 end
 
 """
@@ -213,8 +215,10 @@ function scale_z(pos, scale)
     end
     return new_pos
 end
-function scale_z(config::Config{N}, scale) where {N}
-    return Config{N}(scale_z(config.pos, scale), scale_z(config.bc, scale))
+function scale_z(config::Config, scale)
+    return Config(
+        scale_z(config.positions, scale), scale_z(config.boundary_condition, scale)
+    )
 end
 
 """
@@ -227,12 +231,14 @@ Returns the trial configuration.
 """
 function volume_change_xy(conf::Config, max_vchange, max_length, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
-    if conf.bc.box_length / conf.bc.box_height >= lh_ratio * 1.1 && scale > 1.0
+    if conf.boundary_condition.box_length / conf.boundary_condition.box_height >=
+       lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
-    elseif conf.bc.box_length / conf.bc.box_height <= lh_ratio * 0.909 && scale < 1.0
+    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
+           lh_ratio * 0.909 && scale < 1.0
         scale = 1 / scale
     end
-    if conf.bc.box_length >= max_length && scale > 1.0
+    if conf.boundary_condition.box_length >= max_length && scale > 1.0
         scale = 1 / scale
     end
 
@@ -249,12 +255,14 @@ Returns the trial configuration.
 """
 function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)
-    if conf.bc.box_length / conf.bc.box_height <= lh_ratio * 1.1 && scale > 1.0
+    if conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
+       lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
-    elseif conf.bc.box_length / conf.bc.box_height >= lh_ratio * 0.909 && scale < 1.0
+    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height >=
+           lh_ratio * 0.909 && scale < 1.0
         scale = 1 / scale
     end
-    if conf.bc.box_height >= max_height && scale > 1.0
+    if conf.boundary_condition.box_height >= max_height && scale > 1.0
         scale = 1 / scale
     end
 
@@ -271,7 +279,7 @@ function volume_change_uniform(mc_state::MCState)
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
     mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.bc
+        mc_state.ensemble_variables.trial_config.boundary_condition
     )
     mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
 
@@ -316,19 +324,19 @@ function volume_change_separated(mc_state::MCState)
     end
 
     mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.bc
+        mc_state.ensemble_variables.trial_config.boundary_condition
     )
-    mc_state.ensemble_variables.new_dist2_mat = get_distance2_mat(
-        mc_state.ensemble_variables.trial_config
+    get_distance2_mat!(
+        mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
 
     if ra <= 3 && (
         mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
         mc_state.potential_variables isa LookupTableVariables{Float64}
     )
-        mc_state.potential_variables.new_tan_mat = get_tantheta_mat(
+        get_tantheta_mat!(
+            mc_state.potential_variables.new_tan_mat,
             mc_state.ensemble_variables.trial_config,
-            mc_state.ensemble_variables.trial_config.bc,
         )
     end
     return mc_state
@@ -353,9 +361,10 @@ end
 Swaps two atoms in the configuration.
 """
 function swap_atoms(
-    mc_state::MCState{T,N,BC,PV,EV}
-) where {T,N,BC,PV,EV<:NNVTVariables{tee,n,N1,N2}} where {tee,n,N1,N2}
-    i1, i2 = rand(1:N1), rand((N1 + 1):N)
+    mc_state::MCState{T,BC,PV,EV}
+) where {T,BC,PV,EV<:NNVTVariables{tee,n,N1,N2}} where {tee,n,N1,N2}
+    # TODO: make extracting Ns nicer than this.
+    i1, i2 = rand(1:N1), rand((N1 + 1):length(mc_state.config))
     mc_state.ensemble_variables.swap_indices = SVector{2}(i1, i2)
     return mc_state
 end

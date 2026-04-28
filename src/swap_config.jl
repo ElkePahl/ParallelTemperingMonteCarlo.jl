@@ -11,8 +11,8 @@ Implemented for the following `move_type`:
 All methods also call the [`swap_vars!`](@ref) function which distributes the appropriate `mc_states.potential_variables` values into the current `mc_state` struct.
 """
 function swap_config!(
-    mc_state::MCState{T,N,BC,P,E}, movetype::String
-) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
+    mc_state::MCState{T,BC,P,E}, movetype::String
+) where {T,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
     if movetype == "atommove"
         swap_atom_config!(
             mc_state,
@@ -25,7 +25,7 @@ function swap_config!(
         swap_config_v!(
             mc_state,
             mc_state.potential_variables,
-            mc_state.config.bc,
+            mc_state.config.boundary_condition,
             mc_state.ensemble_variables.trial_config,
             mc_state.ensemble_variables.new_dist2_mat,
             mc_state.potential_variables.en_atom_vec,
@@ -38,9 +38,9 @@ end
     swap_atom_config!(mc_state::MCState{T, N, BC, P, E}, i_atom::Int, trial_pos::PositionVector) where {T, N, BC, P <: AbstractPotentialVariables, E <: AbstractEnsembleVariables}
 """
 function swap_atom_config!(
-    mc_state::MCState{T,N,BC,P,E}, i_atom::Int, trial_pos::PositionVector
-) where {T,N,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
-    mc_state.config.pos[i_atom] = trial_pos
+    mc_state::MCState{T,BC,P,E}, i_atom::Int, trial_pos::PositionVector
+) where {T,BC,P<:AbstractPotentialVariables,E<:AbstractEnsembleVariables}
+    mc_state.config[i_atom] = trial_pos
     mc_state.dist2_mat[i_atom, :] = mc_state.new_dist2_vec
     mc_state.dist2_mat[:, i_atom] = mc_state.new_dist2_vec
     mc_state.en_tot, mc_state.new_en = mc_state.new_en, mc_state.en_tot
@@ -68,7 +68,7 @@ function swap_config_v!(
     en_vec_new,
     new_en_tot,
 )
-    mc_state.config = Config(trial_config.pos, trial_config.bc)
+    mc_state.config = Config(trial_config, trial_config.boundary_condition)
     mc_state.dist2_mat .= new_dist2_mat
     mc_state.potential_variables.en_atom_vec .= en_vec_new
 
@@ -88,7 +88,7 @@ function swap_config_v!(
     en_vec_new,
     new_en_tot,
 )
-    mc_state.config = Config(trial_config.pos, trial_config.bc)
+    mc_state.config = Config(trial_config, trial_config.boundary_condition)
 
     mc_state.dist2_mat .= new_dist2_mat
     mc_state.potential_variables.en_atom_vec .= en_vec_new
@@ -119,7 +119,7 @@ function swap_config_v!(
     en_vec_new,
     new_en_tot,
 )
-    mc_state.config = Config(trial_config.pos, trial_config.bc)
+    mc_state.config = Config(trial_config, trial_config.boundary_condition)
     mc_state.dist2_mat .= new_dist2_mat
 
     mc_state.potential_variables.en_atom_vec .= en_vec_new
@@ -149,7 +149,7 @@ function swap_config_v!(
     en_vec_new,
     new_en_tot,
 )
-    mc_state.config = Config(trial_config.pos, trial_config.bc)
+    mc_state.config = Config(trial_config, trial_config.boundary_condition)
     # TODO: swap instead of copying
     mc_state.dist2_mat .= new_dist2_mat
     mc_state.potential_variables.en_atom_vec .= en_vec_new
@@ -238,8 +238,8 @@ function swap_move_config!(mc_state::MCState, indices::VorS)
     #swap energy
     mc_state.en_tot, mc_state.new_en = mc_state.new_en, mc_state.en_tot
     #swap positions
-    mc_state.config.pos[indices[1]], mc_state.config.pos[indices[2]] = mc_state.config.pos[indices[2]],
-    mc_state.config.pos[indices[1]]
+    mc_state.config[indices[1]], mc_state.config[indices[2]] = mc_state.config[indices[2]],
+    mc_state.config[indices[1]]
     #swap dist2mat
     mc_state.dist2_mat[indices[1], :], mc_state.dist2_mat[indices[2], :] = mc_state.dist2_mat[
         indices[2], :,

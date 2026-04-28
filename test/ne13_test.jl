@@ -77,7 +77,7 @@ for temperature in 1:25
         atom_count = 1 # tracks which atom index we are up to
         for line in eachline(file)
             line = line[4:end] # ignore atom label at start of line
-            test = string(join(mc_states[temperature].config.pos[atom_count], " "), " ")
+            test = string(join(mc_states[temperature].config[atom_count], " "), " ")
             # This puts the data from the simulation into the same format as that in storage
             @test test == line
             atom_count += 1
