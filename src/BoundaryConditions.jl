@@ -120,10 +120,9 @@ Is abstract type for periodic boundary conditions to simulate bulk systems.
 In addition to the methods required by [`AbstractBC`](@ref), a `PeriodicBC` should
 implement
 - [`volume`](@ref)
-- [`scale_xyz`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble)
-- [`scale_xy`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble with separated volume moves)
-- [`scale_z`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) with separated volume moves)
-- [`long_range_correction`](@ref) (optional, defaults to returning zero)
+- [`scale_xyz`](@ref)
+- [`scale_xy`](@ref)
+- [`scale_z`](@ref)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
@@ -156,8 +155,7 @@ function volume(bc::CubicBC)
     return bc.box_length^3
 end
 function check_boundary(bc::CubicBC, position)
-    return position -
-           bc.box_length * SVector(
+    return position - bc.box_length * SVector(
         round(position[1] / bc.box_length),
         round(position[2] / bc.box_length),
         round(position[3] / bc.box_length),
