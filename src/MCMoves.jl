@@ -30,114 +30,35 @@ Implemented for:
 
 The final method is a wrapper function which unpacks `mc_states`, which contains all the necessary arguments for the two methods above. When we have correctly implemented `move_strat` this wrapper will be expanded to include other methods.
 """
-function atom_displacement(pos, max_displacement, bc::SphericalBC)
-    delta_move = SVector(
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-    )
-    trial_pos = pos + delta_move
-    # count = 0
-    # while check_boundary(bc, trial_pos)         #displace the atom until it's inside the binding sphere
-    #     count += 1
-    #     delta_move = SVector((rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement,(rand()-0.5)*max_displacement)
-    #     trial_pos = pos + delta_move
-    #     count == 100 && error("Error: too many moves out of binding sphere")
-    # end
-    return trial_pos
-end
+function atom_displacement(mc_state::MCState)
+    initial_position = mc_state.config[mc_state.ensemble_variables.index]
+    max_displacement = mc_state.max_displ[1]
+    boundary_condition = mc_state.config.boundary_condition
 
-function atom_displacement(pos, max_displacement, bc::CubicBC)
-    delta_move = SVector(
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-    )
-    trial_pos = pos + delta_move
-    trial_pos -=
-        bc.box_length * SVector(
-            round(trial_pos[1] / bc.box_length),
-            round(trial_pos[2] / bc.box_length),
-            round(trial_pos[3] / bc.box_length),
+    num_attempts = 0
+    trial_position = nothing
+    move_is_valid = false
+
+    while !move_is_valid
+        num_attempts += 1
+        num_attempts ≥ 100 && error("Error: too many moves out of bounds")
+        num_attempts == 50 && recentre!(mc_state.config)
+
+        delta_move = SVector(
+            (rand() - 0.5) * max_displacement,
+            (rand() - 0.5) * max_displacement,
+            (rand() - 0.5) * max_displacement,
         )
-    return trial_pos
-end
+        trial_position = initial_position + delta_move
+        trial_position = check_boundary(boundary_condition, trial_position)
 
-function atom_displacement(pos, max_displacement, bc::RhombicBC)
-    delta_move = SVector(
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-    )
-    trial_pos = pos + delta_move
-    trial_pos -= SVector(
-        bc.box_length *
-        round((trial_pos[1] - trial_pos[2] / 3^0.5 - bc.box_length / 2) / bc.box_length) +
-        bc.box_length / 2 *
-        round((trial_pos[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
-        bc.box_length * 3^0.5 / 2 *
-        round((trial_pos[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
-        bc.box_height * round((trial_pos[3] - bc.box_height / 2) / bc.box_height),
-    )
-    return trial_pos
-end
+        move_is_valid = !isnothing(trial_position)
+    end
+    mc_state.ensemble_variables.trial_move = trial_position
 
-function atom_displacement(pos, max_displacement, bc::RectangularBC)
-    delta_move = SVector(
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-        (rand() - 0.5) * max_displacement,
-    )
-    trial_pos = pos + delta_move
-    trial_pos -= SVector(
-        bc.box_length * round(trial_pos[1] / bc.box_length),
-        bc.box_length * round(trial_pos[2] / bc.box_length),
-        bc.box_height * round(trial_pos[3] / bc.box_height),
-    )
-    return trial_pos
-end
-
-function atom_displacement(mc_state::MCState{<:Any,<:PeriodicBC})
-    mc_state.ensemble_variables.trial_move = atom_displacement(
-        mc_state.config[mc_state.ensemble_variables.index],
-        mc_state.max_displ[1],
-        mc_state.config.boundary_condition,
-    )
     for (i, b) in enumerate(mc_state.config)
         mc_state.new_dist2_vec[i] = distance2(
-            mc_state.ensemble_variables.trial_move, b, mc_state.config.boundary_condition
-        )
-    end
-    mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
-    return mc_state
-end
-
-function atom_displacement(mc_state::MCState{<:Any,<:SphericalBC})
-    count = 0.0
-    trial_pos = atom_displacement(
-        mc_state.config[mc_state.ensemble_variables.index],
-        mc_state.max_displ[1],
-        mc_state.config.boundary_condition,
-    )
-    while check_boundary(mc_state.config.boundary_condition, trial_pos)
-        count += 1
-        if count == 50
-            recentre!(mc_state.config)
-        else
-            trial_pos = atom_displacement(
-                mc_state.config[mc_state.ensemble_variables.index],
-                mc_state.max_displ[1],
-                mc_state.config.boundary_condition,
-            )
-            count == 100 && error("Error: too many moves out of binding sphere")
-        end
-    end
-    mc_state.ensemble_variables.trial_move = trial_pos
-
-    # mc_state.ensemble_variables.trial_move = atom_displacement(mc_state.config[mc_state.ensemble_variables.index],mc_state.max_displ[1],mc_state.config.boundary_condition)
-    for (i, b) in enumerate(mc_state.config)
-        mc_state.new_dist2_vec[i] = distance2(
-            mc_state.ensemble_variables.trial_move, b, mc_state.config.boundary_condition
+            mc_state.ensemble_variables.trial_move, b, boundary_condition
         )
     end
     mc_state.new_dist2_vec[mc_state.ensemble_variables.index] = 0.0
