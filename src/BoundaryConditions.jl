@@ -155,7 +155,8 @@ function volume(bc::CubicBC)
     return bc.box_length^3
 end
 function check_boundary(bc::CubicBC, position)
-    return position - bc.box_length * SVector(
+    return position -
+           bc.box_length * SVector(
         round(position[1] / bc.box_length),
         round(position[2] / bc.box_length),
         round(position[3] / bc.box_length),
