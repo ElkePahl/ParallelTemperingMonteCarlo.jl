@@ -137,7 +137,7 @@ function long_range_correction(pot::LookupTablePotential, num_atoms, r_cut)
     if r_cut <= 10
         e_lrc = 1.0
     else
-        rc3 = r_cut ^ 1.5
+        rc3 = r_cut^1.5
         e_lrc = pot.c6coeff / rc3 / 3
         e_lrc *= π * num_atoms^2 / 4 / rc3
     end

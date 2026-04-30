@@ -104,7 +104,7 @@ Needs squared distances matrix, see [`get_distance2_mat`](@ref) and potential in
 """
 # uses no r_cut, no tan_mat
 function dimer_energy_config(
-    distmat, NAtoms, potential_variables, pot::AbstractDimerPotential,
+    distmat, NAtoms, potential_variables, pot::AbstractDimerPotential
 )
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
@@ -121,7 +121,7 @@ function dimer_energy_config(
 end
 # uses r_cut, no tan_mat
 function dimer_energy_config(
-    distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotential,
+    distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotential
 )
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
@@ -258,9 +258,7 @@ Implemented dimer potentials:
 """
 abstract type AbstractDimerPotentialB <: AbstractDimerPotential end
 
-function dimer_energy_atom(
-    i::Int, d2vec, tanvec, r_cut::Real, pot::AbstractDimerPotentialB
-)
+function dimer_energy_atom(i::Int, d2vec, tanvec, r_cut::Real, pot::AbstractDimerPotentialB)
     sum1 = 0.0
     for j in 1:(i - 1)
         if d2vec[j] <= r_cut
@@ -285,7 +283,7 @@ function dimer_energy_atom(i::Int, d2vec, tanvec, pot::AbstractDimerPotentialB)
     return sum1
 end
 function dimer_energy_config(
-    distmat, NAtoms, potential_variables, pot::AbstractDimerPotentialB,
+    distmat, NAtoms, potential_variables, pot::AbstractDimerPotentialB
 )
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
@@ -301,7 +299,7 @@ function dimer_energy_config(
     return dimer_energy_vec, energy_tot
 end
 function dimer_energy_config(
-    distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotentialB,
+    distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotentialB
 )
     dimer_energy_vec = zeros(NAtoms)
     energy_tot = 0.0
@@ -407,7 +405,6 @@ function energy_update!(
     return potential_variables, new_energy
 end
 
-
 """
     DimerPotentialVariables
 
@@ -429,7 +426,6 @@ mutable struct DimerPotentialBVariables{T} <: AbstractPotentialVariables
     new_tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
 end #TODO: make immutable
-
 
 """
     dimer_energy_update!(index::Int,dist2_mat::Matrix{Float64},new_dist2_vec,en_tot::Float64,pot::AbstractDimerPotential)

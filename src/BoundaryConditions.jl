@@ -118,7 +118,8 @@ function volume(bc::CubicBC)
     return bc.box_length^3
 end
 function check_boundary(bc::CubicBC, position)
-    return position - bc.box_length * SVector(
+    return position -
+           bc.box_length * SVector(
         round(position[1] / bc.box_length),
         round(position[2] / bc.box_length),
         round(position[3] / bc.box_length),
@@ -198,8 +199,8 @@ function check_boundary(bc::RhombicBC, position)
     )
 end
 function long_range_correction(bc::RhombicBC, potential, num_atoms, r_cut)
-    return long_range_correction(potential, num_atoms, r_cut) *
-        3bc.box_length / 4bc.box_height
+    return long_range_correction(potential, num_atoms, r_cut) * 3bc.box_length /
+           4bc.box_height
 end
 
 end
