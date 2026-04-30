@@ -236,4 +236,31 @@ function get_tantheta_mat!(dest, config::Config)
     return dest
 end
 
+scale_xyz(vector, α) = α * vector
+function scale_xyz(config::Config, α)
+    return Config(scale_xyz(config.positions, α), scale_xyz(config.boundary_condition, α))
+end
+function scale_xy(pos, scale)
+    new_pos = map(pos) do p
+        SVector(p[1] * scale, p[2] * scale, p[3])
+    end
+    return new_pos
+end
+function scale_xy(config::Config, scale)
+    return Config(
+        scale_xy(config.positions, scale), scale_xy(config.boundary_condition, scale)
+    )
+end
+function scale_z(pos, scale)
+    new_pos = map(pos) do p
+        SVector(p[1], p[2], p[3] * scale)
+    end
+    return new_pos
+end
+function scale_z(config::Config, scale)
+    return Config(
+        scale_z(config.positions, scale), scale_z(config.boundary_condition, scale)
+    )
+end
+
 end
