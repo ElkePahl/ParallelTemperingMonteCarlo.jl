@@ -51,7 +51,7 @@ export energy_update!,
 
 export swap_energy_update
 
-include("abstract_types.jl")
+include("abstract.jl")
 include("ELJPotentials.jl")
 include("LookupTablePotential.jl")
 include("EmbeddedAtomPotential.jl")
