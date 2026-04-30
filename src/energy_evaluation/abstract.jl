@@ -102,7 +102,6 @@ such as the ELJB potential.
 Needs squared distances matrix, see [`get_distance2_mat`](@ref) and potential information
 `potential` [`AbstractPotential`](@ref)
 """
-# uses no r_cut, no tan_mat
 function dimer_energy_config(
     distmat, NAtoms, potential_variables, pot::AbstractDimerPotential
 )
@@ -119,7 +118,6 @@ function dimer_energy_config(
     end
     return dimer_energy_vec, energy_tot
 end
-# uses r_cut, no tan_mat
 function dimer_energy_config(
     distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotential
 )
