@@ -185,11 +185,11 @@ end
 
 @testset "Volume" begin
     bc = CubicBC(10.0)
-    v = get_volume(bc)
+    v = volume(bc)
     @test v == 1000.0
 
     bc = RhombicBC(10.0, 10.0)
-    v = get_volume(bc)
+    v = volume(bc)
     @test v == 3^0.5 / 2 * 1000.0
 end
 

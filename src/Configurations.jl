@@ -23,8 +23,7 @@ export distance2,
     get_distance2_mat!,
     get_tan,
     get_tantheta_mat,
-    get_tantheta_mat!,
-    get_volume
+    get_tantheta_mat!
 export get_centre, recentre!
 
 """
@@ -235,24 +234,6 @@ function get_tantheta_mat!(dest, config::Config)
         dest[i, i] = 0
     end
     return dest
-end
-
-"""
-    get_volume(bc::CubicBC)
-    get_volume(bc::RhombicBC)
-
-Returns the volume of a box according to its geometry for use where the ensemble does not imply a fixed `V`.
-"""
-function get_volume(bc::CubicBC)
-    return bc.box_length^3
-end
-
-function get_volume(bc::RhombicBC)
-    return bc.box_length^2 * bc.box_height * 3^0.5 / 2
-end
-
-function get_volume(bc::RectangularBC)
-    return bc.box_length^2 * bc.box_height
 end
 
 end
