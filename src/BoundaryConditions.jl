@@ -125,7 +125,7 @@ function check_boundary(bc::CubicBC, position)
     )
 end
 function long_range_correction(bc::CubicBC, potential, num_atoms, r_cut)
-    return long_range_correction(args, potential, num_atoms, r_cut)
+    return long_range_correction(potential, num_atoms, r_cut)
 end
 
 """
