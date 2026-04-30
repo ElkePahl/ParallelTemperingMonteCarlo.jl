@@ -29,6 +29,37 @@ zero for [`SphericalBC`](@ref).
 long_range_correction
 
 """
+    scale_xyz(::RhombicBC, α)
+    scale_xyz(::RectangularBC, α)
+    scale_xyz(::Vector{<:SVector}, α)
+    scale_xyz(::Config, α)
+
+Scale boundary condition, vector, or configuration in all three dimensions by factor `α`.
+"""
+scale_xyz
+
+"""
+    scale_xy(::RhombicBC, α)
+    scale_xy(::RectangularBC, α)
+    scale_xy(::Vector{<:SVector}, α)
+    scale_xy(::Config, α)
+
+Scale boundary condition, vector, or configuration in all ``x`` and ``y`` dimensions by
+factor `α`.
+"""
+scale_xy
+
+"""
+    scale_z(::RhombicBC, α)
+    scale_z(::RectangularBC, α)
+    scale_z(::Vector{<:SVector}, α)
+    scale_z(::Config, α)
+
+Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
+"""
+scale_z
+
+"""
     AbstractBC{T}
 
 Is abstract type for boundary conditions.
@@ -129,6 +160,8 @@ function long_range_correction(bc::CubicBC, potential, num_atoms, r_cut)
     return long_range_correction(potential, num_atoms, r_cut)
 end
 
+scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
+
 """
     RectangularBC{T}
 
@@ -161,6 +194,10 @@ function long_range_correction(bc::RectangularBC, potential, num_atoms, r_cut)
         return lrc * bc.box_height^2 / bc.box_length^2
     end
 end
+
+scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
+scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box_height)
+scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
 
 """
     RhombicBC{T}(; length::Real, height::Real)
@@ -202,5 +239,9 @@ function long_range_correction(bc::RhombicBC, potential, num_atoms, r_cut)
     return long_range_correction(potential, num_atoms, r_cut) * 3bc.box_length /
            4bc.box_height
 end
+
+scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
+scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
+scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
 
 end

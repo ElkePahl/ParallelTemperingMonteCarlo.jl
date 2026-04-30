@@ -66,22 +66,6 @@ function atom_displacement(mc_state::MCState)
 end
 
 """
-    scale_xyz(::RhombicBC, α)
-    scale_xyz(::RectangularBC, α)
-    scale_xyz(::Vector{<:SVector}, α)
-    scale_xyz(::Config, α)
-
-Scale boundary condition, vector, or configuration in all three dimensions by factor `α`.
-"""
-scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
-scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
-scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
-scale_xyz(vector, α) = α * vector
-function scale_xyz(config::Config, α)
-    return Config(scale_xyz(config.positions, α), scale_xyz(config.boundary_condition, α))
-end
-
-"""
     volume_change_xyz(conf::Config, bc, max_vchange::Real, max_length::Real)
 
 Scale the whole configuration, including positions and the box length by a random amount.
@@ -95,51 +79,6 @@ function volume_change_xyz(conf::Config, max_vchange::Real, max_length::Real)
 
     trial_config = scale_xyz(conf, scale)
     return trial_config, scale
-end
-
-"""
-    scale_xy(::RhombicBC, α)
-    scale_xy(::RectangularBC, α)
-    scale_xy(::Vector{<:SVector}, α)
-    scale_xy(::Config, α)
-
-Scale boundary condition, vector, or configuration in all ``x`` and ``y`` dimensions by
-factor `α`.
-"""
-scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
-scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box_height)
-function scale_xy(pos, scale)
-    new_pos = map(pos) do p
-        SVector(p[1] * scale, p[2] * scale, p[3])
-    end
-    return new_pos
-end
-function scale_xy(config::Config, scale)
-    return Config(
-        scale_xy(config.positions, scale), scale_xy(config.boundary_condition, scale)
-    )
-end
-
-"""
-    scale_z(::RhombicBC, α)
-    scale_z(::RectangularBC, α)
-    scale_z(::Vector{<:SVector}, α)
-    scale_z(::Config, α)
-
-Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
-"""
-scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
-scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
-function scale_z(pos, scale)
-    new_pos = map(pos) do p
-        SVector(p[1], p[2], p[3] * scale)
-    end
-    return new_pos
-end
-function scale_z(config::Config, scale)
-    return Config(
-        scale_z(config.positions, scale), scale_z(config.boundary_condition, scale)
-    )
 end
 
 """
