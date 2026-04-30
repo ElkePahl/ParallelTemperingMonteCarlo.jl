@@ -19,11 +19,7 @@ using ..CustomTypes
 
 export Config
 export distance2,
-    get_distance2_mat,
-    get_distance2_mat!,
-    get_tan,
-    get_tantheta_mat,
-    get_tantheta_mat!
+    get_distance2_mat, get_distance2_mat!, get_tan, get_tantheta_mat, get_tantheta_mat!
 export get_centre, recentre!
 
 """
