@@ -69,7 +69,6 @@ end
 
 LookupTablePotential(link::String) = LookupTablePotential(read_lookuptable(link)...)
 
-#TODO: document me
 """
     LookupTableVariables{T} <: AbstractPotentialVariables
 
