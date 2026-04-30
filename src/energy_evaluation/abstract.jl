@@ -26,6 +26,21 @@ Abstract type for potentials.
 Each potential also requires a potential variable struct
 ([`AbstractPotentialVariables`](@ref)) to hold all non-static information relating a
 potential to the current configuration.
+Abstract type for possible potentials.
+implemented subtype:
+- [`AbstractDimerPotential`](@ref)
+- [`AbstractDimerPotentialB`](@ref)
+- [`EmbeddedAtomPotential`](@ref)
+- [`AbstractMachineLearningPotential`](@ref)
+
+
+When defining a new type, the functions relating a potential to the rest of the Monte Carlo code are explicated at the end of this file. Each potential also requires a PotentialVariable [`AbstractPotentialVariables`](@ref) struct to hold all non-static information relating a potential to the current configuration.
+
+ Needs method for:
+- [`energy_update!`](@ref)
+- [`initialise_energy`](@ref)
+- [`set_variables`](@ref)
+
 """
 abstract type AbstractPotential end
 const Ptype = T where {T<:AbstractPotential}
@@ -33,16 +48,11 @@ export Ptype
 
 """
     AbstractPotentialVariables
-
-Defines abstract type for mutable structs containing relevant potential information updated
-throughout the Monte Carlo simulation.
-
-# Subtypes
-
+An abstract type defining a class of mutable struct containing all the relevant vectors and arrays each potential will need throughout the course of a simulation to prevent over-definitions inside the MCState struct.
+Implemented subtypes:
 - [`DimerPotentialVariables`](@ref)
 - [`ELJPotentialBVariables`](@ref)
 - [`EmbeddedAtomVariables`](@ref)
-- [`LookupTableVariables`](@ref)
 - [`NNPVariables`](@ref)
 
 """
@@ -272,7 +282,6 @@ end
     AbstractDimerPotentialB <: AbstractDimerPotential
 
 # Subtypes
-
 - [`ELJPotentialB`](@ref)
 - [`LookupTablePotential`](@ref)
 """
