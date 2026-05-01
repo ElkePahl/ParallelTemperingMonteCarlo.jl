@@ -138,9 +138,6 @@ function volume_change_uniform(mc_state::MCState)
     mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.boundary_condition
-    )
     mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
 
     return mc_state
@@ -183,9 +180,6 @@ function volume_change_separated(mc_state::MCState)
         )
     end
 
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.boundary_condition
-    )
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )

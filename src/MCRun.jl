@@ -74,12 +74,11 @@ function get_energy!(
             pot,
         )
     else
-        mc_state.potential_variables.en_atom_vec, mc_state.new_en = dimer_energy_config(
+        mc_state.new_en = dimer_energy_config!(
+            mc_state.potential_variables.en_atom_vec,
+            mc_state.ensemble_variables.trial_config,
             mc_state.ensemble_variables.new_dist2_mat,
-            length(mc_state.config),
             mc_state.potential_variables,
-            mc_state.ensemble_variables.new_r_cut,
-            mc_state.ensemble_variables.trial_config.boundary_condition,
             pot,
         )
     end
@@ -225,24 +224,7 @@ function mc_cycle!(
     potential,
 ) where {N,E}
     #TODO: Implement saving configurations after n steps
-    #=
-    if rem(idx,10000) == 0
-        for i=1:length(mc_states)
-            open("$(length(mc_states[1].config))/configuration_$(mc_states[i].temp).txt","a") do io
-                println(io, length(mc_states[1].config))
-                #println(io,mc_states[i].en_tot)
-                #println(io,mc_states[i].new_en)
-                #println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.boundary_condition, potential)[2])
-                println(io,mc_states[i].config.boundary_condition.box_length)
-                println(io,mc_states[i].config.boundary_condition.box_height)
-                for j=1:length(mc_states[1].config)
-                    println(io, "Ne ", mc_states[i].config[j][1]," ",mc_states[i].config[j][2]," ",mc_states[i].config[j][3])
-                end
-                println(io," ")
-            end
-        end
-    end
-    =#
+
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, idx)
 
     if rem(idx, mc_params.mc_sample) == 0

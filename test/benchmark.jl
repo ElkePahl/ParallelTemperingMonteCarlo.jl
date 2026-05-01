@@ -9,12 +9,12 @@ suite = BenchmarkGroup()
 
 suite["Ensembles"] = BenchmarkGroup()
 begin
-    global suite["Ensembles"]["get_r_cut"] = BenchmarkGroup()
+    global suite["Ensembles"]["r_cut"] = BenchmarkGroup()
     begin
-        global suite["Ensembles"]["get_r_cut"]["CubicBC"] = @benchmarkable get_r_cut(
+        global suite["Ensembles"]["r_cut"]["CubicBC"] = @benchmarkable get_r_cut(
             cubic_bc
         ) setup = (cubic_bc = get_cubic_bc())
-        global suite["Ensembles"]["get_r_cut"]["RhombicBC"] = @benchmarkable get_r_cut(
+        global suite["Ensembles"]["r_cut"]["RhombicBC"] = @benchmarkable get_r_cut(
             rhombic_bc
         ) setup = (rhombic_bc = get_rhombic_bc())
     end

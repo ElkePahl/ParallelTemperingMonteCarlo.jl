@@ -31,7 +31,6 @@ end
     conf2 = Config([v1, v1, v1], CubicBC(8.7674))
     envars_npt = set_ensemble_variables(conf2, NPT(3, 101325, false))
 
-    @test envars_npt.r_cut == conf2.boundary_condition.box_length^2 / 4
     @test size(envars_npt.new_dist2_mat) == (3, 3)
 
     z = MoveStrategy(NPT(5, 101325, false))
@@ -39,12 +38,10 @@ end
     conf3 = Config([v1, v1, v1], RhombicBC(10.0, 10.0))
     envars_npt = set_ensemble_variables(conf3, NPT(3, 101325, false))
 
-    @test envars_npt.r_cut == conf3.boundary_condition.box_length^2 * 3 / 16
     @test size(envars_npt.new_dist2_mat) == (3, 3)
 
     conf4 = Config([v1, v1, v1], RhombicBC(10.0, 5.0))
     envars_npt = set_ensemble_variables(conf4, NPT(3, 101325, false))
-    @test envars_npt.r_cut == conf4.boundary_condition.box_height^2 / 4
 
     nnvtens = NNVT([8, 2])
     @test sum(nnvtens.natoms) == 10

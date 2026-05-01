@@ -107,10 +107,11 @@ function dimer_energy_atom(i::Int, d2vec, r_cut::Real, pot::AbstractDimerPotenti
     return sum1
 end
 
+# TODO VVV
 """
-    dimer_energy_config(distmat, num_atoms, potential_variables, pot)
-    dimer_energy_config(distmat, num_atoms, potential_variables, r_cut, pot)
-    dimer_energy_config(distmat, num_atoms, potential_variables, r_cut, boundary_condition, potential)
+    dimer_energy_config(dist_mat, num_atoms, potential_variables, pot)
+    dimer_energy_config(dist_mat, num_atoms, potential_variables, r_cut, pot)
+    dimer_energy_config(dist_mat, num_atoms, potential_variables, r_cut, boundary_condition, potential)
 
 Stores the total of dimer energies of one atom with all other atoms in vector and calculates
 total energy of configuration.
@@ -122,39 +123,23 @@ such as the ELJB potential.
 Needs squared distances matrix, see [`get_distance2_mat`](@ref) and potential information
 `potential` [`AbstractPotential`](@ref)
 """
-function dimer_energy_config(
-    distmat, NAtoms, potential_variables, pot::AbstractDimerPotential
+function dimer_energy_config!(
+    dimer_energy_vec, config, dist_mat, potential_variables, pot::AbstractDimerPotential
 )
-    dimer_energy_vec = zeros(NAtoms)
+    num_atoms = length(config)
     energy_tot = 0.0
 
-    for i in 1:NAtoms
-        for j in (i + 1):NAtoms
-            e_ij = dimer_energy(pot, distmat[i, j])
-            dimer_energy_vec[i] += e_ij
-            dimer_energy_vec[j] += e_ij
-            energy_tot += e_ij
-        end
-    end
-    return dimer_energy_vec, energy_tot
-end
-function dimer_energy_config(
-    distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotential
-)
-    dimer_energy_vec = zeros(NAtoms)
-    energy_tot = 0.0
-
-    for i in 1:NAtoms
-        for j in (i + 1):NAtoms
-            if distmat[i, j] <= r_cut
-                e_ij = dimer_energy(pot, distmat[i, j])
+    for i in 1:num_atoms
+        for j in (i + 1):num_atoms
+            if dist_mat[i, j] <= r_cut(config.boundary_condition)
+                e_ij = dimer_energy(pot, dist_mat[i, j])
                 dimer_energy_vec[i] += e_ij
                 dimer_energy_vec[j] += e_ij
                 energy_tot += e_ij
             end
         end
     end
-    return dimer_energy_vec, energy_tot + long_range_correction(bc, pot, NAtoms, r_cut)
+    return energy_tot + long_range_correction(config.boundary_condition, pot, num_atoms)
 end
 
 """
@@ -185,12 +170,11 @@ function initialise_energy(
     ensemble_variables::NPTVariables,
     pot::AbstractDimerPotential,
 )
-    potential_variables.en_atom_vec, en_tot = dimer_energy_config(
+    en_tot = dimer_energy_config!(
+        potential_variables.en_atom_vec,
+        config,
         dist2_mat,
-        length(config),
         potential_variables,
-        ensemble_variables.r_cut,
-        config.boundary_condition,
         pot,
     )
 
@@ -203,8 +187,12 @@ function initialise_energy(
     ensemble_variables::NVTVariables,
     pot::AbstractDimerPotential,
 )
-    potential_variables.en_atom_vec, en_tot = dimer_energy_config(
-        dist2_mat, length(config), potential_variables, pot
+    en_tot = dimer_energy_config!(
+        potential_variables.en_atom_vec,
+        config,
+        dist2_mat,
+        potential_variables,
+        pot,
     )
 
     return en_tot, potential_variables
@@ -261,7 +249,7 @@ function energy_update!(
         dist2_mat,
         new_dist2_vec,
         en_tot,
-        ensemblevariables.r_cut,
+        r_cut(config.boundary_condition),
         pot,
     )
     return potential_variables, new_energy
@@ -302,39 +290,23 @@ function dimer_energy_atom(i::Int, d2vec, tanvec, pot::AbstractDimerPotentialB)
     end
     return sum1
 end
-function dimer_energy_config(
-    distmat, NAtoms, potential_variables, pot::AbstractDimerPotentialB
+function dimer_energy_config!(
+    dimer_energy_vec, config, dist_mat, potential_variables, pot::AbstractDimerPotentialB
 )
-    dimer_energy_vec = zeros(NAtoms)
+    num_atoms = length(config)
     energy_tot = 0.0
 
-    for i in 1:NAtoms
-        for j in (i + 1):NAtoms
-            e_ij = dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
-            dimer_energy_vec[i] += e_ij
-            dimer_energy_vec[j] += e_ij
-            energy_tot += e_ij
-        end
-    end
-    return dimer_energy_vec, energy_tot
-end
-function dimer_energy_config(
-    distmat, NAtoms, potential_variables, r_cut, bc, pot::AbstractDimerPotentialB
-)
-    dimer_energy_vec = zeros(NAtoms)
-    energy_tot = 0.0
-
-    for i in 1:NAtoms
-        for j in (i + 1):NAtoms
-            if distmat[i, j] <= r_cut
-                e_ij = dimer_energy(pot, distmat[i, j], potential_variables.tan_mat[i, j])
+    for i in 1:num_atoms
+        for j in (i + 1):num_atoms
+            if dist_mat[i, j] <= r_cut(config.boundary_condition)
+                e_ij = dimer_energy(pot, dist_mat[i, j], potential_variables.tan_mat[i, j])
                 dimer_energy_vec[i] += e_ij
                 dimer_energy_vec[j] += e_ij
                 energy_tot += e_ij
             end
         end
     end
-    return dimer_energy_vec, energy_tot + long_range_correction(bc, pot, NAtoms, r_cut)
+    return energy_tot + long_range_correction(config.boundary_condition, pot, num_atoms)
 end
 
 function initialise_energy(
@@ -344,12 +316,11 @@ function initialise_energy(
     ensemble_variables::NPTVariables,
     pot::AbstractDimerPotentialB,
 )
-    potential_variables.en_atom_vec, en_tot = dimer_energy_config(
+    en_tot = dimer_energy_config!(
+        potential_variables.en_atom_vec,
+        config,
         dist2_mat,
-        length(config),
         potential_variables,
-        ensemble_variables.r_cut,
-        config.boundary_condition,
         pot,
     )
     return en_tot, potential_variables
@@ -361,8 +332,12 @@ function initialise_energy(
     ensemble_variables::NVTVariables,
     pot::AbstractDimerPotentialB,
 )
-    potential_variables.en_atom_vec, en_tot = dimer_energy_config(
-        dist2_mat, length(config), potential_variables, pot
+    en_tot = dimer_energy_config!(
+        potential_variables.en_atom_vec,
+        config,
+        dist2_mat,
+        potential_variables,
+        pot,
     )
     return en_tot, potential_variables
 end

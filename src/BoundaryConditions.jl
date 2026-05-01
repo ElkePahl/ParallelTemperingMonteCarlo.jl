@@ -9,7 +9,7 @@ module BoundaryConditions
 using StaticArrays
 
 export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
-export check_boundary, long_range_correction, volume
+export check_boundary, long_range_correction, volume, r_cut
 
 """
     AbstractBC{T}
@@ -82,6 +82,13 @@ scale_xy
 Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
 """
 scale_z
+
+"""
+    r_cut(::AbstractBC)
+
+The square of the cut-off radius `r_cut` that is implied by periodic boundary conditions to avoid double-counting. Defaults to returning `Inf`
+"""
+r_cut(::AbstractBC) = Inf
 
 """
     SphericalBC{T}(;radius::Real)
@@ -163,11 +170,13 @@ function check_boundary(bc::CubicBC, position)
         round(position[3] / bc.box_length),
     )
 end
-function long_range_correction(bc::CubicBC, potential, num_atoms, r_cut)
-    return long_range_correction(potential, num_atoms, r_cut)
+function long_range_correction(bc::CubicBC, potential, num_atoms)
+    return long_range_correction(potential, num_atoms, r_cut(bc))
 end
 
 scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
+
+r_cut(bc::CubicBC) = bc.box_length^2 / 4
 
 """
     RectangularBC{T}
@@ -193,8 +202,8 @@ function check_boundary(bc::RectangularBC, position)
         bc.box_height * round(position[3] / bc.box_height),
     )
 end
-function long_range_correction(bc::RectangularBC, potential, num_atoms, r_cut)
-    lrc = long_range_correction(potential, num_atoms, r_cut)
+function long_range_correction(bc::RectangularBC, potential, num_atoms)
+    lrc = long_range_correction(potential, num_atoms, r_cut(bc))
     if bc.box_length < bc.box_height
         return lrc * bc.box_length / bc.box_height
     else
@@ -205,6 +214,8 @@ end
 scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
 scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box_height)
 scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
+
+r_cut(bc::RectangularBC) = min(bc.box_length^2 / 4, bc.box_height^2 / 4)
 
 """
     RhombicBC{T}(; length::Real, height::Real)
@@ -242,13 +253,15 @@ function check_boundary(bc::RhombicBC, position)
         bc.box_height * round((position[3] - bc.box_height / 2) / bc.box_height),
     )
 end
-function long_range_correction(bc::RhombicBC, potential, num_atoms, r_cut)
-    return long_range_correction(potential, num_atoms, r_cut) * 3bc.box_length /
+function long_range_correction(bc::RhombicBC, potential, num_atoms)
+    return long_range_correction(potential, num_atoms, r_cut(bc)) * 3bc.box_length /
            4bc.box_height
 end
 
 scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
 scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
 scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
+
+r_cut(bc::RhombicBC) = min(bc.box_length^2 * 3 / 16, bc.box_height^2 / 4)
 
 end

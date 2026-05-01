@@ -76,7 +76,6 @@ function swap_config_v!(
     mc_state.count_vol[1] += 1
     mc_state.count_vol[2] += 1
 
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 
 function swap_config_v!(
@@ -106,7 +105,6 @@ function swap_config_v!(
         mc_state.count_vol_z[2] += 1
     end
 
-    mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
 end
 =#
 
@@ -135,8 +133,7 @@ function swap_config_v!(
         mc_state.count_vol_z[1] += 1
         mc_state.count_vol_z[2] += 1
     end
-
-    return mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
+    return nothing
 end
 
 #TODO: potential_variables is passed as argument, but only mc_state.potential_variables is used.
@@ -170,8 +167,7 @@ function swap_config_v!(
         mc_state.count_vol_z[1] += 1
         mc_state.count_vol_z[2] += 1
     end
-
-    return mc_state.ensemble_variables.r_cut = mc_state.ensemble_variables.new_r_cut
+    return nothing
 end
 
 """

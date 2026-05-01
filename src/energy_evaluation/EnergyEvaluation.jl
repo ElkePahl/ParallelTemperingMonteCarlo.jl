@@ -37,7 +37,7 @@ export AbstractPotentialVariables,
     DimerPotentialVariables, ELJPotentialBVariables, LookupTableVariables
 export EmbeddedAtomVariables, NNPVariables, NNPVariables2a
 
-export dimer_energy, dimer_energy_atom, dimer_energy_config, dimer_energy_update!
+export dimer_energy, dimer_energy_atom, dimer_energy_config!, dimer_energy_update!
 export energy_update!,
     set_variables,
     initialise_energy,

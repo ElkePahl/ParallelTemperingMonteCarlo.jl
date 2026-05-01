@@ -11,7 +11,6 @@ export AbstractEnsembleVariables,
 
 export MoveType, atommove, volumemove, atomswap
 export MoveStrategy
-export get_r_cut
 
 """
     AbstractEnsemble
@@ -93,36 +92,18 @@ NPT ensemble specific variable that change during MC run.
     -   `trial_move::SVector{3,T}`
     -   `trial_config::Config`
     -   `new_dist2_mat::Matrix{T}`
-    -   `r_cut::T`
-    -   `new_r_cut::T`
 When trialing a new configuration we select an atom at `index` to move to new position `trial_move`,
 the index can be greater than `n_atoms` in which case we trial a volume move,
-involving a scaled `trial_config` with a `new_r_cut` having a `new_dist2_mat` this being a volume move.
+involving a scaled `trial_config` with a `new_dist2_mat` this being a volume move.
 """
 mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     index::Int64
     trial_move::SVector{3,T}
     trial_config::Config
     new_dist2_mat::Matrix{T}
-    r_cut::T
-    new_r_cut::T
     xy_or_z::Int
 end
 
-"""
-    get_r_cut(bc<:PeriodicBC)
-
-finds the square of the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting).
-implemented for [`CubicBC`](@ref), [`RhombicBC`](@ref) and [`RectangularBC`](@ref).
-"""
-function get_r_cut(bc::CubicBC)
-    return bc.box_length^2 / 4
-end
-
-function get_r_cut(bc::RhombicBC)
-    return min(bc.box_length^2 * 3 / 16, bc.box_height^2 / 4)
-    #return bc.box_length^2*3/16
-end
 #---------------------------------------------------------------------#
 #--------------------------------NNVT---------------------------------#
 #---------------------------------------------------------------------#
@@ -148,10 +129,6 @@ function NNVT(natomsvec; natomswaps=1, natommoves=sum(natomsvec))
         natoms = natomsvec
     end
     return NNVT(natoms, natommoves, natomswaps)
-end
-
-function get_r_cut(bc::RectangularBC)
-    return min(bc.box_length^2 / 4, bc.box_height^2 / 4)
 end
 
 """
@@ -194,8 +171,6 @@ function set_ensemble_variables(config::Config{T}, ensemble::NPT) where {T}
         SVector{3}(zeros(3)),
         deepcopy(config),
         zeros(ensemble.n_atoms, ensemble.n_atoms),
-        get_r_cut(config.boundary_condition),
-        0.0,
         0,
     )
 end
