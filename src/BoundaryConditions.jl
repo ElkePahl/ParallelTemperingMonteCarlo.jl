@@ -41,7 +41,6 @@ check_boundary
     long_range_correction(potential, num_atoms, r_cut)
 
 Compute correction to energy from atoms outside the boundary condition. It is the integral
-of all interaction outside the cutoff distance, using uniform density approximation.
 
 The first method should call the second an multiply it with an appropriate factor (for
 periodic boundary conditions) or return zero (for boundary conditions where a long range
