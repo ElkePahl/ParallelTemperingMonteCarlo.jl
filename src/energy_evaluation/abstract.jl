@@ -9,7 +9,7 @@ Abstract type for potentials.
   - [`ELJPotential`](@ref)
   - [`AbstractDimerPotentialB`](@ref):
     - [`ELJPotentialB`](@ref)
-    - [`LookupPotential`](@ref)
+    - [`LookupTablePotential`](@ref)
 - [`EmbeddedAtomPotential`](@ref)
 - [`AbstractMachineLearningPotential`](@ref):
   - [`RuNNerPotential`](@ref)
@@ -52,7 +52,7 @@ abstract type AbstractPotentialVariables end
 - [`ELJPotentialEven`](@ref)
 - [`AbstractDimerPotentialB`](@ref):
   - [`ELJPotentialB`](@ref)
-  - [`LookupPotential`](@ref)
+  - [`LookupTablePotential`](@ref)
 
 # Interface
 
