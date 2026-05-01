@@ -35,13 +35,10 @@ end
 function update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
     for state in mc_states
         state.ham[1] +=
-            state.en_tot + ensemble.pressure * get_volume(state.config.boundary_condition)
+            state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)
         state.ham[2] +=
-            (
-                state.en_tot +
-                ensemble.pressure * get_volume(state.config.boundary_condition)
-            ) *
-            (state.en_tot + ensemble.pressure * get_volume(state.config.boundary_condition))
+            (state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)) *
+            (state.en_tot + ensemble.pressure * volume(state.config.boundary_condition))
     end
 end
 """
