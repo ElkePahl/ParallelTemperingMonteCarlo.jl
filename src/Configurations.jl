@@ -9,6 +9,7 @@ This module defines types and functions for working with atomic configurations o
 ## Exported functions
 -   [`distance2`](@ref)
 -   [`get_distance2_mat`](@ref)
+-   [`get_distance2_mat!`](@ref)
 """
 module Configurations
 

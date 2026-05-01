@@ -22,7 +22,7 @@ function ELJPotentialEven(c)
     return ELJPotentialEven{N,T}(coeff)
 end
 function long_range_correction(pot::ELJPotentialEven, num_atoms, r_cut)
-    if r_cut <= 50
+    if r_cut <= 50 # TODO: why
         e_lrc = 0.0
     else
         r_cut_sqrt = r_cut^0.5

@@ -21,10 +21,12 @@ check_boundary
 
 """
     long_range_correction(bc::AbstractBC, potential, num_atoms, r_cut)
+    long_range_correction(potential, num_atoms, r_cut)
 
 Compute correction to energy from atoms outside the boundary condition. It is the integral
-of all interaction outside the cutoff distance, using uniform density approximation. Returns
-zero for [`SphericalBC`](@ref).
+of all interaction outside the cutoff distance, using uniform density approximation. The
+second method only needs to be defined for a given potential if used with periodic boundary
+conditions.
 """
 long_range_correction
 

@@ -134,7 +134,7 @@ function set_variables(
     return LookupTableVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
 function long_range_correction(pot::LookupTablePotential, num_atoms, r_cut)
-    if r_cut <= 10
+    if r_cut <= 10 # TODO: why
         e_lrc = 1.0
     else
         rc3 = r_cut^1.5
