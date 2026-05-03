@@ -15,9 +15,7 @@ Abstract type for potentials.
   - [`RuNNerPotential`](@ref)
   - [`RuNNerPotential2Atom`](@ref)
 
-# Inteface
-
-When defining a new type, the functions relating a potential to the rest of the Monte Carlo code are explicated at the end of this file. Each potential also requires a PotentialVariable [`AbstractPotentialVariables`](@ref) struct to hold all non-static information relating a potential to the current configuration.
+# Interface
 
 - [`energy_update!`](@ref)
 - [`initialise_energy`](@ref)
@@ -25,6 +23,9 @@ When defining a new type, the functions relating a potential to the rest of the 
 - [`long_range_correction`](@ref) (optional, necessary for the potential to work with
   periodic boundary conditions)
 
+Each potential also requires a potential variable struct
+([`AbstractPotentialVariables`](@ref)) to hold all non-static information relating a
+potential to the current configuration.
 """
 abstract type AbstractPotential end
 const Ptype = T where {T<:AbstractPotential}
@@ -33,11 +34,15 @@ export Ptype
 """
     AbstractPotentialVariables
 
-An abstract type defining a class of mutable struct containing all the relevant vectors and arrays each potential will need throughout the course of a simulation to prevent over-definitions inside the MCState struct.
-Implemented subtypes:
+Defines abstract type for mutable structs containing relevant potential information updated
+throughout the Monte Carlo simulation.
+
+# Subtypes
+
 - [`DimerPotentialVariables`](@ref)
 - [`ELJPotentialBVariables`](@ref)
 - [`EmbeddedAtomVariables`](@ref)
+- [`LookupTableVariables`](@ref)
 - [`NNPVariables`](@ref)
 
 """
