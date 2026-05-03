@@ -12,6 +12,23 @@ export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
 export check_boundary, long_range_correction, volume
 
 """
+    AbstractBC{T}
+
+Is abstract type for boundary conditions.
+
+# Implemented boundary conditions
+
+- [`SphericalBC`](@ref)
+- [`PeriodicBC`](@ref) with subtypes:
+    - [`CubicBC`](@ref)
+    - [`RhombicBC`](@ref)
+    - [`RectangularBC`](@ref)
+
+All subtypes should implement [`check_boundary`](@ref).
+"""
+abstract type AbstractBC{T} end
+
+"""
     check_boundary(bc::AbstractBC, position)
 
 Check if `position` is within the boundaries of `bc` and move it back into the boundary (in
@@ -65,23 +82,6 @@ scale_xy
 Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
 """
 scale_z
-
-"""
-    AbstractBC{T}
-
-Is abstract type for boundary conditions.
-
-# Implemented boundary conditions
-
-- [`SphericalBC`](@ref)
-- [`PeriodicBC`](@ref) with subtypes:
-    - [`CubicBC`](@ref)
-    - [`RhombicBC`](@ref)
-    - [`RectangularBC`](@ref)
-
-All subtypes should implement [`check_boundary`](@ref).
-"""
-abstract type AbstractBC{T} end
 
 """
     SphericalBC{T}(;radius::Real)
