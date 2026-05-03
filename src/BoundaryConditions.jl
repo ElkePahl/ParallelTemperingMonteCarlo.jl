@@ -122,7 +122,7 @@ implement
 - [`volume`](@ref)
 - [`scale_xyz`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble)
 - [`scale_xy`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble with separated volume moves)
-- [`scale_z`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT ensemble) with separated volume moves)
+- [`scale_z`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) with separated volume moves)
 - [`long_range_correction`](@ref) (optional, defaults to returning zero)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
