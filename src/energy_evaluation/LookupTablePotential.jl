@@ -70,6 +70,11 @@ end
 LookupTablePotential(link::String) = LookupTablePotential(read_lookuptable(link)...)
 
 #TODO: document me
+"""
+    LookupTableVariables{T} <: AbstractPotentialVariables
+
+Potential variables for the [`LookupTablePotential`](@ref).
+"""
 mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
     en_atom_vec::Array{T}
     tan_mat::Matrix{T}
