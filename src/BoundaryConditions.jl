@@ -14,7 +14,7 @@ export check_boundary, long_range_correction, volume, r_cut
 """
     AbstractBC{T}
 
-Is abstract type for boundary conditions.
+Abstract type for boundary conditions.
 
 # Implemented boundary conditions
 
@@ -24,7 +24,21 @@ Is abstract type for boundary conditions.
     - [`RhombicBC`](@ref)
     - [`RectangularBC`](@ref)
 
-All subtypes should implement [`check_boundary`](@ref).
+# Interface
+
+Basic interface:
+- [`check_boundary`](@ref) (required)
+- [`r_cut`](@ref) (optional for non-periodic boundaries, defaults to returning `Inf`)
+- [`long_range_correction`](@ref) (optional for non-periodic boundaries, defaults to
+  returning zero)
+
+Required for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT)
+ensemble:
+- [`volume`](@ref)
+- [`scale_xyz`](@ref)
+- [`scale_xy`](@ref)
+- [`scale_z`](@ref)
+
 """
 abstract type AbstractBC{T} end
 
@@ -40,21 +54,38 @@ check_boundary
     long_range_correction(bc::AbstractBC, potential, num_atoms, r_cut)
     long_range_correction(potential, num_atoms, r_cut)
 
-Compute correction to energy from atoms outside the boundary condition. It is the integral
-of all interaction outside the cutoff distance, using uniform density approximation.
+Compute correction to energy from atoms outside the boundary condition, e.g. an integral
+of all interaction outside the cutoff distance using uniform density approximation.
 
 The first method should call the second an multiply it with an appropriate factor (for
 periodic boundary conditions) or return zero (for boundary conditions where a long range
 correction is not necessary).
 
-The second method only needs to be defined for a given potential if used with periodic
-boundary conditions.
+The second method only needs to be defined for a given potential for it to be usable with
+periodic boundary conditions.
 """
 long_range_correction(::AbstractBC, _, _, _) = 0.0
 
 """
-    scale_xyz(::RhombicBC, α)
-    scale_xyz(::RectangularBC, α)
+    r_cut(::AbstractBC)
+
+The square of the cut-off radius `r_cut` that is implied by periodic boundary conditions to
+avoid double-counting. Defaults to returning `Inf`, and as such only needs to be implemented
+for periodic boundary conditions.
+"""
+r_cut(::AbstractBC) = Inf
+
+
+"""
+    volume(::AbstractBC)
+
+Returns the volume of a box according to its geometry for use where the ensemble does not
+imply a fixed `V`.
+"""
+volume
+
+"""
+    scale_xyz(::AbstractBC, α)
     scale_xyz(::Vector{<:SVector}, α)
     scale_xyz(::Config, α)
 
@@ -63,8 +94,7 @@ Scale boundary condition, vector, or configuration in all three dimensions by fa
 scale_xyz
 
 """
-    scale_xy(::RhombicBC, α)
-    scale_xy(::RectangularBC, α)
+    scale_xy(::AbstractBC, α)
     scale_xy(::Vector{<:SVector}, α)
     scale_xy(::Config, α)
 
@@ -74,21 +104,13 @@ factor `α`.
 scale_xy
 
 """
-    scale_z(::RhombicBC, α)
-    scale_z(::RectangularBC, α)
+    scale_z(::AbstractBC, α)
     scale_z(::Vector{<:SVector}, α)
     scale_z(::Config, α)
 
 Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
 """
 scale_z
-
-"""
-    r_cut(::AbstractBC)
-
-The square of the cut-off radius `r_cut` that is implied by periodic boundary conditions to avoid double-counting. Defaults to returning `Inf`
-"""
-r_cut(::AbstractBC) = Inf
 
 """
     SphericalBC{T}(;radius::Real)
@@ -126,21 +148,12 @@ Is abstract type for periodic boundary conditions to simulate bulk systems.
 
 In addition to the methods required by [`AbstractBC`](@ref), a `PeriodicBC` should
 implement
-- [`volume`](@ref)
-- [`scale_xyz`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble)
-- [`scale_xy`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble with separated volume moves)
-- [`scale_z`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) with separated volume moves)
-- [`long_range_correction`](@ref) (optional, defaults to returning zero)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
-"""
-    volume(::PeriodicBC)
-
-Returns the volume of a box according to its geometry for use where the ensemble does not
-imply a fixed `V`.
-"""
-volume
+# Override defaults, so they are necessary to implement.
+long_range_correction(bc::PeriodicBC, pot, n, r_cut) = throw(MethodError(bc, pot, n, r_cut))
+r_cut(bc::PeriodicBC) = throw(MethodError(r_cut, bc))
 
 """
     CubicBC{T}(; side_length::Real)
