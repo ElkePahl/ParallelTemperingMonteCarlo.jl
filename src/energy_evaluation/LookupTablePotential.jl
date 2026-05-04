@@ -19,13 +19,13 @@ Read lookup table potential from `file`.
 """
 struct LookupTablePotential <: AbstractDimerPotentialB
     table::Matrix{Float64}
-    start_dist::Float64
-    start_angle::Float64
-    l_dist::Int32     #how many distances
-    l_angle::Int32    #how many angles
-    d_dist::Float64
-    d_angle::Float64
-    c6coeff::Float64
+    start_dist::Float64  #
+    start_angle::Float64 #
+    l_dist::Int32        # how many distances
+    l_angle::Int32       # how many angles
+    d_dist::Float64      # delta distance
+    d_angle::Float64     # delta angle
+    c6coeff::Float64     # coefficient for long-range correction
 end
 
 """

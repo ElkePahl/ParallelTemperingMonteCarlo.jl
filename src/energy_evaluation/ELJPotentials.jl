@@ -75,8 +75,10 @@ function set_variables(
     return ELJPotentialBVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
 function long_range_correction(pot::ELJPotentialB, num_atoms, r_cut)
+    # TODO: replace. this is some kind of average of usual coefficients. replace with
+    #       45 degrees.
     coeff = (-0.1279111890228638, -1.328138539967966, 12.260941135261255, 41.12212408251662)
-    if r_cut <= 16 # TODO: why 16? doesn't this depend on anything?
+    if r_cut <= 16 # TODO: make parameter
         e_lrc = 0.0
     else
         r_cut_sqrt = r_cut^0.5
