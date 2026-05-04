@@ -7,6 +7,7 @@ module Exchange
 
 using ..MCStates
 using ..InputParams
+using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 using ..Ensembles
@@ -79,8 +80,8 @@ function metropolis_condition(
         return metropolis_condition(
             ensemble,
             (mc_state.new_en - mc_state.en_tot),
-            get_volume(mc_state.ensemble_variables.trial_config.boundary_condition),
-            get_volume(mc_state.config.boundary_condition),
+            volume(mc_state.ensemble_variables.trial_config.boundary_condition),
+            volume(mc_state.config.boundary_condition),
             mc_state.beta,
         )
     elseif movetype == "atomswap"
@@ -167,11 +168,11 @@ function parallel_tempering_exchange!(
         mc_states[n_exc + 1].beta,
         (
             mc_states[n_exc].en_tot +
-            ensemble.pressure * get_volume(mc_states[n_exc].config.boundary_condition)
+            ensemble.pressure * volume(mc_states[n_exc].config.boundary_condition)
         ),
         (
             mc_states[n_exc + 1].en_tot +
-            ensemble.pressure * get_volume(mc_states[n_exc + 1].config.boundary_condition)
+            ensemble.pressure * volume(mc_states[n_exc + 1].config.boundary_condition)
         ),
     ) > rand()
         mc_states[n_exc].count_exc[2] += 1

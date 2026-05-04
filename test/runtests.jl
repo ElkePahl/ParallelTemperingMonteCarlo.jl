@@ -79,9 +79,6 @@ end
     @test d2mat[2, 1] == d2mat[1, 2]
 
     displ = 0.1
-    # @test_throws ErrorException atom_displacement(v1,displ,bc)
-    trial_pos = atom_displacement(v3, displ, bc)
-    @test norm(trial_pos - v3) < displ
 end
 
 @testset "Config_cubic" begin
@@ -114,10 +111,6 @@ end
         trial_config.boundary_condition.box_length / bc.box_length -
         trial_config[1][1] / v1[1],
     ) <= 10^(-15)
-
-    displ = 0.1
-    trial_pos = atom_displacement(v1, displ, bc)
-    @test norm(trial_pos - v1) < displ
 end
 
 @testset "Config_rhombic" begin
@@ -158,11 +151,6 @@ end
         trial_config.boundary_condition.box_length / bc.box_length -
         trial_config.boundary_condition.box_height / bc.box_height,
     ) <= 10^(-15)
-
-    v5 = SVector(7.5, 4.330127018922193, 5.0)
-    displ = 0.1
-    trial_pos = atom_displacement(v5, displ, bc)
-    @test norm(trial_pos - v5) < displ
 end
 
 @testset "Tangent" begin
@@ -197,11 +185,11 @@ end
 
 @testset "Volume" begin
     bc = CubicBC(10.0)
-    v = get_volume(bc)
+    v = volume(bc)
     @test v == 1000.0
 
     bc = RhombicBC(10.0, 10.0)
-    v = get_volume(bc)
+    v = volume(bc)
     @test v == 3^0.5 / 2 * 1000.0
 end
 
@@ -209,8 +197,8 @@ end
     bc = SphericalBC(; radius=1.0)
     @test bc.radius2 == 1.0
 
-    @test check_boundary(bc, SVector(0, 0.5, 1.0))
-    @test check_boundary(bc, SVector(0, 0.5, 0.5)) == false
+    @test check_boundary(bc, SVector(0, 0.5, 1.0)) ≡ nothing
+    @test check_boundary(bc, SVector(0, 0.5, 0.5)) ≡ SVector(0, 0.5, 0.5)
 end
 
 @testset "TemperatureGrid" begin

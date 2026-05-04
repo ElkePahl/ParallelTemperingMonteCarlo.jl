@@ -117,8 +117,8 @@ end
     @test metropolis_condition("volumemove", state_new, ensemble) ≈ metropolis_condition(
         ensemble,
         state_new.new_en - state.en_tot,
-        get_volume(state_new.ensemble_variables.trial_config.boundary_condition),
-        get_volume(state.config.boundary_condition),
+        volume(state_new.ensemble_variables.trial_config.boundary_condition),
+        volume(state.config.boundary_condition),
         state.beta,
     )
 end

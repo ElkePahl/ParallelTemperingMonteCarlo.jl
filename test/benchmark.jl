@@ -112,12 +112,12 @@ begin
         ) setup = (config = get_config(get_rhombic_bc()))
     end
 
-    global suite["Configurations"]["get_volume"] = BenchmarkGroup()
+    global suite["Configurations"]["volume"] = BenchmarkGroup()
     begin
-        global suite["Configurations"]["get_volume"]["CubicBC"] = @benchmarkable get_volume(
+        global suite["Configurations"]["volume"]["CubicBC"] = @benchmarkable volume(
             cubic_bc
         ) setup = (cubic_bc = get_cubic_bc())
-        global suite["Configurations"]["get_volume"]["RhombicBC"] = @benchmarkable get_volume(
+        global suite["Configurations"]["volume"]["RhombicBC"] = @benchmarkable volume(
             rhombic_bc
         ) setup = (rhombic_bc = get_rhombic_bc())
     end

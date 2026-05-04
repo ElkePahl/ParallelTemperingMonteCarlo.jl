@@ -7,27 +7,81 @@ Provides structs and methods for different boundary conditions.
 module BoundaryConditions
 
 using StaticArrays
-using ..CustomTypes
 
 export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
-export check_boundary
+export check_boundary, long_range_correction, volume
 
 """
     AbstractBC{T}
 
 Is abstract type for boundary conditions.
 
-Implemented boundary conditions:
--   `SphericalBC`
--   `PeriodicBC` with subtypes:
-    -   `CubicBC`
-    -   `RhombicBC`
-    -   `RectangularBC`
+# Implemented boundary conditions
 
-Needs methods implemented for
--   [`atom_displacement`](@ref Main.ParallelTemperingMonteCarlo.MCMoves.atom_displacement)
+- [`SphericalBC`](@ref)
+- [`PeriodicBC`](@ref) with subtypes:
+    - [`CubicBC`](@ref)
+    - [`RhombicBC`](@ref)
+    - [`RectangularBC`](@ref)
+
+All subtypes should implement [`check_boundary`](@ref).
 """
 abstract type AbstractBC{T} end
+
+"""
+    check_boundary(bc::AbstractBC, position)
+
+Check if `position` is within the boundaries of `bc` and move it back into the boundary (in
+case of [`PeriodicBC`](@ref)), or return `nothing` if the position is invalid.
+"""
+check_boundary
+
+"""
+    long_range_correction(bc::AbstractBC, potential, num_atoms, r_cut)
+    long_range_correction(potential, num_atoms, r_cut)
+
+Compute correction to energy from atoms outside the boundary condition. It is the integral
+of all interaction outside the cutoff distance, using uniform density approximation.
+
+The first method should call the second an multiply it with an appropriate factor (for
+periodic boundary conditions) or return zero (for boundary conditions where a long range
+correction is not necessary).
+
+The second method only needs to be defined for a given potential if used with periodic
+boundary conditions.
+"""
+long_range_correction(::AbstractBC, _, _, _) = 0.0
+
+"""
+    scale_xyz(::RhombicBC, α)
+    scale_xyz(::RectangularBC, α)
+    scale_xyz(::Vector{<:SVector}, α)
+    scale_xyz(::Config, α)
+
+Scale boundary condition, vector, or configuration in all three dimensions by factor `α`.
+"""
+scale_xyz
+
+"""
+    scale_xy(::RhombicBC, α)
+    scale_xy(::RectangularBC, α)
+    scale_xy(::Vector{<:SVector}, α)
+    scale_xy(::Config, α)
+
+Scale boundary condition, vector, or configuration in all ``x`` and ``y`` dimensions by
+factor `α`.
+"""
+scale_xy
+
+"""
+    scale_z(::RhombicBC, α)
+    scale_z(::RectangularBC, α)
+    scale_z(::Vector{<:SVector}, α)
+    scale_z(::Config, α)
+
+Scale boundary condition, vector, or configuration in the ``z`` dimension by factor `α`.
+"""
+scale_z
 
 """
     SphericalBC{T}(;radius::Real)
@@ -45,18 +99,41 @@ struct SphericalBC{T} <: AbstractBC{T}
     radius2::T   #radius of binding sphere squared
     SphericalBC(; radius::T) where {T<:Real} = new{T}(radius * radius)
 end
+function check_boundary(bc::SphericalBC, position)
+    if sum(abs2, position) > bc.radius2
+        return nothing
+    else
+        return position
+    end
+end
 
 """
     PeriodicBC{T}
 
 Is abstract type for periodic boundary conditions to simulate bulk systems.
 
-- Implemented types:
-    - `CubicBC`
-    - `RhombicBC`
-    - `RectangularBC`
+# Implemented types
+- [`CubicBC`](@ref)
+- [`RhombicBC`](@ref)
+- [`RectangularBC`](@ref)
+
+In addition to the methods required by [`AbstractBC`](@ref), a `PeriodicBC` should
+implement
+- [`volume`](@ref)
+- [`scale_xyz`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble)
+- [`scale_xy`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble with separated volume moves)
+- [`scale_z`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) with separated volume moves)
+- [`long_range_correction`](@ref) (optional, defaults to returning zero)
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
+
+"""
+    volume(::PeriodicBC)
+
+Returns the volume of a box according to its geometry for use where the ensemble does not
+imply a fixed `V`.
+"""
+volume
 
 """
     CubicBC{T}(; side_length::Real)
@@ -75,6 +152,22 @@ struct CubicBC{T} <: PeriodicBC{T}
     CubicBC{T}(x::T) where {T<:Real} = new{T}(x)
     CubicBC(x::T) where {T<:Real} = new{T}(x)
 end
+function volume(bc::CubicBC)
+    return bc.box_length^3
+end
+function check_boundary(bc::CubicBC, position)
+    return position -
+           bc.box_length * SVector(
+        round(position[1] / bc.box_length),
+        round(position[2] / bc.box_length),
+        round(position[3] / bc.box_length),
+    )
+end
+function long_range_correction(bc::CubicBC, potential, num_atoms, r_cut)
+    return long_range_correction(potential, num_atoms, r_cut)
+end
+
+scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
 
 """
     RectangularBC{T}
@@ -90,8 +183,29 @@ struct RectangularBC{T} <: PeriodicBC{T}
     box_length::T
     box_height::T
 end
+function volume(bc::RectangularBC)
+    return bc.box_length^2 * bc.box_height
+end
+function check_boundary(bc::RectangularBC, position)
+    return position - SVector(
+        bc.box_length * round(position[1] / bc.box_length),
+        bc.box_length * round(position[2] / bc.box_length),
+        bc.box_height * round(position[3] / bc.box_height),
+    )
+end
+function long_range_correction(bc::RectangularBC, potential, num_atoms, r_cut)
+    lrc = long_range_correction(potential, num_atoms, r_cut)
+    if bc.box_length < bc.box_height
+        return lrc * bc.box_length / bc.box_height
+    else
+        return lrc * bc.box_height^2 / bc.box_length^2
+    end
+end
 
-# TODO  check how exactly implemented (height is length of side or projection on z-axis?)
+scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
+scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box_height)
+scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
+
 """
     RhombicBC{T}(; length::Real, height::Real)
 
@@ -114,33 +228,27 @@ struct RhombicBC{T} <: PeriodicBC{T}
     RhombicBC{T}(x::T, y::T) where {T<:Real} = new{T}(x, y)
     RhombicBC(x::T, y::T) where {T<:Real} = new{T}(x, y)
 end
-
-"""
-    check_boundary(bc::SpericalBC,pos::PositionVector) where T <: Real
-
-Checks if atom moved outside of spherical boundary
-(squared norm of position vector smaller than squared radius of binding sphere).
-Returns `true` if atom lies outside.
-
-# Arguments
-- [`SphericalBC`](@ref)
-- `pos`: position of moved atom
-
-"""
-check_boundary(bc::SphericalBC, pos::PositionVector) = sum(x -> x^2, pos) > bc.radius2
-
-"""
-    test_cluster_inside(pos::Vector{SVector{3,T}},bc::SphericalBC) where T <: Real
-
-Tests if whole cluster lies in the binding sphere.
-
-# Arguments
-- atomic positions
-- [`SphericalBC`](@ref)
-"""
-function test_cluster_inside(pos::Vector{SVector{3,T}}, bc::SphericalBC) where {T<:Real}
-    return sum(x -> check_boundary(bc, x), pos) == 0
+function volume(bc::RhombicBC)
+    return bc.box_length^2 * bc.box_height * 3^0.5 / 2
 end
-# TO DO: check if this function is used at all? If so, make consistent with check_boundary
+function check_boundary(bc::RhombicBC, position)
+    return position - SVector(
+        bc.box_length *
+        round((position[1] - position[2] / 3^0.5 - bc.box_length / 2) / bc.box_length) +
+        bc.box_length / 2 *
+        round((position[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        bc.box_length * 3^0.5 / 2 *
+        round((position[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        bc.box_height * round((position[3] - bc.box_height / 2) / bc.box_height),
+    )
+end
+function long_range_correction(bc::RhombicBC, potential, num_atoms, r_cut)
+    return long_range_correction(potential, num_atoms, r_cut) * 3bc.box_length /
+           4bc.box_height
+end
+
+scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
+scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
+scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
 
 end

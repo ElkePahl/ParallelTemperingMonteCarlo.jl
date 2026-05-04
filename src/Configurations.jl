@@ -9,6 +9,7 @@ This module defines types and functions for working with atomic configurations o
 ## Exported functions
 -   [`distance2`](@ref)
 -   [`get_distance2_mat`](@ref)
+-   [`get_distance2_mat!`](@ref)
 """
 module Configurations
 
@@ -17,14 +18,12 @@ using StaticArrays, LinearAlgebra, Statistics
 using ..BoundaryConditions
 using ..CustomTypes
 
+import ..BoundaryConditions: scale_xyz, scale_xy, scale_z
+export scale_xyz, scale_xy, scale_z
+
 export Config
 export distance2,
-    get_distance2_mat,
-    get_distance2_mat!,
-    get_tan,
-    get_tantheta_mat,
-    get_tantheta_mat!,
-    get_volume
+    get_distance2_mat, get_distance2_mat!, get_tan, get_tantheta_mat, get_tantheta_mat!
 export get_centre, recentre!
 
 """
@@ -237,22 +236,31 @@ function get_tantheta_mat!(dest, config::Config)
     return dest
 end
 
-"""
-    get_volume(bc::CubicBC)
-    get_volume(bc::RhombicBC)
-
-Returns the volume of a box according to its geometry for use where the ensemble does not imply a fixed `V`.
-"""
-function get_volume(bc::CubicBC)
-    return bc.box_length^3
+scale_xyz(vector, α) = α * vector
+function scale_xyz(config::Config, α)
+    return Config(scale_xyz(config.positions, α), scale_xyz(config.boundary_condition, α))
 end
-
-function get_volume(bc::RhombicBC)
-    return bc.box_length^2 * bc.box_height * 3^0.5 / 2
+function scale_xy(pos, scale)
+    new_pos = map(pos) do p
+        SVector(p[1] * scale, p[2] * scale, p[3])
+    end
+    return new_pos
 end
-
-function get_volume(bc::RectangularBC)
-    return bc.box_length^2 * bc.box_height
+function scale_xy(config::Config, scale)
+    return Config(
+        scale_xy(config.positions, scale), scale_xy(config.boundary_condition, scale)
+    )
+end
+function scale_z(pos, scale)
+    new_pos = map(pos) do p
+        SVector(p[1], p[2], p[3] * scale)
+    end
+    return new_pos
+end
+function scale_z(config::Config, scale)
+    return Config(
+        scale_z(config.positions, scale), scale_z(config.boundary_condition, scale)
+    )
 end
 
 end
