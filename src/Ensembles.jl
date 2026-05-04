@@ -21,8 +21,6 @@ Abstract type for ensemble:
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
-const Etype = T where {T<:AbstractEnsemble}
-export Etype
 
 """
     AbstractEnsembleVariables
@@ -192,19 +190,19 @@ Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) stru
 @enum MoveType atommove volumemove atomswap
 
 """
-    MoveStrategy{N,Etype}
+    MoveStrategy{N,AbstractEnsemble}
 
 A struct to define the types of moves performed per MC cycle.
 -   Field names:
-    -   `ensemble::Etype`: type of ensemble (NVT, NPT)
+    -   `ensemble::AbstractEnsemble`: type of ensemble (NVT, NPT)
     -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle (see `MoveType`)
 Constructors:
 -   MoveStrategy(ensemble::NPT)
 -   MoveStrategy(ensemble::NVT)
 -   MoveStrategy(ensemble::NNVT)
 """
-struct MoveStrategy{N,Etype} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps.
-    ensemble::Etype
+struct MoveStrategy{N,E} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps.
+    ensemble::E
     movestrat::Vector{String}
 end
 

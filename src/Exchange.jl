@@ -45,8 +45,8 @@ export parallel_tempering_exchange!, update_max_stepsize!
 # end
 """
     metropolis_condition(delta_energy::Number, beta::Number)
-    metropolis_condition(ensemble::Etype, delta_energy::Float64, volume_changed::Float64, volume_unchanged::Float64, beta::Float64) where Etype <: NPT
-    metropolis_condition(movetype::String, mc_state::MCState, ensemble::Etype) where Etype <: AbstractEnsemble
+    metropolis_condition(ensemble::NPT, delta_energy::Float64, volume_changed::Float64, volume_unchanged::Float64, beta::Float64)
+    metropolis_condition(movetype::String, mc_state::MCState, ensemble)
 Function returning the probability value associated with a trial move. Four methods included. The last two methods are separatig functions taking a `movetype`, `mc_state` and `ensemble` and separating them into volume and atom moves defined in the first two functions, namely:
 -   accepts `delta_energy` and `beta` and determines the thermodynamic probability of the single-atom move
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
@@ -57,12 +57,12 @@ function metropolis_condition(delta_energy::Number, beta::Number)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
 function metropolis_condition(
-    ensemble::Etype,
+    ensemble::NPT,
     delta_energy::Float64,
     volume_changed::Float64,
     volume_unchanged::Float64,
     beta::Float64,
-) where {Etype<:NPT}
+)
     delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged)
     prob_val = exp(
         -delta_h * beta + ensemble.n_atoms * log(volume_changed / volume_unchanged)
@@ -70,9 +70,7 @@ function metropolis_condition(
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-function metropolis_condition(
-    movetype::String, mc_state::MCState, ensemble::Etype
-) where {Etype<:AbstractEnsemble}
+function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
     if movetype == "atommove"
         return metropolis_condition((mc_state.new_en - mc_state.en_tot), mc_state.beta)
     elseif movetype == "volumemove"
@@ -188,7 +186,7 @@ end
 
 """
     update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number)
-    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::Etype, min_acc::Number, max_acc::Number) where Etype <: AbstractEnsemble
+    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble, min_acc::Number, max_acc::Number)
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
 if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles;
 each cycle consists of `a` atom, `v` volume moves.
@@ -249,8 +247,8 @@ function update_max_stepsize!(
     return mc_state
 end
 function update_max_stepsize!(
-    mc_state::MCState, n_update::Int, ensemble::Etype, min_acc::Number, max_acc::Number
-) where {Etype<:AbstractEnsemble}
+    mc_state::MCState, n_update::Int, ensemble, min_acc::Number, max_acc::Number
+)
     #atom moves
     acc_rate = mc_state.count_atom[2] / (n_update * ensemble.n_atom_moves)
     if acc_rate < min_acc

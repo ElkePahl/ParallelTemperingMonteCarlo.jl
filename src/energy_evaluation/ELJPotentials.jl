@@ -9,8 +9,9 @@ struct ELJPotentialEven{N,T} <: AbstractDimerPotential
     coeff::SVector{N,T}
 end
 function ELJPotentialEven{N}(c) where {N}
-    @boundscheck length(c) == N ||
-        error("number of ELJ coefficients does not match given length")
+    @boundscheck if length(c) ≠ N
+        throw(DimensionMismatch("number of coefficients does not match length of input"))
+    end
     coeff = SVector{N}(c)
     T = eltype(c)
     return ELJPotentialEven{N,T}(coeff)
@@ -48,8 +49,9 @@ struct ELJPotentialB{N,T} <: AbstractDimerPotentialB
     coeff_c::SVector{N,T}
 end
 function ELJPotentialB{N}(a, b, c) where {N}
-    @boundscheck length(c) == N ||
-        error("number of ELJ coefficients does not match given length")
+    @boundscheck if length(c) ≠ N
+        throw(DimensionMismatch("number of coefficients does not match length of input"))
+    end
     coeff_a = SVector{N}(a)
     coeff_b = SVector{N}(b)
     coeff_c = SVector{N}(c)
@@ -114,8 +116,9 @@ struct ELJPotential{N,T} <: AbstractDimerPotential
 end
 
 function ELJPotential{N}(c) where {N}
-    @boundscheck length(c) == N ||
-        error("number of ELJ coefficients does not match given length")
+    @boundscheck if length(c) ≠ N
+        throw(DimensionMismatch("number of coefficients does not match length of input"))
+    end
     coeff = SVector{N}(c)
     T = eltype(c)
     return ELJPotential{N,T}(coeff)

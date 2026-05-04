@@ -51,7 +51,7 @@ case of [`PeriodicBC`](@ref)), or return `nothing` if the position is invalid.
 check_boundary
 
 """
-    long_range_correction(bc::AbstractBC, potential, num_atoms, r_cut)
+    long_range_correction(bc::AbstractBC, potential, num_atoms)
     long_range_correction(potential, num_atoms, r_cut)
 
 Compute correction to energy from atoms outside the boundary condition, e.g. an integral
@@ -64,7 +64,7 @@ correction is not necessary).
 The second method only needs to be defined for a given potential for it to be usable with
 periodic boundary conditions.
 """
-long_range_correction(::AbstractBC, _, _, _) = 0.0
+long_range_correction(::AbstractBC, _, _) = 0.0
 
 """
     r_cut(::AbstractBC)
@@ -74,7 +74,6 @@ avoid double-counting. Defaults to returning `Inf`, and as such only needs to be
 for periodic boundary conditions.
 """
 r_cut(::AbstractBC) = Inf
-
 
 """
     volume(::AbstractBC)
@@ -151,7 +150,7 @@ implement
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
-# Override defaults, so they are necessary to implement.
+# Override defaults, so they are necessary to implement for PeriodicBC.
 long_range_correction(bc::PeriodicBC, pot, n, r_cut) = throw(MethodError(bc, pot, n, r_cut))
 r_cut(bc::PeriodicBC) = throw(MethodError(r_cut, bc))
 
@@ -176,12 +175,7 @@ function volume(bc::CubicBC)
     return bc.box_length^3
 end
 function check_boundary(bc::CubicBC, position)
-    return position -
-           bc.box_length * SVector(
-        round(position[1] / bc.box_length),
-        round(position[2] / bc.box_length),
-        round(position[3] / bc.box_length),
-    )
+    return position .- bc.box_length .* round.(position ./ bc.box_length)
 end
 function long_range_correction(bc::CubicBC, potential, num_atoms)
     return long_range_correction(potential, num_atoms, r_cut(bc))
@@ -209,11 +203,8 @@ function volume(bc::RectangularBC)
     return bc.box_length^2 * bc.box_height
 end
 function check_boundary(bc::RectangularBC, position)
-    return position - SVector(
-        bc.box_length * round(position[1] / bc.box_length),
-        bc.box_length * round(position[2] / bc.box_length),
-        bc.box_height * round(position[3] / bc.box_height),
-    )
+    box_size = SVector(bc.box_length, bc.box_length, bc.box_height)
+    return position .- box_size .* round.(position ./ box_size)
 end
 function long_range_correction(bc::RectangularBC, potential, num_atoms)
     lrc = long_range_correction(potential, num_atoms, r_cut(bc))
@@ -253,16 +244,16 @@ struct RhombicBC{T} <: PeriodicBC{T}
     RhombicBC(x::T, y::T) where {T<:Real} = new{T}(x, y)
 end
 function volume(bc::RhombicBC)
-    return bc.box_length^2 * bc.box_height * 3^0.5 / 2
+    return bc.box_length^2 * bc.box_height * √3 / 2
 end
 function check_boundary(bc::RhombicBC, position)
     return position - SVector(
         bc.box_length *
-        round((position[1] - position[2] / 3^0.5 - bc.box_length / 2) / bc.box_length) +
+        round((position[1] - position[2] / √3 - bc.box_length / 2) / bc.box_length) +
         bc.box_length / 2 *
-        round((position[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
-        bc.box_length * 3^0.5 / 2 *
-        round((position[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        round((position[2] - bc.box_length * √3 / 4) / (bc.box_length * √3 / 2)),
+        bc.box_length * √3 / 2 *
+        round((position[2] - bc.box_length * √3 / 4) / (bc.box_length * √3 / 2)),
         bc.box_height * round((position[3] - bc.box_height / 2) / bc.box_height),
     )
 end

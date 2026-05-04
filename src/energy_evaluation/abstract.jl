@@ -28,8 +28,6 @@ Each potential also requires a potential variable struct
 potential to the current configuration.
 """
 abstract type AbstractPotential end
-const Ptype = T where {T<:AbstractPotential}
-export Ptype
 
 """
     AbstractPotentialVariables
@@ -171,11 +169,7 @@ function initialise_energy(
     pot::AbstractDimerPotential,
 )
     en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec,
-        config,
-        dist2_mat,
-        potential_variables,
-        pot,
+        potential_variables.en_atom_vec, config, dist2_mat, potential_variables, pot
     )
 
     return en_tot, potential_variables
@@ -188,11 +182,7 @@ function initialise_energy(
     pot::AbstractDimerPotential,
 )
     en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec,
-        config,
-        dist2_mat,
-        potential_variables,
-        pot,
+        potential_variables.en_atom_vec, config, dist2_mat, potential_variables, pot
     )
 
     return en_tot, potential_variables
@@ -317,11 +307,7 @@ function initialise_energy(
     pot::AbstractDimerPotentialB,
 )
     en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec,
-        config,
-        dist2_mat,
-        potential_variables,
-        pot,
+        potential_variables.en_atom_vec, config, dist2_mat, potential_variables, pot
     )
     return en_tot, potential_variables
 end
@@ -333,11 +319,7 @@ function initialise_energy(
     pot::AbstractDimerPotentialB,
 )
     en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec,
-        config,
-        dist2_mat,
-        potential_variables,
-        pot,
+        potential_variables.en_atom_vec, config, dist2_mat, potential_variables, pot
     )
     return en_tot, potential_variables
 end
