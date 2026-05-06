@@ -1,4 +1,42 @@
 """
+    ELJPotential{N,T}
+Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
+as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6`
+field name: `coeff::SVector{N,T}` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6`, coefficient for every power needed.
+Constructors:
+    ELJPotential{N}(c) where N
+    ELJPotential(c)
+"""
+struct ELJPotential{N,T} <: AbstractDimerPotential
+    coeff::SVector{N,T}
+end
+function ELJPotential{N}(c) where {N}
+    @boundscheck if length(c) ≠ N
+        throw(DimensionMismatch("number of coefficients does not match length of input"))
+    end
+    coeff = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotential{N,T}(coeff)
+end
+function ELJPotential(c)
+    N = length(c)
+    coeff = SVector{N}(c)
+    T = eltype(c)
+    return ELJPotential{N,T}(coeff)
+end
+
+function dimer_energy(pot::ELJPotential{N}, r2::Real) where {N}
+    r = sqrt(r2)
+    r6inv = 1 / (r2 * r2 * r2)
+    sum1 = 0.0
+    for i in 1:N
+        sum1 += pot.coeff[i] * r6inv
+        r6inv /= r
+    end
+    return sum1
+end
+
+"""
     ELJPotentialEven(coefficients) <: AbstractDimerPotential
 
 Implements type for extended Lennard Jones potential with only even powers; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
@@ -22,6 +60,17 @@ function ELJPotentialEven(c)
     T = eltype(c)
     return ELJPotentialEven{N,T}(coeff)
 end
+
+function dimer_energy(pot::ELJPotentialEven{N}, r2::Real) where {N}
+    r6inv = 1 / (r2 * r2 * r2)
+    sum1 = 0.0
+    for i in 1:N
+        sum1 += pot.coeff[i] * r6inv
+        r6inv /= r2
+    end
+    return sum1
+end
+
 function long_range_correction(pot::ELJPotentialEven, num_atoms, r_cut)
     if r_cut <= 50 # TODO: why
         e_lrc = 0.0
@@ -66,6 +115,7 @@ function ELJPotentialB(a, b, c)
     T = eltype(c)
     return ELJPotentialB{N,T}(coeff_a, coeff_b, coeff_c)
 end
+
 function set_variables(
     config::Config{T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB
 ) where {T}
@@ -74,6 +124,24 @@ function set_variables(
 
     return ELJPotentialBVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
 end
+
+function dimer_energy(pot::ELJPotentialB{N}, r2::Real, z_angle::Real) where {N}
+    if r2 >= 5.30 # TODO: hardcoded cutoff
+        r6inv = 1 / (r2 * r2 * r2)
+        t2 = 2 / (z_angle^2 + 1) - 1     #cos(2*theta)
+        t4 = 2 * t2^2 - 1
+        sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1] * t2 + pot.coeff_b[1] * t4)
+        r6inv /= r2
+        for i in 2:N
+            sum1 += pot.coeff_c[i] * r6inv * (1 + pot.coeff_a[i] * t2 + pot.coeff_b[i] * t4)
+            r6inv /= r2^0.5
+        end
+    else
+        sum1 = 0.1
+    end
+    return sum1
+end
+
 function long_range_correction(pot::ELJPotentialB, num_atoms, r_cut)
     # TODO: replace. this is some kind of average of usual coefficients. replace with
     #       45 degrees.
@@ -102,83 +170,4 @@ mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
     tan_mat::Matrix{T}
     new_tan_mat::Matrix{T}
     new_tan_vec::Vector{T}
-end
-
-"""
-    ELJPotential{N,T}
-Implements type for extended Lennard Jones potential; subtype of [`AbstractDimerPotential`](@ref)<:[`AbstractPotential`](@ref);
-as sum over `c_i r^(-i)`, starting with `i=6` up to `i=N+6`
-field name: `coeff::SVector{N,T}` : contains ELJ coefficients `c_i` from `i=6` to `i=N+6`, coefficient for every power needed.
-Constructors:
-    ELJPotential{N}(c) where N
-    ELJPotential(c)
-"""
-struct ELJPotential{N,T} <: AbstractDimerPotential
-    coeff::SVector{N,T}
-end
-
-function ELJPotential{N}(c) where {N}
-    @boundscheck if length(c) ≠ N
-        throw(DimensionMismatch("number of coefficients does not match length of input"))
-    end
-    coeff = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotential{N,T}(coeff)
-end
-
-function ELJPotential(c)
-    N = length(c)
-    coeff = SVector{N}(c)
-    T = eltype(c)
-    return ELJPotential{N,T}(coeff)
-end
-
-"""
-    dimer_energy(pot::ELJPotential{N}, r2::Real) where N
-    dimer_energy(pot::ELJPotentialEven{N}, r2::Real) where N
-    dimer_energy(pot::ELJPotentialB{N}, r2::Real, z_angle::Real) where N
-Calculates energy of dimer for given potential `pot` and squared distance `r2` between atoms
-Methods implemented for:
-
--   [`ELJPotential`](@ref)
-
--   [`ELJPotentialEven`](@ref)
-Dimer energy when the distance square between two atom is `r2` and the angle between the line connecting them and z-direction is `z_angle`.
-When `r2 < 5.30`, returns 1.
-"""
-function dimer_energy(pot::ELJPotential{N}, r2::Real) where {N}
-    r = sqrt(r2)
-    r6inv = 1 / (r2 * r2 * r2)
-    sum1 = 0.0
-    for i in 1:N
-        sum1 += pot.coeff[i] * r6inv
-        r6inv /= r
-    end
-    return sum1
-end
-
-function dimer_energy(pot::ELJPotentialEven{N}, r2::Real) where {N}
-    r6inv = 1 / (r2 * r2 * r2)
-    sum1 = 0.0
-    for i in 1:N
-        sum1 += pot.coeff[i] * r6inv
-        r6inv /= r2
-    end
-    return sum1
-end
-function dimer_energy(pot::ELJPotentialB{N}, r2::Real, z_angle::Real) where {N}
-    if r2 >= 5.30
-        r6inv = 1 / (r2 * r2 * r2)
-        t2 = 2 / (z_angle^2 + 1) - 1     #cos(2*theta)
-        t4 = 2 * t2^2 - 1
-        sum1 = pot.coeff_c[1] * r6inv * (1 + pot.coeff_a[1] * t2 + pot.coeff_b[1] * t4)
-        r6inv /= r2
-        for i in 2:N
-            sum1 += pot.coeff_c[i] * r6inv * (1 + pot.coeff_a[i] * t2 + pot.coeff_b[i] * t4)
-            r6inv /= r2^0.5
-        end
-    else
-        sum1 = 0.1
-    end
-    return sum1
 end
