@@ -140,7 +140,9 @@ function dimer_energy_config!(
         for j in (i + 1):num_atoms
             if dist2_mat[i, j] <= r_cut(config.boundary_condition)
                 if pot isa AbstractDimerPotentialB
-                    e_ij = dimer_energy(pot, dist2_mat[i, j], potential_variables.tan_mat[i, j])
+                    e_ij = dimer_energy(
+                        pot, dist2_mat[i, j], potential_variables.tan_mat[i, j]
+                    )
                 else
                     e_ij = dimer_energy(pot, dist2_mat[i, j])
                 end
@@ -217,7 +219,7 @@ function energy_update!(
     dist2_mat,
     new_dist2_vec,
     en_tot,
-    potential::AbstractDimerPotential
+    potential::AbstractDimerPotential,
 )
     trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
@@ -228,7 +230,7 @@ function energy_update!(
     if potential isa AbstractDimerPotentialB
         potential_variables.new_tan_vec .= (
             get_tan(trial_pos, b, config.boundary_condition) for b in config
-                )
+        )
         potential_variables.new_tan_vec[index] = 0
 
         new_tan_vec = potential_variables.new_tan_vec
@@ -236,7 +238,9 @@ function energy_update!(
 
         @views delta_en =
             dimer_energy_atom(index, new_dist2_vec, new_tan_vec, cutoff, potential) -
-            dimer_energy_atom(index, dist2_mat[index, :], tan_mat[index, :], cutoff, potential)
+            dimer_energy_atom(
+                index, dist2_mat[index, :], tan_mat[index, :], cutoff, potential
+            )
     else
         @views delta_en =
             dimer_energy_atom(index, new_dist2_vec, cutoff, potential) -
