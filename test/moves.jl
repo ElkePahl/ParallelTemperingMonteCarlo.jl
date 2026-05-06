@@ -130,7 +130,7 @@ test_cases = [
             )
 
             for i in 1:100
-                mc_move!(mc_state, move_strat, potential, ensemble)
+                mc_move!(mc_state, move_strategy, potential, ensemble)
 
                 new_config = mc_state.config
                 updated_dist2 = mc_state.dist2_mat
