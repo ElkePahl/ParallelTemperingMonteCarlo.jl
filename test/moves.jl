@@ -52,7 +52,8 @@ config_ne27 = Config(
         [3.13248304, 5.42561978, 5.11532339],
         [6.26496608, 5.42561978, 5.11532339],
         [9.39744912, 5.42561978, 5.11532339],
-    ], RhombicBC(; length=9.3974, height=7.673)
+    ],
+    RhombicBC(; length=9.3974, height=7.673),
 )
 config_ne32 = Config(
     [
@@ -88,19 +89,18 @@ config_ne32 = Config(
         [2.1918, 2.1918, 0.0000],
         [2.1918, 0.0000, 2.1918],
         [0.0000, 2.1918, 2.1918],
-    ], CubicBC(8.7674),
+    ],
+    CubicBC(8.7674),
 )
 
-pot_ne = ELJPotentialEven{6}(
-    [
-        -10.5097942564988,
-        989.725135614556,
-        -101383.865938807,
-        3918846.12841668,
-        -56234083.4334278,
-        288738837.441765,
-    ]
-)
+pot_ne = ELJPotentialEven{6}([
+    -10.5097942564988,
+    989.725135614556,
+    -101383.865938807,
+    3918846.12841668,
+    -56234083.4334278,
+    288738837.441765,
+])
 potB_ne = ELJPotentialB{6}(
     [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608],
     [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751],
@@ -126,11 +126,7 @@ test_cases = [
         @testset "Case $id" begin
             move_strategy = MoveStrategy(ensemble)
             mc_state = MCState(
-                temp.t_grid[5],
-                temp.beta_grid[5],
-                config,
-                ensemble,
-                potential,
+                temp.t_grid[5], temp.beta_grid[5], config, ensemble, potential
             )
 
             for i in 1:100
