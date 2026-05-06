@@ -56,6 +56,7 @@ function atom_displacement(mc_state::MCState)
     end
     mc_state.ensemble_variables.trial_move = trial_position
 
+    # TODO: put me in potential variables?
     for (i, b) in enumerate(mc_state.config)
         mc_state.new_dist2_vec[i] = distance2(
             mc_state.ensemble_variables.trial_move, b, boundary_condition

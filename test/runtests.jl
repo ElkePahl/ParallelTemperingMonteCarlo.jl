@@ -5,10 +5,6 @@ using SafeTestsets
 using ParallelTemperingMonteCarlo
 using StaticArrays, LinearAlgebra
 
-@safetestset "Saveconfigs" begin
-    include(joinpath(@__DIR__, "ne13_test.jl"))
-end
-
 @safetestset "Configurations" begin
     include(joinpath(@__DIR__, "configurations.jl"))
 end
@@ -276,6 +272,14 @@ end
 
 @safetestset "multihist" begin
     include("multihist_test.jl")
+end
+
+@safetestset "Saveconfigs" begin
+    include(joinpath(@__DIR__, "ne13_test.jl"))
+end
+
+@safetestset "Move consistency" begin
+    include(joinpath(@__DIR__, "moves.jl"))
 end
 
 @testset "scripts run without errors" begin
