@@ -112,8 +112,8 @@ test_cases = [
     "Ne13 (B)" => (config_ne13, NVT(13), potB_ne),
     "Ne27" => (config_ne27, NPT(27, 0.01146855224345714, true), pot_ne),
     "Ne27 (B)" => (config_ne27, NPT(27, 0.01146855224345714, true), potB_ne),
-    #"Ne32" => (config_ne32, NPT(32, 0.01146855224345714, false), pot_ne),
-    #"Ne32 (B)" => (config_ne32, NPT(32, 0.01146855224345714, false), potB_ne),
+    "Ne32" => (config_ne32, NPT(32, 0.01146855224345714, false), pot_ne),
+    "Ne32 (B)" => (config_ne32, NPT(32, 0.01146855224345714, false), potB_ne),
 ]
 
 @testset "Move consistency" begin
@@ -129,7 +129,7 @@ test_cases = [
                 temp.t_grid[5], temp.beta_grid[5], config, ensemble, potential
             )
 
-            for i in 1:200
+            for i in 1:10_000
                 mc_move!(mc_state, move_strategy, potential, ensemble)
 
                 updated_dist2 = mc_state.dist2_mat
@@ -141,22 +141,26 @@ test_cases = [
                     true_tan = get_tantheta_mat(mc_state.config)
 
                     @test updated_tan ≈ true_tan
+
+                    true_energy = dimer_energy_config!(
+                        zeros(length(config)),
+                        mc_state.config,
+                        true_dist2,
+                        true_tan,
+                        potential,
+                    )
+                else
+                    true_energy = dimer_energy_config!(
+                        zeros(length(config)),
+                        mc_state.config,
+                        true_dist2,
+                        potential,
+                    )
                 end
 
                 updated_energy = mc_state.en_tot
-                true_energy = initialise_energy(
-                    config,
-                    mc_state.dist2_mat,
-                    mc_state.potential_variables,
-                    mc_state.ensemble_variables,
-                    potential,
-                )[1]
 
                 @test updated_energy ≈ true_energy
-                if updated_energy ≉ true_energy
-                    @show mc_state.ensemble_variables.index
-                    break
-                end
             end
         end
     end

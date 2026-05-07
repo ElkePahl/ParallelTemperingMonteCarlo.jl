@@ -139,7 +139,17 @@ function volume_change_uniform(mc_state::MCState)
     mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
-    mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
+    if mc_state.potential_variables isa ELJPotentialBVariables || mc_state.potential_variables isa LookupTableVariables
+        mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
+    end
+
+    # Recalculating the distance matrix is necessary even on uniform moves. scaling it can
+    # cause numerical issues.
+    # mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
+    get_distance2_mat!(
+        mc_state.ensemble_variables.new_dist2_mat,
+        mc_state.ensemble_variables.trial_config,
+    )
 
     return mc_state
 end
@@ -181,19 +191,26 @@ function volume_change_separated(mc_state::MCState)
         )
     end
 
-    get_distance2_mat!(
-        mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
-    )
-
-    if ra <= 3 && (
+    if (
         mc_state.potential_variables isa ELJPotentialBVariables ||
-        mc_state.potential_variables isa LookupTableVariables
-    )
-        get_tantheta_mat!(
-            mc_state.potential_variables.new_tan_mat,
-            mc_state.ensemble_variables.trial_config,
+            mc_state.potential_variables isa LookupTableVariables
         )
+        if ra <= 3
+            get_tantheta_mat!(
+                mc_state.potential_variables.new_tan_mat,
+                mc_state.ensemble_variables.trial_config,
+            )
+        else
+            mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
+        end
     end
+
+    # Recalculating the distance matrix is necessary even on uniform moves. scaling it can
+    # cause numerical issues.
+    get_distance2_mat!(
+        mc_state.ensemble_variables.new_dist2_mat,
+        mc_state.ensemble_variables.trial_config,
+    )
     return mc_state
 end
 

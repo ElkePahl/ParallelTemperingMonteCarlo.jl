@@ -196,13 +196,17 @@ function initialise_energy(
     potential::AbstractDimerPotential,
 )
     if potential isa AbstractDimerPotentialB
-    en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec, config, dist2_mat, potential_variables.tan_mat, potential
-    )
+        en_tot = dimer_energy_config!(
+            potential_variables.en_atom_vec,
+            config,
+            dist2_mat,
+            potential_variables.tan_mat,
+            potential,
+        )
     else
-    en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec, config, dist2_mat, potential,
-    )
+        en_tot = dimer_energy_config!(
+            potential_variables.en_atom_vec, config, dist2_mat, potential
+        )
     end
     return en_tot, potential_variables # TODO: why return potential variables? They aren't modified.
 end
