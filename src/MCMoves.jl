@@ -186,13 +186,17 @@ function volume_change_separated(mc_state::MCState)
     )
 
     if ra <= 3 && (
-        mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
-        mc_state.potential_variables isa LookupTableVariables{Float64}
+        mc_state.potential_variables isa ELJPotentialBVariables ||
+        mc_state.potential_variables isa LookupTableVariables
     )
         get_tantheta_mat!(
             mc_state.potential_variables.new_tan_mat,
             mc_state.ensemble_variables.trial_config,
         )
+        println("updating new_tan_mat on vol move")
+    else
+        println("skipping new_tan_mat update on vol move")
+        mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
     end
     return mc_state
 end

@@ -135,7 +135,7 @@ function set_variables(
     N = length(config)
     tan_matrix = get_tantheta_mat(config)
 
-    return LookupTableVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
+    return LookupTableVariables{T}(zeros(N), tan_matrix, copy(tan_matrix), zeros(N))
 end
 function long_range_correction(pot::LookupTablePotential, num_atoms, r_cut)
     if r_cut <= 10 # TODO: why

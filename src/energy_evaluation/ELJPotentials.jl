@@ -122,7 +122,7 @@ function set_variables(
     N = length(config)
     tan_matrix = get_tantheta_mat(config)
 
-    return ELJPotentialBVariables{T}(zeros(N), tan_matrix, tan_matrix, zeros(N))
+    return ELJPotentialBVariables{T}(zeros(N), tan_matrix, copy(tan_matrix), zeros(N))
 end
 
 function dimer_energy(pot::ELJPotentialB{N}, r2::Real, z_angle::Real) where {N}

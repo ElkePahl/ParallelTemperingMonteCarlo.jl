@@ -121,12 +121,6 @@ and the internal `potential_variables` within the mc_states dictate how [`swap_c
 function acc_test!(mc_state::MCState, ensemble, movetype::String)
     if metropolis_condition(movetype, mc_state, ensemble) >= rand()
         swap_config!(mc_state, movetype)
-    else
-        #TODO: why was this here?
-        # DimerPotentialVariables does not have the new_tan_mat or tan_mat fields.
-        #for i in eachindex(mc_state.potential_variables.tan_mat)
-        #   mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
-        #end
     end
 end
 """
