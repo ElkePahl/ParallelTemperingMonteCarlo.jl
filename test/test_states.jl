@@ -19,9 +19,7 @@ using Random
     @test typeof(state.ensemble_variables) == NVTVariables{Float64}
     @test typeof(state.potential_variables) == DimerPotentialVariables{Float64}
 
-    @test state.en_tot == dimer_energy_config!(
-        zeros(3), conf1, state.dist2_mat, state.potential_variables, pot1
-    )
+    @test state.en_tot == dimer_energy_config!(zeros(3), conf1, state.dist2_mat, pot1)
 
     state.ensemble_variables.index = 1
 
@@ -65,9 +63,7 @@ end
     @test typeof(state.ensemble_variables) == NPTVariables{Float64}
     @test typeof(state.potential_variables) == DimerPotentialVariables{Float64}
 
-    @test state.en_tot == dimer_energy_config!(
-        zeros(3), conf1, state.dist2_mat, state.potential_variables, pot1
-    )
+    @test state.en_tot == dimer_energy_config!(zeros(3), conf1, state.dist2_mat, pot1)
 
     state.ensemble_variables.index = 1
     Random.seed!(1234)

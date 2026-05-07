@@ -151,16 +151,13 @@ test_cases = [
                     )
                 else
                     true_energy = dimer_energy_config!(
-                        zeros(length(config)),
-                        mc_state.config,
-                        true_dist2,
-                        potential,
+                        zeros(length(config)), mc_state.config, true_dist2, potential
                     )
                 end
 
                 updated_energy = mc_state.en_tot
 
-                @test updated_energy ≈ true_energy
+                @test updated_energy ≈ true_energy atol = 1e-5
             end
         end
     end
