@@ -65,7 +65,7 @@ function metropolis_condition(
 )
     delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged)
     prob_val = exp(
-        -delta_h * beta + ensemble.n_atoms * log(volume_changed / volume_unchanged)
+        -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
     )
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
