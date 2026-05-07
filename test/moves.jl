@@ -108,9 +108,9 @@ potB_ne = ELJPotentialB{6}(
 )
 
 test_cases = [
-    #"Ne13" => (config_ne13, NVT(13), pot_ne),
-    #"Ne13 (B)" => (config_ne13, NVT(13), potB_ne),
-    #"Ne27" => (config_ne27, NPT(27, 0.01146855224345714, true), pot_ne),
+    "Ne13" => (config_ne13, NVT(13), pot_ne),
+    "Ne13 (B)" => (config_ne13, NVT(13), potB_ne),
+    "Ne27" => (config_ne27, NPT(27, 0.01146855224345714, true), pot_ne),
     "Ne27 (B)" => (config_ne27, NPT(27, 0.01146855224345714, true), potB_ne),
     #"Ne32" => (config_ne32, NPT(32, 0.01146855224345714, false), pot_ne),
     #"Ne32 (B)" => (config_ne32, NPT(32, 0.01146855224345714, false), potB_ne),
@@ -129,13 +129,9 @@ test_cases = [
                 temp.t_grid[5], temp.beta_grid[5], config, ensemble, potential
             )
 
-            prev_tan_mat = zeros(length(config), length(config))
-            for i in 1:20000
-                prev_tan_mat = mc_state.potential_variables.tan_mat
-                prev_config = mc_state.config
+            for i in 1:200
                 mc_move!(mc_state, move_strategy, potential, ensemble)
 
-                new_config = mc_state.config
                 updated_dist2 = mc_state.dist2_mat
                 true_dist2 = get_distance2_mat(mc_state.config)
                 @test updated_dist2 ≈ true_dist2
@@ -156,10 +152,11 @@ test_cases = [
                     potential,
                 )[1]
 
+                @test updated_energy ≈ true_energy
                 if updated_energy ≉ true_energy
+                    @show mc_state.ensemble_variables.index
                     break
                 end
-                @test updated_energy ≈ true_energy
             end
         end
     end

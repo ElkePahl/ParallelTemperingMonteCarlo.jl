@@ -74,13 +74,22 @@ function get_energy!(
             pot,
         )
     else
+        if pot isa AbstractDimerPotentialB
         mc_state.new_en = dimer_energy_config!(
             mc_state.potential_variables.en_atom_vec,
             mc_state.ensemble_variables.trial_config,
             mc_state.ensemble_variables.new_dist2_mat,
-            mc_state.potential_variables,
+            mc_state.potential_variables.new_tan_mat,
             pot,
         )
+        else
+        mc_state.new_en = dimer_energy_config!(
+            mc_state.potential_variables.en_atom_vec,
+            mc_state.ensemble_variables.trial_config,
+            mc_state.ensemble_variables.new_dist2_mat,
+            pot,
+        )
+        end
     end
     return mc_state
 end

@@ -131,7 +131,7 @@ the total energy of configuration.
 The energy is calculated through a call of [`dimer_energy`](@ref).
 """
 function dimer_energy_config!(
-    dimer_energy_vec, config, dist2_mat, potential_variables, pot::AbstractDimerPotential
+    dimer_energy_vec, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB
 )
     num_atoms = length(config)
     energy_tot = 0.0
@@ -139,13 +139,25 @@ function dimer_energy_config!(
     for i in 1:num_atoms
         for j in (i + 1):num_atoms
             if dist2_mat[i, j] <= r_cut(config.boundary_condition)
-                if pot isa AbstractDimerPotentialB
-                    e_ij = dimer_energy(
-                        pot, dist2_mat[i, j], potential_variables.tan_mat[i, j]
-                    )
-                else
-                    e_ij = dimer_energy(pot, dist2_mat[i, j])
-                end
+                e_ij = dimer_energy(pot, dist2_mat[i, j], tan_mat[i, j])
+                dimer_energy_vec[i] += e_ij
+                dimer_energy_vec[j] += e_ij
+                energy_tot += e_ij
+            end
+        end
+    end
+    return energy_tot + long_range_correction(config.boundary_condition, pot, num_atoms)
+end
+function dimer_energy_config!(
+    dimer_energy_vec, config, dist2_mat, pot::AbstractDimerPotential
+)
+    num_atoms = length(config)
+    energy_tot = 0.0
+
+    for i in 1:num_atoms
+        for j in (i + 1):num_atoms
+            if dist2_mat[i, j] <= r_cut(config.boundary_condition)
+                e_ij = dimer_energy(pot, dist2_mat[i, j])
                 dimer_energy_vec[i] += e_ij
                 dimer_energy_vec[j] += e_ij
                 energy_tot += e_ij
@@ -183,9 +195,15 @@ function initialise_energy(
     ensemble_variables,
     potential::AbstractDimerPotential,
 )
+    if potential isa AbstractDimerPotentialB
     en_tot = dimer_energy_config!(
-        potential_variables.en_atom_vec, config, dist2_mat, potential_variables, potential
+        potential_variables.en_atom_vec, config, dist2_mat, potential_variables.tan_mat, potential
     )
+    else
+    en_tot = dimer_energy_config!(
+        potential_variables.en_atom_vec, config, dist2_mat, potential,
+    )
+    end
     return en_tot, potential_variables # TODO: why return potential variables? They aren't modified.
 end
 
