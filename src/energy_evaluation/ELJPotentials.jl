@@ -27,11 +27,11 @@ end
 
 function dimer_energy(pot::ELJPotential{N}, r2::Real) where {N}
     r = sqrt(r2)
-    r6inv = 1 / (r2 * r2 * r2)
+    r6 = r2 ^ 3
     sum1 = 0.0
     for i in 1:N
-        sum1 += pot.coeff[i] * r6inv
-        r6inv /= r
+        sum1 += pot.coeff[i] / r6
+        r6 *= r
     end
     return sum1
 end
