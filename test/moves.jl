@@ -76,7 +76,7 @@ function generate_test_cases(n_atoms)
             CubicBC(5.0),
             RectangularBC(5.0, 5.0),
             RhombicBC(5.0, 5.0),
-            )
+        )
             if bc isa SphericalBC && ensemble_type === NPT
                 continue
             elseif bc isa CubicBC && ensemble_type === NPT
