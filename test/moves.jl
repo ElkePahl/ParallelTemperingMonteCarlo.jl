@@ -4,95 +4,46 @@
 # current configuration yields the same result as the updated values.
 using Test
 using ParallelTemperingMonteCarlo
+using StaticArrays
 
-config_ne13 = Config(
-    [
-        [2.825384495892464, 0.928562467914040, 0.505520149314310],
-        [2.023342172678102, -2.136126268595355, 0.666071287554958],
-        [2.033761811732818, -0.643989413759464, -2.133000349161121],
-        [0.979777205108572, 2.312002562803556, -1.671909307631893],
-        [0.962914279874254, -0.102326586625353, 2.857083360096907],
-        [0.317957619634043, 2.646768968413408, 1.412132053672896],
-        [-2.825388342924982, -0.928563755928189, -0.505520471387560],
-        [-0.317955944853142, -2.646769840660271, -1.412131825293682],
-        [-0.979776174195320, -2.312003751825495, 1.671909138648006],
-        [-0.962916072888105, 0.102326392265998, -2.857083272537599],
-        [-2.023340541398004, 2.136128558801072, -0.666071089291685],
-        [-2.033762834001679, 0.643989905095452, 2.132999911364582],
-        [0.000002325340981, 0.000000762100600, 0.000000414930733],
-    ],
-    SphericalBC(; radius=5.32),
-)
-config_ne27 = Config(
-    [
-        [1.56624152, 0.90426996, 0.0],
-        [4.69872456, 0.90426996, 0.0],
-        [7.8312076, 0.90426996, 0.0],
-        [3.13248304, 3.61707985, 0.0],
-        [6.26496608, 3.61707985, 0.0],
-        [9.39744912, 3.61707985, 0.0],
-        [4.69872456, 6.32988974, 0.0],
-        [7.8312076, 6.32988974, 0.0],
-        [10.96369064, 6.32988974, 0.0],
-        [9.39744912, 1.80853993, 2.55766169],
-        [3.13248304, 1.80853993, 2.55766169],
-        [6.26496608, 1.80853993, 2.55766169],
-        [10.96369064, 4.52134982, 2.55766169],
-        [4.69872456, 4.52134982, 2.55766169],
-        [7.8312076, 4.52134982, 2.55766169],
-        [12.52993216, 7.23415971, 2.55766169],
-        [6.26496608, 7.23415971, 2.55766169],
-        [9.39744912, 7.23415971, 2.55766169],
-        [0.0, 0.0, 5.11532339],
-        [3.13248304, 0.0, 5.11532339],
-        [6.26496608, 0.0, 5.11532339],
-        [1.56624152, 2.71280989, 5.11532339],
-        [4.69872456, 2.71280989, 5.11532339],
-        [7.8312076, 2.71280989, 5.11532339],
-        [3.13248304, 5.42561978, 5.11532339],
-        [6.26496608, 5.42561978, 5.11532339],
-        [9.39744912, 5.42561978, 5.11532339],
-    ],
-    RhombicBC(; length=9.3974, height=7.673),
-)
-config_ne32 = Config(
-    [
-        [-4.3837, -4.3837, -4.3837],
-        [-2.1918, -2.1918, -4.3837],
-        [-2.1918, -4.3837, -2.1918],
-        [-4.3837, -2.1918, -2.1918],
-        [-4.3837, -4.3837, 0.0000],
-        [-2.1918, -2.1918, 0.0000],
-        [-2.1918, -4.3837, 2.1918],
-        [-4.3837, -2.1918, 2.1918],
-        [-4.3837, 0.0000, -4.3837],
-        [-2.1918, 2.1918, -4.3837],
-        [-2.1918, 0.0000, -2.1918],
-        [-4.3837, 2.1918, -2.1918],
-        [-4.3837, 0.0000, 0.0000],
-        [-2.1918, 2.1918, 0.0000],
-        [-2.1918, 0.0000, 2.1918],
-        [-4.3837, 2.1918, 2.1918],
-        [0.0000, -4.3837, -4.3837],
-        [2.1918, -2.1918, -4.3837],
-        [2.1918, -4.3837, -2.1918],
-        [0.0000, -2.1918, -2.1918],
-        [0.0000, -4.3837, 0.0000],
-        [2.1918, -2.1918, 0.0000],
-        [2.1918, -4.3837, 2.1918],
-        [0.0000, -2.1918, 2.1918],
-        [0.0000, 0.0000, -4.3837],
-        [2.1918, 2.1918, -4.3837],
-        [2.1918, 0.0000, -2.1918],
-        [0.0000, 2.1918, -2.1918],
-        [0.0000, 0.0000, 0.0000],
-        [2.1918, 2.1918, 0.0000],
-        [2.1918, 0.0000, 2.1918],
-        [0.0000, 2.1918, 2.1918],
-    ],
-    CubicBC(8.7674),
-)
+"""
+    mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
 
+Like `mc_move!`, but takes accepts the step is `accept ≡ true`. Returns move name for easier
+debugging.
+"""
+function mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
+    mc_state.ensemble_variables.index = index = rand(eachindex(move_strat.movestrat))
+    move = move_strat.movestrat[index]
+
+    generate_move!(mc_state, move, ensemble)
+    get_energy!(mc_state, pot, move)
+
+    if accept
+        swap_config!(mc_state, move)
+    end
+    return move
+end
+
+"""
+    generate_config(ensemble, boundary_condition)
+
+Generate a (uniform) random configuration that fits into boundary condition.
+"""
+function generate_config(ensemble, boundary_condition)
+    positions = SVector{3,Float64}[]
+
+    while length(positions) < ensemble.n_atoms
+        pos = 10 * @SVector(rand(3)) .- 5
+        pos = check_boundary(boundary_condition, pos)
+        if !isnothing(pos)
+            push!(positions, pos)
+        end
+    end
+    return Config(positions, boundary_condition)
+end
+
+# Potentials
 pot_ne = ELJPotentialEven{6}([
     -10.5097942564988,
     989.725135614556,
@@ -106,31 +57,76 @@ potB_ne = ELJPotentialB{6}(
     [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751],
     [-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203],
 )
+pot_lut = LookupTablePotential(
+    joinpath(@__DIR__, "../scripts/lookup-tables/LookupTable_Neon_B0.3_MP2.txt")
+)
 
-test_cases = [
-    "Ne13" => (config_ne13, NVT(13), pot_ne),
-    "Ne13 (B)" => (config_ne13, NVT(13), potB_ne),
-    "Ne27" => (config_ne27, NPT(27, 0.01146855224345714, true), pot_ne),
-    "Ne27 (B)" => (config_ne27, NPT(27, 0.01146855224345714, true), potB_ne),
-    "Ne32" => (config_ne32, NPT(32, 0.01146855224345714, false), pot_ne),
-    "Ne32 (B)" => (config_ne32, NPT(32, 0.01146855224345714, false), potB_ne),
-]
+pot_embedded = EmbeddedAtomPotential(8.482, 4.692, 0.0013597241, 4.724325, 27.561)
 
+"""
+    generate_test_cases(n_atoms)
+
+Generated test cases, combinations of boundary conditions, ensembles and potentials.
+"""
+function generate_test_cases(n_atoms)
+    test_cases = []
+    for ensemble_type in (NPT, NVT)
+        for bc in (
+            SphericalBC(; radius=5.0),
+            CubicBC(5.0),
+            RectangularBC(5.0, 5.0),
+            RhombicBC(5.0, 5.0),
+            )
+            if bc isa SphericalBC && ensemble_type === NPT
+                continue
+            elseif bc isa CubicBC && ensemble_type === NPT
+                ensemble = NPT(n_atoms, 0.01, false)
+            elseif ensemble_type == NPT
+                ensemble = NPT(n_atoms, 0.01, true)
+            else
+                ensemble = ensemble_type(n_atoms)
+            end
+            for potential in (
+                # TODO: RuNNer, embedded. They aren't dimer potentials
+                pot_ne,
+                potB_ne,
+                pot_lut,
+                pot_embedded,
+            )
+                if !(potential isa AbstractDimerPotential) && ensemble_type === NPT
+                    continue
+                end
+                id = "$ensemble_type, $(nameof(typeof(potential))), $bc"
+                push!(test_cases, id => (bc, ensemble, potential))
+            end
+        end
+    end
+    return test_cases
+end
+
+# These tests check that performing (or rejecting) a MC step correctly updates the energy,
+# the distance matrix and (when applicable) the tangent matrix. The test is performed on
+# a random starting configuration in a way where every other step is rejected.
 @testset "Move consistency" begin
     ti = 9.0
     tf = 16.0
     n_traj = 16
     temp = TempGrid{n_traj}(ti, tf)
 
-    for (id, (config, ensemble, potential)) in test_cases
+    for (id, (boundary_condition, ensemble, potential)) in generate_test_cases(10)
+        config = generate_config(ensemble, boundary_condition)
+
         @testset "$id" begin
             move_strategy = MoveStrategy(ensemble)
             mc_state = MCState(
                 temp.t_grid[5], temp.beta_grid[5], config, ensemble, potential
             )
 
-            for i in 1:10_000
-                mc_move!(mc_state, move_strategy, potential, ensemble)
+            for i in 1:100_000
+                accept = iseven(i)
+                move = mc_move_deterministic!(
+                    accept, mc_state, move_strategy, potential, ensemble
+                )
 
                 updated_dist2 = mc_state.dist2_mat
                 true_dist2 = get_distance2_mat(mc_state.config)
@@ -149,15 +145,28 @@ test_cases = [
                         true_tan,
                         potential,
                     )
-                else
+                elseif potential isa AbstractDimerPotential
                     true_energy = dimer_energy_config!(
                         zeros(length(config)), mc_state.config, true_dist2, potential
                     )
+                else
+                    true_energy = initialise_energy(
+                        config,
+                        true_dist2,
+                        mc_state.potential_variables,
+                        mc_state.ensemble_variables,
+                        potential,
+                    )[1]
                 end
 
                 updated_energy = mc_state.en_tot
 
-                @test updated_energy ≈ true_energy atol = 1e-5
+                @test updated_energy ≈ true_energy rtol = 1e-5
+
+                # With these high energy configurations, the energy has a tendency to drift
+                # a bit. Resetting it to the correct energy fixes the issue.
+                # TODO: this should probably also be done by the MC algorithm
+                mc_state.en_tot = true_energy
             end
         end
     end

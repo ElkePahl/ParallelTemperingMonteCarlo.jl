@@ -61,7 +61,7 @@ function get_energy!(
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
+    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractDimerPotential, movetype::String
 ) where {E<:NPTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
