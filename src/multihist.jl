@@ -437,7 +437,7 @@ function run_multihistogram(
     if debug
         println(C)
     end
-    return (;T, Z, C, dC, U)
+    return (; T, Z, C, dC, U)
 end
 
 """
