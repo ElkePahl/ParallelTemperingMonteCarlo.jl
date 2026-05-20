@@ -12,7 +12,6 @@ using ..Configurations
 using ..EnergyEvaluation
 using ..CustomTypes
 
-export InputParameters
 export MCParams, TempGrid
 export Output
 
