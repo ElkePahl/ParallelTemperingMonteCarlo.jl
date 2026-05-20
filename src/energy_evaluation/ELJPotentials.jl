@@ -27,7 +27,7 @@ end
 
 function dimer_energy(pot::ELJPotential{N}, r2::Real) where {N}
     r = sqrt(r2)
-    r6 = r2 ^ 3
+    r6 = r2^3
     sum1 = 0.0
     for i in 1:N
         sum1 += pot.coeff[i] / r6
@@ -116,15 +116,6 @@ function ELJPotentialB(a, b, c)
     return ELJPotentialB{N,T}(coeff_a, coeff_b, coeff_c)
 end
 
-function set_variables(
-    config::Config{T}, dist2_matrix::Matrix{Float64}, pot::AbstractDimerPotentialB
-) where {T}
-    N = length(config)
-    tan_matrix = get_tantheta_mat(config)
-
-    return ELJPotentialBVariables{T}(zeros(N), tan_matrix, copy(tan_matrix), zeros(N))
-end
-
 function dimer_energy(pot::ELJPotentialB{N}, r2::Real, z_angle::Real) where {N}
     if r2 >= 5.30 # TODO: hardcoded cutoff
         r6inv = 1 / (r2 * r2 * r2)
@@ -159,15 +150,4 @@ function long_range_correction(pot::ELJPotentialB, num_atoms, r_cut)
         e_lrc *= pi * num_atoms^2 / 4 / r_cut_sqrt^3
     end
     return e_lrc
-end
-
-"""
-    ELJPotentialBVariables{T}
-Contains the `en_atom_vec::Array{T}`, `tan_mat::Matrix{T}` and `new_tan_vec::Vector{T}` for the ELJPotentialB potential.
-"""
-mutable struct ELJPotentialBVariables{T} <: AbstractPotentialVariables
-    en_atom_vec::Array{T}
-    tan_mat::Matrix{T}
-    new_tan_mat::Matrix{T}
-    new_tan_vec::Vector{T}
 end

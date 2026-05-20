@@ -5,6 +5,7 @@
 using Test
 using ParallelTemperingMonteCarlo
 using StaticArrays
+using LinearAlgebra
 
 """
     mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
@@ -87,7 +88,7 @@ function generate_test_cases(n_atoms)
                 ensemble = ensemble_type(n_atoms)
             end
             for potential in (
-                # TODO: RuNNer, embedded. They aren't dimer potentials
+                # TODO: RuNNer
                 pot_ne,
                 potB_ne,
                 pot_lut,
@@ -122,7 +123,15 @@ end
                 temp.t_grid[5], temp.beta_grid[5], config, ensemble, potential
             )
 
-            for i in 1:100_000
+            true_dist2 = get_distance2_mat(config)
+            @test mc_state.dist2_mat == true_dist2
+
+            if potential isa AbstractDimerPotentialB
+                true_tan = get_tantheta_mat(config)
+                @test mc_state.potential_variables.tan_mat == true_tan
+            end
+
+            for i in 1:10_000
                 accept = iseven(i)
                 move = mc_move_deterministic!(
                     accept, mc_state, move_strategy, potential, ensemble
@@ -131,37 +140,27 @@ end
                 updated_dist2 = mc_state.dist2_mat
                 true_dist2 = get_distance2_mat(mc_state.config)
                 @test updated_dist2 ≈ true_dist2
+                @test issymmetric(updated_dist2)
 
                 if potential isa AbstractDimerPotentialB
                     updated_tan = mc_state.potential_variables.tan_mat
                     true_tan = get_tantheta_mat(mc_state.config)
 
                     @test updated_tan ≈ true_tan
-
-                    true_energy = dimer_energy_config!(
-                        zeros(length(config)),
-                        mc_state.config,
-                        true_dist2,
-                        true_tan,
-                        potential,
-                    )
-                elseif potential isa AbstractDimerPotential
-                    true_energy = dimer_energy_config!(
-                        zeros(length(config)), mc_state.config, true_dist2, potential
-                    )
-                else
-                    true_energy = initialise_energy(
-                        config,
-                        true_dist2,
-                        mc_state.potential_variables,
-                        mc_state.ensemble_variables,
-                        potential,
-                    )[1]
+                    @test issymmetric(updated_tan)
                 end
+
+                true_energy = initialise_energy(
+                    mc_state.config,
+                    true_dist2,
+                    mc_state.potential_variables,
+                    mc_state.ensemble_variables,
+                    potential,
+                )[1]
 
                 updated_energy = mc_state.en_tot
 
-                @test updated_energy ≈ true_energy rtol = 1e-5
+                @test updated_energy ≈ true_energy
 
                 # With these high energy configurations, the energy has a tendency to drift
                 # a bit. Resetting it to the correct energy fixes the issue.

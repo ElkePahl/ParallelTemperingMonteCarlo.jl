@@ -279,7 +279,7 @@ end
 end
 
 @safetestset "Move consistency" begin
-    include(joinpath(@__DIR__, "moves.jl"))
+    include(joinpath(@__DIR__, "move-consistency.jl"))
 end
 
 @testset "scripts run without errors" begin

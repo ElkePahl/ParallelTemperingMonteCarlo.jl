@@ -69,44 +69,6 @@ end
 
 LookupTablePotential(link::String) = LookupTablePotential(read_lookuptable(link)...)
 
-"""
-    LookupTableVariables{T} <: AbstractPotentialVariables
-
-Potential variables for the [`LookupTablePotential`](@ref).
-"""
-mutable struct LookupTableVariables{T} <: AbstractPotentialVariables
-    en_atom_vec::Array{T}
-    tan_mat::Matrix{T}
-    new_tan_mat::Matrix{T}
-    new_tan_vec::Vector{T}
-end
-
-function dimer_energy_update!(
-    index, dist2_mat, tanmat, new_dist2_vec, new_tan_vec, en_tot, pot::LookupTablePotential
-)
-    @views delta_en =
-        dimer_energy_atom(index, new_dist2_vec, new_tan_vec, pot) -
-        dimer_energy_atom(index, dist2_mat[index, :], tanmat[index, :], pot)
-
-    return delta_en + en_tot
-end
-function dimer_energy_update!(
-    index,
-    dist2_mat,
-    tanmat,
-    new_dist2_vec,
-    new_tan_vec,
-    en_tot,
-    r_cut,
-    pot::LookupTablePotential,
-)
-    @views delta_en =
-        dimer_energy_atom(index, new_dist2_vec, new_tan_vec, r_cut, pot) -
-        dimer_energy_atom(index, dist2_mat[index, :], tanmat[index, :], r_cut, pot)
-
-    return delta_en + en_tot
-end
-
 function dimer_energy(pot::LookupTablePotential, r2, tan)
     angle_index = 1
     if abs(tan) > 0.00872687153 && abs(tan) <= 114.592845357
@@ -128,14 +90,6 @@ function dimer_energy(pot::LookupTablePotential, r2, tan)
     end
 
     return e
-end
-function set_variables(
-    config::Config{T}, dist2_matrix::Matrix{Float64}, pot::LookupTablePotential
-) where {T}
-    N = length(config)
-    tan_matrix = get_tantheta_mat(config)
-
-    return LookupTableVariables{T}(zeros(N), tan_matrix, copy(tan_matrix), zeros(N))
 end
 function long_range_correction(pot::LookupTablePotential, num_atoms, r_cut)
     if r_cut <= 10 # TODO: why

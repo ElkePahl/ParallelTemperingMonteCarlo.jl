@@ -38,9 +38,8 @@ throughout the Monte Carlo simulation.
 # Subtypes
 
 - [`DimerPotentialVariables`](@ref)
-- [`ELJPotentialBVariables`](@ref)
+- [`DimerPotentialBVariables`](@ref)
 - [`EmbeddedAtomVariables`](@ref)
-- [`LookupTableVariables`](@ref)
 - [`NNPVariables`](@ref)
 
 """
@@ -83,43 +82,10 @@ dimer_energy
 """
 abstract type AbstractDimerPotentialB <: AbstractDimerPotential end
 
+
+# TODO: this function needs more work
 """
-    dimer_energy_atom(i, d2vec, potential)
-    dimer_energy_atom(i, d2vec, r_cut, potential)
-    dimer_energy_atom(i, d2vec, tanvec, potential)
-    dimer_energy_atom(i, d2vec, tanvec, r_cut, potential)
-
-Sums the dimer energies for atom `i` with all other atoms Needs vector of squared distances
-`d2vec` between atom `i` and all other atoms in configuration See
-[`get_distance2_mat`](@ref) and potential information `pot` [`AbstractPotential`](@ref)
-
-Second method includes additional variable `r_cut` to exclude distances outside the cutoff
-radius of the potential.
-
-Final two methods relate to the use of magnetic field potentials such as
-[`ELJPotentialB`](@ref).
-"""
-function dimer_energy_atom(i::Int, d2vec, r_cut, pot::AbstractDimerPotential)
-    result = 0.0
-    @inbounds for j in eachindex(d2vec)
-        if i ≠ j && d2vec[j] <= r_cut
-            result += dimer_energy(pot, d2vec[j])
-        end
-    end
-    return result
-end
-function dimer_energy_atom(i::Int, d2vec, tanvec, r_cut, pot::AbstractDimerPotentialB)
-    result = 0.0
-    @inbounds for j in eachindex(d2vec)
-        if i ≠ j && d2vec[j] <= r_cut
-            result += dimer_energy(pot, d2vec[j], tanvec[j])
-        end
-    end
-    return result
-end
-
-"""
-    dimer_energy_config!(dimer_energies, config, dist2_mat, potential_variables, potential)
+    dimer_energy_config!(config, dist2_mat, potential_variables, potential)
 
 Store the dimer energies of one atom with all other atoms in `dimer_energies` and return
 the total energy of configuration.
@@ -130,41 +96,40 @@ the total energy of configuration.
 
 The energy is calculated through a call of [`dimer_energy`](@ref).
 """
-function dimer_energy_config!(
-    dimer_energy_vec, config, dist2_mat, tan_mat, pot::AbstractDimerPotentialB
+function dimer_energy_config(
+    config, dist2_mat, potential_variables, pot::AbstractDimerPotentialB; new=false,
 )
+    tan_mat = new ? potential_variables.new_tan_mat : potential_variables.tan_mat
+
     num_atoms = length(config)
-    energy_tot = 0.0
+    total_energy = 0.0
 
     for i in 1:num_atoms
         for j in (i + 1):num_atoms
-            if dist2_mat[i, j] <= r_cut(config.boundary_condition)
-                e_ij = dimer_energy(pot, dist2_mat[i, j], tan_mat[i, j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+            if dist2_mat[j, i] <= r_cut(config.boundary_condition)
+                e_ij = dimer_energy(pot, dist2_mat[j, i], tan_mat[j, i])
+                total_energy += e_ij
             end
         end
     end
-    return energy_tot + long_range_correction(config.boundary_condition, pot, num_atoms)
+    return total_energy + long_range_correction(config.boundary_condition, pot, num_atoms)
 end
-function dimer_energy_config!(
-    dimer_energy_vec, config, dist2_mat, pot::AbstractDimerPotential
+
+function dimer_energy_config(
+    config, dist2_mat, potential_variables, pot::AbstractDimerPotential; new=false,
 )
     num_atoms = length(config)
-    energy_tot = 0.0
+    total_energy = 0.0
 
     for i in 1:num_atoms
         for j in (i + 1):num_atoms
-            if dist2_mat[i, j] <= r_cut(config.boundary_condition)
-                e_ij = dimer_energy(pot, dist2_mat[i, j])
-                dimer_energy_vec[i] += e_ij
-                dimer_energy_vec[j] += e_ij
-                energy_tot += e_ij
+            if dist2_mat[j, i] <= r_cut(config.boundary_condition)
+                e_ij = dimer_energy(pot, dist2_mat[j, i])
+                total_energy += e_ij
             end
         end
     end
-    return energy_tot + long_range_correction(config.boundary_condition, pot, num_atoms)
+    return total_energy + long_range_correction(config.boundary_condition, pot, num_atoms)
 end
 
 """
@@ -174,11 +139,14 @@ Initialises the PotentialVariable struct for the various potentials. Defined in 
 generalise the [`MCState`](@ref Main.ParallelTemperingMonteCarlo.MCStates.MCState) function
 as this must be type-invariant with respect to the potential.
 """
-function set_variables(
-    config::Config{T}, dist_2_mat::Matrix{Float64}, pot::AbstractDimerPotential
-) where {T}
-    N = length(config)
-    return DimerPotentialVariables{T}(zeros(N))
+function set_variables(_, _, pot::AbstractDimerPotential)
+    return DimerPotentialVariables()
+end
+function set_variables(config, _, pot::AbstractDimerPotentialB)
+    n = length(config)
+    tan_matrix = get_tantheta_mat(config)
+
+    return DimerPotentialBVariables(tan_matrix, copy(tan_matrix), zeros(n))
 end
 
 """
@@ -189,27 +157,40 @@ according to the potential as `pot` and the configurational variables
 `potential_variables`. Written with general input means the top-level is type-invariant.
 """
 function initialise_energy(
-    config::Config,
-    dist2_mat,
-    potential_variables,
-    ensemble_variables,
-    potential::AbstractDimerPotential,
+    config::Config, dist2_mat, potential_variables, _, potential::AbstractDimerPotential
 )
-    if potential isa AbstractDimerPotentialB
-        en_tot = dimer_energy_config!(
-            potential_variables.en_atom_vec,
-            config,
-            dist2_mat,
-            potential_variables.tan_mat,
-            potential,
-        )
-    else
-        en_tot = dimer_energy_config!(
-            potential_variables.en_atom_vec, config, dist2_mat, potential
-        )
-    end
-    return en_tot, potential_variables # TODO: why return potential variables? They aren't modified.
+    return dimer_energy_config(config, dist2_mat, potential_variables, potential; new=false),
+    potential_variables
 end
+
+"""
+    dimer_energy_atom(potential::AbstractDimerPotential, index, cutoff, dist2)
+    dimer_energy_atom(potential::AbstractDimerPotentialB, index, cutoff, dist2, tan)
+
+Sum the dimer energies for atom `index` with all other atoms.
+"""
+function dimer_energy_atom(potential, index, cutoff, dist2)
+    energy = 0.0
+    @inbounds for j in eachindex(dist2)
+        if j ≠ index && dist2[j] ≤ cutoff
+            energy += dimer_energy(potential, dist2[j])
+        end
+    end
+    return energy
+end
+function dimer_energy_atom(potential, index, cutoff, dist2, tan)
+    energy = 0.0
+    @boundscheck if length(dist2) ≠ length(tan)
+        throw(DimensionMismatch("lengths of `dist2` and `tan2` don't match"))
+    end
+    @inbounds for j in eachindex(dist2)
+        if j ≠ index && dist2[j] ≤ cutoff
+            energy += dimer_energy(potential, dist2[j], tan[j])
+        end
+    end
+    return energy
+end
+
 
 """
     energy_update!(ensemblevariables, config, potential_variables, dist2_mat, new_dist2_vec, en_tot, pot)
@@ -240,36 +221,45 @@ function energy_update!(
     potential_variables,
     dist2_mat,
     new_dist2_vec,
-    en_tot,
+    total_energy,
     potential::AbstractDimerPotential,
 )
-    trial_pos = ensemble_variables.trial_move
     index = ensemble_variables.index
     cutoff = r_cut(config.boundary_condition)
 
-    # TODO: move tan calculation into an update_potential_variables function
-    # TODO: make dimer_energy_atom take potential variables as argument
-    if potential isa AbstractDimerPotentialB
-        potential_variables.new_tan_vec .= (
-            get_tan(trial_pos, b, config.boundary_condition) for b in config
-        )
-        potential_variables.new_tan_vec[index] = 0
+    old_dist2_vec = view(dist2_mat, :, index)
 
-        new_tan_vec = potential_variables.new_tan_vec
-        tan_mat = potential_variables.tan_mat
+    delta_energy = dimer_energy_atom(potential, index, cutoff, new_dist2_vec) -
+        dimer_energy_atom(potential, index, cutoff, old_dist2_vec)
 
-        @views delta_en =
-            dimer_energy_atom(index, new_dist2_vec, new_tan_vec, cutoff, potential) -
-            dimer_energy_atom(
-                index, dist2_mat[index, :], tan_mat[index, :], cutoff, potential
-            )
-    else
-        @views delta_en =
-            dimer_energy_atom(index, new_dist2_vec, cutoff, potential) -
-            dimer_energy_atom(index, dist2_mat[index, :], cutoff, potential)
-    end
+    return potential_variables, total_energy + delta_energy
+end
+function energy_update!(
+    ensemble_variables,
+    config,
+    potential_variables,
+    dist2_mat,
+    new_dist2_vec,
+    total_energy,
+    potential::AbstractDimerPotentialB,
+)
+    index = ensemble_variables.index
+    cutoff = r_cut(config.boundary_condition)
 
-    return potential_variables, delta_en + en_tot
+    trial_pos = ensemble_variables.trial_move
+    potential_variables.new_tan_vec .= (
+        get_tan(trial_pos, b, config.boundary_condition) for b in config
+    )
+    potential_variables.new_tan_vec[index] = 0
+
+    old_dist2_vec = view(dist2_mat, :, index)
+    old_tan_vec = view(potential_variables.tan_mat, :, index)
+    new_tan_vec = potential_variables.new_tan_vec
+
+    delta_energy = dimer_energy_atom(potential, index, cutoff, new_dist2_vec, new_tan_vec) -
+        dimer_energy_atom(potential, index, cutoff, old_dist2_vec, old_tan_vec)
+
+    return potential_variables, total_energy + delta_energy
 end
 
 """
@@ -277,9 +267,7 @@ end
 
 Potential variables for simple dimer potentials. Contains the energy per atom in the system.
 """
-mutable struct DimerPotentialVariables{T} <: AbstractPotentialVariables
-    en_atom_vec::Vector{T}
-end #TODO: make immutable
+struct DimerPotentialVariables <: AbstractPotentialVariables end
 
 """
     DimerPotentialBVariables
@@ -287,12 +275,11 @@ end #TODO: make immutable
 Potential variables for dimer potentials in magnetic field. Contains the energy per atom in
 the system and the tangent matrix.
 """
-mutable struct DimerPotentialBVariables{T} <: AbstractPotentialVariables
-    en_atom_vec::Vector{T}
-    tan_mat::Matrix{T}
-    new_tan_mat::Matrix{T}
-    new_tan_vec::Vector{T}
-end #TODO: make immutable
+struct DimerPotentialBVariables <: AbstractPotentialVariables
+    tan_mat::Matrix{Float64}
+    new_tan_mat::Matrix{Float64}
+    new_tan_vec::Vector{Float64}
+end
 
 # TODO: this is hardcoded to be used with ruNNer?
 """

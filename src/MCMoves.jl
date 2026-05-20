@@ -116,6 +116,7 @@ Returns the trial configuration.
 """
 function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)
+
     if conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
        lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
@@ -139,8 +140,7 @@ function volume_change_uniform(mc_state::MCState)
     mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
-    if mc_state.potential_variables isa ELJPotentialBVariables ||
-        mc_state.potential_variables isa LookupTableVariables
+    if mc_state.potential_variables isa DimerPotentialBVariables
         mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
     end
 
@@ -191,10 +191,7 @@ function volume_change_separated(mc_state::MCState)
         )
     end
 
-    if (
-        mc_state.potential_variables isa ELJPotentialBVariables ||
-        mc_state.potential_variables isa LookupTableVariables
-    )
+    if mc_state.potential_variables isa DimerPotentialBVariables
         if ra <= 3
             get_tantheta_mat!(
                 mc_state.potential_variables.new_tan_mat,

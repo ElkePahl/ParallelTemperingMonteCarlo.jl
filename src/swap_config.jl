@@ -28,7 +28,6 @@ function swap_config!(
             mc_state.config.boundary_condition,
             mc_state.ensemble_variables.trial_config,
             mc_state.ensemble_variables.new_dist2_mat,
-            mc_state.potential_variables.en_atom_vec,
             mc_state.new_en,
         )
     end
@@ -114,13 +113,10 @@ function swap_config_v!(
     bc,
     trial_config::Config,
     new_dist2_mat,
-    en_vec_new,
     new_en_tot,
 )
     mc_state.config = Config(trial_config, trial_config.boundary_condition)
     mc_state.dist2_mat .= new_dist2_mat
-
-    mc_state.potential_variables.en_atom_vec .= en_vec_new
 
     mc_state.en_tot = new_en_tot
     if mc_state.ensemble_variables.xy_or_z == 0
@@ -139,17 +135,15 @@ end
 #TODO: potential_variables is passed as argument, but only mc_state.potential_variables is used.
 function swap_config_v!(
     mc_state::MCState,
-    potential_variables::Union{ELJPotentialBVariables,LookupTableVariables},
-    bc,#::Union{RectangularBC,RhombicBC},
+    potential_variables::DimerPotentialBVariables,
+    bc,
     trial_config::Config,
     new_dist2_mat,
-    en_vec_new,
     new_en_tot,
 )
     mc_state.config = Config(trial_config, trial_config.boundary_condition)
     # TODO: swap instead of copying
     mc_state.dist2_mat .= new_dist2_mat
-    mc_state.potential_variables.en_atom_vec .= en_vec_new
 
     # if xy_or_z == 0, tangents don't change. TODO: replace 0, 1, 2 with an Enum.
     if mc_state.ensemble_variables.xy_or_z ≥ 1
@@ -171,11 +165,7 @@ function swap_config_v!(
 end
 
 """
-    swap_vars!(i_atom::Int, potential_variables::V) where V <: DimerPotentialVariables
-    swap_vars!(i_atom::Int, potential_variables::ELJPotentialBVariables)
-    swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
-    swap_vars!(i_atom::Int, potential_variables::NNPVariables)
-    swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
+    swap_vars!(i_atom::Int, potential_variables)
 
 Called by `swap_atom_config!` function;
 takes the appropriate `potential_variables` that are specific to the potential energy surface under consideration
@@ -185,46 +175,41 @@ and replaces the current values with the new values such as:
 -   Using an NNP we require the new G matrix and F matrix to replace the old versions.
 Implemented for potential variables:
 -   [`DimerPotentialVariables`](@ref)
--   [`ELJPotentialBVariables`](@ref)
+-   [`DimerPotentialBVariables`](@ref)
 -   [`EmbeddedAtomVariables`](@ref)
 -   [`NNPVariables`](@ref)
 """
-function swap_vars!(i_atom::Int, potential_variables::V) where {V<:DimerPotentialVariables} end
-
-function swap_vars!(i_atom::Int, potential_variables::ELJPotentialBVariables)
-    potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
-    return potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
+function swap_vars!(i_atom::Int, potential_variables::DimerPotentialVariables)
+    return nothing
 end
 
-function swap_vars!(i_atom, potential_variables::LookupTableVariables)
+function swap_vars!(i_atom::Int, potential_variables::DimerPotentialBVariables)
     potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
-    return potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
+    potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
+    return nothing
 end
-
 function swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
-    return potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector,
-    potential_variables.component_vector
+
+    potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector, potential_variables.component_vector
+    return nothing
 end
 
 function swap_vars!(i_atom::Int, potential_variables::NNPVariables)
-    potential_variables.en_atom_vec, potential_variables.new_en_atom = potential_variables.new_en_atom,
-    potential_variables.en_atom_vec
     potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix,
     potential_variables.g_matrix
 
     potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
-    return potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    return nothing
 end
 
 function swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
-    potential_variables.en_atom_vec, potential_variables.new_en_atom = potential_variables.new_en_atom,
-    potential_variables.en_atom_vec
-
     potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix,
     potential_variables.g_matrix
 
     potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
-    return potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    return nothing
 end
 """
     swap_move_config!(mc_state::MCState,indices::VorS)
