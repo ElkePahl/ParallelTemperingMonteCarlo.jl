@@ -23,7 +23,7 @@ get_pot(; ensemble=get_nvt()) =
 get_ensemble() = rand([get_nvt(), get_npt()])
 function get_eljpot_even()
     (
-        c=[
+        c = [
             -10.5097942564988,
             989.725135614556,
             -101383.865938807,
@@ -50,17 +50,17 @@ function initialise(;
     ebounds=[-100.0, 100.0],
 )
     (
-        output=initialisation(mc_params, tempgrid, config, pot, ensemble);
+        output = initialisation(mc_params, tempgrid, config, pot, ensemble);
         if ham
             for state in output[1]
                 push!(state.ham, 0.0)
                 push!(state.ham, 0.0)
             end
         end;
-        results=initialise_histograms!(
+        results = initialise_histograms!(
             mc_params, output[3], ebounds, config.boundary_condition
         );
-        output=(output[1], output[2], results, output[4], output[5]);
+        output = (output[1], output[2], results, output[4], output[5]);
         return output
     )
 end
@@ -71,24 +71,20 @@ end
 get_mcstatevec(; kargs...) = initialise(; kargs...)[1]
 get_mcstate(; kargs...) = rand(get_mcstatevec(; kargs...))
 function get_eljpot_b()
-    (
-        a=[0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608];
-        b=[-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751];
-        c1=[-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203];
-        return ELJPotentialB{6}(a, b, c1)
-    )
+    (a = [0.0005742, -0.4032, -0.2101, -0.0595, 0.0606, 0.1608];
+    b = [-0.01336, -0.02005, -0.1051, -0.1268, -0.1405, -0.1751];
+    c1 = [-0.1132, -1.5012, 35.6955, -268.7494, 729.7605, -583.4203];
+    return ELJPotentialB{6}(a, b, c1))
 end
 function get_eam()
-    (
-        nmtobohr=18.8973;
-        evtohartree=0.0367493;
-        n=8.482;
-        m=4.692;
-        ϵ=evtohartree * 0.0370;
-        a=0.25 * nmtobohr;
-        C=27.561;
-        return EmbeddedAtomPotential(n, m, ϵ, C, a)
-    )
+    (nmtobohr = 18.8973;
+    evtohartree = 0.0367493;
+    n = 8.482;
+    m = 4.692;
+    ϵ = evtohartree * 0.0370;
+    a = 0.25 * nmtobohr;
+    C = 27.561;
+    return EmbeddedAtomPotential(n, m, ϵ, C, a))
 end
 function get_elj()
     return ELJPotential{11}([
