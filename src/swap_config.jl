@@ -189,8 +189,8 @@ function swap_vars!(i_atom::Int, potential_variables::DimerPotentialBVariables)
     return nothing
 end
 function swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
-
-    potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector, potential_variables.component_vector
+    potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector,
+    potential_variables.component_vector
     return nothing
 end
 

@@ -278,7 +278,7 @@ close(file)
 weights = vec(weights)
 nnp = NeuralNetworkPotential(num_nodes, activation_functions, weights)
 
-runnerpotential = RuNNerPotential(nnp, totalsymmvec) #============================================================#
+runnerpotential = RuNNerPotential(nnp, totalsymmvec)#============================================================#
 #------------------------------------------------------------#
 
 #------------------------------------------------------------#

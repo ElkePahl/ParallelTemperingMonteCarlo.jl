@@ -19,7 +19,8 @@ using Random
     @test state.ensemble_variables isa NVTVariables{Float64}
     @test state.potential_variables isa DimerPotentialVariables
 
-    @test state.en_tot == dimer_energy_config(conf1, state.dist2_mat, state.potential_variables, pot1)
+    @test state.en_tot ==
+        dimer_energy_config(conf1, state.dist2_mat, state.potential_variables, pot1)
 
     state.ensemble_variables.index = 1
 
@@ -63,7 +64,8 @@ end
     @test state.ensemble_variables isa NPTVariables{Float64}
     @test state.potential_variables isa DimerPotentialVariables
 
-    @test state.en_tot == dimer_energy_config(conf1, state.dist2_mat, state.potential_variables, pot1)
+    @test state.en_tot ==
+        dimer_energy_config(conf1, state.dist2_mat, state.potential_variables, pot1)
 
     state.ensemble_variables.index = 1
     Random.seed!(1234)

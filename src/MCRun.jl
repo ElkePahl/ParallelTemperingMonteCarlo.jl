@@ -1,10 +1,6 @@
 module MCRun
 
-export metropolis_condition,
-    mc_step!,
-    mc_cycle!,
-    ptmc_run!,
-    get_energy!
+export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!, get_energy!
 export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
@@ -358,8 +354,6 @@ function ptmc_run!(
         save_histparams(results)
     end
 
-    energies = [Float64[] for _ in eachindex(mc_states)]
-
     @info "equilibration complete"
 
     # Main loop
@@ -377,9 +371,6 @@ function ptmc_run!(
             potential,
         )
 
-        for (i, state) in enumerate(mc_states)
-            push!(energies[i], state.en_tot)
-        end
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
         end
@@ -401,7 +392,7 @@ function ptmc_run!(
 
     #Finalisation of results
     results = finalise_results(mc_states, mc_params, results)
-    return mc_states, results, energies
+    return mc_states, results
 end
 
 # This method is used to resume a saved computation
@@ -426,8 +417,6 @@ function ptmc_run!(
         save_histparams(results)
     end
 
-    energies = [Float64[] for _ in eachindex(mc_states)]
-
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
@@ -441,9 +430,6 @@ function ptmc_run!(
             rdfsave,
             potential,
         )
-        for (i, state) in enumerate(mc_states)
-            push!(energies[i], state.en_tot)
-        end
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
         end
@@ -455,7 +441,7 @@ function ptmc_run!(
 
     results = finalise_results(mc_states, mc_params, results)
 
-    return mc_states, results, energies
+    return mc_states, results
 end
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#

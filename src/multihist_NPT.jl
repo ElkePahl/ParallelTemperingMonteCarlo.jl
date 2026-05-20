@@ -216,21 +216,22 @@ function multihistogram_NPT(
                 energy_t = Emin + (m - 0.5) * dEhist
                 volume = Vmin + (n - 0.5) * dVhist
 
-                qp = quasiprob(
-                    betat,
-                    m,
-                    n,
-                    ncycles,
-                    dEhist,
-                    dVhist,
-                    Emin,
-                    Vmin,
-                    tempnumber,
-                    EVhistogram,
-                    beta,
-                    p,
-                    free_energy,
-                ) / normalconst[i]
+                qp =
+                    quasiprob(
+                        betat,
+                        m,
+                        n,
+                        ncycles,
+                        dEhist,
+                        dVhist,
+                        Emin,
+                        Vmin,
+                        tempnumber,
+                        EVhistogram,
+                        beta,
+                        p,
+                        free_energy,
+                    ) / normalconst[i]
 
                 eenergy += qp * energy_t
                 evolume += qp * volume

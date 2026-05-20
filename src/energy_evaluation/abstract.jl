@@ -82,7 +82,6 @@ dimer_energy
 """
 abstract type AbstractDimerPotentialB <: AbstractDimerPotential end
 
-
 # TODO: this function needs more work
 """
     dimer_energy_config!(config, dist2_mat, potential_variables, potential)
@@ -97,7 +96,7 @@ the total energy of configuration.
 The energy is calculated through a call of [`dimer_energy`](@ref).
 """
 function dimer_energy_config(
-    config, dist2_mat, potential_variables, pot::AbstractDimerPotentialB; new=false,
+    config, dist2_mat, potential_variables, pot::AbstractDimerPotentialB; new=false
 )
     tan_mat = new ? potential_variables.new_tan_mat : potential_variables.tan_mat
 
@@ -116,7 +115,7 @@ function dimer_energy_config(
 end
 
 function dimer_energy_config(
-    config, dist2_mat, potential_variables, pot::AbstractDimerPotential; new=false,
+    config, dist2_mat, potential_variables, pot::AbstractDimerPotential; new=false
 )
     num_atoms = length(config)
     total_energy = 0.0
@@ -159,7 +158,9 @@ according to the potential as `pot` and the configurational variables
 function initialise_energy(
     config::Config, dist2_mat, potential_variables, _, potential::AbstractDimerPotential
 )
-    return dimer_energy_config(config, dist2_mat, potential_variables, potential; new=false),
+    return dimer_energy_config(
+        config, dist2_mat, potential_variables, potential; new=false
+    ),
     potential_variables
 end
 
@@ -190,7 +191,6 @@ function dimer_energy_atom(potential, index, cutoff, dist2, tan)
     end
     return energy
 end
-
 
 """
     energy_update!(ensemblevariables, config, potential_variables, dist2_mat, new_dist2_vec, en_tot, pot)
@@ -229,7 +229,8 @@ function energy_update!(
 
     old_dist2_vec = view(dist2_mat, :, index)
 
-    delta_energy = dimer_energy_atom(potential, index, cutoff, new_dist2_vec) -
+    delta_energy =
+        dimer_energy_atom(potential, index, cutoff, new_dist2_vec) -
         dimer_energy_atom(potential, index, cutoff, old_dist2_vec)
 
     return potential_variables, total_energy + delta_energy
@@ -256,7 +257,8 @@ function energy_update!(
     old_tan_vec = view(potential_variables.tan_mat, :, index)
     new_tan_vec = potential_variables.new_tan_vec
 
-    delta_energy = dimer_energy_atom(potential, index, cutoff, new_dist2_vec, new_tan_vec) -
+    delta_energy =
+        dimer_energy_atom(potential, index, cutoff, new_dist2_vec, new_tan_vec) -
         dimer_energy_atom(potential, index, cutoff, old_dist2_vec, old_tan_vec)
 
     return potential_variables, total_energy + delta_energy
