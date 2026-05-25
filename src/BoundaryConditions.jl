@@ -57,7 +57,7 @@ check_boundary
 Compute correction to energy from atoms outside the boundary condition, e.g. an integral
 of all interaction outside the cutoff distance using uniform density approximation.
 
-The first method should call the second an multiply it with an appropriate factor (for
+The first method should call the second and multiply it with an appropriate factor (for
 periodic boundary conditions) or return zero (for boundary conditions where a long range
 correction is not necessary).
 
@@ -145,8 +145,7 @@ Is abstract type for periodic boundary conditions to simulate bulk systems.
 - [`RhombicBC`](@ref)
 - [`RectangularBC`](@ref)
 
-In addition to the methods required by [`AbstractBC`](@ref), a `PeriodicBC` should
-implement
+A `PeriodicBC` should implement [`long_range_correction`](@ref) and [`r_cut`](@ref).
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 

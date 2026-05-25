@@ -10,7 +10,7 @@ using LinearAlgebra
 """
     mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
 
-Like `mc_move!`, but takes accepts the step is `accept ≡ true`. Returns move name for easier
+Like `mc_move!`, but accepts the step if `accept ≡ true`. Returns move name for easier
 debugging.
 """
 function mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)

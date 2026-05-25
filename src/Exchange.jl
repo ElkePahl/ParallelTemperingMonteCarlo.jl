@@ -43,10 +43,28 @@ export parallel_tempering_exchange!, update_max_stepsize!
 #     T = typeof(prob_val)
 #     return ifelse(prob_val > 1, T(1), prob_val)
 # end
+#=
+TODO:
+Elke:
+I think that this is a bit chaotic. Would it make sense to separate last method from first
+two as they do different things. First two could be renamed to get_metropolis_probability or
+something like this.
+
+Documentation has to be updated anyway as only three methods left.
+Suggestions:
+
+- metropolis_condition(movetype ...)
+- Returns probability for given move_type (atom, volume or atom swap moves). Perhaps provide
+  formulae here?
+- get_metropolis_probability(...)
+- get_metropolis_probability(...)
+- Return probability for atom or atom swap moves (1st method) or volume move(2nd method)
+=#
 """
     metropolis_condition(delta_energy::Number, beta::Number)
     metropolis_condition(ensemble::NPT, delta_energy::Float64, volume_changed::Float64, volume_unchanged::Float64, beta::Float64)
     metropolis_condition(movetype::String, mc_state::MCState, ensemble)
+
 Function returning the probability value associated with a trial move. Four methods included. The last two methods are separatig functions taking a `movetype`, `mc_state` and `ensemble` and separating them into volume and atom moves defined in the first two functions, namely:
 -   accepts `delta_energy` and `beta` and determines the thermodynamic probability of the single-atom move
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.

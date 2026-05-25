@@ -84,15 +84,18 @@ end
 
 """
     NPTVariables <: AbstractEnsembleVariables
-NPT ensemble specific variable that change during MC run.
+
+Contains [`NPT`](@ref) ensemble variables that change during MC run.
 -   Field names:
     -   `index::Int64`
     -   `trial_move::SVector{3,T}`
     -   `trial_config::Config`
     -   `new_dist2_mat::Matrix{T}`
-When trialing a new configuration we select an atom at `index` to move to new position `trial_move`,
-the index can be greater than `n_atoms` in which case we trial a volume move,
-involving a scaled `trial_config` with a `new_dist2_mat` this being a volume move.
+
+Using an NPT ensemble, the type of move is selected according to `index`. For indices
+smaller or equal to the number of atoms in the system, a `trial_move` for the `index`-th
+atom is generated. If `index` is larger that the number of atoms, a volume move is trialled
+involving the generation of a scaled `trial_config` and corresponding `new_dist2_mat`.
 """
 mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     index::Int64

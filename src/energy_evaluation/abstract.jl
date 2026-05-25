@@ -67,8 +67,8 @@ abstract type AbstractDimerPotential <: AbstractPotential end
     dimer_energy(potential::AbstractDimerPotentialB, r2::Real, z_angle::Real)
 
 Calculate the energy of dimer for given potential `potential` and squared distance `r2`
-between atoms. For an [`AbstractDimerPotentialB`](@ref), the angle between the line
-connecting them and z-direction (`z_angle`) is also required.
+between atoms. For an [`AbstractDimerPotentialB`](@ref), the angle between the molecular
+axis and the z-direction (`z_angle`) is also required.
 """
 dimer_energy
 
@@ -84,14 +84,15 @@ abstract type AbstractDimerPotentialB <: AbstractDimerPotential end
 
 # TODO: this function needs more work
 """
-    dimer_energy_config!(config, dist2_mat, potential_variables, potential)
+    dimer_energy_config!(config, dist2_mat, potential_variables, potential; new=false)
 
-Store the dimer energies of one atom with all other atoms in `dimer_energies` and return
-the total energy of configuration.
+Return the total energy of configuration. If `new=false`, calculate the energy of the
+current configuration, while if `new=true`, calculate the energy for the trial
+configuration.
 
 `config` is the configuration, `dist2_mat` a squared distance matrix, (see
 [`get_distance2_mat`](@ref)), and the potential information is in `potential_variables` and
-`potential` (see [`AbstractPotential`](@ref)).  `potential` [`AbstractPotential`](@ref).
+`potential` (see [`AbstractPotential`](@ref)).
 
 The energy is calculated through a call of [`dimer_energy`](@ref).
 """
