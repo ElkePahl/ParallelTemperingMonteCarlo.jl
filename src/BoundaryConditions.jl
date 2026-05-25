@@ -9,12 +9,12 @@ module BoundaryConditions
 using StaticArrays
 
 export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
-export check_boundary, long_range_correction, volume
+export check_boundary, long_range_correction, volume, r_cut
 
 """
     AbstractBC{T}
 
-Is abstract type for boundary conditions.
+Abstract type for boundary conditions.
 
 # Implemented boundary conditions
 
@@ -24,7 +24,21 @@ Is abstract type for boundary conditions.
     - [`RhombicBC`](@ref)
     - [`RectangularBC`](@ref)
 
-All subtypes should implement [`check_boundary`](@ref).
+# Interface
+
+Basic interface:
+- [`check_boundary`](@ref) (required)
+- [`r_cut`](@ref) (optional for non-periodic boundaries, defaults to returning `Inf`)
+- [`long_range_correction`](@ref) (optional for non-periodic boundaries, defaults to
+  returning zero)
+
+Required for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT)
+ensemble:
+- [`volume`](@ref)
+- [`scale_xyz`](@ref)
+- [`scale_xy`](@ref)
+- [`scale_z`](@ref)
+
 """
 abstract type AbstractBC{T} end
 
@@ -37,24 +51,40 @@ case of [`PeriodicBC`](@ref)), or return `nothing` if the position is invalid.
 check_boundary
 
 """
-    long_range_correction(bc::AbstractBC, potential, num_atoms, r_cut)
+    long_range_correction(bc::AbstractBC, potential, num_atoms)
     long_range_correction(potential, num_atoms, r_cut)
 
-Compute correction to energy from atoms outside the boundary condition. It is the integral
-of all interaction outside the cutoff distance, using uniform density approximation.
+Compute correction to energy from atoms outside the boundary condition, e.g. an integral
+of all interaction outside the cutoff distance using uniform density approximation.
 
-The first method should call the second an multiply it with an appropriate factor (for
+The first method should call the second and multiply it with an appropriate factor (for
 periodic boundary conditions) or return zero (for boundary conditions where a long range
 correction is not necessary).
 
-The second method only needs to be defined for a given potential if used with periodic
-boundary conditions.
+The second method only needs to be defined for a given potential for it to be usable with
+periodic boundary conditions.
 """
-long_range_correction(::AbstractBC, _, _, _) = 0.0
+long_range_correction(::AbstractBC, _, _) = 0.0
 
 """
-    scale_xyz(::RhombicBC, α)
-    scale_xyz(::RectangularBC, α)
+    r_cut(::AbstractBC)
+
+The square of the cut-off radius `r_cut` that is implied by periodic boundary conditions to
+avoid double-counting. Defaults to returning `Inf`, and as such only needs to be implemented
+for periodic boundary conditions.
+"""
+r_cut(::AbstractBC) = Inf
+
+"""
+    volume(::AbstractBC)
+
+Returns the volume of a box according to its geometry for use where the ensemble does not
+imply a fixed `V`.
+"""
+volume
+
+"""
+    scale_xyz(::AbstractBC, α)
     scale_xyz(::Vector{<:SVector}, α)
     scale_xyz(::Config, α)
 
@@ -63,8 +93,7 @@ Scale boundary condition, vector, or configuration in all three dimensions by fa
 scale_xyz
 
 """
-    scale_xy(::RhombicBC, α)
-    scale_xy(::RectangularBC, α)
+    scale_xy(::AbstractBC, α)
     scale_xy(::Vector{<:SVector}, α)
     scale_xy(::Config, α)
 
@@ -74,8 +103,7 @@ factor `α`.
 scale_xy
 
 """
-    scale_z(::RhombicBC, α)
-    scale_z(::RectangularBC, α)
+    scale_z(::AbstractBC, α)
     scale_z(::Vector{<:SVector}, α)
     scale_z(::Config, α)
 
@@ -117,23 +145,13 @@ Is abstract type for periodic boundary conditions to simulate bulk systems.
 - [`RhombicBC`](@ref)
 - [`RectangularBC`](@ref)
 
-In addition to the methods required by [`AbstractBC`](@ref), a `PeriodicBC` should
-implement
-- [`volume`](@ref)
-- [`scale_xyz`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble)
-- [`scale_xy`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) ensemble with separated volume moves)
-- [`scale_z`](@ref) (optional, for use with the [`NPT`](@ref Main.ParallelTemperingMonteCarlo.Ensembles.NPT) with separated volume moves)
-- [`long_range_correction`](@ref) (optional, defaults to returning zero)
+A `PeriodicBC` should implement [`long_range_correction`](@ref) and [`r_cut`](@ref).
 """
 abstract type PeriodicBC{T} <: AbstractBC{T} end
 
-"""
-    volume(::PeriodicBC)
-
-Returns the volume of a box according to its geometry for use where the ensemble does not
-imply a fixed `V`.
-"""
-volume
+# Override defaults, so they are necessary to implement for PeriodicBC.
+long_range_correction(bc::PeriodicBC, pot, n, r_cut) = throw(MethodError(bc, pot, n, r_cut))
+r_cut(bc::PeriodicBC) = throw(MethodError(r_cut, bc))
 
 """
     CubicBC{T}(; side_length::Real)
@@ -156,18 +174,15 @@ function volume(bc::CubicBC)
     return bc.box_length^3
 end
 function check_boundary(bc::CubicBC, position)
-    return position -
-           bc.box_length * SVector(
-        round(position[1] / bc.box_length),
-        round(position[2] / bc.box_length),
-        round(position[3] / bc.box_length),
-    )
+    return position .- bc.box_length .* round.(position ./ bc.box_length)
 end
-function long_range_correction(bc::CubicBC, potential, num_atoms, r_cut)
-    return long_range_correction(potential, num_atoms, r_cut)
+function long_range_correction(bc::CubicBC, potential, num_atoms)
+    return long_range_correction(potential, num_atoms, r_cut(bc))
 end
 
 scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
+
+r_cut(bc::CubicBC) = bc.box_length^2 / 4
 
 """
     RectangularBC{T}
@@ -187,14 +202,11 @@ function volume(bc::RectangularBC)
     return bc.box_length^2 * bc.box_height
 end
 function check_boundary(bc::RectangularBC, position)
-    return position - SVector(
-        bc.box_length * round(position[1] / bc.box_length),
-        bc.box_length * round(position[2] / bc.box_length),
-        bc.box_height * round(position[3] / bc.box_height),
-    )
+    box_size = SVector(bc.box_length, bc.box_length, bc.box_height)
+    return position .- box_size .* round.(position ./ box_size)
 end
-function long_range_correction(bc::RectangularBC, potential, num_atoms, r_cut)
-    lrc = long_range_correction(potential, num_atoms, r_cut)
+function long_range_correction(bc::RectangularBC, potential, num_atoms)
+    lrc = long_range_correction(potential, num_atoms, r_cut(bc))
     if bc.box_length < bc.box_height
         return lrc * bc.box_length / bc.box_height
     else
@@ -205,6 +217,8 @@ end
 scale_xyz(bc::RectangularBC, α) = RectangularBC(α * bc.box_length, α * bc.box_height)
 scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box_height)
 scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
+
+r_cut(bc::RectangularBC) = min(bc.box_length^2 / 4, bc.box_height^2 / 4)
 
 """
     RhombicBC{T}(; length::Real, height::Real)
@@ -229,26 +243,28 @@ struct RhombicBC{T} <: PeriodicBC{T}
     RhombicBC(x::T, y::T) where {T<:Real} = new{T}(x, y)
 end
 function volume(bc::RhombicBC)
-    return bc.box_length^2 * bc.box_height * 3^0.5 / 2
+    return bc.box_length^2 * bc.box_height * √3 / 2
 end
 function check_boundary(bc::RhombicBC, position)
     return position - SVector(
         bc.box_length *
-        round((position[1] - position[2] / 3^0.5 - bc.box_length / 2) / bc.box_length) +
+        round((position[1] - position[2] / √3 - bc.box_length / 2) / bc.box_length) +
         bc.box_length / 2 *
-        round((position[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
-        bc.box_length * 3^0.5 / 2 *
-        round((position[2] - bc.box_length * 3^0.5 / 4) / (bc.box_length * 3^0.5 / 2)),
+        round((position[2] - bc.box_length * √3 / 4) / (bc.box_length * √3 / 2)),
+        bc.box_length * √3 / 2 *
+        round((position[2] - bc.box_length * √3 / 4) / (bc.box_length * √3 / 2)),
         bc.box_height * round((position[3] - bc.box_height / 2) / bc.box_height),
     )
 end
-function long_range_correction(bc::RhombicBC, potential, num_atoms, r_cut)
-    return long_range_correction(potential, num_atoms, r_cut) * 3bc.box_length /
+function long_range_correction(bc::RhombicBC, potential, num_atoms)
+    return long_range_correction(potential, num_atoms, r_cut(bc)) * 3bc.box_length /
            4bc.box_height
 end
 
 scale_xyz(bc::RhombicBC, α) = RhombicBC(α * bc.box_length, α * bc.box_height)
 scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
 scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
+
+r_cut(bc::RhombicBC) = min(bc.box_length^2 * 3 / 16, bc.box_height^2 / 4)
 
 end

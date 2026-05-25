@@ -86,7 +86,7 @@ function quasiprob(
     volume = Vmin + (n - 0.5) * dVhist
     quasiprob = 0
     denom = 0
-    offset = -10^6
+    offset = -1e6
     for i in 1:tempnumber
         offset = max(offset, -beta[i] * (energy_t + p * volume) - free_energy[i])
     end
@@ -204,12 +204,11 @@ function multihistogram_NPT(
     end
 
     cp = zeros(tempnumber_result)
+    vol = zeros(tempnumber_result)
     for i in 1:tempnumber_result
         betat = beta_result[i]
         eenergy = 0
-        eenergy2 = 0
         evolume = 0
-        evolume2 = 0
         eenthalpy = 0
         eenthalpy2 = 0
         for m in 1:Ebins
@@ -217,8 +216,7 @@ function multihistogram_NPT(
                 energy_t = Emin + (m - 0.5) * dEhist
                 volume = Vmin + (n - 0.5) * dVhist
 
-                eenergy =
-                    eenergy +
+                qp =
                     quasiprob(
                         betat,
                         m,
@@ -233,108 +231,27 @@ function multihistogram_NPT(
                         beta,
                         p,
                         free_energy,
-                    ) / normalconst[i] * energy_t
-                eenergy2 =
-                    eenergy2 +
-                    quasiprob(
-                        betat,
-                        m,
-                        n,
-                        ncycles,
-                        dEhist,
-                        dVhist,
-                        Emin,
-                        Vmin,
-                        tempnumber,
-                        EVhistogram,
-                        beta,
-                        p,
-                        free_energy,
-                    ) / normalconst[i] * energy_t^2
+                    ) / normalconst[i]
 
-                evolume =
-                    evolume +
-                    quasiprob(
-                        betat,
-                        m,
-                        n,
-                        ncycles,
-                        dEhist,
-                        dVhist,
-                        Emin,
-                        Vmin,
-                        tempnumber,
-                        EVhistogram,
-                        beta,
-                        p,
-                        free_energy,
-                    ) / normalconst[i] * volume
-                evolume2 =
-                    evolume2 +
-                    quasiprob(
-                        betat,
-                        m,
-                        n,
-                        ncycles,
-                        dEhist,
-                        dVhist,
-                        Emin,
-                        Vmin,
-                        tempnumber,
-                        EVhistogram,
-                        beta,
-                        p,
-                        free_energy,
-                    ) / normalconst[i] * volume^2
-
-                eenthalpy =
-                    eenthalpy +
-                    quasiprob(
-                        betat,
-                        m,
-                        n,
-                        ncycles,
-                        dEhist,
-                        dVhist,
-                        Emin,
-                        Vmin,
-                        tempnumber,
-                        EVhistogram,
-                        beta,
-                        p,
-                        free_energy,
-                    ) / normalconst[i] * (energy_t + p * volume)
-                eenthalpy2 =
-                    eenthalpy2 +
-                    quasiprob(
-                        betat,
-                        m,
-                        n,
-                        ncycles,
-                        dEhist,
-                        dVhist,
-                        Emin,
-                        Vmin,
-                        tempnumber,
-                        EVhistogram,
-                        beta,
-                        p,
-                        free_energy,
-                    ) / normalconst[i] * (energy_t + p * volume)^2
+                eenergy += qp * energy_t
+                evolume += qp * volume
+                eenthalpy += qp * (energy_t + p * volume)
+                eenthalpy2 += qp * (energy_t + p * volume)^2
             end
         end
-        println("temperature: ", temp_result[i])
-        println("energy: ", eenergy)
-        println("volume: ", evolume)
-        println("enthalpy: ", eenthalpy)
-        println("heat capacity: ", (eenthalpy2 - eenthalpy^2) / (k * temp_result[i]^2))
-        println()
+        #println("temperature: ", temp_result[i])
+        #println("energy: ", eenergy)
+        #println("volume: ", evolume)
+        #println("enthalpy: ", eenthalpy)
+        #println("heat capacity: ", (eenthalpy2 - eenthalpy^2) / (k * temp_result[i]^2))
+        #println()
         cp[i] = (eenthalpy2 - eenthalpy^2) / (k * temp_result[i]^2)
+        vol[i] = evolume
     end
-    println("temperature array: ", temp_result)
-    println("heat capacity array: ", cp)
+    #println("temperature array: ", temp_result)
+    #println("heat capacity array: ", cp)
 
-    return temp_result, cp
+    return (; T=temp_result, C=cp, V=vol)
 end
 
 end

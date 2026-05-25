@@ -16,11 +16,11 @@ using Random
 
     state = MCState(temp.t_grid[1], temp.beta_grid[1], conf1, ensemble, pot1)
     state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf1, ensemble, pot1)
-    @test typeof(state.ensemble_variables) == NVTVariables{Float64}
-    @test typeof(state.potential_variables) == DimerPotentialVariables{Float64}
+    @test state.ensemble_variables isa NVTVariables{Float64}
+    @test state.potential_variables isa DimerPotentialVariables
 
     @test state.en_tot ==
-        dimer_energy_config(state.dist2_mat, 3, state.potential_variables, pot1)[2]
+        dimer_energy_config(conf1, state.dist2_mat, state.potential_variables, pot1)
 
     state.ensemble_variables.index = 1
 
@@ -61,17 +61,11 @@ end
     state = MCState(temp.t_grid[1], temp.beta_grid[1], conf1, ensemble, pot1)
     state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf1, ensemble, pot1)
 
-    @test typeof(state.ensemble_variables) == NPTVariables{Float64}
-    @test typeof(state.potential_variables) == DimerPotentialVariables{Float64}
+    @test state.ensemble_variables isa NPTVariables{Float64}
+    @test state.potential_variables isa DimerPotentialVariables
 
-    @test state.en_tot == dimer_energy_config(
-        state.dist2_mat,
-        3,
-        state.potential_variables,
-        state.ensemble_variables.r_cut,
-        state.config.boundary_condition,
-        pot1,
-    )[2]
+    @test state.en_tot ==
+        dimer_energy_config(conf1, state.dist2_mat, state.potential_variables, pot1)
 
     state.ensemble_variables.index = 1
     Random.seed!(1234)

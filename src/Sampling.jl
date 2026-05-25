@@ -20,11 +20,9 @@ using ..BoundaryConditions
 using ..EnergyEvaluation
 using ..Ensembles
 """
-    update_energy_tot(mc_states::MCStateVector, ensemble::Etype) where Etype <: AbstractEnsemble
-    update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
+    update_energy_tot(mc_states::MCStateVector, ensemble)
 
 Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required.
-Two methods avoids needless for-loops, where the JIT can save us computation time.
 """
 function update_energy_tot(mc_states::MCStateVector, ensemble::AbstractEnsemble)
     for state in mc_states
