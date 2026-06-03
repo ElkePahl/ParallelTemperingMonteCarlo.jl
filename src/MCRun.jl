@@ -224,8 +224,7 @@ function mc_cycle!(
     rdfsave::Bool,
     potential,
 ) where {N,E}
-    #TODO: Implement saving configurations after n steps
-    #=
+    
     if rem(idx,10000) == 0
         for i=1:length(mc_states)
             open("$(length(mc_states[1].config))/configuration_$(mc_states[i].temp).txt","a") do io
@@ -242,7 +241,7 @@ function mc_cycle!(
             end
         end
     end
-    =#
+    
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, idx)
 
     if rem(idx, mc_params.mc_sample) == 0
