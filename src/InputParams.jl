@@ -95,7 +95,7 @@ end
 TempGrid(ti::Number, tf::Number, N::Int; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
 
 function TempGrid_customised(tgrid::Array{Float64})
-    N=length(tgrid)
+    N = length(tgrid)
     betagrid = 1.0 ./ (kB .* tgrid)
     return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
 end
