@@ -11,7 +11,6 @@ export AbstractEnsembleVariables,
 
 export MoveType, atommove, volumemove, atomswap
 export MoveStrategy
-export get_r_cut
 
 """
     AbstractEnsemble
@@ -22,8 +21,6 @@ Abstract type for ensemble:
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
-const Etype = T where {T<:AbstractEnsemble}
-export Etype
 
 """
     AbstractEnsembleVariables
@@ -87,42 +84,27 @@ end
 
 """
     NPTVariables <: AbstractEnsembleVariables
-NPT ensemble specific variable that change during MC run.
+
+Contains [`NPT`](@ref) ensemble variables that change during MC run.
 -   Field names:
     -   `index::Int64`
     -   `trial_move::SVector{3,T}`
     -   `trial_config::Config`
     -   `new_dist2_mat::Matrix{T}`
-    -   `r_cut::T`
-    -   `new_r_cut::T`
-When trialing a new configuration we select an atom at `index` to move to new position `trial_move`,
-the index can be greater than `n_atoms` in which case we trial a volume move,
-involving a scaled `trial_config` with a `new_r_cut` having a `new_dist2_mat` this being a volume move.
+
+Using an NPT ensemble, the type of move is selected according to `index`. For indices
+smaller or equal to the number of atoms in the system, a `trial_move` for the `index`-th
+atom is generated. If `index` is larger that the number of atoms, a volume move is trialled
+involving the generation of a scaled `trial_config` and corresponding `new_dist2_mat`.
 """
 mutable struct NPTVariables{T} <: AbstractEnsembleVariables
     index::Int64
     trial_move::SVector{3,T}
     trial_config::Config
     new_dist2_mat::Matrix{T}
-    r_cut::T
-    new_r_cut::T
     xy_or_z::Int
 end
 
-"""
-    get_r_cut(bc<:PeriodicBC)
-
-finds the square of the cut-off radius `r_cut` that is implied by periodic boundary conditions (to avoid double-counting).
-implemented for [`CubicBC`](@ref), [`RhombicBC`](@ref) and [`RectangularBC`](@ref).
-"""
-function get_r_cut(bc::CubicBC)
-    return bc.box_length^2 / 4
-end
-
-function get_r_cut(bc::RhombicBC)
-    return min(bc.box_length^2 * 3 / 16, bc.box_height^2 / 4)
-    #return bc.box_length^2*3/16
-end
 #---------------------------------------------------------------------#
 #--------------------------------NNVT---------------------------------#
 #---------------------------------------------------------------------#
@@ -148,10 +130,6 @@ function NNVT(natomsvec; natomswaps=1, natommoves=sum(natomsvec))
         natoms = natomsvec
     end
     return NNVT(natoms, natommoves, natomswaps)
-end
-
-function get_r_cut(bc::RectangularBC)
-    return min(bc.box_length^2 / 4, bc.box_height^2 / 4)
 end
 
 """
@@ -194,8 +172,6 @@ function set_ensemble_variables(config::Config{T}, ensemble::NPT) where {T}
         SVector{3}(zeros(3)),
         deepcopy(config),
         zeros(ensemble.n_atoms, ensemble.n_atoms),
-        get_r_cut(config.boundary_condition),
-        0.0,
         0,
     )
 end
@@ -217,19 +193,19 @@ Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) stru
 @enum MoveType atommove volumemove atomswap
 
 """
-    MoveStrategy{N,Etype}
+    MoveStrategy{N,AbstractEnsemble}
 
 A struct to define the types of moves performed per MC cycle.
 -   Field names:
-    -   `ensemble::Etype`: type of ensemble (NVT, NPT)
+    -   `ensemble::AbstractEnsemble`: type of ensemble (NVT, NPT)
     -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle (see `MoveType`)
 Constructors:
 -   MoveStrategy(ensemble::NPT)
 -   MoveStrategy(ensemble::NVT)
 -   MoveStrategy(ensemble::NNVT)
 """
-struct MoveStrategy{N,Etype} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps.
-    ensemble::Etype
+struct MoveStrategy{N,E} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps.
+    ensemble::E
     movestrat::Vector{String}
 end
 

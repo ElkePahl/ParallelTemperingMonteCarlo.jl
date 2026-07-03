@@ -161,11 +161,11 @@ function get_distance2_mat!(dest, config::Config)
 end
 
 """
-    get_tan(a::PositionVector,b::PositionVector)
-    get_tan(a::PositionVector,b::PositionVector,bc::SphericalBC)
-    get_tan(a::PositionVector,b::PositionVector,bc::CubicBC)
-    get_tan(a::PositionVector,b::PositionVector,bc::RhombicBC)
-    get_tan(a::PositionVector,b::PositionVector,bc::RectangularBC)
+    get_tan(a, b)
+    get_tan(a, b, bc::SphericalBC)
+    get_tan(a, b, bc::CubicBC)
+    get_tan(a, b, bc::RhombicBC)
+    get_tan(a, b, bc::RectangularBC)
 Method 1&2 :
 tan of the angle between the line connecting two points a and b, and the z-direction
 Method 3:

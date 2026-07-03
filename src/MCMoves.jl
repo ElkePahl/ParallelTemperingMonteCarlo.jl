@@ -56,6 +56,7 @@ function atom_displacement(mc_state::MCState)
     end
     mc_state.ensemble_variables.trial_move = trial_position
 
+    # TODO: put me in potential variables?
     for (i, b) in enumerate(mc_state.config)
         mc_state.new_dist2_vec[i] = distance2(
             mc_state.ensemble_variables.trial_move, b, boundary_condition
@@ -115,6 +116,7 @@ Returns the trial configuration.
 """
 function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
     scale = exp((rand() - 0.5) * max_vchange)
+
     if conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
        lh_ratio * 1.1 && scale > 1.0
         scale = 1 / scale
@@ -138,10 +140,16 @@ function volume_change_uniform(mc_state::MCState)
     mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.boundary_condition
+    if mc_state.potential_variables isa DimerPotentialBVariables
+        mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
+    end
+
+    # Recalculating the distance matrix is necessary even on uniform moves. scaling it can
+    # cause numerical issues.
+    # mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
+    get_distance2_mat!(
+        mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-    mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
 
     return mc_state
 end
@@ -183,22 +191,22 @@ function volume_change_separated(mc_state::MCState)
         )
     end
 
-    mc_state.ensemble_variables.new_r_cut = get_r_cut(
-        mc_state.ensemble_variables.trial_config.boundary_condition
-    )
+    if mc_state.potential_variables isa DimerPotentialBVariables
+        if ra <= 3
+            get_tantheta_mat!(
+                mc_state.potential_variables.new_tan_mat,
+                mc_state.ensemble_variables.trial_config,
+            )
+        else
+            mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
+        end
+    end
+
+    # Recalculating the distance matrix is necessary even on uniform moves. scaling it can
+    # cause numerical issues.
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-
-    if ra <= 3 && (
-        mc_state.potential_variables isa ELJPotentialBVariables{Float64} ||
-        mc_state.potential_variables isa LookupTableVariables{Float64}
-    )
-        get_tantheta_mat!(
-            mc_state.potential_variables.new_tan_mat,
-            mc_state.ensemble_variables.trial_config,
-        )
-    end
     return mc_state
 end
 

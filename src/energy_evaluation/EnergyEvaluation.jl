@@ -26,30 +26,30 @@ using ..CustomTypes
 import ..BoundaryConditions.long_range_correction
 
 export AbstractPotential,
-    AbstractDimerPotential, ELJPotential, ELJPotentialEven, AbstractMachineLearningPotential
-export AbstractDimerPotentialB,
+    AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential
+export ELJPotential,
+    ELJPotentialEven,
     ELJPotentialB,
     EmbeddedAtomPotential,
     RuNNerPotential,
     RuNNerPotential2Atom,
     LookupTablePotential
 export AbstractPotentialVariables,
-    DimerPotentialVariables, ELJPotentialBVariables, LookupTableVariables
-export EmbeddedAtomVariables, NNPVariables, NNPVariables2a
-
-export dimer_energy, dimer_energy_atom, dimer_energy_config, dimer_energy_update!
-export energy_update!,
+    DimerPotentialVariables,
+    DimerPotentialBVariables,
+    EmbeddedAtomVariables,
+    NNPVariables,
+    NNPVariables2a
+export dimer_energy,
+    energy_update!,
     set_variables,
     initialise_energy,
     dimer_energy_config,
-    lrc,
-    invrexp,
     calc_components,
     calc_energies_from_components,
     get_new_state_vars!,
-    calc_new_runner_energy!
-
-export swap_energy_update
+    calc_new_runner_energy!,
+    swap_energy_update
 
 include("abstract.jl")
 include("ELJPotentials.jl")

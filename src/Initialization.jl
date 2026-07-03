@@ -17,7 +17,7 @@ using ..ReadSave
 using ..Ensembles
 
 """
-    initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::NVT)
+    initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential,ensemble::NVT)
     initialisation(restart::Bool;eq_cycles::Number)
 Basic function for establishing the structs and parameters required for the simulation. Inputs for method one are:
 -   `mc_params`: the basic values and parameters concerning how long our simulation runs.
@@ -45,7 +45,7 @@ Method two also returns:
 -   consider shuffling `mc_params` to include the `tempgrid` and cut down the number of inputs.
 
 """
-#function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <:AbstractEnsemble
+#function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential,ensemble)
 
 #move_strategy = MoveStrategy(ensemble)
 #n_steps = length(move_strategy)

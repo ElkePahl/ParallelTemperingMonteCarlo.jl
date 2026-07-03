@@ -23,9 +23,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
 
     vars = set_variables(conf1, d2mat, pot)
     evars = set_ensemble_variables(conf1, NVT(3))
-    @test dimer_energy_atom(2, d2mat[2, :], pot) < 0
-    en_vec, en_tot = dimer_energy_config(d2mat, 3, vars, pot)
-    @test en_vec[2] == dimer_energy_atom(2, d2mat[2, :], pot)
+    en_tot = dimer_energy_config(conf1, d2mat, vars, pot)
     en, vars = initialise_energy(conf1, d2mat, vars, evars, pot)
     @test en ≈ en_tot
 
@@ -33,8 +31,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     conf2 = Config([v1, v2, v3], bc2)
 
     evars1 = set_ensemble_variables(conf2, NPT(3, 10, false))
-    en_vec_pbc, en_tot_pbc = dimer_energy_config(d2mat, 3, vars, 4.0, bc2, pot1)
-    @test en_vec_pbc[2] == dimer_energy_atom(2, d2mat[2, :], 4.0, pot)
+    en_tot_pbc = dimer_energy_config(conf2, d2mat, vars, pot1)
     en_pbc, vars_pbc = initialise_energy(conf2, d2mat, vars, evars1, pot1)
     @test en_pbc == en_tot_pbc
 end

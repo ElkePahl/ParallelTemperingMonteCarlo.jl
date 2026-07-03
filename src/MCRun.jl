@@ -1,15 +1,6 @@
 module MCRun
 
-export metropolis_condition,
-    mc_step!,
-    mc_cycle!,
-    ptmc_cycle!,
-    ptmc_run!,
-    save_states,
-    save_params,
-    save_results,
-    get_energy!
-export atom_move!
+export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!, get_energy!
 export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
@@ -61,7 +52,7 @@ function get_energy!(
     return mc_state
 end
 function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractPotential, movetype::String
+    mc_state::MCState{<:Any,<:Any,<:Any,E}, pot::AbstractDimerPotential, movetype::String
 ) where {E<:NPTVariables}
     if movetype == "atommove"
         mc_state.potential_variables, mc_state.new_en = energy_update!(
@@ -74,13 +65,12 @@ function get_energy!(
             pot,
         )
     else
-        mc_state.potential_variables.en_atom_vec, mc_state.new_en = dimer_energy_config(
+        mc_state.new_en = dimer_energy_config(
+            mc_state.ensemble_variables.trial_config,
             mc_state.ensemble_variables.new_dist2_mat,
-            length(mc_state.config),
             mc_state.potential_variables,
-            mc_state.ensemble_variables.new_r_cut,
-            mc_state.ensemble_variables.trial_config.boundary_condition,
-            pot,
+            pot;
+            new=true,
         )
     end
     return mc_state
@@ -112,35 +102,29 @@ function get_energy!(
 end
 
 """
-    acc_test!(mc_state::MCState,ensemble::Etype,movetype::String) where Etype <: AbstractEnsemble
+    acc_test!(mc_state::MCState,ensemble,movetype::String)
 
 Checks if metropolis condition is fulfilled, comparing it to a random variable in [0,1].
 If the condition is met, the new variables become the current `mc_state` using [`swap_config!`](@ref).
 `ensemble` and `movetype` dictate the exact calculation of the metropolis condition,
 and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
 """
-function acc_test!(mc_state::MCState, ensemble::Etype, movetype::String)
+function acc_test!(mc_state::MCState, ensemble, movetype::String)
     if metropolis_condition(movetype, mc_state, ensemble) >= rand()
         swap_config!(mc_state, movetype)
-    else
-        #TODO: why was this here?
-        # DimerPotentialVariables does not have the new_tan_mat or tan_mat fields.
-        #for i in eachindex(mc_state.potential_variables.tan_mat)
-        #   mc_state.potential_variables.new_tan_mat[i] = mc_state.potential_variables.tan_mat[i]
-        #end
     end
 end
 """
-    mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ensemble::Etype) where Ptype <: AbstractPotential where Etype <: AbstractEnsemble where {N,E}
+    mc_move!(mc_state::MCState,move_strat::MoveStrategy, potential, ensemble)
 
-Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `pot` defining the PES.
+Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `potential` defining the PES.
 -   Calculates an index for the move
 -   Generates either a volume or atom move depending on `movestrat[index]`
 -   Calculates energy based on the pot and new move
 -   Tests acc and swaps if relevant
 """
 function mc_move!(
-    mc_state::MCState, move_strat::MoveStrategy{N,E}, pot::Ptype, ensemble::Etype
+    mc_state::MCState, move_strat::MoveStrategy{N,E}, pot, ensemble
 ) where {N,E}
     mc_state.ensemble_variables.index = rand(1:N)
 
@@ -162,16 +146,12 @@ function mc_move!(
 end
 
 """
-    mc_step!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, pot::Ptype, ensemble::Etype, n_steps::Int) where {N, E}
+    mc_step!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, pot, ensemble, n_steps::Int) where {N, E}
 
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
 function mc_step!(
-    mc_states::MCStateVector,
-    move_strat::MoveStrategy{N,E},
-    pot::Ptype,
-    ensemble::Etype,
-    n_steps::Int,
+    mc_states::MCStateVector, move_strat::MoveStrategy{N,E}, pot, ensemble, n_steps::Int
 ) where {N,E}
     Threads.@threads for state in mc_states
         for i_step in 1:n_steps
@@ -182,8 +162,8 @@ function mc_step!(
 end
 
 """
-    mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, index::Int) where {N, E}
-    mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output, idx::Int, rdfsave::Bool) where {N, E}
+    mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, index::Int) where {N, E}
+    mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, results::Output, idx::Int, rdfsave::Bool) where {N, E}
 
 Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `pot`, `move_strat` and `ensemble`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
 
@@ -193,8 +173,8 @@ function mc_cycle!(
     mc_states::MCStateVector,
     move_strat::MoveStrategy{N,E},
     mc_params::MCParams,
-    pot::Ptype,
-    ensemble::Etype,
+    pot,
+    ensemble,
     n_steps::Int,
     index::Int,
 ) where {N,E}
@@ -216,32 +196,15 @@ function mc_cycle!(
     mc_states::MCStateVector,
     move_strat::MoveStrategy{N,E},
     mc_params::MCParams,
-    pot::Ptype,
-    ensemble::Etype,
+    pot,
+    ensemble,
     n_steps::Int,
     results::Output,
     idx::Int,
     rdfsave::Bool,
     potential,
 ) where {N,E}
-    
-    if rem(idx,10000) == 0
-        for i=1:length(mc_states)
-            open("$(length(mc_states[1].config))/configuration_$(mc_states[i].temp).txt","a") do io
-                println(io, length(mc_states[1].config))
-                #println(io,mc_states[i].en_tot)
-                #println(io,mc_states[i].new_en)
-                #println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.boundary_condition, potential)[2])
-                println(io,mc_states[i].config.boundary_condition.box_length)
-                println(io,mc_states[i].config.boundary_condition.box_height)
-                for j=1:length(mc_states[1].config)
-                    println(io, "Ne ", mc_states[i].config[j][1]," ",mc_states[i].config[j][2]," ",mc_states[i].config[j][3])
-                end
-                println(io," ")
-            end
-        end
-    end
-    
+
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, idx)
 
     if rem(idx, mc_params.mc_sample) == 0
@@ -275,15 +238,15 @@ function reset_counters(state::MCState)
 end
 
 """
-    equilibration_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output) where {N, E}
+    equilibration_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, results::Output) where {N, E}
 Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles defined in `mc_params` are completed without updating the results before initialising the `results` struct according to the maximum and minimum energy determined throughout the equilibration cycle.
 """
 function equilibration_cycle!(
     mc_states::MCStateVector,
     move_strat::MoveStrategy{N,E},
     mc_params::MCParams,
-    pot::Ptype,
-    ensemble::Etype,
+    pot,
+    ensemble,
     n_steps::Int,
     results::Output,
 ) where {N,E}
@@ -313,7 +276,7 @@ end
 
 #TODO: why is restart not functional?
 """
-    equilibration(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output, restart::Bool) where {N, E}
+    equilibration(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, results::Output, restart::Bool) where {N, E}
 While initialisation sets `mc_states`, `params` etc. we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the [`equilibration_cycle!`](@ref) function that optionally removes the thermalisation from restart.
 
 N.B. Restart is currently non-functional, do not try use it
@@ -322,8 +285,8 @@ function equilibration(
     mc_states::MCStateVector,
     move_strat::MoveStrategy{N,E},
     mc_params::MCParams,
-    pot::Ptype,
-    ensemble::Etype,
+    pot,
+    ensemble,
     n_steps::Int,
     results::Output,
     restart::Bool,
@@ -342,7 +305,7 @@ function equilibration(
     end
 end
 """
-    (ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential::Ptype, ensemble::Etype; rdfsave = false, restart = false, save = false, saveconfigs = false, configsname = "configuration", workingdirectory = pwd()) where Ptype <: AbstractPotential) where Etype <: AbstractEnsemble
+    (ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential, ensemble; rdfsave = false, restart = false, save = false, saveconfigs = false, configsname = "configuration", workingdirectory = pwd()))
     ptmc_run!(restart::Bool; rdfsave = false, save = 1000, eq_cycles = 0.2, saveconfigs = false, configsname = "configuration")
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs.
@@ -363,8 +326,8 @@ function ptmc_run!(
     mc_params::MCParams,
     temp::TempGrid,
     start_config,
-    potential::Ptype,
-    ensemble::Etype;
+    potential,
+    ensemble;
     rdfsave=false,
     restart=false,
     save=false,
@@ -406,6 +369,7 @@ function ptmc_run!(
             rdfsave,
             potential,
         )
+
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
         end
