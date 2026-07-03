@@ -204,7 +204,6 @@ function mc_cycle!(
     rdfsave::Bool,
     potential,
 ) where {N,E}
-
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, idx)
 
     if rem(idx, mc_params.mc_sample) == 0
