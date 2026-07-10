@@ -393,9 +393,9 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
-        if rem(i, 100000) == 0 #TODO: this should be a progress bar
+        if rem(i, 1000000) == 0 #TODO: this should be a progress bar
             @info "$i"
-            #results = finalise_results_convergence(i,mc_states,mc_params,results)
+            results = finalise_results_convergence(i,mc_states,mc_params,results)
             #println(results.heat_cap)
         end
     end
