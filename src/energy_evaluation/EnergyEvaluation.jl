@@ -26,7 +26,7 @@ using ..CustomTypes
 import ..BoundaryConditions.long_range_correction
 
 export AbstractPotential,
-    AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential
+    AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential, KoronaPotential
 export ELJPotential,
     ELJPotentialEven,
     ELJPotentialB,
