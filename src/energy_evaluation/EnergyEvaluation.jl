@@ -56,5 +56,6 @@ include("ELJPotentials.jl")
 include("LookupTablePotential.jl")
 include("EmbeddedAtomPotential.jl")
 include("MachineLearningPotentials.jl")
+include("KoronaPotential.jl")
 
 end
