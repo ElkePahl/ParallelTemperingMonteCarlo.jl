@@ -6,7 +6,6 @@ It is a combination of a exponential part and an extended Lennard-Jones part.
 The exponential part contains coefficients A, a1, a2, alpha and beta.
 The extended Lennard Jones part is a sum over f_{2i}(br)c_i r^(-i), starting with `i=6` up to `i=16` with only even integers `i`
 """
-
 struct KoronaPotential{N,T} <: AbstractDimerPotential
     coeff_ab::SVector{N,T}
     coeff_c::SVector{N,T}
@@ -23,6 +22,12 @@ function KoronaPotential(a, b, c)
     T = eltype(c)
     return KoronaPotential{N,T}(coeff_ab,coeff_c,coeff_elj)
 end
+
+"""
+    long_range_correction(pot::KoronaPotential, num_atoms, r_cut)
+    The Korona potential is very close to the extended Lennard-Jones potential from the equilibrium distance to long range.
+    For convenience, the long range correction uses the ELJ coefficients.
+"""
 function long_range_correction(pot::KoronaPotential, num_atoms, r_cut)
     if r_cut <= 50 # TODO: why
         e_lrc = 0.0
@@ -54,12 +59,12 @@ function dimer_energy(pot::KoronaPotential{N}, r2::Real) where {N}
     f14 = f12 - exp(-y) * y7 * y7 / y * (1/6227020800 + y/87178291200)
     f16 = f14 - exp(-y) * y7 * y7 * y * (1/1307674368000 + y/20922789888000)
     
-    C_b = [pot.coeff_c[1] * f6, 
+    C_b = (pot.coeff_c[1] * f6, 
     pot.coeff_c[2] * f8, 
     pot.coeff_c[3] * f10, 
     pot.coeff_c[4] * f12, 
     pot.coeff_c[5] * f14, 
-    pot.coeff_c[6] * f16]
+    pot.coeff_c[6] * f16)
 
     sum = (pot.coeff_ab[1] + pot.coeff_ab[2]*r + pot.coeff_ab[3]/r) * exp( -pot.coeff_ab[4]*r + pot.coeff_ab[5]*r2)
 
