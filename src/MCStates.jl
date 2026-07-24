@@ -50,6 +50,8 @@ mutable struct MCState{T,BC,PVType,EVType}
     count_vol_xy::Vector{Int}
     count_vol_z::Vector{Int}
     count_exc::Vector{Int}
+    acceptance::Float64
+    stats::Vector{NamedTuple}
 end
 
 const MCStateVector = Vector{T} where {T<:MCState}
@@ -95,7 +97,7 @@ function MCState(
     temp::Number,
     beta::Number,
     config::Config{T,BC},
-    dist2_mat::Matrix{Z},
+    dist2_mat::Matrix{T},
     new_dist2_vec::VorS,
     new_en::Number,
     en_tot::Number,
@@ -110,7 +112,7 @@ function MCState(
     count_vol_xy=[0, 0],
     count_vol_z=[0, 0],
     count_exc=[0, 0],
-) where {T,BC} where {Z<:Number}
+) where {T,BC}
     ham = T[]
     return MCState{T,BC,typeof(potentialvariables),typeof(ensemble_variables)}(
         temp,
@@ -132,6 +134,8 @@ function MCState(
         copy(count_vol_xy),
         copy(count_vol_z),
         copy(count_exc),
+        0.0,
+        NamedTuple[],
     )
 end
 function MCState(temp::Number, beta::Number, config::Config, ensemble, pot; kwargs...)

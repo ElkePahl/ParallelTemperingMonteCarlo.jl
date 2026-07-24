@@ -112,6 +112,9 @@ and the internal `potential_variables` within the mc_states dictate how [`swap_c
 function acc_test!(mc_state::MCState, ensemble, movetype::String)
     if metropolis_condition(movetype, mc_state, ensemble) >= rand()
         swap_config!(mc_state, movetype)
+        return true
+    else
+        return false
     end
 end
 """
@@ -136,13 +139,11 @@ function mc_move!(
         mc_state, pot, move_strat.movestrat[mc_state.ensemble_variables.index]
     )
 
-    acc_test!(
+    return acc_test!(
         mc_state,
         move_strat.ensemble,
         move_strat.movestrat[mc_state.ensemble_variables.index],
     )
-
-    return mc_state
 end
 
 """
@@ -154,9 +155,35 @@ function mc_step!(
     mc_states::MCStateVector, move_strat::MoveStrategy{N,E}, pot, ensemble, n_steps::Int
 ) where {N,E}
     Threads.@threads for state in mc_states
+        n_accepted = 0
+
         for i_step in 1:n_steps
-            state = mc_move!(state, move_strat, pot, ensemble)
+            n_accepted += mc_move!(state, move_strat, pot, ensemble)
         end
+
+        state.acceptance = n_accepted / n_steps
+        if isempty(state.stats)
+            cycle = 1
+        else
+            cycle = state.stats[end].cycle + 1
+        end
+
+        push!(state.stats,
+              (;
+               cycle,
+               T=state.temp,
+               hamiltonian=hamiltonian(state, ensemble),
+               E_tot=state.en_tot,
+               acceptance=state.acceptance,
+               volume=volume(state.config.boundary_condition),
+               LH_ratio=state.lh_ratio,
+               count_atom=state.count_atom[1],
+               count_vol=state.count_vol[1],
+               count_vol_xy=state.count_vol_xy[1],
+               count_vol_z=state.count_vol_z[1],
+               count_exc=state.count_exc[1],
+               )
+              )
     end
     return mc_states
 end
@@ -214,6 +241,7 @@ function mc_cycle!(
 
     return mc_states
 end
+
 """
     check_e_bounds(energy::Number, ebounds::VorS)
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
@@ -370,7 +398,6 @@ function ptmc_run!(
             rdfsave,
             potential,
         )
-
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
         end

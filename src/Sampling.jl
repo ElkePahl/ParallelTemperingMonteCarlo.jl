@@ -26,17 +26,9 @@ Function to update the current energy and energy squared values for coarse analy
 """
 function update_energy_tot(mc_states::MCStateVector, ensemble::AbstractEnsemble)
     for state in mc_states
-        state.ham[1] += state.en_tot
-        state.ham[2] += (state.en_tot * state.en_tot)
-    end
-end
-function update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
-    for state in mc_states
-        state.ham[1] +=
-            state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)
-        state.ham[2] +=
-            (state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)) *
-            (state.en_tot + ensemble.pressure * volume(state.config.boundary_condition))
+        ham = hamiltonian(state, ensemble)
+        state.ham[1] += ham
+        state.ham[2] += ham^2
     end
 end
 """
@@ -389,6 +381,9 @@ function finalise_results(mc_states::MCStateVector, mc_params::MCParams, results
         mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for
         i_traj in 1:(mc_params.n_traj)
     ]
+    for state in mc_states
+        append!(results.stats, state.stats)
+    end
 
     return results
 end
