@@ -168,22 +168,23 @@ function mc_step!(
             cycle = state.stats[end].cycle + 1
         end
 
-        push!(state.stats,
-              (;
-               cycle,
-               T=state.temp,
-               hamiltonian=hamiltonian(state, ensemble),
-               E_tot=state.en_tot,
-               acceptance=state.acceptance,
-               volume=volume(state.config.boundary_condition),
-               LH_ratio=state.lh_ratio,
-               count_atom=state.count_atom[1],
-               count_vol=state.count_vol[1],
-               count_vol_xy=state.count_vol_xy[1],
-               count_vol_z=state.count_vol_z[1],
-               count_exc=state.count_exc[1],
-               )
-              )
+        push!(
+            state.stats,
+            (;
+                cycle,
+                T=state.temp,
+                hamiltonian=hamiltonian(state, ensemble),
+                E_tot=state.en_tot,
+                acceptance=state.acceptance,
+                volume=volume(state.config.boundary_condition),
+                LH_ratio=state.lh_ratio,
+                count_atom=state.count_atom[1],
+                count_vol=state.count_vol[1],
+                count_vol_xy=state.count_vol_xy[1],
+                count_vol_z=state.count_vol_z[1],
+                count_exc=state.count_exc[1],
+            ),
+        )
     end
     return mc_states
 end
