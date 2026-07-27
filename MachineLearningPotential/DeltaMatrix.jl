@@ -9,9 +9,11 @@ using ..SymmetryFunctions
 
 using StaticArrays,LinearAlgebra
 
-export total_symm!,total_thr_symm!
 export calc_delta_matrix,calc_swap_matrix
 
+export total_symm!, total_thr_symm!, total_symm_neigh!
+export neighbour_union_from_cutoff_vectors
+export radial_symmetry_calculation_neigh!, angular_symmetry_calculation_neigh!
 
 #----------------------------------------------------------------------#
 #------------------------ New Format Functions ------------------------#
@@ -338,6 +340,7 @@ end
     calc_swap_matrix(g_mat,positions,atomindex1,atomindex2,dist2_mat,f_mat,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
 having swapped atom at atomindex1 and atomindex2 in a system with n1 atoms of type 1 and n2 atoms of type 2, with nrad radial and nang angular symmetry functions, we calculate the changes to g_mat based on the swap. 
 """
+
 function calc_swap_matrix(g_mat,positions,atomindex1,atomindex2,dist2_mat,f_mat,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
     for g_index in 1:nrad
         idx=(g_index-1)*2+1
@@ -445,6 +448,41 @@ function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vec
     end
     return g_vector
 end
+
+
+function radial_symmetry_calculation_neigh!(
+    g_vector,
+    atomindex,
+    neighbour_indices,
+    dist2_mat,
+    new_dist2_vector,
+    f_matrix,
+    new_f_vector,
+    symmetry_function
+)
+    if symmetry_function.type_vec == Int(11)
+        η = symmetry_function.eta
+        g_norm = symmetry_function.G_norm
+
+        for index2 in neighbour_indices
+            calc_new_symmetry_value!(
+                g_vector,
+                atomindex,
+                index2,
+                dist2_mat,
+                new_dist2_vector,
+                f_matrix,
+                new_f_vector,
+                η,
+                g_norm
+            )
+        end
+    end
+
+    return g_vector
+end
+
+
 """
     angular_symmetry_calculation!(g_vector, atomindex, newposition, position, dist2_mat, new_dis_vector, f_matrix, new_f_vector, symmetry_function::AngularType3)
 This method is designed to do the same as the radial symmetry function for the angular symmetry function using the same inputs. Double loop over all `j,k` and use [`calc_new_symmetry_value!`](@ref) over `g_vector`.
@@ -467,6 +505,57 @@ function angular_symmetry_calculation!(g_vector,atomindex,newposition,position,d
             end
         end
         
+    end
+
+    return g_vector
+end
+
+function angular_symmetry_calculation_neigh!(
+    g_vector,
+    atomindex,
+    neighbour_indices,
+    newposition,
+    positions,
+    dist2_mat,
+    new_dist2_vector,
+    f_matrix,
+    new_f_vector,
+    symmetry_function
+)
+    if symmetry_function.type_vec == Int(111)
+
+        η = symmetry_function.eta
+        λ = symmetry_function.lambda
+        ζ = symmetry_function.zeta
+        tpz = symmetry_function.tpz
+
+        for a in 1:length(neighbour_indices)-1
+            j_index = neighbour_indices[a]
+
+            for b in a+1:length(neighbour_indices)
+                k_index = neighbour_indices[b]
+
+                # If j-k is outside the cutoff, both old and new angular products are zero.
+                if f_matrix[j_index, k_index] != 0.0
+                    g_vector = calc_new_symmetry_value!(
+                        g_vector,
+                        atomindex,
+                        j_index,
+                        k_index,
+                        newposition,
+                        positions,
+                        dist2_mat,
+                        new_dist2_vector,
+                        f_matrix,
+                        new_f_vector,
+                        η,
+                        λ,
+                        ζ,
+                        tpz
+                    )
+                end
+            end
+        end
     end
 
     return g_vector
@@ -500,6 +589,7 @@ function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector
 
     return g_matrix 
 end
+
 function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,radsymmfunctions,angsymmfunctions,Nrad,Nang)
     Threads.@threads for g_index in 1:Nrad
         #@views
@@ -513,5 +603,68 @@ function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_ve
     return g_matrix
 end
 
+"""
+    total_symm_neigh!(g_matrix, positions, new_position, dist2_mat, new_dist2_vector, f_matrix, new_f_vector, atomindex, neighbour_indices, radsymmfunctions, angsymmfunctions, Nrad, Nang)
+Neighbour restricted version of total_symm! to calculate the total change to the matrix of symmetry function values `g_matrix`, only updating the g_matrix for the union of atoms within the neigbhourhood of the moved atom before and after its current move. Takes the same arguments as total_symm! Except for one additional argument, the list of neigbhour indicies.
+"""
 
+function total_symm_neigh!(
+    g_matrix,
+    positions,
+    new_position,
+    dist2_mat,
+    new_dist2_vector,
+    f_matrix,
+    new_f_vector,
+    atomindex,
+    neighbour_indices,
+    radsymmfunctions,
+    angsymmfunctions,
+    Nrad,
+    Nang
+)
+    for g_index in 1:Nrad
+        g_matrix[g_index, :] = radial_symmetry_calculation_neigh!(
+            g_matrix[g_index, :],
+            atomindex,
+            neighbour_indices,
+            dist2_mat,
+            new_dist2_vector,
+            f_matrix,
+            new_f_vector,
+            radsymmfunctions[g_index]
+        )
+    end
+
+    for g_index in 1:Nang
+        true_index = g_index + Nrad
+
+        g_matrix[true_index, :] = angular_symmetry_calculation_neigh!(
+            g_matrix[true_index, :],
+            atomindex,
+            neighbour_indices,
+            new_position,
+            positions,
+            dist2_mat,
+            new_dist2_vector,
+            f_matrix,
+            new_f_vector,
+            angsymmfunctions[g_index]
+        )
+    end
+
+    return g_matrix
+end
+
+function neighbour_union_from_cutoff_vectors(f_old_row, f_new_vec, atomindex)
+    neighbours = Int[]
+
+    for j in eachindex(f_new_vec)
+        if j != atomindex && (f_old_row[j] != 0.0 || f_new_vec[j] != 0.0)
+            push!(neighbours, j)
+        end
+    end
+
+    return neighbours
+end
 end

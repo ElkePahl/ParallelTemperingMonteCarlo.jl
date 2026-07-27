@@ -114,6 +114,46 @@ function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Pt
     return mc_states
 end
 
+function mc_step_neigh!(
+    mc_states::MCStateVector,
+    move_strat::MoveStrategy{N,E},
+    pot::Ptype,
+    ensemble::Etype,
+    n_steps::Int,
+) where {N,E,Ptype,Etype}
+
+    Threads.@threads for state in mc_states
+        mc_step_neigh_single!(
+            state,
+            move_strat,
+            pot,
+            ensemble,
+            n_steps,
+        )
+    end
+
+    return mc_states
+end
+
+function mc_step_neigh_single!(
+    mc_state,
+    move_strat,
+    pot,
+    ensemble,
+    n_steps::Int,
+)
+    for _ in 1:n_steps
+        mc_state = mc_move_neigh!(
+            mc_state,
+            move_strat,
+            pot,
+            ensemble,
+        )
+    end
+
+    return mc_state
+end
+
 """
     mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, index::Int) where {N, E}
     mc_cycle!(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot::Ptype, ensemble::Etype, n_steps::Int, results::Output, idx::Int, rdfsave::Bool) where {N, E}

@@ -31,11 +31,12 @@ export AbstractPotentialVariables,DimerPotentialVariables,ELJPotentialBVariables
 export EmbeddedAtomVariables,NNPVariables,NNPVariables2a
 
 
-
 export dimer_energy,dimer_energy_atom,dimer_energy_config,dimer_energy_update!
 export energy_update!,set_variables,initialise_energy,dimer_energy_config,lrc,invrexp, calc_components, calc_energies_from_components, get_new_state_vars!,calc_new_runner_energy!
 
 export swap_energy_update
+
+export get_new_state_vars_neigh!, energy_update_neigh!
 
 #-------------------------------------------------------------#
 #----------------------Universal Structs----------------------#
@@ -720,6 +721,47 @@ function get_new_state_vars!(trial_pos::PositionVector,atomindex::Int,config::Co
     potential_variables.new_g_matrix = total_thr_symm!(potential_variables.new_g_matrix,config.pos,trial_pos,dist2_mat,new_dist2_vec,potential_variables.f_matrix,potential_variables.new_f_vec,atomindex,pot.radsymfunctions,pot.angsymfunctions,Nrad,Nang)
     return potential_variables
 end
+
+function get_new_state_vars_neigh!(
+    trial_pos::PositionVector,
+    atomindex::Int,
+    config::Config,
+    potential_variables::NNPVariables,
+    dist2_mat::Matrix{Float64},
+    new_dist2_vec::Vector{Float64},
+    pot::RuNNerPotential{Nrad,Nang}
+) where {Nrad,Nang}
+
+    potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec), Ref(pot.r_cut))
+
+    neighbour_indices_from_f = neighbour_union_from_cutoff_vectors(
+        potential_variables.f_matrix[atomindex, :],
+        potential_variables.new_f_vec,
+        atomindex
+    )
+
+
+    potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
+
+    potential_variables.new_g_matrix = total_symm_neigh!(
+        potential_variables.new_g_matrix,
+        config.pos,
+        trial_pos,
+        dist2_mat,
+        new_dist2_vec,
+        potential_variables.f_matrix,
+        potential_variables.new_f_vec,
+        atomindex,
+        neighbour_indices_from_f,
+        pot.radsymfunctions,
+        pot.angsymfunctions,
+        Nrad,
+        Nang
+    )
+
+    return potential_variables
+end
+
 """
     calc_new_runner_energy!(potential_variables::NNPVariables,pot::RuNNerPotential)
 Function designed to calculate the new per-atom energy according to the RuNNer forward pass with parameters defined in `pot`. utilises the `new_g_matrix` to redefine the `new_en` and `new_en_atom` variables within the `potential_variables` struct.
@@ -931,6 +973,35 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
     potential_variables,new_en = calc_new_runner_energy!(potential_variables,pot)
 
     return potential_variables,new_en
+end
+
+function energy_update_neigh!(
+    ensemblevariables::Etype,
+    config::Config,
+    potential_variables::NNPVariables,
+    dist2_mat::Matrix{Float64},
+    new_dist2_vec::Vector{Float64},
+    en_tot::Number,
+    pot::RuNNerPotential
+) where Etype <: AbstractEnsembleVariables
+
+    if any(new_dist2_vec[i] < pot.boundary for i in eachindex(new_dist2_vec) if i != ensemblevariables.index)
+        new_en = 100.0
+    else
+        potential_variables = get_new_state_vars_neigh!(
+            ensemblevariables.trial_move,
+            ensemblevariables.index,
+            config,
+            potential_variables,
+            dist2_mat,
+            new_dist2_vec,
+            pot
+        )
+
+        potential_variables, new_en = calc_new_runner_energy!(potential_variables, pot)
+    end
+
+    return potential_variables, new_en
 end
 #------------------------------------------------------------#
 #----------------Initialising State Functions----------------#
