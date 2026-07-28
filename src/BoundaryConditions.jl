@@ -81,7 +81,7 @@ r_cut(::AbstractBC) = Inf
 Returns the volume of a box according to its geometry for use where the ensemble does not
 imply a fixed `V`.
 """
-volume
+volume(::AbstractBC) = missing # TODO: avoid computing volume for non NPT ensembles
 
 """
     scale_xyz(::AbstractBC, α)

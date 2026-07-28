@@ -120,7 +120,7 @@ end
         @testset "$id" begin
             move_strategy = MoveStrategy(ensemble)
             mc_state = MCState(
-                temp.t_grid[5], temp.beta_grid[5], config, ensemble, potential
+                temp.t_grid[5], config, ensemble, potential
             )
 
             true_dist2 = get_distance2_mat(config)

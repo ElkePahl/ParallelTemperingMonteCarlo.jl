@@ -17,8 +17,9 @@ using ..ReadSave
 using ..Ensembles
 
 """
-    initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential,ensemble::NVT)
-    initialisation(restart::Bool;eq_cycles::Number)
+    initialisation(mc_params, temp, start_config, potential, ensemble)
+    initialisation(restart::Bool; eq_cycles)
+
 Basic function for establishing the structs and parameters required for the simulation. Inputs for method one are:
 -   `mc_params`: the basic values and parameters concerning how long our simulation runs.
 -   `temp`: a grid of temp and beta values passed to the mc_states struct.
@@ -45,28 +46,6 @@ Method two also returns:
 -   consider shuffling `mc_params` to include the `tempgrid` and cut down the number of inputs.
 
 """
-#function initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential,ensemble)
-
-#move_strategy = MoveStrategy(ensemble)
-#n_steps = length(move_strategy)
-
-#mc_states = Array{MCState}(undef, mc_params.n_traj)
-#for i in 1:mc_params.n_traj
-#if rem(i,2) == 0
-#mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[1],ensemble,potential)
-#else
-#mc_states[i] = MCState(temp.t_grid[i], temp.beta_grid[i],start_config[2],ensemble,potential)
-#end
-#end
-#mc_states = [MCState(temp.t_grid[i], temp.beta_grid[i],start_config,ensemble,potential) for i in 1:mc_params.n_traj]
-
-#println(mc_states[1].en_tot)
-
-#results = Output{Float64}(mc_params.n_bin;en_min = mc_states[1].en_tot)
-#start_counter=1
-#return mc_states,move_strategy,results,n_steps,start_counter
-#end
-
 function initialisation(
     mc_params::MCParams,
     temp::TempGrid,
@@ -87,7 +66,6 @@ function initialisation(
     mc_states = map(1:(mc_params.n_traj)) do i
         MCState(
             temp.t_grid[i],
-            temp.beta_grid[i],
             start_config[mod1(i, length(start_config))],
             ensemble,
             potential,

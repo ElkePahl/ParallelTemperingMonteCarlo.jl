@@ -215,7 +215,7 @@ end
         (temp1.t_grid[n_traj] - temp1.t_grid[n_traj - 1])
 end
 
-@testset "Separated_volume_change" begin
+@safetestset "Separated_volume_change" begin
     include("separated_v_test.jl")
 end
 
@@ -223,11 +223,11 @@ end
     include("test_runner_forward.jl")
 end
 
-@testset "Potentials" begin
+@safetestset "Potentials" begin
     include("test_potentials.jl")
 end
 
-@testset "States" begin
+@safetestset "States" begin
     include("test_states.jl")
 end
 

@@ -147,7 +147,7 @@ These functions take a vector `mc_states` as well as the parameters of the simul
 The second method uses enthalpy instead of energy to determine acceptance.
 """
 function parallel_tempering_exchange!(
-    mc_states::MCStateVector, mc_params::MCParams, ensemble::AbstractEnsemble
+    mc_states, mc_params::MCParams, ensemble::AbstractEnsemble
 )
     n_exc = rand(1:(mc_params.n_traj - 1))
 
@@ -171,7 +171,7 @@ function parallel_tempering_exchange!(
     return mc_states
 end
 function parallel_tempering_exchange!(
-    mc_states::MCStateVector, mc_params::MCParams, ensemble::NPT
+    mc_states, mc_params::MCParams, ensemble::NPT
 )
     n_exc = rand(1:(mc_params.n_traj - 1))
 

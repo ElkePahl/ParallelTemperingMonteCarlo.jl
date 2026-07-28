@@ -17,7 +17,7 @@ n_traj = 24
 temp = TempGrid{n_traj}(ti, tf)
 
 # MC simulation details
-mc_cycles = 1_000_000 # default 20% equilibration cycles on top
+mc_cycles = 1_00_000 # default 20% equilibration cycles on top
 mc_sample = 1        # sample every mc_sample MC cycles
 displ_atom = 0.05    # in Angstrom
 n_adjust = 100
@@ -44,7 +44,7 @@ pot = ELJPotentialEven{6}(c)
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
 separated_volume = false
-ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^2, separated_volume)
+ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#

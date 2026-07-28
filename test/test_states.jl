@@ -1,4 +1,5 @@
-using Random
+using ParallelTemperingMonteCarlo
+using Random, Test, StaticArrays
 
 @testset "States" begin
     v1 = SVector(1.0, 2.0, 3.0)
@@ -14,8 +15,8 @@ using Random
 
     temp = TempGrid{2}(10, 15)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf1, ensemble, pot1)
-    state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf1, ensemble, pot1)
+    state = MCState(temp.t_grid[1], conf1, ensemble, pot1)
+    state2 = MCState(temp.t_grid[2], conf1, ensemble, pot1)
     @test state.ensemble_variables isa NVTVariables{Float64}
     @test state.potential_variables isa DimerPotentialVariables
 
@@ -58,8 +59,8 @@ end
 
     temp = TempGrid{2}(10, 15)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf1, ensemble, pot1)
-    state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf1, ensemble, pot1)
+    state = MCState(temp.t_grid[1], conf1, ensemble, pot1)
+    state2 = MCState(temp.t_grid[2], conf1, ensemble, pot1)
 
     @test state.ensemble_variables isa NPTVariables{Float64}
     @test state.potential_variables isa DimerPotentialVariables
@@ -105,9 +106,9 @@ end
     nnvtens = NNVT([4, 2])
     temp = TempGrid{2}(500, 650)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf, nnvtens, runnerpotential)
-    state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf, nnvtens, runnerpotential)
-    refstate = MCState(temp.t_grid[1], temp.beta_grid[1], conf, nnvtens, runnerpotential)
+    state = MCState(temp.t_grid[1], conf, nnvtens, runnerpotential)
+    state2 = MCState(temp.t_grid[2], conf, nnvtens, runnerpotential)
+    refstate = MCState(temp.t_grid[1], conf, nnvtens, runnerpotential)
 
     @test isa(state.ensemble_variables, NNVTVariables)
     @test isa(state.potential_variables, NNPVariables2a)
