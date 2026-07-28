@@ -116,7 +116,7 @@ function acc_test!(mc_state::MCState, movetype::String)
     end
 end
 """
-    mc_move!(mc_state::MCState,move_strat::MoveStrategy)
+    mc_move!(mc_state::MCState, move_strat::MoveStrategy)
 
 Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `potential` defining the PES.
 -   Calculates an index for the move
@@ -139,9 +139,10 @@ function mc_move!(mc_state::MCState, move_strat::MoveStrategy{N,E}) where {N,E}
 end
 
 """
-    mc_step!(mc_states, move_strat::MoveStrategy{N, E}, pot, ensemble, n_steps::Int) where {N, E}
+    mc_step!(mc_states, move_strat::MoveStrategy, n_steps)
 
-Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
+Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a
+`move_strat`.
 """
 function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats) where {N,E}
     Threads.@threads for state in mc_states
@@ -174,10 +175,10 @@ function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats)
 end
 
 """
-    mc_cycle!(mc_states, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, index::Int) where {N, E}
-    mc_cycle!(mc_states, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, results::Output, idx::Int, rdfsave::Bool) where {N, E}
+    mc_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, index)
+    mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, results, idx, rdfsave)
 
-Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `pot`, `move_strat` and `ensemble`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
+Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `move_strat`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
 
 Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
 """
@@ -235,7 +236,7 @@ function hamiltonian_value(state::MCState, ensemble::NPT)
 end
 
 """
-    check_e_bounds(energy::Number, ebounds::VorS)
+    check_e_bounds(energy, ebounds)
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
 """
 function check_e_bounds(energy::Number, ebounds::VorS)
@@ -259,8 +260,12 @@ function reset_counters(state::MCState)
 end
 
 """
-    equilibration_cycle!(mc_states, move_strat::MoveStrategy{N, E}, mc_params::MCParams, n_steps::Int, results::Output) where {N, E}
-Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles defined in `mc_params` are completed without updating the results before initialising the `results` struct according to the maximum and minimum energy determined throughout the equilibration cycle.
+    equilibration_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, results::Output, stats)
+
+Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles
+defined in `mc_params` are completed without updating the results before initialising the
+`results` struct according to the maximum and minimum energy determined throughout the
+equilibration cycle.
 """
 function equilibration_cycle!(
     mc_states,
@@ -298,7 +303,8 @@ end
 
 #TODO: why is restart not functional?
 """
-    equilibration(mc_states, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, results::Output, restart::Bool) where {N, E}
+    equilibration(mc_states, move_strat::MoveStrategy, mc_params, pot, ensemble, n_steps::Int, results::Output, restart, stats)
+
 While initialisation sets `mc_states`, `params` etc. we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the [`equilibration_cycle!`](@ref) function that optionally removes the thermalisation from restart.
 
 N.B. Restart is currently non-functional, do not try use it
@@ -326,7 +332,7 @@ function equilibration(
     end
 end
 """
-    (ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential, ensemble; rdfsave = false, restart = false, save = false, saveconfigs = false, configsname = "configuration", workingdirectory = pwd()))
+    ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential, ensemble; rdfsave = false, restart = false, save = false, saveconfigs = false, configsname = "configuration", workingdirectory = pwd())
     ptmc_run!(restart::Bool; rdfsave = false, save = 1000, eq_cycles = 0.2, saveconfigs = false, configsname = "configuration")
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs.
