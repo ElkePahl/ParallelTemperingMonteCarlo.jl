@@ -26,9 +26,9 @@ using Random, Test, StaticArrays
     state.ensemble_variables.index = 1
 
     Random.seed!(1234)
-    generate_move!(state, "atommove", ensemble)
+    generate_move!(state, "atommove")
 
-    state = get_energy!(state, pot1, "atommove")
+    state = get_energy!(state, "atommove")
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
     @test metropolis_condition("atommove", state, ensemble) == 1.0
     @test_throws ErrorException metropolis_condition("evommota", state, ensemble)
@@ -72,9 +72,9 @@ end
     Random.seed!(1234)
 
     Random.seed!(1234)
-    generate_move!(state, "atommove", ensemble)
+    generate_move!(state, "atommove")
 
-    state = get_energy!(state, pot1, "atommove")
+    state = get_energy!(state, "atommove")
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
     @test metropolis_condition("atommove", state, ensemble) == 1.0
 
@@ -129,9 +129,9 @@ end
 
     #test moves
     Random.seed!(123)
-    generate_move!(state, "atommove", nnvtens)
+    generate_move!(state, "atommove")
 
-    state = get_energy!(state, runnerpotential, "atommove")
+    state = get_energy!(state, "atommove")
     delen = state.new_en - state.en_tot
     @test delen ≈ -7.5971516e-5
     #test exc after atom move
@@ -147,11 +147,11 @@ end
     Random.seed!(123)
     MCMoves.swap_atoms(state)
     @test state.ensemble_variables.swap_indices[2] > 4
-    state = get_energy!(state, runnerpotential, "atomswap")
+    state = get_energy!(state, "atomswap")
     delen2 = state.new_en - state.en_tot
     @test delen2 ≈ -0.0017084901948
 
-    MCRun.acc_test!(state, nnvtens, "atomswap")
+    MCRun.acc_test!(state, "atomswap")
 
     refmat = copy(refstate.dist2_mat[6, :])
     refmat[6] = refstate.dist2_mat[6, 3]

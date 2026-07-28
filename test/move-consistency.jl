@@ -17,8 +17,8 @@ function mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
     mc_state.ensemble_variables.index = index = rand(eachindex(move_strat.movestrat))
     move = move_strat.movestrat[index]
 
-    generate_move!(mc_state, move, ensemble)
-    get_energy!(mc_state, pot, move)
+    generate_move!(mc_state, move)
+    get_energy!(mc_state, move)
 
     if accept
         swap_config!(mc_state, move)

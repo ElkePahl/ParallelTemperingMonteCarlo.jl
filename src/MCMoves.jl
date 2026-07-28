@@ -242,13 +242,13 @@ end
 [`generate_move!`](@ref) is the currying function that takes `mc_state` and a `movetype`
 and generates the variables required inside of the `ensemblevariables` struct within `mc_state`.
 """
-function generate_move!(mc_state::MCState, movetype::String, ensemble)
+function generate_move!(mc_state::MCState, movetype::String)
     if movetype == "atommove"
         return atom_displacement(mc_state)
     elseif movetype == "atomswap"
         return swap_atoms(mc_state)
     else
-        return volume_change(mc_state, ensemble.separated_volume)
+        return volume_change(mc_state, mc_state.ensemble.separated_volume)
     end
 end
 
