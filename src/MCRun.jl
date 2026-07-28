@@ -5,7 +5,7 @@ export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
 
-using StaticArrays, DelimitedFiles
+using StaticArrays, DelimitedFiles, ProgressMeter
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -272,18 +272,21 @@ function equilibration_cycle!(
     n_steps::Int,
     results::Output,
 ) where {N,E}
-    #set initial hamiltonian values and ebounds
 
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
+    progress = Progress(mc_params.eq_cycles; desc="Equilibration")
     for i in 1:(mc_params.eq_cycles ÷ 2)
-        mc_states = mc_cycle!(mc_states, move_strat, mc_params, n_steps, i)
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i)
+        next!(progress)
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
+        #TODO: why doesn't it do anything here? Should be doing equilibration steps here as well?
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
+        next!(progress)
     end
     #post equilibration reset
     for state in mc_states
@@ -373,9 +376,8 @@ function ptmc_run!(
         save_histparams(results)
     end
 
-    @info "equilibration complete"
-
     # Main loop
+    progress = Progress(length(start_counter:(mc_params.mc_cycles)); desc="Main loop")
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
@@ -393,13 +395,8 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
-        if rem(i, 100000) == 0 #TODO: this should be a progress bar
-            @info "$i"
-            #results = finalise_results_convergence(i,mc_states,mc_params,results)
-            #println(results.heat_cap)
-        end
+        next!(progress)
     end
-    @info "MC loop done."
 
     if save ≢ false && rem(mc_params.mc_cycles, save) ≠ 0
         # Save at the end if we didn't save in the last step.

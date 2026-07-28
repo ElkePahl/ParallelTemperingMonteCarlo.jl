@@ -96,4 +96,4 @@ start_config = Config(positions, boundary_condition)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
-T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false)

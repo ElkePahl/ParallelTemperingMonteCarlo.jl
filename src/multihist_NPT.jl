@@ -1,6 +1,7 @@
 module Multihistogram_NPT
 
 using DelimitedFiles, LinearAlgebra, StaticArrays
+using ProgressMeter
 
 using ..InputParams
 using ..Ensembles
@@ -103,10 +104,9 @@ function quasiprob(
 end
 
 """
-    multihistogram_NPT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; debug = false)
+    multihistogram_NPT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; show_progress=true)
 Multihistogram analysis for NPT:
 -   `conv_threshold` is the convergence threshold, which user can choose.
--   `debug` kwarg determines whether to print debug information. Defaults to false.
 -   Now "readfile" can only be false.
 -   Example: `multihistogram_NPT(ensemble, temp, results, 10^(-3), false)`
 """
@@ -114,9 +114,10 @@ function multihistogram_NPT(
     ensemble::AbstractEnsemble,
     temp::TempGrid,
     results::Output,
-    conv_threshold::Number,
+    conv_threshold,
     readfile::Bool;
-    debug=false,
+    show_progress=true,
+    maxiter=1000,
 )
     if readfile == false
         tempnumber, tempnumber_result = temp_trajectories(temp)
@@ -132,10 +133,9 @@ function multihistogram_NPT(
         EVhistogram, Ebins, Vbins, tempnumber, tempnumber_result
     )
 
-    for it in 1:1000
-        println("iteration=", it)
+    progress = ProgressThresh(conv_threshold; enabled=show_progress)
+    for it in 1:maxiter
         for i in 1:tempnumber
-            local betat
             betat = beta[i]
             new_free_energy[i] = 0
             for m in 1:Ebins
@@ -158,23 +158,17 @@ function multihistogram_NPT(
                         )
                 end
             end
-
-            #println(new_free_energy[i])
             new_free_energy[i] = log(new_free_energy[i])
-            #println(new_free_energy[i])
         end
 
-        local delta
-        delta = 0
+        delta = 0.0
         for i in 1:tempnumber
             delta = delta + abs(new_free_energy[i] - free_energy[i])^2
             free_energy[i] = new_free_energy[i]
         end
-        println(delta)
-        println()
 
+        update!(progress, delta)
         if delta < conv_threshold
-            println("iteration finished")
             break             #if converged, exit the loop
         end
     end
@@ -239,17 +233,9 @@ function multihistogram_NPT(
                 eenthalpy2 += qp * (energy_t + p * volume)^2
             end
         end
-        #println("temperature: ", temp_result[i])
-        #println("energy: ", eenergy)
-        #println("volume: ", evolume)
-        #println("enthalpy: ", eenthalpy)
-        #println("heat capacity: ", (eenthalpy2 - eenthalpy^2) / (k * temp_result[i]^2))
-        #println()
         cp[i] = (eenthalpy2 - eenthalpy^2) / (k * temp_result[i]^2)
         vol[i] = evolume
     end
-    #println("temperature array: ", temp_result)
-    #println("heat capacity array: ", cp)
 
     return (; T=temp_result, C=cp, V=vol)
 end
