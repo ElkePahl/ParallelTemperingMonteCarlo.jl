@@ -9,7 +9,7 @@ export AbstractEnsemble, NVT, NPT, NNVT
 export AbstractEnsembleVariables,
     NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables
 
-export MoveType, atommove, volumemove, atomswap
+export MoveType, atommove, volumemove, atomswap, report_stats
 export MoveStrategy
 
 """
@@ -21,6 +21,16 @@ Abstract type for ensemble:
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
+
+"""
+    report_stats(mc_state, ensemble)
+
+Return a `NamedTuple` of statistics to report in the result table. The default
+implementation used by [`NVT`](@ref), [`NNVT`](@ref) returns an empty `NamedTuple`.
+"""
+function report_stats(_, ::AbstractEnsemble)
+    return NamedTuple()
+end
 
 """
     AbstractEnsembleVariables
@@ -80,6 +90,10 @@ end
 
 function NPT(n_atoms, pressure, separated_volume)
     return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume)
+end
+
+function report_stats(mc_state, ::NPT)
+    return (; volume=volume(mc_state.config.boundary_condition), LH_ratio=mc_state.lh_ratio)
 end
 
 """

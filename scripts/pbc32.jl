@@ -17,7 +17,7 @@ n_traj = 24
 temp = TempGrid{n_traj}(ti, tf)
 
 # MC simulation details
-mc_cycles = 1_00_000 # default 20% equilibration cycles on top
+mc_cycles = 10_000 # default 20% equilibration cycles on top
 mc_sample = 1        # sample every mc_sample MC cycles
 displ_atom = 0.05    # in Angstrom
 n_adjust = 100
@@ -95,5 +95,7 @@ start_config = Config(positions, boundary_condition)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
-T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false)
+mc_states, results, stats = ptmc_run!(
+    mc_params, temp, start_config, pot, ensemble; save=1000
+)
+#T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false)

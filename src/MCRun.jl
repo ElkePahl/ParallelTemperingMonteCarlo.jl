@@ -147,7 +147,7 @@ end
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
 function mc_step!(
-    mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int
+    mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats
 ) where {N,E}
     Threads.@threads for state in mc_states
         n_accepted = 0
@@ -156,7 +156,26 @@ function mc_step!(
             n_accepted += mc_move!(state, move_strat)
         end
 
+        state.step += 1
         state.acceptance = n_accepted / n_steps
+        state.last_stats = (
+            ;
+            step=state.step,
+            T=state.temp,
+            hamiltonian=hamiltonian_value(state, state.ensemble),
+            E_tot=state.en_tot,
+            acceptance=state.acceptance,
+            report_stats(state, state.ensemble)...,
+            count_atom=state.count_atom[1],
+            count_vol=state.count_vol[1],
+            count_vol_xy=state.count_vol_xy[1],
+            count_vol_z=state.count_vol_z[1],
+            count_exc=state.count_exc[1],
+        )
+
+    end
+    for state in mc_states
+        push!(stats, state.last_stats)
     end
     return mc_states
 end
@@ -175,8 +194,9 @@ function mc_cycle!(
     mc_params::MCParams,
     n_steps::Int,
     index::Int,
+    stats,
 ) where {N,E}
-    mc_step!(mc_states, move_strat, n_steps)
+    mc_step!(mc_states, move_strat, n_steps, stats)
     ensemble = mc_states[1].ensemble
 
     if rand() < 0.1
@@ -200,31 +220,15 @@ function mc_cycle!(
     idx::Int,
     rdfsave::Bool,
     potential,
+    stats,
 ) where {N,E}
     #TODO: Implement saving configurations after n steps
 
-    mc_cycle!(mc_states, move_strat, mc_params, n_steps, idx)
+    mc_cycle!(mc_states, move_strat, mc_params, n_steps, idx, stats)
     ensemble = mc_states[1].ensemble
 
     if rem(idx, mc_params.mc_sample) == 0
         sampling_step!(mc_params, mc_states, ensemble, idx, results, rdfsave, idx)
-    end
-    for state in mc_states
-        push!(state.stats,
-              (;
-               T=state.temp,
-               hamiltonian=hamiltonian_value(state, ensemble),
-               E_tot=state.en_tot,
-               acceptance=state.acceptance,
-               volume=volume(state.config.boundary_condition),
-               LH_ratio=state.lh_ratio,
-               count_atom=state.count_atom[1],
-               count_vol=state.count_vol[1],
-               count_vol_xy=state.count_vol_xy[1],
-               count_vol_z=state.count_vol_z[1],
-               count_exc=state.count_exc[1],
-               )
-              )
     end
 
     return mc_states
@@ -271,6 +275,7 @@ function equilibration_cycle!(
     mc_params::MCParams,
     n_steps::Int,
     results::Output,
+    stats,
 ) where {N,E}
 
     ebounds = [100.0, -100.0]
@@ -278,7 +283,7 @@ function equilibration_cycle!(
     # are very high at the beginning.
     progress = Progress(mc_params.eq_cycles; desc="Equilibration")
     for i in 1:(mc_params.eq_cycles ÷ 2)
-        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i)
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         next!(progress)
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
@@ -313,6 +318,7 @@ function equilibration(
     n_steps::Int,
     results::Output,
     restart::Bool,
+    stats,
 ) where {N,E}
     for state in mc_states
         push!(state.ham, 0)
@@ -323,7 +329,7 @@ function equilibration(
         return mc_states, results
     else
         return equilibration_cycle!(
-            mc_states, move_strat, mc_params, n_steps, results
+            mc_states, move_strat, mc_params, n_steps, results, stats
         )
     end
 end
@@ -363,6 +369,7 @@ function ptmc_run!(
     if save ≢ false
         save_init(potential, ensemble, mc_params, temp)
     end
+    stats = NamedTuple[]
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
         mc_params, temp, start_config, potential, ensemble
@@ -370,7 +377,7 @@ function ptmc_run!(
 
     # Equilibration
     mc_states, results = equilibration(
-        mc_states, move_strategy, mc_params, n_steps, results, restart
+        mc_states, move_strategy, mc_params, n_steps, results, restart, stats
     )
     if save ≢ false
         save_histparams(results)
@@ -388,6 +395,7 @@ function ptmc_run!(
             i,
             rdfsave,
             potential,
+            stats,
         )
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
@@ -405,7 +413,7 @@ function ptmc_run!(
 
     #Finalisation of results
     results = finalise_results(mc_states, mc_params, results)
-    return mc_states, results
+    return mc_states, results, stats
 end
 
 # This method is used to resume a saved computation
@@ -420,9 +428,10 @@ function ptmc_run!(
     mc_params, ensemble, potential, mc_states, move_strategy, results, n_steps, start_counter = initialisation(
         restart, eq_cycles
     )
+    stats = NamedTuple[]
 
     mc_states, results = equilibration(
-        mc_states, move_strategy, mc_params, n_steps, results, restart
+        mc_states, move_strategy, mc_params, n_steps, results, restart, stats
     )
     @info "equilibration complete"
 
@@ -439,7 +448,7 @@ function ptmc_run!(
             results,
             i,
             rdfsave,
-            potential,
+            stats,
         )
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
@@ -452,7 +461,7 @@ function ptmc_run!(
 
     results = finalise_results(mc_states, mc_params, results)
 
-    return mc_states, results
+    return mc_states, results, stats
 end
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#

@@ -72,7 +72,8 @@ mutable struct MCState{BC,P,PV,E,EV}
     count_vol_z::Vector{Int}
     count_exc::Vector{Int}
     acceptance::Float64
-    stats::Vector
+    step::Int
+    last_stats::NamedTuple # TODO: check if this need to be type-stable
 end
 
 """
@@ -152,7 +153,8 @@ function MCState(
         copy(count_vol_z),
         copy(count_exc),
         0.0,
-        [],
+        0,
+        NamedTuple(),
     )
 end
 function MCState(temp, config, ensemble, potential; kwargs...)
