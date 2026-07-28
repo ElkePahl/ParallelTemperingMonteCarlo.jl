@@ -7,7 +7,7 @@ using StaticArrays, Random
 export AbstractEnsemble, NVT, NPT, NNVT
 
 export AbstractEnsembleVariables,
-    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables
+    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables, hamiltonian
 
 export MoveType, atommove, volumemove, atomswap, report_stats
 export MoveStrategy
@@ -165,6 +165,10 @@ end
 #---------------------------------------------------------------------#
 #------------------------global functions-----------------------------#
 #---------------------------------------------------------------------#
+function hamiltonian(state, ::AbstractEnsemble)
+    return state.en_tot
+end
+
 """
     set_ensemble_variables(config::Config, ensemble::NVT)
     set_ensemble_variables(config::Config, ensemble::NPT)
@@ -194,6 +198,10 @@ function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
     return NNVTVariables{T,length(config),N1,N2}(
         1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1)
     )
+end
+
+function hamiltonian(state, ensemble::NPT)
+    return state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)
 end
 
 """
