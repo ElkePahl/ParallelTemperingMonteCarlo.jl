@@ -5,7 +5,7 @@ export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
 
-using StaticArrays, DelimitedFiles, ProgressMeter
+using StaticArrays, DelimitedFiles, ProgressMeter, DataFrames
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -367,7 +367,7 @@ function ptmc_run!(
     if save ≢ false
         save_init(potential, ensemble, mc_params, temp)
     end
-    stats = NamedTuple[]
+    stats = DataFrame()
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
         mc_params, temp, start_config, potential, ensemble
