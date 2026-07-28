@@ -128,17 +128,14 @@ function mc_move!(mc_state::MCState, move_strat::MoveStrategy{N,E}) where {N,E}
     mc_state.ensemble_variables.index = rand(1:N)
 
     mc_state = generate_move!(
-        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index],
+        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index]
     )
 
     mc_state = get_energy!(
         mc_state, move_strat.movestrat[mc_state.ensemble_variables.index]
     )
 
-    return acc_test!(
-        mc_state,
-        move_strat.movestrat[mc_state.ensemble_variables.index],
-    )
+    return acc_test!(mc_state, move_strat.movestrat[mc_state.ensemble_variables.index])
 end
 
 """
@@ -146,9 +143,7 @@ end
 
 Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a `move_strat`, `ensemble` and `pot`.
 """
-function mc_step!(
-    mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats
-) where {N,E}
+function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats) where {N,E}
     Threads.@threads for state in mc_states
         n_accepted = 0
 
@@ -158,8 +153,7 @@ function mc_step!(
 
         state.step += 1
         state.acceptance = n_accepted / n_steps
-        state.last_stats = (
-            ;
+        state.last_stats = (;
             step=state.step,
             T=state.temp,
             hamiltonian=hamiltonian_value(state, state.ensemble),
@@ -172,7 +166,6 @@ function mc_step!(
             count_vol_z=state.count_vol_z[1],
             count_exc=state.count_exc[1],
         )
-
     end
     for state in mc_states
         push!(stats, state.last_stats)
@@ -277,7 +270,6 @@ function equilibration_cycle!(
     results::Output,
     stats,
 ) where {N,E}
-
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
@@ -440,16 +432,7 @@ function ptmc_run!(
     end
 
     for i in start_counter:(mc_params.mc_cycles)
-        mc_cycle!(
-            mc_states,
-            move_strategy,
-            mc_params,
-            n_steps,
-            results,
-            i,
-            rdfsave,
-            stats,
-        )
+        mc_cycle!(mc_states, move_strategy, mc_params, n_steps, results, i, rdfsave, stats)
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
         end

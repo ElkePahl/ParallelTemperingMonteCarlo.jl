@@ -26,7 +26,7 @@ Function to update the current energy and energy squared values for coarse analy
 """
 function update_energy_tot(mc_states, ensemble::AbstractEnsemble)
     for state in mc_states
-        ham = hamiltonian_value(state, ensemble)
+        ham = hamiltonian(state, ensemble)
         state.ham[1] += ham
         state.ham[2] += ham^2
     end
@@ -242,9 +242,7 @@ end
 Self explanatory name, updates the energy histograms in `results` using the current `mc_states.en_tot`
 
 """
-function update_histograms!(
-    mc_states, results::Output, delta_en_hist::Number
-)
+function update_histograms!(mc_states, results::Output, delta_en_hist::Number)
     for i_traj in eachindex(mc_states)
         histindex = find_hist_index(mc_states[i_traj], results, delta_en_hist)
         results.en_histogram[i_traj][histindex] += 1
@@ -381,10 +379,6 @@ function finalise_results(mc_states, mc_params::MCParams, results::Output)
         mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for
         i_traj in 1:(mc_params.n_traj)
     ]
-    for state in mc_states
-        append!(results.stats, state.stats)
-    end
-
     return results
 end
 

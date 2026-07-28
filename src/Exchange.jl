@@ -170,9 +170,7 @@ function parallel_tempering_exchange!(
 
     return mc_states
 end
-function parallel_tempering_exchange!(
-    mc_states, mc_params::MCParams, ensemble::NPT
-)
+function parallel_tempering_exchange!(mc_states, mc_params::MCParams, ensemble::NPT)
     n_exc = rand(1:(mc_params.n_traj - 1))
 
     mc_states[n_exc].count_exc[1] += 1

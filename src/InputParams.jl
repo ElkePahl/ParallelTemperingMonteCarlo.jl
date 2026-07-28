@@ -130,7 +130,6 @@ mutable struct Output{T}
     count_stat_vol::Vector{T}
     count_stat_rot::Vector{T}
     count_stat_exc::Vector{T}
-    stats::Vector{NamedTuple}
 end
 
 function Output{T}(n_bin::Int) where {T<:Number}
@@ -172,7 +171,6 @@ function Output{T}(n_bin::Int) where {T<:Number}
         count_stat_vol,
         count_stat_rot,
         count_stat_exc,
-        NamedTuple[],
     )
 end
 
