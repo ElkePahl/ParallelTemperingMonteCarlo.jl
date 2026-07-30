@@ -9,7 +9,8 @@ import ParallelTemperingMonteCarlo:
 
 using Pkg
 
-Pkg.activate("/home/rev/ParallelTemperingMonteCarlo.jl")
+#Pkg.activate("/home/rev/ParallelTemperingMonteCarlo.jl")
+Pkg.activate(joinpath(@__DIR__, ".."))
 Pkg.instantiate()
 
 using ParallelTemperingMonteCarlo
@@ -19,7 +20,7 @@ using DelimitedFiles
 script_folder = @__DIR__
 data_path = joinpath(script_folder, "data")
 
-include(joinpath(script_folder, "neighbour_ptmc_functions.jl"))
+#include(joinpath(script_folder, "neighbour_ptmc_functions.jl"))
 
 Random.seed!(1234)
 
