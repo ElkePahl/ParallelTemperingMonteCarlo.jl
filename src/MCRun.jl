@@ -73,7 +73,19 @@ function get_energy!(mc_state::MCState{T,N,BC,P,E},pot::PType,movetype::String) 
 end
 
 """
+    get_energy_neigh!(mc_state, pot, movetype::String)
 
+Neighbour-restricted counterpart of [`get_energy!`](@ref).
+
+Dispatches the energy calculation for the proposed move stored in `mc_state`.
+For an `"atommove"`, calls [`energy_update_neigh!`](@ref), which updates the
+RuNNer neural-network potential using only symmetry-function values affected by
+the moved atom and its old/new neighbourhood.
+
+This is only for atom moves using the neighbour-restricted
+RuNNer potential path. An error is thrown for unsupported move types.
+
+Returns the updated `mc_state`.
 """
 function get_energy_neigh!(mc_state, pot, movetype::String)
     if movetype == "atommove"
@@ -124,8 +136,23 @@ function mc_move!(mc_state::MCState,move_strat::MoveStrategy{N,E},pot::Ptype,ens
 
     return mc_state
 end
+
 """
-neighbours-only version of mc_move. 
+    mc_move_neigh!(mc_state, move_strat, pot, ensemble)
+
+Neighbour-restricted counterpart of [`mc_move!`](@ref).
+
+Performs one Monte Carlo move for a single `mc_state` according to the move
+types defined by `move_strat` and the supplied `ensemble` and `pot`.
+
+The function:
+
+- selects an atom index,
+- generates the proposed move,
+- calculates the proposed energy using [`get_energy_neigh!`](@ref),
+- performs the acceptance test using [`acc_test!`](@ref).
+
+Returns the updated `mc_state`.
 """
 function mc_move_neigh!(mc_state, move_strat, pot, ensemble)
     N = length(mc_state.config.pos)
@@ -154,7 +181,22 @@ function mc_step!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},pot::Pt
 end
 
 """
-neighbour-resticted version of mc_step!
+    mc_step_neigh!(
+        mc_states::MCStateVector,
+        move_strat::MoveStrategy{N,E},
+        pot::Ptype,
+        ensemble::Etype,
+        n_steps::Int,
+    ) where {N,E,Ptype,Etype}
+
+Neighbour-restricted counterpart of [`mc_step!`](@ref).
+
+Distributes the states in `mc_states` across Julia threads. For each state,
+calls [`mc_step_neigh_single!`](@ref) to perform `n_steps` sequential
+neighbour-restricted Monte Carlo moves according to `move_strat`, `pot`, and
+`ensemble`.
+
+Returns the updated `mc_states`.
 """
 function mc_step_neigh!(
     mc_states::MCStateVector,
@@ -177,6 +219,25 @@ function mc_step_neigh!(
     return mc_states
 end
 
+"""
+    mc_step_neigh_single!(
+        mc_state,
+        move_strat,
+        pot,
+        ensemble,
+        n_steps::Int,
+    )
+
+Performs `n_steps` sequential neighbour-restricted Monte Carlo moves for one
+`mc_state`.
+
+This helper function is called by [`mc_step_neigh!`](@ref), which distributes
+different states across Julia threads. The Monte Carlo moves within each
+individual state must be performed sequentially because every proposed move
+depends on the accepted configuration produced by the preceding move.
+
+Returns the updated `mc_state`.
+"""
 function mc_step_neigh_single!(
     mc_state,
     move_strat,
@@ -229,9 +290,42 @@ function mc_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc_par
 end
 
 """
-neighbour-restructed version of mc_cycle!
-"""
+    mc_cycle_neigh!(
+        mc_states::MCStateVector,
+        move_strat::MoveStrategy{N,E},
+        mc_params::MCParams,
+        pot::Ptype,
+        ensemble::Etype,
+        n_steps::Int,
+        index::Int,
+    ) where {N,E,Ptype,Etype}
 
+    mc_cycle_neigh!(
+        mc_states::MCStateVector,
+        move_strat::MoveStrategy{N,E},
+        mc_params::MCParams,
+        pot::Ptype,
+        ensemble::Etype,
+        n_steps::Int,
+        results::Output,
+        idx::Int,
+        rdfsave::Bool,
+    ) where {N,E,Ptype,Etype}
+
+Neighbour-restricted counterpart of [`mc_cycle!`](@ref).
+
+The first method advances every state by calling [`mc_step_neigh!`](@ref),
+optionally attempts a [`parallel_tempering_exchange!`](@ref), and periodically
+updates the maximum move step size according to the acceptance-rate bounds in
+`mc_params`.
+
+The second method additionally calls [`sampling_step!`](@ref) at the sampling
+frequency defined by `mc_params.mc_sample`, updating the supplied `results`
+structure. The first method is used during equilibration and therefore does not
+sample results.
+
+Returns the updated `mc_states`.
+"""
 function mc_cycle_neigh!(
     mc_states::MCStateVector,
     move_strat::MoveStrategy{N,E},
@@ -357,7 +451,26 @@ function equilibration_cycle!(mc_states::MCStateVector,move_strat::MoveStrategy{
 end
 
 """
+    equilibration_cycle_neigh!(
+        mc_states::MCStateVector,
+        move_strat::MoveStrategy{N,E},
+        mc_params::MCParams,
+        pot::Ptype,
+        ensemble::Etype,
+        n_steps::Int,
+        results::Output,
+    ) where {N,E,Ptype,Etype}
 
+Neighbour-restricted counterpart of [`equilibration_cycle!`](@ref).
+
+Thermalises the states for `mc_params.eq_cycles` cycles without recording
+production samples. During equilibration, the minimum and maximum encountered
+energies are tracked and used to initialise the result histograms.
+
+After equilibration, acceptance counters are reset and the result histograms
+are initialised using the observed energy bounds.
+
+Returns the updated `(mc_states, results)`.
 """
 function equilibration_cycle_neigh!(
     mc_states::MCStateVector,
@@ -425,7 +538,25 @@ function equilibration(mc_states::MCStateVector,move_strat::MoveStrategy{N,E},mc
 end
 
 """
+    equilibration_neigh!(
+        mc_states::MCStateVector,
+        move_strat::MoveStrategy{N,E},
+        mc_params::MCParams,
+        pot::Ptype,
+        ensemble::Etype,
+        n_steps::Int,
+        results::Output,
+        restart::Bool,
+    ) where {N,E,Ptype,Etype}
 
+Neighbour-restricted counterpart of [`equilibration`](@ref).
+
+Initialises the Hamiltonian history required by the simulation. For a new run,
+calls [`equilibration_cycle_neigh!`](@ref) to thermalise the states and
+initialise the result histograms. If `restart` is true, equilibration is skipped
+and the supplied states and results are returned unchanged.
+
+Returns `(mc_states, results)`.
 """
 function equilibration_neigh!(
     mc_states::MCStateVector,
@@ -538,7 +669,38 @@ function ptmc_run!(restart::Bool;rdfsave=false,save=1000,eq_cycles=0.2)
 end
 
 """
+    ptmc_run_neigh!(
+        mc_params::MCParams,
+        temp::TempGrid,
+        start_config::Config,
+        potential::Ptype,
+        ensemble::Etype;
+        rdfsave::Bool=false,
+        restart::Bool=false,
+        save=false,
+        workingdirectory=pwd(),
+    ) where {Ptype,Etype}
 
+Main entry point for a neighbour-restricted parallel-tempering Monte Carlo
+simulation.
+
+Initialises the Monte Carlo states, move strategy, result structures, and
+temperature trajectories from `mc_params`, `temp`, `start_config`, `potential`,
+and `ensemble`. The states are thermalised using
+[`equilibration_neigh!`](@ref), then advanced through the production cycles
+using [`mc_cycle_neigh!`](@ref).
+
+The neighbour-restricted path updates only those neural-network symmetry
+function values affected by each proposed atom move.
+
+Keyword arguments:
+
+- `rdfsave::Bool`: whether radial distribution functions are sampled and saved.
+- `restart::Bool`: whether the simulation is being resumed from an existing run.
+- `save`: `false` to disable checkpoints, or an integer checkpoint frequency.
+- `workingdirectory`: directory in which simulation files are read and written.
+
+Returns `(mc_states, results)` after finalising the simulation results.
 """
 function ptmc_run_neigh!(
     mc_params::MCParams,

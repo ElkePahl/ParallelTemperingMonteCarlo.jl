@@ -722,6 +722,30 @@ function get_new_state_vars!(trial_pos::PositionVector,atomindex::Int,config::Co
     return potential_variables
 end
 
+"""
+    get_new_state_vars_neigh!(
+        trial_pos::PositionVector,
+        atomindex::Int,
+        config::Config,
+        potential_variables::NNPVariables,
+        dist2_mat::Matrix{Float64},
+        new_dist2_vec::Vector{Float64},
+        pot::RuNNerPotential{Nrad,Nang},
+    ) where {Nrad,Nang}
+
+Neighbour-restricted counterpart of [`get_new_state_vars!`](@ref).
+
+Calculates the proposed cutoff-function vector for the moved atom, constructs
+the union of its old and new neighbourhoods using
+[`neighbour_union_from_cutoff_vectors`](@ref), and copies the current
+symmetry-function matrix into `new_g_matrix`.
+
+The affected radial and angular symmetry-function values are then updated using
+[`total_symm_neigh!`](@ref), while values outside the affected neighbourhood
+remain unchanged.
+
+Returns the updated `potential_variables`.
+"""
 function get_new_state_vars_neigh!(
     trial_pos::PositionVector,
     atomindex::Int,
@@ -975,6 +999,29 @@ function energy_update!(ensemblevariables::Etype,config::Config,potential_variab
     return potential_variables,new_en
 end
 
+"""
+    energy_update_neigh!(
+        ensemblevariables::Etype,
+        config::Config,
+        potential_variables::NNPVariables,
+        dist2_mat::Matrix{Float64},
+        new_dist2_vec::Vector{Float64},
+        en_tot::Number,
+        pot::RuNNerPotential,
+    ) where Etype <: AbstractEnsembleVariables
+
+Neighbour-restricted RuNNer-potential counterpart of [`energy_update!`](@ref).
+
+Checks whether the proposed atom position violates the minimum interatomic
+boundary. If so, assigns a high trial energy. Otherwise, updates the affected
+neural-network state variables using [`get_new_state_vars_neigh!`](@ref), then
+calculates the proposed total energy using [`calc_new_runner_energy!`](@ref).
+
+Only symmetry-function values influenced by the moved atom's old and new
+neighbourhoods are recalculated.
+
+Returns `(potential_variables, new_en)`.
+"""
 function energy_update_neigh!(
     ensemblevariables::Etype,
     config::Config,

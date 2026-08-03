@@ -449,7 +449,31 @@ function radial_symmetry_calculation!(g_vector,atomindex,dist2_mat,new_dist2_vec
     return g_vector
 end
 
+"""
+    radial_symmetry_calculation_neigh!(
+        g_vector,
+        atomindex,
+        neighbour_indices,
+        dist2_mat,
+        new_dist2_vector,
+        f_matrix,
+        new_f_vector,
+        symmetry_function,
+    )
 
+Neighbour-restricted counterpart of
+[`radial_symmetry_calculation!`](@ref).
+
+Updates one radial symmetry-function channel following a proposed move of the
+atom at `atomindex`. Rather than iterating over every atom, the calculation is
+restricted to `neighbour_indices`, containing the union of atoms within the
+cutoff radius before or after the move.
+
+For each affected neighbour, calls [`calc_new_symmetry_value!`](@ref) using the
+old and proposed distance and cutoff-function data.
+
+Returns the updated `g_vector`.
+"""
 function radial_symmetry_calculation_neigh!(
     g_vector,
     atomindex,
@@ -604,10 +628,38 @@ function total_thr_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_ve
 end
 
 """
-    total_symm_neigh!(g_matrix, positions, new_position, dist2_mat, new_dist2_vector, f_matrix, new_f_vector, atomindex, neighbour_indices, radsymmfunctions, angsymmfunctions, Nrad, Nang)
-Neighbour restricted version of total_symm! to calculate the total change to the matrix of symmetry function values `g_matrix`, only updating the g_matrix for the union of atoms within the neigbhourhood of the moved atom before and after its current move. Takes the same arguments as total_symm! Except for one additional argument, the list of neigbhour indicies.
-"""
+    total_symm_neigh!(
+        g_matrix,
+        positions,
+        new_position,
+        dist2_mat,
+        new_dist2_vector,
+        f_matrix,
+        new_f_vector,
+        atomindex,
+        neighbour_indices,
+        radsymmfunctions,
+        angsymmfunctions,
+        Nrad,
+        Nang,
+    )
 
+Neighbour-restricted counterpart of [`total_symm!`](@ref).
+
+Updates the symmetry-function matrix `g_matrix` following a proposed move of
+the atom at `atomindex`. Only symmetry-function values affected by the union of
+the moved atom's old and new neighbourhoods are recalculated.
+
+Radial channels are updated using
+[`radial_symmetry_calculation_neigh!`](@ref), and angular channels are updated
+using [`angular_symmetry_calculation_neigh!`](@ref).
+
+The remaining arguments contain the old configuration, proposed position,
+current and proposed distance data, cutoff-function data, and the radial and angular
+symmetry-function definitions.
+
+Returns the updated `g_matrix`.
+"""
 function total_symm_neigh!(
     g_matrix,
     positions,
@@ -656,6 +708,26 @@ function total_symm_neigh!(
     return g_matrix
 end
 
+"""
+    neighbour_union_from_cutoff_vectors(
+        f_old_row,
+        f_new_vec,
+        atomindex,
+    )
+
+Constructs the union of the moved atom's neighbourhood before and after a
+proposed move.
+
+An atom index is included when its cutoff-function value relative to
+`atomindex` is nonzero in either `f_old_row` or `f_new_vec`. The moved atom
+itself is excluded.
+
+Including both the old and new neighbourhood ensures that symmetry-function
+contributions are updated for atoms entering, leaving, or remaining within the
+cutoff radius.
+
+Returns a vector of neighbour atom indices.
+"""
 function neighbour_union_from_cutoff_vectors(f_old_row, f_new_vec, atomindex)
     neighbours = Int[]
 
