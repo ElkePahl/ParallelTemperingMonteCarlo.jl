@@ -418,7 +418,6 @@ function ptmc_run!(
             save_configs(mc_states, string(configsname, i))
         end
         if !isnothing(stats_filename) && i % flush_interval == 0
-            @info "Flushing data to disk"
             Arrow.append(stats_filename, stats)
             empty!(stats)
         end
@@ -431,11 +430,11 @@ function ptmc_run!(
     end
     if !isnothing(stats_filename) && flush_interval < mc_params.mc_cycles
         # write as regular file
-        Arrow.write(stats_filename, stats)
+        Arrow.append(stats_filename, stats)
         stats = DataFrame(Arrow.Table(stats_filename))
     elseif !isnothing(stats_filename)
         # append remaining rows
-        Arrow.append(stats_filename, stats)
+        Arrow.write(stats_filename, stats)
         stats = DataFrame(Arrow.Table(stats_filename))
     end
 

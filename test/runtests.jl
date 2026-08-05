@@ -275,11 +275,15 @@ end
 end
 
 @safetestset "Saveconfigs" begin
-    include(joinpath(@__DIR__, "ne13_test.jl"))
+    include("ne13_test.jl")
 end
 
 @safetestset "Move consistency" begin
-    include(joinpath(@__DIR__, "move-consistency.jl"))
+    include("move-consistency.jl")
+end
+
+@safetestset "statistic tracking" begin
+    include("statistic-tracking.jl")
 end
 
 @testset "scripts run without errors" begin
