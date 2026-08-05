@@ -10,6 +10,7 @@ using StaticArrays
 
 export SphericalBC, AbstractBC, PeriodicBC, CubicBC, RhombicBC, RectangularBC
 export check_boundary, long_range_correction, volume, r_cut
+export report_stats
 
 """
     AbstractBC{T}
@@ -112,6 +113,13 @@ Scale boundary condition, vector, or configuration in the ``z`` dimension by fac
 scale_z
 
 """
+    report_stats(::AbstractBC)
+
+Report information about boundary condition to output.
+"""
+report_stats
+
+"""
     SphericalBC{T}(;radius::Real)
 
 Implements type for spherical boundary conditions; subtype of [`AbstractBC`](@ref).
@@ -134,6 +142,8 @@ function check_boundary(bc::SphericalBC, position)
         return position
     end
 end
+
+report_stats(bc::SphericalBC) = (; radius=√bc.radius2)
 
 """
     PeriodicBC{T}
@@ -184,6 +194,8 @@ scale_xyz(bc::CubicBC, α) = CubicBC(α * bc.box_length)
 
 r_cut(bc::CubicBC) = bc.box_length^2 / 4
 
+report_stats(bc::CubicBC) = (; box_length=bc.box_length)
+
 """
     RectangularBC{T}
 
@@ -219,6 +231,8 @@ scale_xy(bc::RectangularBC, scale) = RectangularBC(bc.box_length * scale, bc.box
 scale_z(bc::RectangularBC, scale) = RectangularBC(bc.box_length, bc.box_height * scale)
 
 r_cut(bc::RectangularBC) = min(bc.box_length^2 / 4, bc.box_height^2 / 4)
+
+report_stats(bc::RectangularBC) = (; box_length=bc.box_length, box_height=bc.box_height)
 
 """
     RhombicBC{T}(; length::Real, height::Real)
@@ -266,5 +280,7 @@ scale_xy(bc::RhombicBC, scale) = RhombicBC(bc.box_length * scale, bc.box_height)
 scale_z(bc::RhombicBC, scale) = RhombicBC(bc.box_length, bc.box_height * scale)
 
 r_cut(bc::RhombicBC) = min(bc.box_length^2 * 3 / 16, bc.box_height^2 / 4)
+
+report_stats(bc::RhombicBC) = (; box_length=bc.box_length, box_height=bc.box_height)
 
 end

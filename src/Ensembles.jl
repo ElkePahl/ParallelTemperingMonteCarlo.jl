@@ -2,6 +2,7 @@ module Ensembles
 
 using ..Configurations
 using ..BoundaryConditions
+import ..BoundaryConditions: report_stats
 using StaticArrays, Random
 
 export AbstractEnsemble, NVT, NPT, NNVT
@@ -93,7 +94,8 @@ function NPT(n_atoms, pressure, separated_volume)
 end
 
 function report_stats(mc_state, ::NPT)
-    return (; volume=volume(mc_state.config.boundary_condition), length_height_ratio=mc_state.lh_ratio)
+    bc = mc_state.config.boundary_condition
+    return (; volume=volume(bc), report_stats(bc)...)
 end
 
 """

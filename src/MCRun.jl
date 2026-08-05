@@ -5,7 +5,7 @@ export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
 
-using StaticArrays, DelimitedFiles, ProgressMeter, DataFrames
+using StaticArrays, DelimitedFiles, ProgressMeter, DataFrames, Arrow
 using ..MCStates
 using ..BoundaryConditions
 using ..Configurations
@@ -155,7 +155,7 @@ function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats)
         state.step += 1
         state.acceptance = n_accepted / n_steps
         state.last_stats = (;
-            step=state.step,
+            cycle=state.step,
             temperature=state.temp,
             hamiltonian=hamiltonian_value(state, state.ensemble),
             total_energy=state.en_tot,
@@ -364,6 +364,8 @@ function ptmc_run!(
     saveconfigs=false,
     configsname="configuration",
     workingdirectory=pwd(),
+    flush_interval=1_000_000,
+    stats_filename=nothing,
 )
     # Initialisation
     cd(workingdirectory)
@@ -371,6 +373,17 @@ function ptmc_run!(
         save_init(potential, ensemble, mc_params, temp)
     end
     stats = DataFrame()
+
+    if !isnothing(stats_filename)
+        counter = 0
+        base, ext = splitext(stats_filename)
+        while isfile(stats_filename)
+            counter += 1
+            new_filename = string("$base-$counter", ext)
+            @warn "File $stats_filename exists. Using $new_filename"
+            stats_filename = new_filename
+        end
+    end
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
         mc_params, temp, start_config, potential, ensemble
@@ -383,6 +396,7 @@ function ptmc_run!(
     if save ≢ false
         save_histparams(results)
     end
+
 
     # Main loop
     progress = Progress(length(start_counter:(mc_params.mc_cycles)); desc="Main loop")
@@ -404,12 +418,26 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
+        if !isnothing(stats_filename) && i % flush_interval == 0
+            @info "Flushing data to disk"
+            Arrow.append(stats_filename, stats)
+            empty!(stats)
+        end
         next!(progress)
     end
 
     if save ≢ false && rem(mc_params.mc_cycles, save) ≠ 0
         # Save at the end if we didn't save in the last step.
         checkpoint(mc_params.mc_cycles, mc_states, results, ensemble, rdfsave)
+    end
+    if !isnothing(stats_filename) && flush_interval < mc_params.mc_cycles
+        # write as regular file
+        Arrow.write(stats_filename, stats)
+        stats = DataFrame(Arrow.Table(stats_filename))
+    else
+        # append remaining rows
+        Arrow.append(stats_filename, stats)
+        stats = DataFrame(Arrow.Table(stats_filename))
     end
 
     #Finalisation of results
