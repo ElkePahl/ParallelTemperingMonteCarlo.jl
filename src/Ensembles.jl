@@ -93,7 +93,7 @@ function NPT(n_atoms, pressure, separated_volume)
 end
 
 function report_stats(mc_state, ::NPT)
-    return (; volume=volume(mc_state.config.boundary_condition), LH_ratio=mc_state.lh_ratio)
+    return (; volume=volume(mc_state.config.boundary_condition), length_height_ratio=mc_state.lh_ratio)
 end
 
 """

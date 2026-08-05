@@ -154,50 +154,24 @@ function parallel_tempering_exchange!(
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc + 1].count_exc[1] += 1
 
-    if exc_acceptance(
+    success = rand() < exc_acceptance(
         mc_states[n_exc].beta,
         mc_states[n_exc + 1].beta,
-        mc_states[n_exc].en_tot,
-        mc_states[n_exc + 1].en_tot,
-    ) > rand()
+        hamiltonian(mc_states[n_exc], ensemble),
+        hamiltonian(mc_states[n_exc + 1], ensemble),
+    )
+
+    if success
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc + 1].count_exc[2] += 1
 
         mc_states[n_exc], mc_states[n_exc + 1] = exc_trajectories!(
             mc_states[n_exc], mc_states[n_exc + 1]
         )
+        return n_exc
+    else
+        return 0
     end
-
-    return mc_states
-end
-function parallel_tempering_exchange!(mc_states, mc_params::MCParams, ensemble::NPT)
-    n_exc = rand(1:(mc_params.n_traj - 1))
-
-    mc_states[n_exc].count_exc[1] += 1
-    mc_states[n_exc + 1].count_exc[1] += 1
-
-    #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.boundary_condition.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.boundary_condition.box_length^3)) > rand()
-    if exc_acceptance(
-        mc_states[n_exc].beta,
-        mc_states[n_exc + 1].beta,
-        (
-            mc_states[n_exc].en_tot +
-            ensemble.pressure * volume(mc_states[n_exc].config.boundary_condition)
-        ),
-        (
-            mc_states[n_exc + 1].en_tot +
-            ensemble.pressure * volume(mc_states[n_exc + 1].config.boundary_condition)
-        ),
-    ) > rand()
-        mc_states[n_exc].count_exc[2] += 1
-        mc_states[n_exc + 1].count_exc[2] += 1
-
-        mc_states[n_exc], mc_states[n_exc + 1] = exc_trajectories!(
-            mc_states[n_exc], mc_states[n_exc + 1]
-        )
-    end
-
-    return mc_states
 end
 
 """

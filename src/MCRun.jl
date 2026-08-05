@@ -156,9 +156,9 @@ function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats)
         state.acceptance = n_accepted / n_steps
         state.last_stats = (;
             step=state.step,
-            T=state.temp,
+            temperature=state.temp,
             hamiltonian=hamiltonian_value(state, state.ensemble),
-            E_tot=state.en_tot,
+            total_energy=state.en_tot,
             acceptance=state.acceptance,
             report_stats(state, state.ensemble)...,
             count_atom=state.count_atom[1],
@@ -167,9 +167,6 @@ function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats)
             count_vol_z=state.count_vol_z[1],
             count_exc=state.count_exc[1],
         )
-    end
-    for state in mc_states
-        push!(stats, state.last_stats)
     end
     return mc_states
 end
@@ -194,7 +191,9 @@ function mc_cycle!(
     ensemble = mc_states[1].ensemble
 
     if rand() < 0.1
-        parallel_tempering_exchange!(mc_states, mc_params, ensemble)
+        exchange_index = parallel_tempering_exchange!(mc_states, mc_params, ensemble)
+    else
+        exchange_index = 0
     end
     if rem(index, mc_params.n_adjust) == 0
         for state in mc_states
@@ -202,6 +201,10 @@ function mc_cycle!(
                 state, mc_params.n_adjust, ensemble, mc_params.min_acc, mc_params.max_acc
             )
         end
+    end
+    for (i, state) in enumerate(mc_states)
+        exchanged = i ∈ (exchange_index, exchange_index + 1)
+        push!(stats, (; state.last_stats..., exchanged))
     end
     return mc_states
 end
