@@ -450,7 +450,7 @@ function get_new_state_vars_neigh!(
 
     potential_variables.new_g_matrix = total_symm_neigh!(
         potential_variables.new_g_matrix,
-        config.pos,
+        config.positions,
         trial_pos,
         dist2_mat,
         new_dist2_vec,
@@ -465,4 +465,57 @@ function get_new_state_vars_neigh!(
     )
 
     return potential_variables
+end
+
+
+"""
+    energy_update_neigh!(
+        ensemblevariables::Etype,
+        config::Config,
+        potential_variables::NNPVariables,
+        dist2_mat::Matrix{Float64},
+        new_dist2_vec::Vector{Float64},
+        en_tot::Number,
+        pot::RuNNerPotential,
+    ) where Etype <: AbstractEnsembleVariables
+
+Neighbour-restricted RuNNer-potential counterpart of [`energy_update!`](@ref).
+
+Checks whether the proposed atom position violates the minimum interatomic
+boundary. If so, assigns a high trial energy. Otherwise, updates the affected
+neural-network state variables using [`get_new_state_vars_neigh!`](@ref), then
+calculates the proposed total energy using [`calc_new_runner_energy!`](@ref).
+
+Only symmetry-function values influenced by the moved atom's old and new
+neighbourhoods are recalculated.
+
+Returns `(potential_variables, new_en)`.
+"""
+function energy_update_neigh!(
+    ensemblevariables::Etype,
+    config::Config,
+    potential_variables::NNPVariables,
+    dist2_mat::Matrix{Float64},
+    new_dist2_vec::Vector{Float64},
+    en_tot::Number,
+    pot::RuNNerPotential
+) where Etype <: AbstractEnsembleVariables
+
+    if any(new_dist2_vec[i] < pot.boundary for i in eachindex(new_dist2_vec) if i != ensemblevariables.index)
+        new_en = 100.0
+    else
+        potential_variables = get_new_state_vars_neigh!(
+            ensemblevariables.trial_move,
+            ensemblevariables.index,
+            config,
+            potential_variables,
+            dist2_mat,
+            new_dist2_vec,
+            pot
+        )
+
+        potential_variables, new_en = calc_new_runner_energy!(potential_variables, pot)
+    end
+
+    return potential_variables, new_en
 end

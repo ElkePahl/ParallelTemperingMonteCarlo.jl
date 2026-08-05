@@ -203,7 +203,7 @@ function mc_move_neigh!(mc_state, move_strat, pot, ensemble)
     mc_state.ensemble_variables.index = rand(1:N)
     movetype = move_strat.movestrat[mc_state.ensemble_variables.index]
 
-    mc_state = generate_move!(mc_state, movetype)
+    mc_state = generate_move!(mc_state, movetype, ensemble)
     mc_state = get_energy_neigh!(mc_state, pot, movetype)
     acc_test!(mc_state, ensemble, movetype)
 
@@ -466,6 +466,7 @@ function mc_cycle_neigh!(
             idx,
             results,
             rdfsave,
+            idx,
         )
     end
 
