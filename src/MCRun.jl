@@ -397,7 +397,6 @@ function ptmc_run!(
         save_histparams(results)
     end
 
-
     # Main loop
     progress = Progress(length(start_counter:(mc_params.mc_cycles)); desc="Main loop")
     for i in start_counter:(mc_params.mc_cycles)

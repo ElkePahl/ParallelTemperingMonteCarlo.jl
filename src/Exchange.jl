@@ -154,12 +154,13 @@ function parallel_tempering_exchange!(
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc + 1].count_exc[1] += 1
 
-    success = rand() < exc_acceptance(
-        mc_states[n_exc].beta,
-        mc_states[n_exc + 1].beta,
-        hamiltonian(mc_states[n_exc], ensemble),
-        hamiltonian(mc_states[n_exc + 1], ensemble),
-    )
+    success =
+        rand() < exc_acceptance(
+            mc_states[n_exc].beta,
+            mc_states[n_exc + 1].beta,
+            hamiltonian(mc_states[n_exc], ensemble),
+            hamiltonian(mc_states[n_exc + 1], ensemble),
+        )
 
     if success
         mc_states[n_exc].count_exc[2] += 1
