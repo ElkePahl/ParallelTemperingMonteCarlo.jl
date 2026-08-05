@@ -433,7 +433,7 @@ function ptmc_run!(
         # write as regular file
         Arrow.write(stats_filename, stats)
         stats = DataFrame(Arrow.Table(stats_filename))
-    else
+    elseif !isnothing(stats_filename)
         # append remaining rows
         Arrow.append(stats_filename, stats)
         stats = DataFrame(Arrow.Table(stats_filename))
