@@ -7,7 +7,7 @@ include("BoundaryConditions.jl")
 include("Configurations.jl")
 include("Ensembles.jl")
 include("../MachineLearningPotential/MachineLearningPotential.jl")
-include("EnergyEvaluation.jl")
+include("energy_evaluation/EnergyEvaluation.jl")
 
 include("MCStates.jl")
 include("InputParams.jl")
@@ -42,11 +42,4 @@ include("multihist_NVT.jl")
 @reexport using .Multihistogram_NPT
 @reexport using .Multihistogram_NVT
 
- 
-
-
-
-
-
-
-end 
+end

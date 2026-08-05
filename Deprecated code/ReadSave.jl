@@ -1,6 +1,5 @@
 module ReadSave
 
-
 # export save_params,save_state,save_results,save_states
 # export read_results,read_config,read_input,read_states,initialise_params
 # export read_multihist
@@ -12,7 +11,6 @@ module ReadSave
 # using ..EnergyEvaluation
 # using ..MCStates
 # using ..MCMoves
-
 
 # """
 #     save_params(savefile::IOStream, mc_params::MCParams)
@@ -26,7 +24,7 @@ module ReadSave
 #      write(savefile,"n_traj: $(mc_params.n_traj)\n")
 #      write(savefile, "n_atoms: $(mc_params.n_atoms)\n")
 #      write(savefile,"n_adjust: $(mc_params.n_adjust)\n")
-     
+
 #     #  close(savefile)
 #  end
 #  function save_params(savefile::IOStream, mc_params::MCParams,move_strat,ensemble)
@@ -103,7 +101,7 @@ module ReadSave
 #     close(resultsfile)
 #     writedlm(rdf_file,results.rdf)
 #     close(rdf_file)
-    
+
 # end
 # """
 #     save_states(mc_params,mc_states,trial_index; directory = pwd())
@@ -152,7 +150,6 @@ module ReadSave
 # takes the delimited contents of a savefile and splits it into paramdata to reinitialise MC_param, configuration data to reinitialise n_traj mc_states, and the step at which the save was made.
 # """
 
-
 # function read_input(savedata)
 
 #     step = savedata[1,2]
@@ -172,17 +169,15 @@ module ReadSave
 #     #MC_param = MCParams(paramdata[2,2],paramdata[4,2],paramdata[5,2],eq_percentage = eq_percentage,mc_sample = paramdata[3,2], n_adjust = paramdata[6,2])
 
 #     mc_cycles,n_traj,n_atoms,mc_sample,n_adjust = paramdata[2,2],paramdata[4,2],paramdata[5,2],paramdata[3,2], paramdata[6,2]
-    
+
 #     mc_params = MCParams(mc_cycles,n_traj,n_atoms,eq_percentage=eq_percentage,mc_sample=mc_sample,n_adjust=n_adjust)
-
-
 
 #     ensemble = eval(Meta.parse(paramdata[7,2]))
 #     a,v,r = paramdata[8,2],paramdata[8,3],paramdata[8,4]
 #     move_strat = MoveStrategy(atom_moves=a,vol_moves=v,rot_moves=r)
 
 #     return ensemble,move_strat,mc_params
-    
+
 # end
 # """
 #     read_config(config_info)
@@ -201,7 +196,7 @@ module ReadSave
 #     end
 
 #     config = Config(positions,boundarycondition)
-    
+
 #     return config
 # end
 # """
@@ -215,14 +210,13 @@ module ReadSave
 #     countv = [onestatevec[5,4], onestatevec[5,5]]
 #     countr = [onestatevec[5,6], onestatevec[5,7]]
 #     countx = [onestatevec[5,8], onestatevec[5,9]]
-    
+
 #     mcstate = MCState(onestatevec[2,2], onestatevec[2,3],config, potential ; max_displ=[onestatevec[4,2], onestatevec[4,3], onestatevec[4,4] ], count_atom=counta,count_vol=countv,count_rot=countr,count_exc=countx) #initialise the mcstate
 
 #     mcstate.en_tot = onestatevec[3,2] #incl current energy
 
 #     push!(mcstate.ham,onestatevec[6,2])
 #     push!(mcstate.ham,onestatevec[6,3]) #incl the hamiltonian and hamiltonia squared vectors
-
 
 #     return mcstate
 # end
@@ -238,7 +232,6 @@ module ReadSave
 #         onetraj = trajvecs[1+ (idx - 1)*lines:(idx*lines), :]
 #         onestate = read_state(onetraj,potential)
 
-
 #         push!(states,onestate)
 
 #     end
@@ -253,7 +246,7 @@ module ReadSave
 #     rdfdata = readdlm(rdffile)
 #     close(rdffile)
 #     close(resfile)
-    
+
 #     emin,emax,nbins = histinfo[1,2:4]
 #     histograms = []
 #     rdf = []

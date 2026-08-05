@@ -18,5 +18,4 @@ include("ForwardPass.jl")
 @reexport using .DeltaMatrix
 @reexport using .ForwardPass
 
-
 end

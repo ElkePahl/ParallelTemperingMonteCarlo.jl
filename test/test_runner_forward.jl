@@ -11,17 +11,33 @@ function forward_pass(
     batchsize::Int32,
     activation_functions::Vector{Int32},
     num_parameters::Int32,
-    parameters::Vector{Float64}
+    parameters::Vector{Float64},
 )
     """Perform a forward pass using a Fortran library."""
     eatom = zeros(Float64, batchsize)
     return ccall(
         (:forward, joinpath(lib_path(), "librunnerjulia.so")),
         Float64,
-        (Ref{Float64},Ref{Int32}, Ref{Int32}, Ref{Int32}, Ref{Int32},
-         Ref{Int32}, Ref{Float64}, Ref{Int32}, Ref{Float64}),
-        input, num_nodes[1], num_layers, num_nodes, batchsize,
-        num_parameters, parameters, activation_functions, eatom
+        (
+            Ref{Float64},
+            Ref{Int32},
+            Ref{Int32},
+            Ref{Int32},
+            Ref{Int32},
+            Ref{Int32},
+            Ref{Float64},
+            Ref{Int32},
+            Ref{Float64},
+        ),
+        input,
+        num_nodes[1],
+        num_layers,
+        num_nodes,
+        batchsize,
+        num_parameters,
+        parameters,
+        activation_functions,
+        eatom,
     )
 end
 
@@ -52,7 +68,7 @@ function test_forward(num_atoms, batchsize)
             batchsize,
             activation_functions,
             num_parameters,
-            parameters
+            parameters,
         )
         @test res == 21
     end

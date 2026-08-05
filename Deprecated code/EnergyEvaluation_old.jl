@@ -2,7 +2,7 @@
     module EnergyEvaluation
 
 this module provides data, structs and methods for dimer energy and total energy evaluation
-"""    
+"""
 # module EnergyEvaluation
 
 # using StaticArrays 
@@ -13,7 +13,6 @@ this module provides data, structs and methods for dimer energy and total energy
 # using ..Configurations
 
 # export AbstractPotential, AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential,EmbeddedAtomPotential
-
 
 # export RuNNerPotential
 
@@ -26,7 +25,6 @@ this module provides data, structs and methods for dimer energy and total energy
 # export get_energy
 # export AbstractEnsemble, NVT, NPT
 # export EnHist
-
 
 # """
 #     AbstractEnsemble
@@ -82,7 +80,6 @@ this module provides data, structs and methods for dimer energy and total energy
 # #The potential struct for magnetic field (tan(theta) as variable)
 # abstract type AbstractDimerPotentialB <: AbstractPotential end
 
-
 # abstract type AbstractMachineLearningPotential <: AbstractPotential end
 # """
 #     PotentialVariables
@@ -118,7 +115,6 @@ this module provides data, structs and methods for dimer energy and total energy
 #     end 
 #     return sum1
 # end
-
 
 # """
 #     dimer_energy_atom(i, d2vec, r_cut, pot<:AbstractPotential)
@@ -165,7 +161,6 @@ this module provides data, structs and methods for dimer energy and total energy
 #     #energy_tot=sum(dimer_energy_vec)
 #     return dimer_energy_vec, energy_tot
 # end 
-
 
 # """
 #     dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractPotential)
@@ -275,7 +270,7 @@ this module provides data, structs and methods for dimer energy and total energy
 # with the cutoff distance r_cut
 # """
 # function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotential,ensemble::NPT)
-    
+
 #     n=length(mc_states)
 #     r_cut_all=Array{Float64}(undef,n)
 #     for i=1:n
@@ -496,8 +491,6 @@ this module provides data, structs and methods for dimer energy and total energy
 
 #     energyvector,dist2_new,new_components = invert(calc_new_energy.(mc_states,indices,trial_positions,Ref(pot)))
 
-
-
 #     return energyvector,dist2_new,new_components
 # end
 # """
@@ -505,7 +498,7 @@ this module provides data, structs and methods for dimer energy and total energy
 # Currying function to match the initialisation of MCStates with the embedded atom model. This now matches the form of the general dimer potential for use.
 # """
 # function dimer_energy_config(distmat,NAtoms,pot::EmbeddedAtomPotential)
-    
+
 #     return get_energy(distmat,pot)
 # end
 # #------------------------------------------------------------------------#
@@ -518,7 +511,7 @@ this module provides data, structs and methods for dimer energy and total energy
 # lrc is an integral of all interactions outside the cutoff distance, using the uniform density approximation.
 # """
 # function lrc(NAtoms,r_cut,pot::ELJPotentialEven{N}) where N
-    
+
 #     r_cut_sqrt=r_cut^0.5
 #     rc3 = r_cut*r_cut_sqrt
 #     e_lrc = 0.
@@ -529,8 +522,6 @@ this module provides data, structs and methods for dimer energy and total energy
 #     e_lrc *= pi*NAtoms^2/4/r_cut_sqrt^3
 #     return e_lrc
 # end
-
-
 
 # """
 #    potential in B
@@ -582,7 +573,6 @@ this module provides data, structs and methods for dimer energy and total energy
 #     return sum1
 # end 
 
-
 # """
 #     lrc(NAtoms,r_cut,pot::ELJPotentialEven{N})
 # The long range correction for the energy in magnetic field. r_cut is the cutoff distance.
@@ -623,7 +613,6 @@ this module provides data, structs and methods for dimer energy and total energy
 #     end 
 #     return sum1
 # end
-
 
 # """
 #     dimer_energy_atom(i, d2vec, r_cut, pot<:AbstractDimerPotentialB)
@@ -670,7 +659,6 @@ this module provides data, structs and methods for dimer energy and total energy
 #     #energy_tot=sum(dimer_energy_vec)
 #     return dimer_energy_vec, energy_tot
 # end 
-
 
 # """
 #     dimer_energy_config(distmat, NAtoms, r_cut, pot::AbstractDimerPotentialB)
@@ -789,7 +777,7 @@ this module provides data, structs and methods for dimer energy and total energy
 # with the cutoff distance r_cut
 # """
 # function get_energy(trial_positions,indices,mc_states,pot::AbstractDimerPotentialB,ensemble::NPT)
-    
+
 #     n=length(mc_states)
 #     r_cut_all=Array{Float64}(undef,n)
 #     for i=1:n
@@ -825,7 +813,6 @@ this module provides data, structs and methods for dimer energy and total energy
 # """
 #     end here
 # """
-
 
 # """ 
 #     DFTPotential 
@@ -907,9 +894,8 @@ this module provides data, structs and methods for dimer energy and total energy
 
 #     nnp_state.new_dist2_vec = [ distance2(trial_pos,b,nnp_state.config.bc) for b in nnp_state.config.pos]
 #     nnp_state.new_dist2_vec[atomindex] = 0.
-    
-#     nnp_state.new_f_vec = cutoff_function.(sqrt.(nnp_state.new_dist2_vec),Ref(pot.r_cut))
 
+#     nnp_state.new_f_vec = cutoff_function.(sqrt.(nnp_state.new_dist2_vec),Ref(pot.r_cut))
 
 #     nnp_state.new_g_matrix = copy(nnp_state.g_matrix)
 
@@ -934,7 +920,7 @@ this module provides data, structs and methods for dimer energy and total energy
 #     nnp_state = get_new_state_vars!(trial_pos,atomindex,nnp_state,pot)
 
 #     nnp_state = calc_new_energy!(nnp_state,pot)
-    
+
 #     return sum(nnp_state.new_en_atom) , nnp_state
 # end
 # """
@@ -945,7 +931,7 @@ this module provides data, structs and methods for dimer energy and total energy
 #     energyvector = Vector{Float64}(undef,length(indices))
 
 #     energyvector,nnp_states = invert(get_runner_energy!.(trial_positions,indices,nnp_states,Ref(pot)))
-    
+
 #     return energyvector, nnp_states
 # end
 

@@ -2,13 +2,11 @@
 
 # export multihistogram,initialise,systemsolver,bvector,amatrix,Entropycalc,analysis
 
-
 # using Statistics
 # using BenchmarkTools
 # using Plots
 # using DelimitedFiles
 # using LinearAlgebra
-
 
 # function initialise(xdir::String)
 #     # Read in hist.data to obtain constants
@@ -24,7 +22,7 @@
 #     de = (emax-emin)/(NBins-1)
 #     #Below we initialise the histogram array
 #     HistArray = Array{Float64}(undef,NTraj,NBins)
-    
+
 #     for i in 1:NTraj
 #         c = open("$(xdir)histE.$i", "r")
 #         hist = readdlm(c)
@@ -39,7 +37,6 @@
 #     return HistArray,energyvector,beta,nsum,NTraj,NBins,kB
 # end
 
-
 # function processhist!(HistArray,energyvector,beta,NBins)
 #     for i in 1:NTraj
 #         #NB in Florent's original code this factor of NBins*i normalised everything
@@ -51,7 +48,7 @@
 #     for j = 1:NBins
 #         nsum[j] = sum(HistArray[:,j])
 #     end
-    
+
 #     #as it causes colossal headaches, we will now delete all rows
 #     #which have exactly 0 histogram counts. Trust me it's needed.
 #     k=1
@@ -68,8 +65,6 @@
 #     end
 #     return HistArray,energyvector,beta,nsum,NBins
 # end
-
-
 
 # function nancheck(X :: Vector)
 #     N = length(X)
@@ -94,7 +89,6 @@
 #     end
 #     return check
 # end
-
 
 # function bvector(HistArray::Matrix,energyvector::Vector,beta::Vector,nsum::Vector,NTraj,NBins)
 #     #Below we find the matrix of values n_{ij}*(ln(n_{ij} + beta_iE_j)
@@ -141,9 +135,9 @@
 
 #     for i = 1:NTraj
 #         for ip = 1:NTraj
-            
+
 #             A[i,ip] = -sum(HistArray[i,:].*HistArray[ip,:]./nsum[:])
-            
+
 #             if i == ip
 #                 A[i,ip] += sum(HistArray[i,:])
 #             end
@@ -170,7 +164,7 @@
 # end
 
 # function analysis(energyvector:: Vector, S_E :: Vector, beta::Vector,kB::Float64; NPoints=600)
-    
+
 #     NBins = length(energyvector)
 #     Tvec = 1 ./ (kB*beta)
 #     dT = (last(Tvec) - 0.2)/NPoints
@@ -247,7 +241,6 @@
 #     return histplt
 # end
 
-
 # function multihistogram(xdir::String)
 #      HistArray,energyvector,beta,nsum,NTraj,NBins,kB = initialise(xdir)
 #      hist=histplot(HistArray,energyvector,NTraj)
@@ -264,11 +257,7 @@
 #      writedlm(cvfile, ["T" "Cv" "dCv"])
 #      writedlm(cvfile, [T C dC])
 #      close(cvfile)
-        
-# end
-
 
 # end
 
-
-
+# end

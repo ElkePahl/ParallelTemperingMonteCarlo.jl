@@ -2,11 +2,17 @@ module MCSampling
 
 #export sampling_step!
 
+export sampling_step!,
+    initialise_histograms!,
+    finalise_results,
+    finalise_results_convergence,
+    update_energy_tot,
+    find_hist_index,
+    update_histograms!,
+    update_rdf!,
+    rdf_index
 
-
-export sampling_step!, initialise_histograms!,finalise_results, update_energy_tot, find_hist_index, update_histograms!, update_rdf!, rdf_index
-
-using StaticArrays,LinearAlgebra
+using StaticArrays, LinearAlgebra
 using ..MCStates
 using ..Configurations
 using ..InputParams
@@ -14,68 +20,122 @@ using ..BoundaryConditions
 using ..EnergyEvaluation
 using ..Ensembles
 """
-    update_energy_tot(mc_states::MCStateVector, ensemble::Etype) where Etype <: AbstractEnsemble
-    update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
+    update_energy_tot(mc_states::MCStateVector, ensemble)
 
-Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required. 
-Two methods avoids needless for-loops, where the JIT can save us computation time.
+Function to update the current energy and energy squared values for coarse analysis of averages at the end. These are weighted according to the ensemble, and as such a method for each ensemble is required.
 """
-function update_energy_tot(mc_states::MCStateVector,ensemble::Etype) where Etype <: AbstractEnsemble
-        for state in mc_states
-            state.ham[1] += state.en_tot 
-            state.ham[2] += (state.en_tot*state.en_tot)
-        end
-end
-function update_energy_tot(mc_states::MCStateVector,ensemble::NPT)
+function update_energy_tot(mc_states::MCStateVector, ensemble::AbstractEnsemble)
     for state in mc_states
-        state.ham[1] += state.en_tot + ensemble.pressure* get_volume(state.config.bc)
-        state.ham[2] += (state.en_tot + ensemble.pressure* get_volume(state.config.bc))*(state.en_tot + ensemble.pressure* get_volume(state.config.bc))
+        state.ham[1] += state.en_tot
+        state.ham[2] += (state.en_tot * state.en_tot)
     end
-
+end
+function update_energy_tot(mc_states::MCStateVector, ensemble::NPT)
+    for state in mc_states
+        state.ham[1] +=
+            state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)
+        state.ham[2] +=
+            (state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)) *
+            (state.en_tot + ensemble.pressure * volume(state.config.boundary_condition))
+    end
 end
 """
     find_hist_index(hist_index::Number, n_bin::Int)
     find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number)
     find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number, delta_v_hist::Number)
-Returns the histogram index of a single `mc_state` energy and returns this value. 
+Returns the histogram index of a single `mc_state` energy and returns this value.
 """
 function find_hist_index(hist_index::Number, n_bin::Int)
+    # TODO: something not right. The only way to get it to return n_bin+1 is to pass hist_index=n_bin
     if hist_index < 1
         return 1
     elseif hist_index > n_bin
-        return n_bin+2
+        return n_bin + 2
     else
-        return floor(Int,hist_index) +1
+        return floor(Int, hist_index) + 1
     end
 end
-function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number)
-
-    hist_index = (mc_state.en_tot - results.en_min)/delta_en_hist +1
-
-
-    return find_hist_index(hist_index,results.n_bin)
+function find_hist_index(mc_state::MCState, results::Output, delta_en_hist::Number)
+    hist_index = (mc_state.en_tot - results.en_min) / delta_en_hist + 1
+    return find_hist_index(hist_index, results.n_bin)
 end
-function find_hist_index(mc_state::MCState,results::Output,delta_en_hist::Number,delta_v_hist::Number)
 
-    hist_index_e = (mc_state.en_tot - results.en_min)/delta_en_hist +1
-    hist_index_v = (mc_state.config.bc.box_length^3 - results.v_min)/delta_v_hist +1
+"""
+    find_hist_index(mc_state,results,delta_en_hist,delta_v_hist)
+returns the histogram index of a single mc_state energy and returns this value.
+"""
+function find_hist_index(mc_state, results, delta_en_hist, delta_v_hist, bc::CubicBC)
+    hist_index_e = floor(Int, (mc_state.en_tot - results.en_min) / delta_en_hist) + 1
+    hist_index_v =
+        floor(
+            Int,
+            (mc_state.config.boundary_condition.box_length^3 - results.v_min) /
+            delta_v_hist,
+        ) + 1
+    hist_index_e = find_hist_index(hist_index_e, results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v, results.n_bin)
 
-    hist_index_e = find_hist_index(hist_index_e,results.n_bin)
-    hist_index_v = find_hist_index(hist_index_v,results.n_bin)
+    return hist_index_e, hist_index_v
+end
+function find_hist_index(
+    mc_state::MCState, results::Output, delta_en_hist::Number, delta_v_hist::Number
+)
+    hist_index_e = (mc_state.en_tot - results.en_min) / delta_en_hist + 1
+    hist_index_v =
+        (mc_state.config.boundary_condition.box_length^3 - results.v_min) / delta_v_hist + 1
+
+    hist_index_e = find_hist_index(hist_index_e, results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v, results.n_bin)
 
     return hist_index_e, hist_index_v
 end
 
+function find_hist_index(mc_state, results, delta_en_hist, delta_v_hist, bc::RectangularBC)
+    hist_index_e = floor(Int, (mc_state.en_tot - results.en_min) / delta_en_hist) + 1
+    hist_index_v =
+        floor(
+            Int,
+            (
+                mc_state.config.boundary_condition.box_length^2 *
+                mc_state.config.boundary_condition.box_height - results.v_min
+            ) / delta_v_hist,
+        ) + 1
+
+    hist_index_e = find_hist_index(hist_index_e, results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v, results.n_bin)
+
+    return hist_index_e, hist_index_v
+end
+
+function find_hist_index(mc_state, results, delta_en_hist, delta_v_hist, bc::RhombicBC)
+    hist_index_e = floor(Int, (mc_state.en_tot - results.en_min) / delta_en_hist) + 1
+    hist_index_v =
+        floor(
+            Int,
+            (
+                mc_state.config.boundary_condition.box_length^2 *
+                3mc_state.config.boundary_condition.box_height^0.5 / 2 - results.v_min
+            ) / delta_v_hist,
+        ) + 1
+
+    hist_index_e = find_hist_index(hist_index_e, results.n_bin)
+    hist_index_v = find_hist_index(hist_index_v, results.n_bin)
+
+    return hist_index_e, hist_index_v
+end
 
 """
     initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::SphericalBC) where N <: Number
     initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::CubicBC; debug = false) where N <: Number
     initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::RhombicBC) where N <: Number
+    initialise_histograms!(mc_params::MCParams, results::Output, e_bounds::AbstractArray{N, 1}, bc::RectangularBC) where N <: Number
 Function to create the energy and radial histograms at the end of equilibration. The min/max energy values are extracted from `e_bounds` and (with 2% either side additionally) used to determine the energy grating for the histogram (`delta_en_hist`). For spherical boundary conditions the radius squared is used to define a diameter squared since the greatest possible atomic distance is `2*r2` and `distance**2` is used throughout the simulation. Histogram contains overflow bins, rdf has 5 times the number of bins as `en_histogram`.
 
 Returns `delta_en_hist`, `delta_r2`
 """
-function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::AbstractArray{N, 1},bc::SphericalBC) where N <: Number
+function initialise_histograms!(
+    mc_params::MCParams, results::Output, e_bounds::AbstractArray{N,1}, bc::SphericalBC
+) where {N<:Number}
 
     # incl 6% leeway
 
@@ -83,63 +143,103 @@ function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::Ab
     results.en_max = e_bounds[2] #+ abs(0.02*e_bounds[2])
 
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
-    results.delta_r2 = 4*bc.radius2/results.n_bin/5 
+    results.delta_r2 = 4 * bc.radius2 / results.n_bin / 5
 
-    for i_traj in 1:mc_params.n_traj       
-
-        push!(results.en_histogram,zeros(results.n_bin + 2))
-        push!(results.rdf,zeros(results.n_bin*5))
-
+    for i_traj in 1:(mc_params.n_traj)
+        push!(results.en_histogram, zeros(results.n_bin + 2))
+        push!(results.rdf, zeros(results.n_bin * 5))
     end
     return results
 end
-function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::AbstractArray{N, 1},bc::CubicBC; debug = false) where N <: Number
+function initialise_histograms!(
+    mc_params::MCParams,
+    results::Output,
+    e_bounds::AbstractArray{N,1},
+    bc::CubicBC;
+    debug=false,
+) where {N<:Number}
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
     results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
 
-    results.v_min = bc.box_length^3*0.8
-    results.v_max = bc.box_length^3*2.0
+    results.v_min = bc.box_length^3 * 0.8
+    results.v_max = bc.box_length^3 * 2.0
 
-    if debug println(results.v_min) end
-    if debug println(results.v_max) end
+    if debug
+        println(results.v_min)
+    end
+    if debug
+        println(results.v_max)
+    end
 
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
 
-    results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
+    results.delta_v_hist = (results.v_max - results.v_min) / results.n_bin
 
-    for i_traj in 1:mc_params.n_traj       
+    results.delta_r2 = 3 / 4 * bc.box_length^2 / results.n_bin / 5
 
-        push!(results.en_histogram,zeros(results.n_bin + 2))
-        push!(results.ev_histogram,zeros(results.n_bin + 2,results.n_bin + 2))
-        push!(results.rdf,zeros(results.n_bin*5))
-
+    for i_traj in 1:(mc_params.n_traj)
+        push!(results.en_histogram, zeros(results.n_bin + 2))
+        push!(results.ev_histogram, zeros(results.n_bin + 2, results.n_bin + 2))
+        push!(results.rdf, zeros(results.n_bin * 5))
+        push!(results.en_histogram, zeros(results.n_bin + 2))
     end
     return results
 end
-function initialise_histograms!(mc_params::MCParams,results::Output,e_bounds::AbstractArray{N, 1},bc::RhombicBC) where N <: Number
+function initialise_histograms!(
+    mc_params::MCParams, results::Output, e_bounds::AbstractArray{N,1}, bc::RhombicBC
+) where {N<:Number}
 
     # incl 6% leeway
     results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
     results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
 
-    results.v_min = bc.box_length^2 * bc.box_height * 3^0.5/2 * 0.8
-    results.v_max = bc.box_length^2 * bc.box_height * 3^0.5/2 * 2.0
+    results.v_min = bc.box_length^2 * bc.box_height * 3^0.5 / 2 * 0.8
+    results.v_max = bc.box_length^2 * bc.box_height * 3^0.5 / 2 * 2.0
 
     println(results.v_min)
     println(results.v_max)
 
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
 
-    results.delta_v_hist = (results.v_max-results.v_min)/results.n_bin
+    results.delta_v_hist = (results.v_max - results.v_min) / results.n_bin
 
-    for i_traj in 1:mc_params.n_traj       
+    results.delta_r2 =
+        (3 / 8 * bc.box_length^2 + 1 / 4 * bc.box_height^2) / results.n_bin / 5
 
-        push!(results.en_histogram,zeros(results.n_bin + 2))
-        push!(results.ev_histogram,zeros(results.n_bin + 2,results.n_bin + 2))
-        push!(results.rdf,zeros(results.n_bin*5))
+    for i_traj in 1:(mc_params.n_traj)
+        push!(results.en_histogram, zeros(results.n_bin + 2))
+        push!(results.ev_histogram, zeros(results.n_bin + 2, results.n_bin + 2))
+        push!(results.rdf, zeros(results.n_bin * 5))
+        push!(results.lh_histogram, zeros(results.n_bin + 2))
+    end
+    return results
+end
+function initialise_histograms!(mc_params, results, e_bounds, bc::RectangularBC)
 
+    # incl 6% leeway
+    results.en_min = e_bounds[1] #- abs(0.03*e_bounds[1])
+    results.en_max = e_bounds[2] #+ abs(0.03*e_bounds[2])
+
+    results.v_min = bc.box_length^2 * bc.box_height * 0.8
+    results.v_max = bc.box_length^2 * bc.box_height * 2.0
+
+    println(results.v_min)
+    println(results.v_max)
+
+    results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
+
+    results.delta_v_hist = (results.v_max - results.v_min) / results.n_bin
+
+    results.delta_r2 =
+        (1 / 2 * bc.box_length^2 + 1 / 4 * bc.box_height^2) / results.n_bin / 5
+
+    for i_traj in 1:(mc_params.n_traj)
+        push!(results.en_histogram, zeros(results.n_bin + 2))
+        push!(results.ev_histogram, zeros(results.n_bin + 2, results.n_bin + 2))
+        push!(results.rdf, zeros(results.n_bin * 5))
+        push!(results.lh_histogram, zeros(results.n_bin + 2))
     end
     return results
 end
@@ -150,102 +250,173 @@ end
 Self explanatory name, updates the energy histograms in `results` using the current `mc_states.en_tot`
 
 """
-function update_histograms!(mc_states::MCStateVector,results::Output,delta_en_hist::Number)
-     for i_traj in eachindex(mc_states)
-        @inbounds histindex = find_hist_index(mc_states[i_traj],results,delta_en_hist)
-        results.en_histogram[i_traj][histindex] +=1
+function update_histograms!(
+    mc_states::MCStateVector, results::Output, delta_en_hist::Number
+)
+    for i_traj in eachindex(mc_states)
+        histindex = find_hist_index(mc_states[i_traj], results, delta_en_hist)
+        results.en_histogram[i_traj][histindex] += 1
     end
-
 end
 
-function update_histograms!(mc_states::MCStateVector,results::Output,delta_en_hist::Number,delta_v_hist::Number)
-     for i_traj in eachindex(mc_states)
-        @inbounds histindex_e,histindex_v = find_hist_index(mc_states[i_traj],results,delta_en_hist,delta_v_hist)
-        results.ev_histogram[i_traj][histindex_e,histindex_v] +=1
+function update_histograms!(
+    mc_states::MCStateVector, results::Output, delta_en_hist::Number, delta_v_hist::Number
+)
+    for i_traj in eachindex(mc_states)
+        histindex_e, histindex_v = find_hist_index(
+            mc_states[i_traj],
+            results,
+            delta_en_hist,
+            delta_v_hist,
+            mc_states[i_traj].config.boundary_condition,
+        )
+        results.ev_histogram[i_traj][histindex_e, histindex_v] += 1
     end
-
 end
 
-rdf_index(r2val,delta_r2) = floor(Int,(r2val/delta_r2))
-      
+rdf_index(r2val, delta_r2) = floor(Int, (r2val / delta_r2))
+
+function update_lh_histograms!(mc_states, results)
+    for i_traj in eachindex(mc_states)
+        lh_ratio =
+            mc_states[i_traj].config.boundary_condition.box_length /
+            mc_states[i_traj].config.boundary_condition.box_height
+        if lh_ratio >= 0.5 && lh_ratio < 1.5
+            lh_index = floor(Int, (lh_ratio - 0.5) * 100) + 1
+        end
+        results.lh_histogram[i_traj][lh_index] += 1
+    end
+end
+
 """
     update_rdf!(mc_states::MCStateVector, results::Output, delta_r2::Number)
-Self explanatory name, iterates over `mc_states` and adds to the appropriate `results.rdf` histogram. Type stable by the initialise function specifying a vector of integers.  
+Self explanatory name, iterates over `mc_states` and adds to the appropriate `results.rdf` histogram. Type stable by the initialise function specifying a vector of integers.
 
 """
-function update_rdf!(mc_states::MCStateVector,results::Output,delta_r2::Number)
+function update_rdf!(mc_states::MCStateVector, results::Output, delta_r2::Number)
     for j_traj in eachindex(mc_states)
-        #for element in mc_states[j_traj].dist2_mat 
-        for i in 1:length(mc_states[1].config.pos)
+        #for element in mc_states[j_traj].dist2_mat
+        for i in 1:length(mc_states[1].config)
             for k in 1:i
-#            println(delta_r2)
-#            println(mc_states[j_traj].dist2_mat[k_traj])
-                idx=rdf_index(mc_states[j_traj].dist2_mat[i,k],delta_r2)
-                if idx != 0 && idx <= results.n_bin*5
+                #            println(delta_r2)
+                #            println(mc_states[j_traj].dist2_mat[k_traj])
+                idx = rdf_index(mc_states[j_traj].dist2_mat[i, k], delta_r2)
+                if idx != 0 && idx <= results.n_bin * 5
                     #println(idx)
-                    results.rdf[j_traj][idx] +=1
+                    results.rdf[j_traj][idx] += 1
                 end
             end
         end
     end
-    
 end
 """
     sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::AbstractEnsemble, save_index::Int, results::Output, rdfsave::Bool)
     sampling_step!(mc_params::MCParams, mc_states::MCStateVector, ensemble::NPT, save_index::Int, results::Output, rdfsave::Bool)
 Function performed at the end of an [`mc_cycle!`](@ref Main.ParallelTemperingMonteCarlo.MCRun.mc_cycle!) after equilibration. Updates the `E,E**2` totals for each `mc_state`, updates the energy and radial histograms and then returns the modified `mc_states` and `results`.
 
-N.B. we have now included the `delta_en`, `delta_v` and `delta_r2` values in the `results` struct to allow for more general methods such as this.  
+N.B. we have now included the `delta_en`, `delta_v` and `delta_r2` values in the `results` struct to allow for more general methods such as this.
 
 Second method does not perform the rdf calculation. This is designed to improve the speed of sampling where the rdf is not required.
 
 
 TO IMPLEMENT:
-This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted. 
+This function benchmarked at 7.84μs, the update RDF step takes 7.545μs of this. Removing the rdf information should become a toggle-able option in case faster results with less information are wanted.
 """
-function sampling_step!(mc_params::MCParams,mc_states::MCStateVector,ensemble::AbstractEnsemble,save_index::Int,results::Output,rdfsave::Bool)
+function sampling_step!(
+    mc_params::MCParams,
+    mc_states::MCStateVector,
+    ensemble::AbstractEnsemble,
+    save_index::Int,
+    results::Output,
+    rdfsave::Bool,
+    idx,
+)
     if rem(save_index, mc_params.mc_sample) == 0
+        update_energy_tot(mc_states, ensemble)
 
-        update_energy_tot(mc_states,ensemble)
-        
-        update_histograms!(mc_states,results,results.delta_en_hist)
+        update_histograms!(mc_states, results, results.delta_en_hist)
         if rdfsave == true
-            update_rdf!(mc_states,results,results.delta_r2)
+            if rem(idx, 1000) == 0
+                update_rdf!(mc_states, results, results.delta_r2)
+            end
         end
-    end 
+    end
 end
-function sampling_step!(mc_params::MCParams,mc_states::MCStateVector,ensemble::NPT,save_index::Int,results::Output,rdfsave::Bool)
+function sampling_step!(
+    mc_params::MCParams,
+    mc_states::MCStateVector,
+    ensemble::NPT,
+    save_index::Int,
+    results::Output,
+    rdfsave::Bool,
+    idx,
+)
     if rem(save_index, mc_params.mc_sample) == 0
+        update_energy_tot(mc_states, ensemble)
 
-        update_energy_tot(mc_states,ensemble)
-        
-        update_histograms!(mc_states,results,results.delta_en_hist,results.delta_v_hist)
-        #update_rdf!(mc_states,results,results.delta_r2)
-    end 
+        update_histograms!(mc_states, results, results.delta_en_hist, results.delta_v_hist)
+        if rdfsave == true
+            if rem(idx, 1000) == 0
+                update_rdf!(mc_states, results, results.delta_r2)
+            end
+        end
+
+        #update_lh_histograms!(mc_states,results)
+    end
 end
 
 """
     finalise_results(mc_states::MCStateVector, mc_params::MCParams, results::Output)
-Function designed to take a complete MC simulation and calculate the averages. 
+Function designed to take a complete MC simulation and calculate the averages.
 """
-function finalise_results(mc_states::MCStateVector,mc_params::MCParams,results::Output)
+function finalise_results(mc_states::MCStateVector, mc_params::MCParams, results::Output)
 
     #Energy average
     n_sample = mc_params.mc_cycles / mc_params.mc_sample
-    en_avg = [mc_states[i_traj].ham[1] / n_sample  for i_traj in 1:mc_params.n_traj]
-    en2_avg = [mc_states[i_traj].ham[2] / n_sample  for i_traj in 1:mc_params.n_traj]
+    en_avg = [mc_states[i_traj].ham[1] / n_sample for i_traj in 1:(mc_params.n_traj)]
+    en2_avg = [mc_states[i_traj].ham[2] / n_sample for i_traj in 1:(mc_params.n_traj)]
     results.en_avg = en_avg
     #heat capacity
-    results.heat_cap = [(en2_avg[i]-en_avg[i]^2) * mc_states[i].beta^2 for i in 1:mc_params.n_traj]
-    #count stats 
-    results.count_stat_atom = [mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for i_traj in 1:mc_params.n_traj]
-    results.count_stat_exc = [mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for i_traj in 1:mc_params.n_traj]
+    results.heat_cap = [
+        (en2_avg[i] - en_avg[i]^2) * mc_states[i].beta^2 for i in 1:(mc_params.n_traj)
+    ]
+    #count stats
+    results.count_stat_atom = [
+        mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for
+        i_traj in 1:(mc_params.n_traj)
+    ]
+    results.count_stat_exc = [
+        mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for
+        i_traj in 1:(mc_params.n_traj)
+    ]
+
+    return results
+end
+
+function finalise_results_convergence(i_check, mc_states, mc_params, results)
+
+    #Energy average
+    n_sample = i_check / mc_params.mc_sample
+    en_avg = [mc_states[i_traj].ham[1] / n_sample for i_traj in 1:(mc_params.n_traj)]
+    en2_avg = [mc_states[i_traj].ham[2] / n_sample for i_traj in 1:(mc_params.n_traj)]
+    results.en_avg = en_avg
+    #heat capacity
+    results.heat_cap = [
+        (en2_avg[i] - en_avg[i]^2) * mc_states[i].beta^2 for i in 1:(mc_params.n_traj)
+    ]
+    #count stats
+    results.count_stat_atom = [
+        mc_states[i_traj].count_atom[1] / (mc_params.n_atoms * mc_params.mc_cycles) for
+        i_traj in 1:(mc_params.n_traj)
+    ]
+    results.count_stat_exc = [
+        mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for
+        i_traj in 1:(mc_params.n_traj)
+    ]
 
     println(results.heat_cap)
 
     return results
-
-
 end
 
 end
