@@ -98,7 +98,7 @@ function multihistogram_NVT(
     conv_threshold::Number,
     readfile::Bool;
     max_iter=1000,
-    show_progress=true,
+    show_progress=isinteractive(),
 )
     if readfile == false
         tempnumber, tempnumber_result = temp_trajectories(temp)

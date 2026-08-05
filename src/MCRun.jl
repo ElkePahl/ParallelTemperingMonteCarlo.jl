@@ -281,7 +281,7 @@ function equilibration_cycle!(
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
-    progress = Progress(mc_params.eq_cycles; desc="Equilibration")
+    progress = Progress(mc_params.eq_cycles; desc="Equilibration", enabled=isinteractive())
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         next!(progress)
@@ -398,7 +398,10 @@ function ptmc_run!(
     end
 
     # Main loop
-    progress = Progress(length(start_counter:(mc_params.mc_cycles)); desc="Main loop")
+    progress = Progress(
+        length(start_counter:(mc_params.mc_cycles));
+        desc="Main loop", enabled=isinteractive(),
+    )
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,

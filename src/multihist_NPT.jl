@@ -116,7 +116,7 @@ function multihistogram_NPT(
     results::Output,
     conv_threshold,
     readfile::Bool;
-    show_progress=true,
+    show_progress=isinteractive(),
     maxiter=1000,
 )
     if readfile == false

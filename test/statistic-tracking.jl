@@ -1,6 +1,4 @@
-using ParallelTemperingMonteCarlo, Test, Arrow
-
-using Random, DataFrames
+using ParallelTemperingMonteCarlo, Test, Arrow, Random, DataFrames
 
 function run_full_computation(; flush_interval)
     Random.seed!(1234)
