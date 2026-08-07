@@ -145,7 +145,8 @@ Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accor
 `move_strat`.
 """
 function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats) where {N,E}
-    Threads.@threads for state in mc_states
+    Threads.@threads for trajectory_id in eachindex(mc_states)
+        state = mc_states[trajectory_id]
         n_accepted = 0
 
         for i_step in 1:n_steps
@@ -156,16 +157,12 @@ function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats)
         state.acceptance = n_accepted / n_steps
         state.last_stats = (;
             cycle=state.step,
+            trajectory_id,
             temperature=state.temp,
             hamiltonian=hamiltonian_value(state, state.ensemble),
             total_energy=state.en_tot,
             acceptance=state.acceptance,
             report_stats(state, state.ensemble)...,
-            count_atom=state.count_atom[1],
-            count_vol=state.count_vol[1],
-            count_vol_xy=state.count_vol_xy[1],
-            count_vol_z=state.count_vol_z[1],
-            count_exc=state.count_exc[1],
         )
     end
     return mc_states
