@@ -20,8 +20,6 @@ using DelimitedFiles
 script_folder = @__DIR__
 data_path = joinpath(script_folder, "data")
 
-#include(joinpath(script_folder, "neighbour_ptmc_functions.jl"))
-
 Random.seed!(1234)
 
 println("Julia threads: ", Threads.nthreads())
@@ -83,7 +81,6 @@ V = [[0.0001,1,1,11.338],[0.0001,-1,2,11.338],[0.003,-1,1,11.338],[0.003,-1,2,11
 
 T = [111,110,100]
 
-angularsymmvec = AngularType3{Float64}[]
 #-------------------------------------------#
 #-----------Including scaling data----------#
 #-------------------------------------------#
@@ -117,12 +114,6 @@ for element in V
     end
 end
 end
-#---------------------------------------------------#
-#------concatenating radial and angular values------#
-#---------------------------------------------------#
-
-totalsymmvec = vcat(radsymmvec,angularsymmvec)
-
 
 #--------------------------------------------------#
 #-----------Initialising the nnp weights-----------#
@@ -142,7 +133,7 @@ nnp = NeuralNetworkPotential(
     weights,
 )
 
-runnerpotential = RuNNerPotential(
+runnerpotential = RuNNerPotentialWithNeighbourhood(
     nnp,
     radsymmvec,
     angularsymmvec,
@@ -239,7 +230,7 @@ println("Production cycles: ", mc_params.mc_cycles)
 println("Equilibration cycles: ", mc_params.eq_cycles)
 println("Julia threads: ", Threads.nthreads())
 
-states, results = ptmc_run_neigh!(
+states, results = ptmc_run!(
     mc_params,
     temp,
     start_config,
@@ -252,6 +243,6 @@ states, results = ptmc_run_neigh!(
 )
 
 println()
-println("Neighbour PTMCMC smoke test completed successfully")
+println("Neighbour potential PTMCMC smoke test completed successfully")
 println("Number of returned states: ", length(states))
 println("Final energies: ", [state.en_tot for state in states])
