@@ -933,6 +933,34 @@ function angular_symmetry_calculation!(
     return g_vector
 end
 
+"""
+    angular_symmetry_calculation_neigh!(
+        g_vector,
+        atomindex,
+        neighbour_indices,
+        newposition,
+        positions,
+        dist2_mat,
+        new_dist2_vector,
+        f_matrix,
+        new_f_vector,
+        symmetry_function,
+    )
+
+Neighbour-restricted counterpart of [`angular_symmetry_calculation!`](@ref).
+
+Updates the angular symmetry-function values affected by a proposed move of
+`atomindex`. Only atom pairs drawn from `neighbour_indices` are considered,
+reducing the angular update to triplets involving the moved atom and two atoms
+within its old or new neighbourhood.
+
+For symmetry functions with `type_vec == 111`, each unique neighbour pair is
+examined. If the neighbour-neighbour cutoff value is nonzero, the corresponding
+old and proposed angular contributions are updated using
+[`calc_new_symmetry_value!`](@ref).
+
+Returns the updated `g_vector`.
+"""
 function angular_symmetry_calculation_neigh!(
     g_vector,
     atomindex,
@@ -983,17 +1011,6 @@ function angular_symmetry_calculation_neigh!(
 
     return g_vector
 end
-"""
-    total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined [`radial_symmetry_calculation!`](@ref) and [`angular_symmetry_calculation!`](@ref) functions.
-"""
-# function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-#     for g_index in eachindex(total_symmetry_vector)
-#         g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
-#     end
-
-#     return g_matrix
-# end
 
 """
     total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
