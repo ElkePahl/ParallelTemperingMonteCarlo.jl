@@ -3,16 +3,12 @@ using DataFrames
 using ParallelTemperingMonteCarlo
 
 @testset "MultiHistogram" begin
-    trajectory_id = repeat(1:3, inner=4)
-    temperature = repeat([300.0, 400.0, 500.0], inner=4)
+    trajectory_id = repeat(1:3; inner=4)
+    temperature = repeat([300.0, 400.0, 500.0]; inner=4)
     cycle = repeat(1:4, 3)
-    hamiltonian = [
-        -10.0, -9.0, -8.0, -7.0,
-        -8.0, -6.0, -5.0, -4.0,
-        -5.0, -3.0, -2.0, -1.0,
-    ]
+    hamiltonian = [-10.0, -9.0, -8.0, -7.0, -8.0, -6.0, -5.0, -4.0, -5.0, -3.0, -2.0, -1.0]
 
-    df = DataFrame(
+    df = DataFrame(;
         trajectory_id=trajectory_id,
         temperature=temperature,
         cycle=cycle,
@@ -62,21 +58,13 @@ using ParallelTemperingMonteCarlo
     end
 
     @testset "input validation" begin
-        @test_throws DimensionMismatch MultiHistogram(
-            [1, 2], [300.0], [1, 2], [-1.0, -2.0]
-        )
+        @test_throws DimensionMismatch MultiHistogram([1, 2], [300.0], [1, 2], [-1.0, -2.0])
 
-        @test_throws ArgumentError MultiHistogram(
-            df; num_bins=2
-        )
+        @test_throws ArgumentError MultiHistogram(df; num_bins=2)
 
-        @test_throws ArgumentError MultiHistogram(
-            df; skip_ratio=-0.01
-        )
+        @test_throws ArgumentError MultiHistogram(df; skip_ratio=-0.01)
 
-        @test_throws ArgumentError MultiHistogram(
-            df; skip_ratio=1
-        )
+        @test_throws ArgumentError MultiHistogram(df; skip_ratio=1)
 
         inconsistent_temperature = copy(df.temperature)
         inconsistent_temperature[2] = 301.0
@@ -109,12 +97,7 @@ using ParallelTemperingMonteCarlo
         temperature2 = fill(300.0, 4)
 
         @test_throws ArgumentError MultiHistogram(
-            trajectory2,
-            temperature2,
-            cycle2,
-            fill(1.0, 4);
-            num_bins=4,
-            skip_ratio=0,
+            trajectory2, temperature2, cycle2, fill(1.0, 4); num_bins=4, skip_ratio=0
         )
 
         @test_throws ArgumentError MultiHistogram(
@@ -129,22 +112,29 @@ using ParallelTemperingMonteCarlo
 end
 
 @testset "multihistogram iteration" begin
-    trajectory_id = repeat(1:3, inner=5)
-    temperature = repeat([300.0, 400.0, 500.0], inner=5)
+    trajectory_id = repeat(1:3; inner=5)
+    temperature = repeat([300.0, 400.0, 500.0]; inner=5)
     cycle = repeat(1:5, 3)
     hamiltonian = [
-        -10.0, -9.0, -8.0, -7.0, -6.0,
-        -8.0, -7.0, -6.0, -5.0, -4.0,
-        -6.0, -5.0, -4.0, -3.0, -2.0,
+        -10.0,
+        -9.0,
+        -8.0,
+        -7.0,
+        -6.0,
+        -8.0,
+        -7.0,
+        -6.0,
+        -5.0,
+        -4.0,
+        -6.0,
+        -5.0,
+        -4.0,
+        -3.0,
+        -2.0,
     ]
 
     mh = MultiHistogram(
-        trajectory_id,
-        temperature,
-        cycle,
-        hamiltonian;
-        num_bins=8,
-        skip_ratio=0,
+        trajectory_id, temperature, cycle, hamiltonian; num_bins=8, skip_ratio=0
     )
 
     @testset "log denominator update" begin
@@ -152,9 +142,7 @@ end
         free_energy = zeros(num_trajectories(mh))
 
         result = MultiHistogramAnalysis.update_log_denominator!(
-            log_denominator,
-            mh,
-            free_energy,
+            log_denominator, mh, free_energy
         )
 
         @test result === log_denominator
@@ -175,16 +163,37 @@ end
 end
 
 @testset "thermodynamic_properties" begin
-    trajectory_id = repeat(1:3, inner=8)
-    temperature = repeat([300.0, 400.0, 500.0], inner=8)
+    trajectory_id = repeat(1:3; inner=8)
+    temperature = repeat([300.0, 400.0, 500.0]; inner=8)
     cycle = repeat(1:8, 3)
     hamiltonian = [
-        -10.0, -9.0, -8.0, -7.0, -6.0, -5.0, -4.0, -3.0,
-        -9.0, -8.0, -7.0, -6.0, -5.0, -4.0, -3.0, -2.0,
-        -8.0, -7.0, -6.0, -5.0, -4.0, -3.0, -2.0, -1.0,
+        -10.0,
+        -9.0,
+        -8.0,
+        -7.0,
+        -6.0,
+        -5.0,
+        -4.0,
+        -3.0,
+        -9.0,
+        -8.0,
+        -7.0,
+        -6.0,
+        -5.0,
+        -4.0,
+        -3.0,
+        -2.0,
+        -8.0,
+        -7.0,
+        -6.0,
+        -5.0,
+        -4.0,
+        -3.0,
+        -2.0,
+        -1.0,
     ]
 
-    df = DataFrame(
+    df = DataFrame(;
         trajectory_id=trajectory_id,
         temperature=temperature,
         cycle=cycle,
@@ -193,21 +202,12 @@ end
 
     @testset "returns expected columns and sizes" begin
         result = thermodynamic_properties(
-            df;
-            num_bins=12,
-            skip_ratio=0,
-            points=7,
-            tol=1e-10,
-            maxiter=5000,
+            df; num_bins=12, skip_ratio=0, points=7, tol=1e-10, maxiter=5000
         )
 
         @test result isa DataFrame
         @test names(result) == [
-            "temperature",
-            "heat_capacity",
-            "hamiltonian",
-            "hamiltonian_squared",
-            "entropy",
+            "temperature", "heat_capacity", "hamiltonian", "hamiltonian_squared", "entropy"
         ]
         @test nrow(result) == 7
         @test all(isfinite, result.temperature)
@@ -223,20 +223,10 @@ end
         mh = MultiHistogram(df; num_bins=12, skip_ratio=0)
 
         from_df = thermodynamic_properties(
-            df;
-            num_bins=12,
-            skip_ratio=0,
-            points=7,
-            tol=1e-10,
-            maxiter=5000,
+            df; num_bins=12, skip_ratio=0, points=7, tol=1e-10, maxiter=5000
         )
 
-        from_mh = thermodynamic_properties(
-            mh;
-            points=7,
-            tol=1e-10,
-            maxiter=5000,
-        )
+        from_mh = thermodynamic_properties(mh; points=7, tol=1e-10, maxiter=5000)
 
         @test from_df.temperature ≈ from_mh.temperature
         @test from_df.heat_capacity ≈ from_mh.heat_capacity
@@ -248,8 +238,6 @@ end
     @testset "validation" begin
         mh = MultiHistogram(df; num_bins=8, skip_ratio=0)
 
-        @test_throws ArgumentError thermodynamic_properties(
-            mh; points=0
-        )
+        @test_throws ArgumentError thermodynamic_properties(mh; points=0)
     end
 end
