@@ -1,55 +1,51 @@
-using ParallelTemperingMonteCarlo
-using Random
+# Melting of argon under constant stress
+# ======================================
+#= This is a calculation for the high-pressure melting of crystalline argon, using a
+rectangular simulation box, constant pressure, and constant tensorial stress =#
 
-#-------------------------------------------------------#
-#-----------------------MC Params-----------------------#
-#-------------------------------------------------------#
-Random.seed!(1234)
+using ParallelTemperingMonteCarlo
+using LaTeXStrings
+using Random 
+using DelimitedFiles
+using BenchmarkTools
+# ## Setting up the model 
+
+# for testing we use a set random seed
+
+#Random.seed!(1234)
 
 n_atoms = 32
-pressure = 101325
 AtoBohr = 1.8897261259077824
 
 # temperature grid
-ti = 10
-tf = 25
+
+ti = 4000
+tf = 5000
 n_traj = 24
 temp = TempGrid{n_traj}(ti, tf)
 
-# MC simulation details
-mc_cycles = 1_000_000 # default 20% equilibration cycles on top
-mc_sample = 1        # sample every mc_sample MC cycles
-displ_atom = 0.05    # in Angstrom
+# MC Simulation details
+
+mc_cycles = 40000
+displ_atom = 0.05 # in Angstrom
+mc_sample = 1
 n_adjust = 100
 max_displ_atom = [0.1 * √(displ_atom * temp.t_grid[i]) for i in 1:n_traj]
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
 
-#-------------------------------------------------------------#
-#----------------------Potential------------------------------#
-#-------------------------------------------------------------#
+# Lennard Jones coefficients
 
-#c = [-1.81754233e-01, -2.32682279e+02,  7.49842579e+03, -1.56977364e+04, -6.15601605e+05, 3.50732411e+06]
 c = [
-    -10.5097942564988,
-    989.725135614556,
-    -101383.865938807,
-    3918846.12841668,
-    -56234083.4334278,
-    288738837.441765,
+    −123.635101619510,
+    21262.8963716972,
+    −3239750.64086661,
+    189367623.844691,
+    −4304257347.72069,
+    35315085074.3605,
 ]
-#c = [-123.63510161951,21262.8963716972,-3239750.64086661,189367623.844691,-4304257347.72069,35314085074.72069]
+
 pot = ELJPotentialEven{6}(c)
-
-#-------------------------------------------------------------#
-#------------------------Move Strategy------------------------#
-#-------------------------------------------------------------#
-separated_volume = false
-ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^2, separated_volume)
-
-#-------------------------------------------------------------#
-#-----------------------Starting Config-----------------------#
-#-------------------------------------------------------------#
-# Face centred cubic structure.
+separated_volume = true
 pos_ne32 = [
     [-4.3837, -4.3837, -4.3837],
     [-2.1918, -2.1918, -4.3837],
@@ -85,14 +81,28 @@ pos_ne32 = [
     [0.0000, 2.1918, 2.1918],
 ]
 
-positions = pos_ne32 * AtoBohr
-box_length = 8.7674 * AtoBohr
-boundary_condition = CubicBC(box_length)
+positions = pos_ne32 * AtoBohr * 3.7782/3.0985
+box_length = 8.7674 * 3.7782/3.0985 * AtoBohr
+boundary_condition = RectangularBC(box_length, box_length)
 
 start_config = Config(positions, boundary_condition)
 
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
+pascal_pressure = 50e9
+pressure = pascal_pressure * 3.3989e-14
+relative_stress = 0
+stress = relative_stress * pressure
+ensemble = NPT(
+    n_atoms, 
+    pressure,
+    separated_volume,
+    [-stress/2, stress]
+    )
 mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
 T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+println(string("Melting point is at ", T[argmax(Cp)], "K, for stress = ", relative_stress))
+
+writedlm("T.csv", T, ',')
+writedlm("Cp.csv", Cp, ',')

@@ -1,4 +1,4 @@
-# Example 1: Melting a 13-Atoms Neon Cluster 
+# Example 1: Melting a 13-Atom Neon Cluster 
 # ==========================================
 
 #= This is an example calculation for finding the melting temperature of a 
@@ -98,7 +98,7 @@ n_adjust = 100;
 
 # Next we include parameters that characterise how often the configuration is saved:
 save_configuration = true
-save_frequency = 20_000
+save_frequency = 0
 file_name = "Configurations"
 
 # For neatness, all parameters are collected in a `MCParams` struct:

@@ -57,56 +57,6 @@ end
 Swaps `mc_state`s and ensemble variables in case of accepted volume move for NPT ensemble.
 Implemented for [`CubicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.CubicBC) and [`RhombicBC`](@ref Main.ParallelTemperingMonteCarlo.BoundaryConditions.RhombicBC)
     """
-#=
-function swap_config_v!(
-    mc_state::MCState,
-    _,
-    bc::CubicBC,
-    trial_config::Config,
-    new_dist2_mat,
-    en_vec_new,
-    new_en_tot,
-)
-    mc_state.config = Config(trial_config, trial_config.boundary_condition)
-    mc_state.dist2_mat .= new_dist2_mat
-    mc_state.potential_variables.en_atom_vec .= en_vec_new
-
-    mc_state.en_tot = new_en_tot
-    mc_state.count_vol[1] += 1
-    mc_state.count_vol[2] += 1
-
-end
-
-function swap_config_v!(
-    mc_state::MCState,
-    _,
-    bc::RhombicBC,
-    trial_config::Config,
-    new_dist2_mat,
-    en_vec_new,
-    new_en_tot,
-)
-    mc_state.config = Config(trial_config, trial_config.boundary_condition)
-
-    mc_state.dist2_mat .= new_dist2_mat
-    mc_state.potential_variables.en_atom_vec .= en_vec_new
-    mc_state.potential_variables.en_atom_vec .= en_vec_new
-
-    mc_state.en_tot = new_en_tot
-    if mc_state.ensemble_variables.xy_or_z==0
-        mc_state.count_vol[1] += 1
-        mc_state.count_vol[2] += 1
-    elseif mc_state.ensemble_variables.xy_or_z==1
-        mc_state.count_vol_xy[1] += 1
-        mc_state.count_vol_xy[2] += 1
-    else
-        mc_state.count_vol_z[1] += 1
-        mc_state.count_vol_z[2] += 1
-    end
-
-end
-=#
-
 function swap_config_v!(
     mc_state::MCState,
     potential_variables::DimerPotentialVariables,

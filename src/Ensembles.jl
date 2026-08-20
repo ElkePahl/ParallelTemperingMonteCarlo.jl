@@ -16,7 +16,7 @@ export MoveStrategy
     AbstractEnsemble
 Abstract type for ensemble:
 -   [`NVT`](@ref): canonical ensemble
--   [`NPT`](@ref): isothermal,isobaric ensemble
+-   [`NPT`](@ref): isothermal,isobaric ensemble, with option to include isostress.
 
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
@@ -66,8 +66,11 @@ Isothermal, isobaric ensemble.
     -   `n_atoms::Int64`: number of atoms
     -   `n_atom_moves::Int64`: number of atom moves; defaults to `n_atoms`
     -   `n_volume_moves::Int64`: number of volume moves; defaults to 1
-    -   `n_swap_moves::Int64`: number of atom exchanges made; defaults to 0
+    -   `n_atom_swaps::Int64`: number of atom exchanges made; defaults to 0
     -   `pressure::Float64`: the fixed pressure of the system
+    -   `stress_tensor::SVector{3, Float64}`: the fixed internal stress of the system. First entry
+    corresponds to the stress in the x and y directions, assumed the same, second entry is z.
+    -   `separated_volume::Bool`: allows independent volume changes in different directions.
 """
 struct NPT <: AbstractEnsemble
     n_atoms::Int64
@@ -76,10 +79,11 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
     separated_volume::Bool
+    stress_tensor::SVector{2, Float64}
 end
 
-function NPT(n_atoms, pressure, separated_volume)
-    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume)
+function NPT(n_atoms, pressure, separated_volume, stress_tensor=[0, 0])
+    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress_tensor)
 end
 
 """

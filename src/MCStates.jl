@@ -11,7 +11,23 @@ using ..CustomTypes
 export MCState, max_length#, NNPState
 
 """
-    MCState(temp::Number, beta::Number, config::Config, dist2_mat::Matrix{Number}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.boundary_condition), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}
+    MCState(
+    temp::Number, 
+    beta::Number, 
+    config::Config, 
+    dist2_mat::Matrix{Number}, 
+    new_dist2_vec::VorS, 
+    new_en::Number, 
+    en_tot::Number, 
+    potentialvariables::AbstractPotentialVariables, 
+    ensemble_variables::AbstractEnsembleVariables; 
+    max_displ = [0.1, 0.1, 1.0], 
+    max_boxlength = max_length(config.boundary_condition), 
+    count_atom = [0, 0], 
+    count_vol = [0, 0],
+    count_exc = [0, 0]
+) where {T, N, BC}
+ 
     MCState(temp::Number, beta::Number, config::Config, ensemble, pot; kwargs...)
 Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
 
@@ -87,7 +103,24 @@ function max_height(bc::RectangularBC)
 end
 
 """
-    (MCState(temp::Number, beta::Number, config::Config, dist2_mat::Matrix{Z}, new_dist2_vec::VorS, new_en::Number, en_tot::Number, potentialvariables::AbstractPotentialVariables, ensemble_variables::AbstractEnsembleVariables; max_displ = [0.1, 0.1, 1.0], max_boxlength = max_length(config.boundary_condition), count_atom = [0, 0], count_vol = [0, 0], count_exc = [0, 0]) where {T, N, BC}) where Z <: Number
+    (MCState(
+    temp::Number,
+    beta::Number,
+    config::Config,
+    dist2_mat::Matrix{Z},
+    new_dist2_vec::VorS,
+    new_en::Number,
+    en_tot::Number,
+    potentialvariables::AbstractPotentialVariables,
+    ensemble_variables::AbstractEnsembleVariables;
+    max_displ = [0.1, 0.1, 1.0],
+    max_boxlength = max_length(config.boundary_condition),
+    count_atom = [0, 0],
+    count_vol = [0, 0],
+    count_exc = [0, 0]
+) where {T, N, BC}
+) where Z <: Number
+
     MCState(temp::Number, beta::Number, config::Config, ensemble, pot; kwargs...)
 Constructor for the [`MCState`](@ref) struct.
 """
