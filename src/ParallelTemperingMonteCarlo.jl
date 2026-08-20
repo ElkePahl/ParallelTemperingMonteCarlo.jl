@@ -42,5 +42,6 @@ include("multihistogram_analysis.jl")
 @reexport using .Multihistogram
 @reexport using .Multihistogram_NPT
 @reexport using .Multihistogram_NVT
+@reexport using .MultiHistogramAnalysis
 
 end
