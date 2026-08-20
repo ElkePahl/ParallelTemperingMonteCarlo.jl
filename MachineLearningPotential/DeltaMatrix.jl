@@ -12,7 +12,7 @@ using StaticArrays,LinearAlgebra
 export calc_delta_matrix,calc_swap_matrix
 
 export total_symm!, total_thr_symm!, total_symm_neigh!
-export neighbour_union_from_cutoff_vectors
+export neighbour_union_from_cutoff_vectors!
 export radial_symmetry_calculation_neigh!, angular_symmetry_calculation_neigh!
 
 #----------------------------------------------------------------------#
@@ -1186,34 +1186,34 @@ function total_symm_neigh!(
 end
 
 """
-    neighbour_union_from_cutoff_vectors(
+    neighbour_union_from_cutoff_vectors!(
+        neighbour_buffer,
         f_old_row,
         f_new_vec,
         atomindex,
     )
 
-Constructs the union of the moved atom's neighbourhood before and after a
-proposed move.
+Writes the union of the moved atom's old and proposed neighbourhoods into the
+preallocated `neighbour_buffer`.
 
-An atom index is included when its cutoff-function value relative to
-`atomindex` is nonzero in either `f_old_row` or `f_new_vec`. The moved atom
-itself is excluded.
-
-Including both the old and new neighbourhood ensures that symmetry-function
-contributions are updated for atoms entering, leaving, or remaining within the
-cutoff radius.
-
-Returns a vector of neighbour atom indices.
+The moved atom itself is excluded. Returns the number of valid neighbour
+indices written to the beginning of `neighbour_buffer`.
 """
-function neighbour_union_from_cutoff_vectors(f_old_row, f_new_vec, atomindex)
-    neighbours = Int[]
+function neighbour_union_from_cutoff_vectors!(
+    neighbour_buffer,
+    f_old_row,
+    f_new_vec,
+    atomindex,
+)
+    n_neighbours = 0
 
-    for j in eachindex(f_new_vec)
+    @inbounds for j in eachindex(f_new_vec)
         if j != atomindex && (f_old_row[j] != 0.0 || f_new_vec[j] != 0.0)
-            push!(neighbours, j)
+            n_neighbours += 1
+            neighbour_buffer[n_neighbours] = j
         end
     end
 
-    return neighbours
+    return n_neighbours
 end
 end

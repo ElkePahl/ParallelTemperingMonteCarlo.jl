@@ -1,12 +1,3 @@
-#=
-import ParallelTemperingMonteCarlo:
-    energy_update_neigh!,
-    generate_move!,
-    acc_test!,
-    check_e_bounds,
-    reset_counters
-    =#
-
 using Pkg
 
 #Pkg.activate("/home/rev/ParallelTemperingMonteCarlo.jl")
@@ -230,17 +221,21 @@ println("Production cycles: ", mc_params.mc_cycles)
 println("Equilibration cycles: ", mc_params.eq_cycles)
 println("Julia threads: ", Threads.nthreads())
 
-states, results = ptmc_run!(
-    mc_params,
-    temp,
-    start_config,
-    runnerpotential,
-    ensemble;
-    rdfsave=false,
-    restart=false,
-    save=false,
-    workingdirectory=script_folder,
-)
+elapsed = @elapsed begin
+    states, results = ptmc_run!(
+        mc_params,
+        temp,
+        start_config,
+        runnerpotential,
+        ensemble;
+        rdfsave=false,
+        restart=false,
+        save=false,
+        workingdirectory=script_folder,
+    )
+end
+
+println("PTMC elapsed time: ", elapsed, " seconds")
 
 println()
 println("Neighbour potential PTMCMC smoke test completed successfully")

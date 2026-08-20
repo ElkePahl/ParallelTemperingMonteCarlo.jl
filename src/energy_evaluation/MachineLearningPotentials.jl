@@ -165,6 +165,7 @@ mutable struct NNPVariablesWithNeighbourhood{T} <: AbstractPotentialVariables
     f_matrix::Matrix{T}
     new_g_matrix::Matrix{T}
     new_f_vec::Vector{T}
+    neighbour_buffer::Vector{Int}
 end
 
 function set_variables(
@@ -220,7 +221,8 @@ function set_variables(
         g_matrix,
         f_matrix,
         copy(g_matrix),
-        zeros(N)
+        zeros(N),
+        Vector{Int}(undef, N - 1),
     )
 end
 
@@ -625,21 +627,27 @@ function get_new_state_vars_neigh!(
     potential_variables::NNPVariablesWithNeighbourhood,
     dist2_mat::Matrix{Float64},
     new_dist2_vec::Vector{Float64},
-    pot::RuNNerPotentialWithNeighbourhood{Nrad,Nang}
+    pot::RuNNerPotentialWithNeighbourhood{Nrad,Nang},
 ) where {Nrad,Nang}
 
-    potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec), Ref(pot.r_cut))
+    potential_variables.new_f_vec .=
+        cutoff_function.(sqrt.(new_dist2_vec), Ref(pot.r_cut))
 
-    neighbour_indices_from_f = neighbour_union_from_cutoff_vectors(
-        potential_variables.f_matrix[atomindex, :],
+    f_old_row = @view potential_variables.f_matrix[atomindex, :]
+
+    n_neighbours = neighbour_union_from_cutoff_vectors!(
+        potential_variables.neighbour_buffer,
+        f_old_row,
         potential_variables.new_f_vec,
-        atomindex
+        atomindex,
     )
 
+    neighbour_indices =
+        @view potential_variables.neighbour_buffer[1:n_neighbours]
 
-    potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
+    potential_variables.new_g_matrix .= potential_variables.g_matrix
 
-    potential_variables.new_g_matrix = total_symm_neigh!(
+    total_symm_neigh!(
         potential_variables.new_g_matrix,
         config.positions,
         trial_pos,
@@ -648,11 +656,11 @@ function get_new_state_vars_neigh!(
         potential_variables.f_matrix,
         potential_variables.new_f_vec,
         atomindex,
-        neighbour_indices_from_f,
+        neighbour_indices,
         pot.radsymfunctions,
         pot.angsymfunctions,
         Nrad,
-        Nang
+        Nang,
     )
 
     return potential_variables
