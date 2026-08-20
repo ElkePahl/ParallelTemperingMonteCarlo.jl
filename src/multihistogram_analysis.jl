@@ -30,9 +30,7 @@ function check_trajectory_temperature_consistency(traj_id, temperature)
         end
     end
     if !all(seen)
-        throw(ArgumentError(
-            "traj_id values $(findall(!, seen)) never appear in the data"
-        ))
+        throw(ArgumentError("traj_id values $(findall(!, seen)) never appear in the data"))
     end
     return temp_of_traj
 end
@@ -93,10 +91,14 @@ function MultiHistogram(df; kwargs...)
 end
 
 function MultiHistogram(
-    traj_id, temperature, cycle, hamiltonian; num_bins=100, skip_ratio=1/11,
+    traj_id, temperature, cycle, hamiltonian; num_bins=100, skip_ratio=1 / 11
 )
     if !(length(traj_id) == length(temperature) == length(cycle) == length(hamiltonian))
-        throw(DimensionMismatch("lengths of `trajectory_id`, `temperature`, `cycle`, and/or `hamiltonian` do not match!"))
+        throw(
+            DimensionMismatch(
+                "lengths of `trajectory_id`, `temperature`, `cycle`, and/or `hamiltonian` do not match!",
+            ),
+        )
     end
     if num_bins ≤ 2
         throw(ArgumentError("`num_bins` must be at least 3"))
@@ -117,9 +119,9 @@ function MultiHistogram(
         end
     end
     if !isfinite(lo) || !isfinite(hi) || lo == hi
-        throw(ArgumentError(
-            "cannot construct histogram. Consider decreasing `skip_ratio`."
-        ))
+        throw(
+            ArgumentError("cannot construct histogram. Consider decreasing `skip_ratio`.")
+        )
     end
 
     num_traj = maximum(traj_id)
@@ -143,15 +145,8 @@ function MultiHistogram(
     num_samples = vec(sum(weights; dims=1))
 
     beta = inv.(unique_temps .* kB)
-    bin_centre = (edges[1:end-1] + edges[2:end]) ./ 2
-    return MultiHistogram(
-        unique_temps,
-        beta,
-        bin_centre,
-        edges,
-        weights,
-        num_samples,
-    )
+    bin_centre = (edges[1:(end - 1)] + edges[2:end]) ./ 2
+    return MultiHistogram(unique_temps, beta, bin_centre, edges, weights, num_samples)
 end
 
 """
@@ -164,8 +159,8 @@ function update_log_denominator!(log_denominator, mh::MultiHistogram, free_energ
     Threads.@threads for k in 1:num_bins(mh)
         H = mh.bin_centre[k]
         log_denominator[k] = logsumexp(
-            log(mh.num_samples[j]) - mh.beta[j]*H + free_energy[j]
-            for j in 1:num_trajectories(mh)
+            log(mh.num_samples[j]) - mh.beta[j] * H + free_energy[j] for
+            j in 1:num_trajectories(mh)
         )
     end
     return log_denominator
@@ -201,10 +196,11 @@ function get_log_weights(mh::MultiHistogram, tol, maxiter)
         # Update the free energy.
         for i in 1:num_trajectories(mh)
             beta = mh.beta[i]
-            new_free_energy[i] = -logsumexp(
-                log_numerator[k] - log_denominator[k] - beta*mh.bin_centre[k]
-                for k in 1:num_bins(mh)
-            )
+            new_free_energy[i] =
+                -logsumexp(
+                    log_numerator[k] - log_denominator[k] - beta * mh.bin_centre[k] for
+                    k in 1:num_bins(mh)
+                )
         end
         new_free_energy .-= maximum(new_free_energy)
 
@@ -219,7 +215,7 @@ function get_log_weights(mh::MultiHistogram, tol, maxiter)
         end
         free_energy, new_free_energy = new_free_energy, free_energy
     end
-    error("Failed to converge in $maxiter iterations.")
+    return error("Failed to converge in $maxiter iterations.")
 end
 
 """
@@ -276,8 +272,7 @@ function thermodynamic_properties(
         entropy[i] = kB * (log_Z + β * H)
     end
 
-    return DataFrame(
-        ;
+    return DataFrame(;
         temperature=temperatures_result,
         heat_capacity,
         hamiltonian,
