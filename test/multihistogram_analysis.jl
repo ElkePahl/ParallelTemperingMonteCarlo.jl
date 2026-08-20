@@ -1,6 +1,7 @@
 using Test
 using DataFrames
 using ParallelTemperingMonteCarlo
+using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
 
 @testset "MultiHistogram" begin
     trajectory_id = repeat(1:3; inner=4)
