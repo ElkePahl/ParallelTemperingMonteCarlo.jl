@@ -101,15 +101,14 @@ end
 
 """
     magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min/2)
-    magic_cluster(num_atoms; r_min=1, binding_sphere_radius=r_min/2)
 
 Create magic number cluster configuration cells. The atoms are placed such that the smallest
 distance between atoms is `r_min`.
-The first argument can either be the magic number index (see below) or number of atoms.
+The first argument is the magic number index (see below).
 `binding_sphere_radius` sets the how much the radius of binding sphere is extended top of
 the radius of the cluster.
 
-Number of atoms per `magic_number_index`:
+## Number of atoms per `magic_number_index`:
 - `magic_number_index=1`: 13
 - `magic_number_index=2`: 55
 - `magic_number_index=3`: 147
