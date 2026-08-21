@@ -1,4 +1,5 @@
 using Test
+using Arrow
 using DataFrames
 using ParallelTemperingMonteCarlo
 using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
@@ -240,5 +241,14 @@ end
         mh = MultiHistogram(df; num_bins=8, skip_ratio=0)
 
         @test_throws ArgumentError thermodynamic_properties(mh; points=0)
+    end
+
+    @testset "known results" begin
+        df = Arrow.Table("testing_data/neon-55-100K.arrow")
+
+        properties = thermodynamic_properties(df)
+        max_heat_capacity = properties.temperature[argmax(prop.heat_capacity)]
+
+        @test 12 ≤ max_heat_capacity ≤ 13
     end
 end
