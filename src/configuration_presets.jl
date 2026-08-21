@@ -118,17 +118,18 @@ Number of atoms per `magic_number_index`:
 - `magic_number_index=6`: 923
 """
 function magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min / 2)
-    if magic_number_index ∈ (1, 13)
+    if magic_number_index == 1
         filename = "13.txt"
-    elseif magic_number_index ∈ (2, 55)
+    elseif magic_number_index == 2
         filename = "55.txt"
-    elseif magic_number_index ∈ (3, 147)
+    elseif magic_number_index == 3
         filename = "147.txt"
-    elseif magic_number_index ∈ (4, 309)
+    elseif magic_number_index == 4
+        error("`magic_number_index = 4` currently not supported")
         filename = "309.txt"
-    elseif magic_number_index ∈ (5, 561)
+    elseif magic_number_index == 5
         filename = "561.txt"
-    elseif magic_number_index ∈ (6, 923)
+    elseif magic_number_index == 6
         filename = "923.txt"
     else
         throw(ArgumentError("`magic_number_index` should be an integer between 1 and 6"))

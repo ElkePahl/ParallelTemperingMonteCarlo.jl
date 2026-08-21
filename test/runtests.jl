@@ -146,6 +146,10 @@ end
     ) <= 10^(-15)
 end
 
+@safetestset "Configuration presets" begin
+    include("configuration_presets.jl")
+end
+
 @testset "Tangent" begin
     # TODO: tests broken because tan now returns absolute values
     bc = SphericalBC(; radius=10.0)
