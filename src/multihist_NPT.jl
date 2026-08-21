@@ -237,7 +237,7 @@ function multihistogram_NPT(
         vol[i] = evolume
     end
 
-    return (; T=temp_result, C=cp, V=vol)
+    return (; temperature=temp_result, heat_capacity=cp, volume=vol)
 end
 
 end
