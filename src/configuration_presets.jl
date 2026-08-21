@@ -75,7 +75,6 @@ function body_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC)
 end
 
 function hexagonal_close_packing(width, height)
-
 end
 
 """
