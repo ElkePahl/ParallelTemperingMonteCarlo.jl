@@ -78,13 +78,14 @@ end
     _, _, stats1 = run_full_computation(; flush_interval=100)
     _, _, stats2 = run_full_computation(; flush_interval=10000)
 
-    @test size(stats1) == size(stats2) == (26400, 13)
+    @test size(stats1) == size(stats2) == (26400, 9)
 
     @test stats1 == DataFrame(Arrow.Table("test.arrow"))
     @test stats2 == DataFrame(Arrow.Table("test-1.arrow"))
 
     @test stats1.hamiltonian ≈ stats1.total_energy .+ stats1.volume .* 3.4439667494478555e-9
 
+    # cleanup
     i = 1
     if isfile("test.arrow")
         rm("test.arrow")

@@ -157,11 +157,11 @@ function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats)
         state.acceptance = n_accepted / n_steps
         state.last_stats = (;
             cycle=state.step,
-            trajectory_id,
+            trajectory_id=Int16(trajectory_id), # Int16 to conserve RAM
             temperature=state.temp,
             hamiltonian=hamiltonian_value(state, state.ensemble),
             total_energy=state.en_tot,
-            acceptance=state.acceptance,
+            acceptance=Float32(state.acceptance),
             report_stats(state, state.ensemble)...,
         )
     end
@@ -399,6 +399,12 @@ function ptmc_run!(
         length(start_counter:(mc_params.mc_cycles));
         desc="Main loop", enabled=isinteractive(),
     )
+    # Set up Arrow writer if needed.
+    if flush_interval < mc_params.mc_cycles
+        writer = open(Arrow.Writer, stats_filename, compress=:zstd)
+    else
+        writer = nothing
+    end
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
@@ -418,7 +424,8 @@ function ptmc_run!(
             save_configs(mc_states, string(configsname, i))
         end
         if !isnothing(stats_filename) && i % flush_interval == 0
-            Arrow.append(stats_filename, stats)
+            # write using writer set up earlier and flush DataFrame
+            Arrow.write(writer, stats)
             empty!(stats)
         end
         next!(progress)
@@ -428,13 +435,14 @@ function ptmc_run!(
         # Save at the end if we didn't save in the last step.
         checkpoint(mc_params.mc_cycles, mc_states, results, ensemble, rdfsave)
     end
-    if !isnothing(stats_filename) && flush_interval < mc_params.mc_cycles
-        # write as regular file
-        Arrow.append(stats_filename, stats)
+    if !isnothing(stats_filename) && !isnothing(writer)
+        # write remaining rows and re-read DataFrame
+        Arrow.write(writer, stats)
+        close(writer)
         stats = DataFrame(Arrow.Table(stats_filename))
-    elseif !isnothing(stats_filename)
-        # append remaining rows
-        Arrow.write(stats_filename, stats)
+    elseif !isnothing(stats_filename) && isnothing(writer)
+        # write entire table to disk
+        Arrow.write(stats_filename, stats; compress=:zstd)
         stats = DataFrame(Arrow.Table(stats_filename))
     end
 

@@ -73,7 +73,7 @@ mutable struct MCState{BC,P,PV,E,EV}
     count_exc::Vector{Int}
     acceptance::Float64
     step::Int
-    last_stats::NamedTuple # TODO: check if this need to be type-stable
+    last_stats::NamedTuple
 end
 
 """
