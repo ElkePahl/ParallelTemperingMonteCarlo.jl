@@ -9,7 +9,7 @@ export magic_cluster, face_centred_cubic, body_centred_cubic
 
 Create face-centred cubic configuration with `cell_size` cells. The atoms are placed such
 that the smallest distance between atoms is `r_min`.
-`boundary_condition` can be set to `CubicBC` or `RectangularBC`.
+`boundary_condition` can be set to [`CubicBC`](@ref) or [`RectangularBC`](@ref).
 
 Number of atoms per `cell_size`:
 - `cell_size=1`: 32
@@ -45,7 +45,7 @@ end
 
 Create body-centred cubic configuration with `cell_size` cells. The atoms are placed such
 that the smallest distance between atoms is `r_min`.
-`boundary_condition` can be set to `CubicBC` or `RectangularBC`.
+`boundary_condition` can be set to [`CubicBC`](@ref) or [`RectangularBC`](@ref).
 
 Number of atoms per `cell_size`:
 - `cell_size=1`: 16
@@ -72,9 +72,6 @@ function body_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC)
         throw(ArgumentError("invalid `boundary_condition=$boundary_condition`"))
     end
     return Config(points, bc)
-end
-
-function hexagonal_close_packing(width, height)
 end
 
 """
