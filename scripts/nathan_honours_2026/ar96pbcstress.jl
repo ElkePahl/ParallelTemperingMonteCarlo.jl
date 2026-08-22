@@ -19,12 +19,12 @@ AtoBohr = 1.8897261259077824
 
 ti = 4000
 tf = 5000
-n_traj = 24
+n_traj = 50
 temp = TempGrid{n_traj}(ti, tf)
 
 # MC Simulation details
 
-mc_cycles = 40000
+mc_cycles = 3000000
 displ_atom = 0.05 # in Angstrom
 mc_sample = 1
 n_adjust = 100
@@ -156,18 +156,20 @@ start_config = Config(positions, boundary_condition)
 #----------------------------------------------------------------#
 pascal_pressure = 50e9
 pressure = pascal_pressure * 3.3989e-14
-for relative_stress in [-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
-    stress = relative_stress * pressure
-    ensemble = NPT(
-        n_atoms, 
-        pressure,
-        separated_volume,
-        [-stress/2, stress]
-        )
-    mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=0)
-    T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
-    filepath_T = str("/./output-files/P", pascal_pressure, "sig=", relative_stress, "T.csv")
-    filepath_Cp = str("/./output-files/P", pascal_pressure, "sig=", relative_stress, "Cp.csv")
-    writedlm(filepath_T, T, ',')
-    writedlm(filepath_Cp, Cp, ',')
+for run in 1:5
+    for relative_stress in [-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
+        stress = relative_stress * pressure
+        ensemble = NPT(
+            n_atoms, 
+            pressure,
+            separated_volume,
+            [-stress/2, stress]
+            )
+        mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=false)
+        T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+        filepath_T = str("/./output-files/P", pascal_pressure, "sig=", relative_stress, "run", run, "T.csv")
+        filepath_Cp = str("/./output-files/P", pascal_pressure, "sig=", relative_stress, "run", run, "Cp.csv")
+        writedlm(filepath_T, T, ',')
+        writedlm(filepath_Cp, Cp, ',')
+end
 end
