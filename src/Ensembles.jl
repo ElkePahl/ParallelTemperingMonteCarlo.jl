@@ -34,7 +34,7 @@ Canonical ensemble.
 -   Fieldnames:
     -   `n_atoms::Int64`: number of atoms
     -   `n_atom_moves::Int64`: number of atom moves; defaults to `n_atoms`
-    -   `n_swap_moves::Int64`: number of atom exchanges made; defaults to 0
+    -   `n_atom_swaps::Int64`: number of atom exchanges made; defaults to 0
 """
 struct NVT <: AbstractEnsemble
     n_atoms::Int64
