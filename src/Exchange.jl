@@ -96,9 +96,9 @@ function get_metropolis_probability(
     xy_unchanged::Float64,
     z_unchanged::Float64,
     beta::Float64,
-    reference_length::Float64=15.8 #Variable encoding reference box size.
+    reference_length::Float64=23.0 #Variable encoding reference box size.
     #=The value 15.8 corresponds specifically to the reference length obtained for a 32 atom
-    Argon box. This value will not impact the calculation unless the stress tensor for the
+    Argon box. (The value 23 correponds to the reference length for a 96 atom Argon box) This value will not impact the calculation unless the stress tensor for the
     NPT ensemble is nonzero. =#
 )
     delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged) +

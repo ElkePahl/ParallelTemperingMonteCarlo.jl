@@ -4,10 +4,8 @@
 rectangular simulation box, constant pressure, and constant tensorial stress =#
 
 using ParallelTemperingMonteCarlo
-using LaTeXStrings
 using Random 
 using DelimitedFiles
-using BenchmarkTools
 # ## Setting up the model 
 
 # for testing we use a set random seed
