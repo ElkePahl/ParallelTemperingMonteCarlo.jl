@@ -74,7 +74,7 @@ end
 function get_metropolis_probability(
     ensemble::NPT,
     delta_energy::Float64,
-    volume_change::Float64,
+    volume_changed::Float64,
     volume_unchanged::Float64,
     beta::Float64
 )
@@ -136,7 +136,7 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
     elseif movetype == "volumemove"
         if ensemble.stress_tensor ≠ [0, 0] # If we are in NPT, just use simple version.
             # This doesn't waste time multiplying by zero.
-            return metropolis_condition(
+            return get_metropolis_probability(
             ensemble,
             (mc_state.new_en - mc_state.en_tot),
             volume(mc_state.ensemble_variables.trial_config.boundary_condition),
