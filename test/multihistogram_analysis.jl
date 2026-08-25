@@ -247,7 +247,7 @@ end
         df = Arrow.Table("testing_data/neon-55-100K.arrow")
 
         properties = thermodynamic_properties(df)
-        max_heat_capacity = properties.temperature[argmax(prop.heat_capacity)]
+        max_heat_capacity = properties.temperature[argmax(properties.heat_capacity)]
 
         @test 12 ≤ max_heat_capacity ≤ 13
     end
