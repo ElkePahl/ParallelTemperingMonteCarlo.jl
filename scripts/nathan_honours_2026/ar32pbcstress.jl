@@ -99,4 +99,4 @@ ensemble = NPT(
     [-stress/2, stress]
     )
 mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
-T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false)
+T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)

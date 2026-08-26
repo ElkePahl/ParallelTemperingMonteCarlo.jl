@@ -116,7 +116,7 @@ function multihistogram_NPT(
     results::Output,
     conv_threshold::Number,
     readfile::Bool;
-    #debug=false, Debug appears nowhere in the function definition so I've removed it for now.
+    debug=false,
 )
     if readfile == false
         tempnumber, tempnumber_result = temp_trajectories(temp)
