@@ -514,7 +514,7 @@ begin
         global suite["Exchange"]["metropolis_condition"]["delta_energy/beta"] = @benchmarkable metropolis_condition(
             delta, beta
         ) setup = (delta = rand() * 2; beta = rand() * 2)
-        global suite["Exchange"]["metropolis_condition"]["ensemble/etc"] = @benchmarkable metropolis_condition(
+        global suite["Exchange"]["get_metropolis_probability]"]["ensemble/etc"] = @benchmarkable get_metropolis_probability(
             ensemble, delta, vi, vf, beta
         ) setup = (ensemble = get_npt();
         delta = rand() * 2;
