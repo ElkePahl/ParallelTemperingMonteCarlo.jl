@@ -4,7 +4,7 @@
 rectangular simulation box, constant pressure, and constant tensorial stress =#
 
 using ParallelTemperingMonteCarlo
-using Random 
+using Random
 using DelimitedFiles
 # ## Setting up the model 
 
@@ -148,7 +148,6 @@ box_length = 15.6624152 * 2 * 3.7782/3.0985 * AtoBohr
 boundary_condition = RectangularBC(box_length, box_length)
 #we start with a cubic box, but we need it to be able to deform, so use RBC instead of CBC.
 
-
 start_config = Config(pos_ar96, boundary_condition)
 
 #----------------------------------------------------------------#
@@ -159,17 +158,18 @@ pressure = pascal_pressure * 3.3989e-14
 for run in 1:1
     for relative_stress in [-0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2]
         stress = relative_stress * pressure
-        ensemble = NPT(
-            n_atoms, 
-            pressure,
-            separated_volume,
-            [-stress/2, stress]
-            )
-        mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=false)
+        ensemble = NPT(n_atoms, pressure, separated_volume, [-stress/2, stress])
+        mc_states, results = ptmc_run!(
+            mc_params, temp, start_config, pot, ensemble; save=false
+        )
         T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
-        filepath_T = string("checkpoint/P", pascal_pressure, "sig=", relative_stress, "run", run, "T.csv")
-        filepath_Cp = string("checkpoint/P", pascal_pressure, "sig=", relative_stress, "run", run, "Cp.csv")
+        filepath_T = string(
+            "checkpoint/P", pascal_pressure, "sig=", relative_stress, "run", run, "T.csv"
+        )
+        filepath_Cp = string(
+            "checkpoint/P", pascal_pressure, "sig=", relative_stress, "run", run, "Cp.csv"
+        )
         writedlm(filepath_T, T, ',')
         writedlm(filepath_Cp, Cp, ',')
-end
+    end
 end

@@ -79,26 +79,34 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
     separated_volume::Bool
-    stress_tensor::SVector{2, Float64}
+    stress_tensor::SVector{2,Float64}
 end
 #= This first method is to ensure that any prior code which constructed an NPT ensemble
-using 6 variables continues to construct the correct ensemble now that there are 7 options.=# 
+using 6 variables continues to construct the correct ensemble now that there are 7 options.=#
 function NPT(
     n_atoms::Int64,
     n_atom_moves::Int64,
     n_volume_moves::Int64,
     n_atom_swaps::Int64,
     pressure::Float64,
-    separated_volume::Bool
+    separated_volume::Bool,
 )
-    return NPT(n_atoms, n_atom_moves, n_volume_moves, n_atom_swaps, pressure, separated_volume, [0,0])
+    return NPT(
+        n_atoms,
+        n_atom_moves,
+        n_volume_moves,
+        n_atom_swaps,
+        pressure,
+        separated_volume,
+        [0, 0],
+    )
 end
 # These two generate the appropriate ensemble by assuming omitted parameters take on default values.
 function NPT(n_atoms, pressure, separated_volume, stress)
     return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress)
 end
 function NPT(n_atoms, pressure, separated_volume)
-    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0,0])
+    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0, 0])
 end
 
 """

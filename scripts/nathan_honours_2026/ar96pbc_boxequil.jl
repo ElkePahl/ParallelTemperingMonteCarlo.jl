@@ -4,7 +4,7 @@
 rectangular simulation box, constant pressure, and constant tensorial stress =#
 
 using ParallelTemperingMonteCarlo
-using Random 
+using Random
 using DelimitedFiles
 # ## Setting up the model 
 
@@ -148,7 +148,6 @@ box_length = 15.6624152 * 2 * 3.7782/3.0985 * AtoBohr
 boundary_condition = RectangularBC(box_length, box_length)
 #we start with a cubic box, but we need it to be able to deform, so use RBC instead of CBC.
 
-
 start_config = Config(pos_ar96, boundary_condition)
 
 #----------------------------------------------------------------#
@@ -157,12 +156,7 @@ start_config = Config(pos_ar96, boundary_condition)
 pascal_pressure = 50e9
 pressure = pascal_pressure * 3.3989e-14
 stress = 0
-ensemble = NPT(
-    n_atoms, 
-    pressure,
-    separated_volume,
-    [-stress/2, stress]
-    )
+ensemble = NPT(n_atoms, pressure, separated_volume, [-stress/2, stress])
 mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=false)
 T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
 filepath = string("/./output-files/", relative_stress, "T.csv")

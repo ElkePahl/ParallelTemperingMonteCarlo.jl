@@ -22,12 +22,14 @@ export read_init, setresults, rebuild_states, read_config, build_states
 Function to write the `mc_params` and `temp` data into a `savefile`. These are static parameters that define how the simulation is to proceed such as the number of cycles, trajectories and the temperatures to be covered.
 """
 function writeparams(savefile::IO, params::MCParams, temp::TempGrid)
-    headersvec =
-        ["cycles:" "sample_rate:" "n_traj:" "n_atoms:" "n_adjust" "n_bins" "min_acc:" "max_acc" "t_i:" "t_f"]
-    paramsvec =
-        [params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(
+    headersvec = [
+        "cycles:" "sample_rate:" "n_traj:" "n_atoms:" "n_adjust" "n_bins" "min_acc:" "max_acc" "t_i:" "t_f"
+    ]
+    paramsvec = [
+        params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(
             temp.t_grid
-        ) last(temp.t_grid)]
+        ) last(temp.t_grid)
+    ]
     return writedlm(savefile, [headersvec, paramsvec], ' ')
 end
 """
@@ -42,16 +44,19 @@ function writeensemble(savefile::IO, ensemble::NVT)
     return writedlm(savefile, [headersvec, valuesvec], ' ')
 end
 function writeensemble(savefile::IO, ensemble::NPT)
-    headersvec =
-        ["ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure" "separated_volume"]
-    valuesvec =
-        ["NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure ensemble.separated_volume]
+    headersvec = [
+        "ensemble" "n_atom_moves" "n_volume_moves" "n_atom_swaps" "pressure" "separated_volume"
+    ]
+    valuesvec = [
+        "NPT" ensemble.n_atoms ensemble.n_atom_moves ensemble.n_volume_moves ensemble.n_atom_swaps ensemble.pressure ensemble.separated_volume
+    ]
     return writedlm(savefile, [headersvec, valuesvec], ' ')
 end
 function writeensemble(savefile::IO, ensemble::NNVT)
     headersvec = ["ensemble" "n_1" "n_2" "n_atom_moves" "n_atom_swaps"]
-    valuesvec =
-        ["NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps]
+    valuesvec = [
+        "NNVT" ensemble.natoms[1] ensemble.natoms[2] ensemble.n_atom_moves ensemble.n_atom_swaps
+    ]
     return writedlm(savefile, [headersvec, valuesvec], ' ')
 end
 """
@@ -119,8 +124,9 @@ function save_histparams(results::Output)
     # else
     resfile = open("./checkpoint/hist_info.data", "w+")
     headersvec = ["e_min" "e_max" "v_min" "v_max" "Δ_E" "Δ_V" "Δ_r2"]
-    infovec =
-        [results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2]
+    infovec = [
+        results.en_min results.en_max results.v_min results.v_max results.delta_en_hist results.delta_v_hist results.delta_r2
+    ]
     writedlm(resfile, [headersvec, infovec], ' ')
     return close(resfile)
     # end

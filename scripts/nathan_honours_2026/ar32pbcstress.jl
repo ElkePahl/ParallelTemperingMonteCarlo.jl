@@ -4,7 +4,7 @@
 rectangular simulation box, constant pressure, and constant tensorial stress =#
 
 using ParallelTemperingMonteCarlo
-using Random 
+using Random
 using DelimitedFiles
 # ## Setting up the model 
 
@@ -24,7 +24,7 @@ temp = TempGrid{n_traj}(ti, tf)
 
 # MC Simulation details
 
-mc_cycles = 40000
+mc_cycles = 10000
 displ_atom = 0.05 # in Angstrom
 mc_sample = 1
 n_adjust = 100
@@ -92,11 +92,6 @@ pascal_pressure = 50e9
 pressure = pascal_pressure * 3.3989e-14
 relative_stress = 0
 stress = relative_stress * pressure
-ensemble = NPT(
-    n_atoms, 
-    pressure,
-    separated_volume,
-    [-stress/2, stress]
-    )
+ensemble = NPT(n_atoms, pressure, separated_volume, [-stress/2, stress])
 mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
 T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)

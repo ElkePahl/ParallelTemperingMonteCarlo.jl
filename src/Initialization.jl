@@ -63,7 +63,7 @@ function initialisation(
 )
     move_strategy = MoveStrategy(ensemble)
     mc_states = map(1:(mc_params.n_traj)) do i
-        MCState(
+        return MCState(
             temp.t_grid[i],
             temp.beta_grid[i],
             start_config[mod1(i, length(start_config))],
