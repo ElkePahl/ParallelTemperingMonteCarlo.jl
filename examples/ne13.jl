@@ -97,7 +97,7 @@ max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj];
 n_adjust = 100;
 
 # Next we include parameters that characterise how often the configuration is saved:
-save_configuration = true
+save_configuration = false
 save_frequency = 0
 file_name = "Configurations"
 
