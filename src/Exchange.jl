@@ -134,7 +134,7 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
     if movetype == "atommove"
         return get_metropolis_probability(mc_state.new_en - mc_state.en_tot, mc_state.beta)
     elseif movetype == "volumemove"
-        if ensemble.stress_tensor ≠ [0, 0] # If we are in NPT, just use simple version.
+        if ensemble.stress_tensor == [0, 0] # If we are in NPT, just use simple version.
             # This doesn't waste time multiplying by zero.
             return get_metropolis_probability(
             ensemble,
