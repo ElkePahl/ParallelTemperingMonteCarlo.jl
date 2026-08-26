@@ -120,7 +120,7 @@ end
     ensemble
 )
 Separating functions taking a `movetype`, `mc_state` and `ensemble` and separating them
-into volume and atom moves defined in [get_metropolis_probability](@ref) namely:
+into volume and atom moves defined in [`get_metropolis_probability`](@ref) namely:
 -   accepts `delta_energy` and `beta` and determines the thermodynamic probability of
 the single-atom move
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of
