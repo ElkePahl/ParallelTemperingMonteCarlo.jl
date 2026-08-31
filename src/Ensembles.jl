@@ -68,9 +68,12 @@ Isothermal, isobaric ensemble.
     -   `n_volume_moves::Int64`: number of volume moves; defaults to 1
     -   `n_atom_swaps::Int64`: number of atom exchanges made; defaults to 0
     -   `pressure::Float64`: the fixed pressure of the system
+    -   `separated_volume::Bool`: allows independent volume changes in different directions.
     -   `stress_tensor::SVector{2, Float64}`: the fixed internal stress of the system. First entry
     corresponds to the stress in the x and y directions, assumed the same, second entry is z.
-    -   `separated_volume::Bool`: allows independent volume changes in different directions.
+    -   `reference_length::Float64`: This is a specialised variable specifically related
+    to NσT ensemble. In order to discuss strain, one needs to make reference to an 
+    unstrained length, which is what this parameter encodes.
 """
 struct NPT <: AbstractEnsemble
     n_atoms::Int64
