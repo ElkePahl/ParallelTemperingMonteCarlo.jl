@@ -122,6 +122,15 @@ function NPT(
         reference_length
     )
 end
+#=For users who are using regular NPT, this function allows a shortcut for constructing
+a separated volume NPT ensemble.=#
+function NPT(
+    n_atoms,
+    pressure,
+    separated_volume
+)
+return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress_tensor=[0,0], reference_length=0)
+end
 """
     NPTVariables <: AbstractEnsembleVariables
 
