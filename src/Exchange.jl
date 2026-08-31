@@ -135,7 +135,16 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
     if movetype == "atommove"
         return get_metropolis_probability(mc_state.new_en - mc_state.en_tot, mc_state.beta)
     elseif movetype == "volumemove"
-        return get_metropolis_probability(
+        if iszero(ensemble.reference_length)
+            return get_metropolis_probability(
+                ensemble,
+                (mc_state.new_en - mc_state.en_tot),
+                volume(mc_state.ensemble_variables.trial_config.boundary_condition),
+                volume(mc_state.config.boundary_condition),
+                mc_state.beta,
+            )
+        else
+            return get_metropolis_probability(
                 ensemble,
                 (mc_state.new_en - mc_state.en_tot),
                 volume(mc_state.ensemble_variables.trial_config.boundary_condition),
@@ -146,7 +155,8 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
                 mc_state.config.boundary_condition.box_height,
                 mc_state.beta,
                 ensemble.reference_length
-            )
+                )
+        end
     elseif movetype == "atomswap"
         return get_metropolis_probability(
             (mc_state.new_en - mc_state.en_tot), mc_state.beta
