@@ -37,27 +37,27 @@ Suggestions:
 =#
 """
     get_metropolis_probability(
-    delta_energy::Number,
-    beta::Number
+        delta_energy::Number,
+        beta::Number
     )
     get_metropolis_probability(
-    ensemble::NPT,
-    delta_energy::Float64,
-    volume_changed::Float64,
-    volume_unchanged::Float64,
-    beta::Float64
+        ensemble::NPT,
+        delta_energy::Float64,
+        volume_changed::Float64,
+        volume_unchanged::Float64,
+        beta::Float64
     )
     get_metropolis_probability(
-    ensemble::NPT,
-    delta_energy::Float64,
-    volume_changed::Float64,
-    xy_changed::Float64,
-    z_changed::Float64,
-    volume_unchanged::Float64,
-    xy_unchanged::Float64,
-    z_unchanged::Float64,
-    beta::Float64,
-    reference_length::Float64=15.8 
+        ensemble::NPT,
+        delta_energy::Float64,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
+        beta::Float64,
+        reference_length::Float64=15.8 
     )
 Function returning the probability value associated with a trial move. 
 Three methods included, one for NVT, one for NPT, one for NσT. 
@@ -93,10 +93,7 @@ function get_metropolis_probability(
     xy_unchanged::Float64,
     z_unchanged::Float64,
     beta::Float64,
-    reference_length::Float64=23.0 #Variable encoding reference box size.
-    #=The value 15.8 corresponds specifically to the reference length obtained for a 32 atom
-    Argon box. (The value 23 correponds to the reference length for a 96 atom Argon box) This value will not impact the calculation unless the stress tensor for the
-    NPT ensemble is nonzero. =#
+    reference_length::Float64
 )
     delta_h =
         delta_energy +
@@ -104,17 +101,17 @@ function get_metropolis_probability(
         reference_length^3 *
         ensemble.stress_tensor[1] *
         (xy_unchanged + xy_changed) *
-        (xy_changed - xy_unchanged)/(reference_length)^2 +
+        (xy_changed - xy_unchanged) / (reference_length)^2 +
         reference_length^3 *
         ensemble.stress_tensor[2] *
         0.5 *
         (z_unchanged + z_changed) *
-        (z_changed - z_unchanged)/(reference_length)^2
+        (z_changed - z_unchanged) / (reference_length)^2
     prob_val = exp(
         -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
     )
     T = typeof(prob_val)
-    return ifelse(prob_val > 1, T(1), prob_val)
+    return min(prob_val, one(prob_val))
 end
 
 """
@@ -138,17 +135,7 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
     if movetype == "atommove"
         return get_metropolis_probability(mc_state.new_en - mc_state.en_tot, mc_state.beta)
     elseif movetype == "volumemove"
-        if ensemble.stress_tensor == [0, 0] # If we are in NPT, just use simple version.
-            # This doesn't waste time multiplying by zero.
-            return get_metropolis_probability(
-                ensemble,
-                (mc_state.new_en - mc_state.en_tot),
-                volume(mc_state.ensemble_variables.trial_config.boundary_condition),
-                volume(mc_state.config.boundary_condition),
-                mc_state.beta,
-            )
-        else # Otherwise, we need to include the stress.
-            return get_metropolis_probability(
+        return get_metropolis_probability(
                 ensemble,
                 (mc_state.new_en - mc_state.en_tot),
                 volume(mc_state.ensemble_variables.trial_config.boundary_condition),
@@ -158,10 +145,8 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
                 mc_state.config.boundary_condition.box_length,
                 mc_state.config.boundary_condition.box_height,
                 mc_state.beta,
-                #Eventually, this line will also be an input, allowing the specification of a
-                #reference length. This will ultimately be a part of the ensemble variables.
+                ensemble.reference_length
             )
-        end
     elseif movetype == "atomswap"
         return get_metropolis_probability(
             (mc_state.new_en - mc_state.en_tot), mc_state.beta
@@ -200,13 +185,11 @@ end
 
 """
     parallel_tempering_exchange!(
-    mc_states::Vector{T},
-    mc_params::MCParams,
-    ensemble::NVT
-    ) where T <: MCState
+        mc_states::Vector{<:MCState}, mc_params::MCParams, ensemble::NVT
+    )
     parallel_tempering_exchange!(
-    mc_states::Vector{T},mc_params::MCParams,ensemble::NPT
-    ) where T <: MCState
+        mc_states::Vector{<:MCState}, mc_params::MCParams, ensemble::NPT
+    )
 These functions take a vector `mc_states` as well as the parameters of the simulation
 and attempt to swap two trajectories according to the parallel tempering method.
 The second method uses enthalpy instead of energy to determine acceptance.

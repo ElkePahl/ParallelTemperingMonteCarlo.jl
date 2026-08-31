@@ -68,7 +68,7 @@ Isothermal, isobaric ensemble.
     -   `n_volume_moves::Int64`: number of volume moves; defaults to 1
     -   `n_atom_swaps::Int64`: number of atom exchanges made; defaults to 0
     -   `pressure::Float64`: the fixed pressure of the system
-    -   `stress_tensor::SVector{3, Float64}`: the fixed internal stress of the system. First entry
+    -   `stress_tensor::SVector{2, Float64}`: the fixed internal stress of the system. First entry
     corresponds to the stress in the x and y directions, assumed the same, second entry is z.
     -   `separated_volume::Bool`: allows independent volume changes in different directions.
 """
@@ -79,17 +79,18 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
     separated_volume::Bool
-    stress_tensor::SVector{2,Float64}
+    stress_tensor::SVector{2, Float64}
+    reference_length::Float64
 end
 #= This first method is to ensure that any prior code which constructed an NPT ensemble
-using 6 variables continues to construct the correct ensemble now that there are 7 options.=#
+using 6 variables continues to construct the correct ensemble now that there are 8 options.=#
 function NPT(
     n_atoms::Int64,
     n_atom_moves::Int64,
     n_volume_moves::Int64,
     n_atom_swaps::Int64,
     pressure::Float64,
-    separated_volume::Bool,
+    separated_volume::Bool
 )
     return NPT(
         n_atoms,
@@ -99,16 +100,28 @@ function NPT(
         pressure,
         separated_volume,
         [0, 0],
+        0
     )
 end
-# These two generate the appropriate ensemble by assuming omitted parameters take on default values.
-function NPT(n_atoms, pressure, separated_volume, stress)
-    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress)
+# This generates the appropriate ensemble by assuming omitted parameters take on default values.
+function NPT(
+    n_atoms::Int64,
+    pressure::Float64;
+    separated_volume::Bool=false,
+    stress_tensor::Vector{Float64}=[0,0],
+    reference_length::Float64=0.0
+    )
+    return NPT(
+        n_atoms,
+        n_atoms,
+        1,
+        0,
+        pressure,
+        separated_volume,
+        stress_tensor,
+        reference_length
+    )
 end
-function NPT(n_atoms, pressure, separated_volume)
-    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0, 0])
-end
-
 """
     NPTVariables <: AbstractEnsembleVariables
 
