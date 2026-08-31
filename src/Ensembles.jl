@@ -129,7 +129,7 @@ function NPT(
     pressure,
     separated_volume
 )
-return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress_tensor=[0,0], reference_length=0)
+return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0,0], 0)
 end
 """
     NPTVariables <: AbstractEnsembleVariables
