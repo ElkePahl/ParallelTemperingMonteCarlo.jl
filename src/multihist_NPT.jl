@@ -170,6 +170,8 @@ function multihistogram_NPT(
         update!(progress, delta)
         if delta < conv_threshold
             break             #if converged, exit the loop
+        elseif isnan(delta)
+            break
         end
     end
 
