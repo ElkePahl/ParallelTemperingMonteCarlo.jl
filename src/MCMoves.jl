@@ -4,6 +4,8 @@ export atom_displacement, volume_change
 export scale_xy, scale_z, volume_change_xy, volume_change_z, volume_change_xyz
 export generate_move!
 
+export generate_move!, AtomDisplacement, AtomSwap, VolumeChange, metropolis_condition
+
 using StaticArrays
 
 using ..MCStates
@@ -249,6 +251,43 @@ function generate_move!(mc_state::MCState, movetype::String)
     else
         move = VolumeChange(; separated=mc_state.ensemble.separated_volume)
         return generate_move!(move, mc_state)
+    end
+end
+
+"""
+    metropolis_probability(::AbstractMove, mc_state)
+
+Get the probability of accepting a given move.
+"""
+function metropolis_probability(::Union{AtomDisplacement,AtomSwap}, mc_state)
+    delta_energy = mc_state.new_en - mc_state.en_tot
+    return min(exp(-delta_energy * mc_state.beta), 1.0)
+end
+function metropolis_probability(::VolumeChange, mc_state)
+    ensemble = mc_state.ensemble::NPT
+    new_volume = volume(mc_state.ensemble_variables.trial_config.boundary_condition)
+    old_volume = volume(mc_state.config.boundary_condition)
+    delta_energy = mc_state.new_en - mc_state.en_tot
+    delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
+    probability = exp(
+        -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_volume / old_volume)
+    )
+    return min(probability, 1.0)
+end
+
+"""
+to be removed, dispatch on the type!
+"""
+function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
+    if movetype == "atommove"
+        return metropolis_probability(AtomDisplacement(), mc_state)
+    elseif movetype == "volumemove"
+        move = VolumeChange(; separated=ensemble.separated_volume)
+        return metropolis_probability(move, mc_state)
+    elseif movetype == "atomswap"
+        return metropolis_probability(AtomSwap(), mc_state)
+    else
+        error("chosen move_type not implemented yet (see Exchange.jl)")
     end
 end
 
