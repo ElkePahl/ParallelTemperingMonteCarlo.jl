@@ -14,25 +14,29 @@ using ..EnergyEvaluation
 using ..CustomTypes
 
 """
-    atom_displacement(pos::PositionVector, max_displacement::Number, bc::SphericalBC)
-    atom_displacement(pos::PositionVector, max_displacement::Number, bc::CubicBC)
-    atom_displacement(pos::PositionVector, max_displacement::Number, bc::RhombicBC)
-    atom_displacement(mc_state::MCState{T, N, BC}) where {T, N, BC <: PeriodicBC}
-    atom_displacement(mc_state::MCState{T, N, BC}) where {T, N, BC <: SphericalBC}
+    abstract type AbstractMove end
 
-Generates trial position for atom, moving it from `pos` by some random displacement.
-Random displacement determined by `max_displacement`.
-These variables are additionally contained in `mc_state` where the pos is determined by `index`.
-Implemented for:
--   [`SphericalBC`](@ref): trial move is repeated until moved atom is within binding sphere
--   [`CubicBC`](@ref); [`RhombicBC`](@ref); [`RectangularBC`](@ref): periodic boundary condition enforced, an atom is moved into the box from the other side when it tries to get out.
+Abstract type representing moves. Each move must implement
+[`generate_move!(::AbstractMove, ::MCState)`](@ref).
 
-
-The final method is a wrapper function which unpacks `mc_states`, which contains all the necessary arguments for the two methods above. When we have correctly implemented `move_strat` this wrapper will be expanded to include other methods.
+Currently supported move types:
+- [`AtomDisplacement`](@ref)
+- [`AtomSwap`](@ref)
+- [`VolumeChange`](@ref)
 """
-function atom_displacement(mc_state::MCState)
+abstract type AbstractMove end
+
+"""
+    AtomDisplacement() <: AbstractMove
+
+An [`AbstractMove`](@ref) that moves a single atom. For a MC state `mc_state`, the move's
+max move size is determined by `mc_state.max_displ[1]`.
+"""
+struct AtomDisplacement <: AbstractMove end
+
+function generate_move!(::AtomDisplacement, mc_state::MCState)
     initial_position = mc_state.config[mc_state.ensemble_variables.index]
-    max_displacement = mc_state.max_displ[1]
+    max_displacement = mc_state.max_displ[1] # <- move variables?
     boundary_condition = mc_state.config.boundary_condition
 
     num_attempts = 0
@@ -67,76 +71,42 @@ function atom_displacement(mc_state::MCState)
 end
 
 """
-    volume_change_xyz(conf::Config, bc, max_vchange::Real, max_length::Real)
+    AtomSwap() <: AbstractMove
 
-Scale the whole configuration, including positions and the box length by a random amount.
-Returns the trial configuration.
+An [`AbstractMove`](@ref) that swaps two atoms in a configuration. Currently only works with
+the [`NNVT`](@ref) ensemble.
 """
-function volume_change_xyz(conf::Config, max_vchange::Real, max_length::Real)
-    scale = exp((rand() - 0.5) * max_vchange)^(1 / 3)
-    if conf.boundary_condition.box_length >= max_length && scale > 1.0
-        scale = 1.0
-    end
+struct AtomSwap <: AbstractMove end
 
-    trial_config = scale_xyz(conf, scale)
-    return trial_config, scale
+function generate_move!(::AtomSwap, mc_state::MCState)
+    N1, N2 = mc_state.ensemble.n_atoms
+    i1, i2 = rand(1:N1), N1 + rand(1:N2)
+    mc_state.ensemble_variables.swap_indices = SVector{2}(i1, i2)
+    return mc_state
 end
 
 """
-    volume_change_xy(conf::Config, bc, max_vchange::Real, max_length::Real, lh_ratio)
+    VolumeChange(; separated_volume=false, max_asymmetry=0.1) <: AbstractMove
 
-Scale the whole configuration, including positions and the box length by a random amount in
-the ``x`` and ``y`` directions.
+An [`AbstractMove`](@ref) that changes the volume of the configuration. Only works with the
+[`NPT`](@ref) ensemble. For a MC state `mc_state`,the maximum size of the change is
+controlled by `mc_state.max_displ[2]`. The maximum size of the configuration is controlled
+by `mc_state.max_boxlength` and `mc_state.max_boxheight`.
 
-Returns the trial configuration.
+## Keyword arguments
+- `separated_volume`: if true, allow for separate moves in the `xy` and `z`-directions. The
+  separated moves are controlled by `mc_state.max_displ[3]` (in `xy`) and
+  `mc_state.max_displ[4]` (in `z`).
+- `max_asymmetry`: controls how asymmetric the configuration is allowed to become. It limits
+  the ratio between box length and box height to ``R/(1 + max_asymmetry)``and ``R (1 +
+  max_asymmetry)``, where ``R`` is the lenth to height ratio of the initial configuration.
 """
-function volume_change_xy(conf::Config, max_vchange, max_length, lh_ratio)
-    scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
-    if conf.boundary_condition.box_length / conf.boundary_condition.box_height >=
-       lh_ratio * 1.1 && scale > 1.0
-        scale = 1 / scale
-    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
-           lh_ratio * 0.909 && scale < 1.0
-        scale = 1 / scale
-    end
-    if conf.boundary_condition.box_length >= max_length && scale > 1.0
-        scale = 1 / scale
-    end
-
-    return scale_xy(conf, scale), scale
+struct VolumeChange{separated} <: AbstractMove
+    max_asymmetry::Float64
 end
+VolumeChange(; separated=false, max_asymmetry=0.1) = VolumeChange{separated}(max_asymmetry)
 
-"""
-    volume_change_z(conf::Config, max_vchange::Real, max_length::Real, lh_ratio)
-
-Scale the whole configuration, including positions and the box length by a random amount in
-the ``z`` direction.
-
-Returns the trial configuration.
-"""
-function volume_change_z(conf::Config, max_vchange, max_height, lh_ratio)
-    scale = exp((rand() - 0.5) * max_vchange)
-
-    if conf.boundary_condition.box_length / conf.boundary_condition.box_height <=
-       lh_ratio * 1.1 && scale > 1.0
-        scale = 1 / scale
-    elseif conf.boundary_condition.box_length / conf.boundary_condition.box_height >=
-           lh_ratio * 0.909 && scale < 1.0
-        scale = 1 / scale
-    end
-    if conf.boundary_condition.box_height >= max_height && scale > 1.0
-        scale = 1 / scale
-    end
-
-    return scale_z(conf, scale), 1 / scale
-end
-
-"""
-    volume_change_uniform(mc_state::MCState)
-
-Change the volume uniformly and update the `mc_state` accordingly.
-"""
-function volume_change_uniform(mc_state::MCState)
+function generate_move!(::VolumeChange{false}, mc_state)
     mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
         mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
     )
@@ -150,22 +120,10 @@ function volume_change_uniform(mc_state::MCState)
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-
     return mc_state
 end
 
-"""
-    volume_change_separated(mc_state::MCState)
-
-Change the volume
-- in the ``z``-direction with probability ``1/3``,
-- in the ``x``,``y``-directions with probability ``2/3`` or
-- unioformly with probability ``1/2``.
-
-Update the `mc_state` accordingly. If the potential used is [`ELJPotentialB`](@ref) or
-[`LookupTablePotential`](@ref), update the tangent matrix as well.
-"""
-function volume_change_separated(mc_state::MCState)
+function generate_move!(vol_move::VolumeChange{true}, mc_state)
     #change volume
     ra = rand(1:6)
     if ra == 1  # Choose z-direction volume change
@@ -173,8 +131,9 @@ function volume_change_separated(mc_state::MCState)
         mc_state.ensemble_variables.trial_config, scale = volume_change_z(
             mc_state.config,
             mc_state.max_displ[4],
+            mc_state.max_boxlength,
             mc_state.max_boxheight,
-            mc_state.lh_ratio,
+            vol_move.max_asymmetry,
         )
     elseif ra <= 3  # Choose xy-direction volume change
         mc_state.ensemble_variables.xy_or_z = 1
@@ -182,7 +141,8 @@ function volume_change_separated(mc_state::MCState)
             mc_state.config,
             mc_state.max_displ[3],
             mc_state.max_boxlength,
-            mc_state.lh_ratio,
+            mc_state.max_boxheight,
+            vol_move.max_asymmetry,
         )
     else   # Choose all-direction volume change
         mc_state.ensemble_variables.xy_or_z = 0
@@ -211,30 +171,69 @@ function volume_change_separated(mc_state::MCState)
 end
 
 """
-    volume_change(mc_state::MCState, separated_volume=false)
+    volume_change_xyz(conf::Config, bc, max_vchange::Real, max_length::Real)
 
-MC move that changes volume. If `separated_volume == true`, the volume is changed in the ``x``,``y`` directions or in the ``z`` direction separately.
+Scale the whole configuration, including positions and the box length by a random amount.
+Returns the trial configuration.
 """
-function volume_change(mc_state::MCState, separated_volume=false)
-    if separated_volume
-        mc_state = volume_change_separated(mc_state)
-    else
-        mc_state = volume_change_uniform(mc_state)
+function volume_change_xyz(conf::Config, max_vchange, max_length)
+    scale = exp((rand() - 0.5) * max_vchange)^(1 / 3)
+    if conf.boundary_condition.box_length >= max_length && scale > 1.0
+        scale = 1.0
     end
-    return mc_state
+
+    trial_config = scale_xyz(conf, scale)
+    return trial_config, scale
 end
 
 """
-    (swap_atoms(mc_state::MCState{T, N, BC, PV, EV}) where {T, N, BC, PV, EV <: NNVTVariables{tee, n, N1, N2}}) where {tee, n, N1, N2}
-Swaps two atoms in the configuration.
+    volume_change_xy(conf, max_vchange, max_length, max_height, max_asymmetry)
+
+Scale the whole configuration, including positions and the box length by a random amount in
+the ``x`` and ``y`` directions.
+
+Returns the trial configuration and the amount it was scaled by.
 """
-function swap_atoms(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,<:NNVTVariables{<:Any,<:Any,N1,N2}}
-) where {N1,N2}
-    # TODO: make extracting Ns nicer than this.
-    i1, i2 = rand(1:N1), rand((N1 + 1):length(mc_state.config))
-    mc_state.ensemble_variables.swap_indices = SVector{2}(i1, i2)
-    return mc_state
+function volume_change_xy(conf::Config, max_vchange, max_length, max_height, max_asymmetry)
+    scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
+    lh_ratio = conf.boundary_condition.box_length / conf.boundary_condition.box_height
+    init_ratio = max_length / max_height
+
+    if lh_ratio >= initial_ratio * (1.0 + max_asymmetry) && scale > 1.0
+        scale = 1 / scale
+    elseif lh_ratio <= initial_ratio / (1 + max_asymmetry) && scale < 1.0
+        scale = 1 / scale
+    end
+    if conf.boundary_condition.box_length >= max_length && scale > 1.0
+        scale = 1 / scale
+    end
+
+    return scale_xy(conf, scale), scale
+end
+
+"""
+    volume_change_z(conf::Config, max_vchange, max_length, max_height, max_asymmetry)
+
+Scale the whole configuration, including positions and the box length by a random amount in
+the ``z`` direction.
+
+Returns the trial configuration and the amount it was scaled by.
+"""
+function volume_change_z(conf::Config, max_vchange, max_length, max_height, max_asymmetry)
+    scale = exp((rand() - 0.5) * max_vchange)
+    lh_ratio = conf.boundary_condition.box_length / conf.boundary_condition.box_height
+    init_ratio = max_length / max_height
+
+    if lh_ratio <= init_ratio * (1 + max_asymmetry) && scale > 1.0
+        scale = 1 / scale
+    elseif lh_ratio >= init_ratio / (1 + max_asymmetry) && scale < 1.0
+        scale = 1 / scale
+    end
+    if conf.boundary_condition.box_height >= max_height && scale > 1.0
+        scale = 1 / scale
+    end
+
+    return scale_z(conf, scale), 1 / scale
 end
 
 """
@@ -244,11 +243,12 @@ and generates the variables required inside of the `ensemblevariables` struct wi
 """
 function generate_move!(mc_state::MCState, movetype::String)
     if movetype == "atommove"
-        return atom_displacement(mc_state)
+        return generate_move!(AtomDisplacement(), mc_state)
     elseif movetype == "atomswap"
-        return swap_atoms(mc_state)
+        return generate_move!(AtomSwap(), mc_state)
     else
-        return volume_change(mc_state, mc_state.ensemble.separated_volume)
+        move = VolumeChange(; separated=mc_state.ensemble.separated_volume)
+        return generate_move!(move, mc_state)
     end
 end
 
