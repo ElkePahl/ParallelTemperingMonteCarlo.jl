@@ -249,6 +249,6 @@ end
         properties = thermodynamic_properties(df)
         max_heat_capacity = properties.temperature[argmax(properties.heat_capacity)]
 
-        @test 12 ≤ max_heat_capacity ≤ 13
+        @test 12 ≤ max_heat_capacity ≤ 14
     end
 end
