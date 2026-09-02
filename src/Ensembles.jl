@@ -10,7 +10,7 @@ export AbstractEnsemble, NVT, NPT, NNVT
 export AbstractEnsembleVariables,
     NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables, hamiltonian
 
-export MoveType, atommove, volumemove, atomswap, report_stats
+export report_stats
 export MoveStrategy
 
 """
@@ -207,22 +207,12 @@ function hamiltonian(state, ensemble::NPT)
 end
 
 """
-    MoveType
-
-Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) struct. Basic types are:
-    -   `atommove::MoveType`: basic move of a single atom
-    -   `volumemove::MoveType`: NPT ensemble requires volume changes to maintain pressure as constant
-    -   `atomswap::MoveType`: for systems with different atom types we need to exchange atoms (not yet implemented)
-"""
-@enum MoveType atommove volumemove atomswap
-
-"""
     MoveStrategy{N,AbstractEnsemble}
 
 A struct to define the types of moves performed per MC cycle.
 -   Field names:
     -   `ensemble::AbstractEnsemble`: type of ensemble (NVT, NPT)
-    -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle (see `MoveType`)
+    -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle
 Constructors:
 -   MoveStrategy(ensemble::NPT)
 -   MoveStrategy(ensemble::NVT)

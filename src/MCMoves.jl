@@ -1,10 +1,11 @@
 module MCMoves
 
 export atom_displacement, volume_change
-export scale_xy, scale_z, volume_change_xy, volume_change_z, volume_change_xyz
-export generate_move!
+export scale_xy, scale_z, volume_change_xy, volume_change_z, volume_change_xyz, get_energy!
+export generate_move!, swap_config!
 
 export generate_move!, AtomDisplacement, AtomSwap, VolumeChange, metropolis_condition
+export NewMoveStrat
 
 using StaticArrays
 
@@ -14,6 +15,43 @@ using ..Configurations
 using ..Ensembles
 using ..EnergyEvaluation
 using ..CustomTypes
+
+#TODO: better doc
+"""
+    MoveStrategy(moves, weights)
+
+Used to (randomly) select moves on each MC cycle.
+"""
+struct NewMoveStrat{N,T<:Tuple}
+    moves::T
+    probabilities::NTuple{N,Float64}
+end
+function NewMoveStrat(pairs...)
+    moves = Tuple(first.(pairs))
+    weights = Tuple(Float64.(last.(pairs)))
+    total_weight = sum(weights)
+
+    return NewMoveStrat(moves, weights ./ total_weight)
+end
+
+function NewMoveStrat(ensemble::NVT)
+    return NewMoveStrat(
+        AtomDisplacement() => ensemble.n_atom_moves,
+    )
+end
+function NewMoveStrat(ensemble::NPT)
+    n_atoms = ensemble.n_atoms
+    return NewMoveStrat(
+        AtomDisplacement() => ensemble.n_atom_moves,
+        VolumeChange(; separated=ensemble.separated_volume) => ensemble.n_volume_moves,
+    )
+end
+function NewMoveStrate(ensemble::NNVT)
+    return NewMoveStrat(
+        AtomDisplacement() => ensemble.n_atom_moves,
+        AtomSwap() => ensemble.n_atom_swaps,
+    )
+end
 
 """
     abstract type AbstractMove end
@@ -239,22 +277,6 @@ function volume_change_z(conf::Config, max_vchange, max_length, max_height, max_
 end
 
 """
-    generate_move!(mc_state::MCState,movetype::String)
-[`generate_move!`](@ref) is the currying function that takes `mc_state` and a `movetype`
-and generates the variables required inside of the `ensemblevariables` struct within `mc_state`.
-"""
-function generate_move!(mc_state::MCState, movetype::String)
-    if movetype == "atommove"
-        return generate_move!(AtomDisplacement(), mc_state)
-    elseif movetype == "atomswap"
-        return generate_move!(AtomSwap(), mc_state)
-    else
-        move = VolumeChange(; separated=mc_state.ensemble.separated_volume)
-        return generate_move!(move, mc_state)
-    end
-end
-
-"""
     metropolis_probability(::AbstractMove, mc_state)
 
 Get the probability of accepting a given move.
@@ -276,6 +298,135 @@ function metropolis_probability(::VolumeChange, mc_state)
 end
 
 """
+    get_energy!(::AbstractMove, mc_state)
+
+Update the energy `mc_state.en_new` according to the move.
+"""
+function get_energy!(::AtomDisplacement, mc_state)
+    mc_state.potential_variables, mc_state.new_en = energy_update!(
+        mc_state.ensemble_variables,
+        mc_state.config,
+        mc_state.potential_variables,
+        mc_state.dist2_mat,
+        mc_state.new_dist2_vec,
+        mc_state.en_tot,
+        mc_state.potential,
+    )
+end
+function get_energy!(::AtomSwap, mc_state)
+    mc_state.potential_variables, mc_state.new_en = swap_energy_update(
+        mc_state.ensemble_variables,
+        mc_state.config,
+        mc_state.potential_variables,
+        mc_state.dist2_mat,
+        mc_state.en_tot,
+        mc_state.potential,
+    )
+end
+function get_energy!(::VolumeChange, mc_state)
+    mc_state.new_en = dimer_energy_config(
+        mc_state.ensemble_variables.trial_config,
+        mc_state.ensemble_variables.new_dist2_mat,
+        mc_state.potential_variables,
+        mc_state.potential;
+        new=true,
+    )
+end
+
+function swap_config!(::AtomDisplacement, mc_state)
+    atom_index = mc_state.ensemble_variables.index
+    mc_state.config[atom_index] = mc_state.ensemble_variables.trial_move
+    mc_state.dist2_mat[atom_index, :] = mc_state.new_dist2_vec
+    mc_state.dist2_mat[:, atom_index] = mc_state.new_dist2_vec
+    mc_state.en_tot, mc_state.new_en = mc_state.new_en, mc_state.en_tot
+    mc_state.count_atom[1] += 1
+    mc_state.count_atom[2] += 1
+
+    return swap_vars!(atom_index, mc_state.potential_variables)
+end
+function swap_config!(::AtomSwap, mc_state)
+    i, j = mc_state.ensemble_variables.swap_indices
+
+    #swap energy and positions
+    mc_state.en_tot, mc_state.new_en = mc_state.new_en, mc_state.en_tot
+    mc_state.config[i], mc_state.config[j] = mc_state.config[j], mc_state.config[i]
+
+    #swap dist2mat
+    dist2_mat = mc_state.dist2_mat
+    dist2_mat[i, :], dist2_mat[j, :] = dist2_mat[j, :], dist2_mat[i, :]
+    dist2_mat[:, i], dist2_mat[:, j] = dist2_mat[:, j], dist2_mat[:, i]
+    dist2_mat[i, i], dist2_mat[j, j] = 0.0, 0.0
+
+    #swap fmat
+    f_matrix = mc_state.potential_variables.f_matrix
+    f_matrix[i, :], f_matrix[j, :] = f_matrix[j, :], f_matrix[i, :]
+    f_matrix[:, i], f_matrix[:, j] = f_matrix[:, j], f_matrix[:, i]
+    f_matrix[i, i], f_matrix[j, j] = 1.0, 1.0
+
+    #swap en_atom_vec and gmat
+    pot_vars = mc_state.potential_variables
+    pot_vars.en_atom_vec, pot_vars.new_en_atom = pot_vars.new_en_atom, pot_vars.en_atom_vec
+end
+function swap_config!(::VolumeChange, mc_state)
+    trial_config = mc_state.ensemble_variables.trial_config
+
+    mc_state.config = Config(trial_config, trial_config.boundary_condition)
+    # TODO: swap instead of copying
+    mc_state.dist2_mat .= mc_state.ensemble_variables.new_dist2_mat
+
+    # if xy_or_z == 0, tangents don't change.
+    if mc_state.potential isa AbstractDimerPotentialB &&
+        mc_state.ensemble_variables.xy_or_z ≥ 1
+        mc_state.potential_variables.tan_mat .= mc_state.potential_variables.new_tan_mat
+    end
+
+    mc_state.en_tot = mc_state.new_en
+    if mc_state.ensemble_variables.xy_or_z == 0
+        mc_state.count_vol[1] += 1
+        mc_state.count_vol[2] += 1
+    elseif mc_state.ensemble_variables.xy_or_z == 1
+        mc_state.count_vol_xy[1] += 1
+        mc_state.count_vol_xy[2] += 1
+    else
+        mc_state.count_vol_z[1] += 1
+        mc_state.count_vol_z[2] += 1
+    end
+    return nothing
+end
+
+# THIS IS A BIT MESSY, FIX IT
+function swap_vars!(i_atom::Int, potential_variables::DimerPotentialVariables)
+    return nothing
+end
+function swap_vars!(i_atom::Int, potential_variables::DimerPotentialBVariables)
+    potential_variables.tan_mat[i_atom, :] .= potential_variables.new_tan_vec
+    potential_variables.tan_mat[:, i_atom] .= potential_variables.new_tan_vec
+    return nothing
+end
+function swap_vars!(i_atom::Int, potential_variables::EmbeddedAtomVariables)
+    potential_variables.component_vector, potential_variables.new_component_vector = potential_variables.new_component_vector,
+    potential_variables.component_vector
+    return nothing
+end
+function swap_vars!(i_atom::Int, potential_variables::NNPVariables)
+    potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix,
+    potential_variables.g_matrix
+
+    potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
+    potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    return nothing
+end
+function swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
+    potential_variables.g_matrix, potential_variables.new_g_matrix = potential_variables.new_g_matrix,
+    potential_variables.g_matrix
+
+    potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
+    potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
+    return nothing
+end
+
+# STUFF BELOW HERE NEEDS TO BE DELETED -------------------------------------------------- #
+"""
 to be removed, dispatch on the type!
 """
 function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
@@ -288,6 +439,41 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
         return metropolis_probability(AtomSwap(), mc_state)
     else
         error("chosen move_type not implemented yet (see Exchange.jl)")
+    end
+end
+
+"""
+to be removed, dispatch on the type!
+"""
+function generate_move!(mc_state::MCState, movetype::String)
+    if movetype == "atommove"
+        return generate_move!(AtomDisplacement(), mc_state)
+    elseif movetype == "atomswap"
+        return generate_move!(AtomSwap(), mc_state)
+    else
+        move = VolumeChange(; separated=mc_state.ensemble.separated_volume)
+        return generate_move!(move, mc_state)
+    end
+end
+
+function get_energy!(mc_state::MCState, movetype::String)
+    if movetype == "atommove"
+        get_energy!(AtomDisplacement(), mc_state)
+    elseif movetype == "atomswap"
+        get_energy!(AtomSwap(), mc_state)
+    elseif movetype == "volumemove"
+        get_energy!(VolumeChange(), mc_state)
+    end
+    return mc_state
+end
+
+function swap_config!(mc_state, movetype::String)
+    if movetype == "atommove"
+        swap_config!(AtomDisplacement(), mc_state)
+    elseif movetype == "atomswap"
+        swap_config!(AtomSwap(), mc_state)
+    elseif movetype == "volumemove"
+        swap_config!(VolumeChange(), mc_state)
     end
 end
 
