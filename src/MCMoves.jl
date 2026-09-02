@@ -2,10 +2,10 @@ module MCMoves
 
 export atom_displacement, volume_change
 export scale_xy, scale_z, volume_change_xy, volume_change_z, volume_change_xyz, get_energy!
-export generate_move!, swap_config!
+export generate_move!, swap_config!, mc_move!
 
 export generate_move!, AtomDisplacement, AtomSwap, VolumeChange, metropolis_condition
-export NewMoveStrat
+export MoveStrategy
 
 using StaticArrays
 
@@ -22,35 +22,55 @@ using ..CustomTypes
 
 Used to (randomly) select moves on each MC cycle.
 """
-struct NewMoveStrat{N,T<:Tuple}
+struct MoveStrategy{N,T<:Tuple}
     moves::T
-    probabilities::NTuple{N,Float64}
+    weights::NTuple{N,Int}
 end
-function NewMoveStrat(pairs...)
+function MoveStrategy(pairs...)
     moves = Tuple(first.(pairs))
-    weights = Tuple(Float64.(last.(pairs)))
-    total_weight = sum(weights)
+    weights = Tuple(Int.(last.(pairs)))
 
-    return NewMoveStrat(moves, weights ./ total_weight)
+    return MoveStrategy(moves, weights)
 end
 
-function NewMoveStrat(ensemble::NVT)
-    return NewMoveStrat(
+function MoveStrategy(ensemble::NVT)
+    return MoveStrategy(
         AtomDisplacement() => ensemble.n_atom_moves,
     )
 end
-function NewMoveStrat(ensemble::NPT)
+function MoveStrategy(ensemble::NPT)
     n_atoms = ensemble.n_atoms
-    return NewMoveStrat(
+    return MoveStrategy(
         AtomDisplacement() => ensemble.n_atom_moves,
         VolumeChange(; separated=ensemble.separated_volume) => ensemble.n_volume_moves,
     )
 end
-function NewMoveStrate(ensemble::NNVT)
-    return NewMoveStrat(
+function MoveStrategy(ensemble::NNVT)
+    return MoveStrategy(
         AtomDisplacement() => ensemble.n_atom_moves,
         AtomSwap() => ensemble.n_atom_swaps,
     )
+end
+Base.length(ms::MoveStrategy) = sum(ms.weights)
+
+function mc_move!(mc_state::MCState, move_strat::MoveStrategy)
+    selection = rand(1:length(move_strat))
+    index = 0
+    while selection > 0
+        selection -= move_strat.weights[index+1]
+        index += 1
+    end
+    return mc_move!(move_strat.moves[index], mc_state)
+end
+function mc_move!(move, mc_state)
+    generate_move!(move, mc_state)
+    get_energy!(move, mc_state)
+    if rand() ≤ metropolis_probability(move, mc_state)
+        swap_config!(move, mc_state)
+        return true
+    else
+        return false
+    end
 end
 
 """
@@ -423,58 +443,6 @@ function swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
     potential_variables.f_matrix[i_atom, :] = potential_variables.new_f_vec
     potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
     return nothing
-end
-
-# STUFF BELOW HERE NEEDS TO BE DELETED -------------------------------------------------- #
-"""
-to be removed, dispatch on the type!
-"""
-function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
-    if movetype == "atommove"
-        return metropolis_probability(AtomDisplacement(), mc_state)
-    elseif movetype == "volumemove"
-        move = VolumeChange(; separated=ensemble.separated_volume)
-        return metropolis_probability(move, mc_state)
-    elseif movetype == "atomswap"
-        return metropolis_probability(AtomSwap(), mc_state)
-    else
-        error("chosen move_type not implemented yet (see Exchange.jl)")
-    end
-end
-
-"""
-to be removed, dispatch on the type!
-"""
-function generate_move!(mc_state::MCState, movetype::String)
-    if movetype == "atommove"
-        return generate_move!(AtomDisplacement(), mc_state)
-    elseif movetype == "atomswap"
-        return generate_move!(AtomSwap(), mc_state)
-    else
-        move = VolumeChange(; separated=mc_state.ensemble.separated_volume)
-        return generate_move!(move, mc_state)
-    end
-end
-
-function get_energy!(mc_state::MCState, movetype::String)
-    if movetype == "atommove"
-        get_energy!(AtomDisplacement(), mc_state)
-    elseif movetype == "atomswap"
-        get_energy!(AtomSwap(), mc_state)
-    elseif movetype == "volumemove"
-        get_energy!(VolumeChange(), mc_state)
-    end
-    return mc_state
-end
-
-function swap_config!(mc_state, movetype::String)
-    if movetype == "atommove"
-        swap_config!(AtomDisplacement(), mc_state)
-    elseif movetype == "atomswap"
-        swap_config!(AtomSwap(), mc_state)
-    elseif movetype == "volumemove"
-        swap_config!(VolumeChange(), mc_state)
-    end
 end
 
 end
