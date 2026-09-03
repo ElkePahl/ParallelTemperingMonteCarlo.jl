@@ -32,6 +32,7 @@ export ELJPotential,
     ELJPotentialB,
     EmbeddedAtomPotential,
     RuNNerPotential,
+    RuNNerPotentialWithNeighbourhood,
     RuNNerPotential2Atom,
     LookupTablePotential
 export AbstractPotentialVariables,
@@ -39,7 +40,9 @@ export AbstractPotentialVariables,
     DimerPotentialBVariables,
     EmbeddedAtomVariables,
     NNPVariables,
+    NNPVariablesWithNeighbourhood,
     NNPVariables2a
+
 export dimer_energy,
     energy_update!,
     set_variables,
@@ -50,6 +53,8 @@ export dimer_energy,
     get_new_state_vars!,
     calc_new_runner_energy!,
     swap_energy_update
+
+export get_new_state_vars_neigh!
 
 include("abstract.jl")
 include("ELJPotentials.jl")
