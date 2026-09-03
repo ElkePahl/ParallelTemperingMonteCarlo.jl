@@ -204,7 +204,23 @@ function mc_cycle!(
     rdfsave::Bool,
     potential,
 ) where {N,E}
-    #TODO: Implement saving configurations after n steps
+
+    if rem(idx,10000) == 0
+        for i=1:length(mc_states)
+            open("$(length(mc_states[1].config))/configuration_$(mc_states[i].temp).txt","a") do io
+                println(io, length(mc_states[1].config))
+                #println(io,mc_states[i].en_tot)
+                #println(io,mc_states[i].new_en)
+                #println(io,dimer_energy_config(mc_states[i].dist2_mat, 216, mc_states[i].potential_variables, mc_states[i].ensemble_variables.r_cut, mc_states[i].config.boundary_condition, potential)[2])
+                println(io,mc_states[i].config.boundary_condition.box_length)
+                println(io,mc_states[i].config.boundary_condition.box_height)
+                for j=1:length(mc_states[1].config)
+                    println(io, "Ar ", mc_states[i].config[j][1]," ",mc_states[i].config[j][2]," ",mc_states[i].config[j][3])
+                end
+                println(io," ")
+            end
+        end
+    end
 
     mc_states = mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, idx)
 
@@ -377,9 +393,9 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
-        if rem(i, 100000) == 0 #TODO: this should be a progress bar
+        if rem(i, 1000000) == 0 #TODO: this should be a progress bar
             @info "$i"
-            #results = finalise_results_convergence(i,mc_states,mc_params,results)
+            results = finalise_results_convergence(i,mc_states,mc_params,results)
             #println(results.heat_cap)
         end
     end

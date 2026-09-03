@@ -26,7 +26,7 @@ using ..CustomTypes
 import ..BoundaryConditions.long_range_correction
 
 export AbstractPotential,
-    AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential
+    AbstractDimerPotential, AbstractDimerPotentialB, AbstractMachineLearningPotential, KoronaPotential
 export ELJPotential,
     ELJPotentialEven,
     ELJPotentialB,
@@ -56,5 +56,6 @@ include("ELJPotentials.jl")
 include("LookupTablePotential.jl")
 include("EmbeddedAtomPotential.jl")
 include("MachineLearningPotentials.jl")
+include("KoronaPotential.jl")
 
 end
