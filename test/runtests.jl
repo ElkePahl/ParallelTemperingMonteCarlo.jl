@@ -304,3 +304,7 @@ end
         @test true
     end
 end
+
+@safetestset "NsigT run" begin
+    include(joinpath(@__DIR__, "ar96pbcstress_test.jl"))
+end
