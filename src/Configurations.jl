@@ -242,7 +242,7 @@ function scale_xyz(config::Config, α)
 end
 function scale_xy(pos, scale)
     new_pos = map(pos) do p
-        SVector(p[1] * scale, p[2] * scale, p[3])
+        return SVector(p[1] * scale, p[2] * scale, p[3])
     end
     return new_pos
 end
@@ -253,7 +253,7 @@ function scale_xy(config::Config, scale)
 end
 function scale_z(pos, scale)
     new_pos = map(pos) do p
-        SVector(p[1], p[2], p[3] * scale)
+        return SVector(p[1], p[2], p[3] * scale)
     end
     return new_pos
 end

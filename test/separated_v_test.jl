@@ -114,7 +114,8 @@ end
 
     state_new = volume_change(state, ensemble.separated_volume)
 
-    @test metropolis_condition("volumemove", state_new, ensemble) ≈ metropolis_condition(
+    @test metropolis_condition("volumemove", state_new, ensemble) ≈
+        get_metropolis_probability(
         ensemble,
         state_new.new_en - state.en_tot,
         volume(state_new.ensemble_variables.trial_config.boundary_condition),

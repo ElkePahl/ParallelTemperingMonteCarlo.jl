@@ -1,7 +1,10 @@
 """
     module Exchange
 
-Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle. Includes [`update_max_stepsize!`](@ref) which controls the frequency of
+Here we include methods for calculating the metropolis condition and other exchange 
+criteria required for Monte Carlo steps. This further declutters the MCRun module and 
+allows us to split the cycle. Includes [`update_max_stepsize!`](@ref) which controls the
+frequency of.
 """
 module Exchange
 
@@ -11,70 +14,43 @@ using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 using ..Ensembles
-export metropolis_condition, exc_acceptance, exc_trajectories!
+export get_metropolis_probability, metropolis_condition, exc_acceptance, exc_trajectories!
 
 export parallel_tempering_exchange!, update_max_stepsize!
-
-# """
-#     metropolis_condition(ensemble, delta_en, beta)
-# Returns probability to accept a MC move at inverse temperature `beta`
-# for energy difference `delta_en` between new and old configuration
-# for given ensemble; implemented:
-#     - `NVT`: canonical ensemble
-#     - `NPT`: NPT ensemble
-# Asymmetric Metropolis criterium, p = 1.0 if new configuration more stable,
-# Boltzmann probability otherwise
-# """
-# function metropolis_condition(::NVT, delta_energy, beta)
-#     prob_val = exp(-delta_energy*beta)
-#     T = typeof(prob_val)
-#     return ifelse(prob_val > 1, T(1), prob_val)
-# end
-
-# function metropolis_condition(::NPT, delta_energy, beta)
-#     prob_val = exp(-delta_energy*beta)
-#     T = typeof(prob_val)
-#     return ifelse(prob_val > 1, T(1), prob_val)
-# end
-
-# function metropolis_condition(ensemble::NPT, N, d_en, volume_changed, volume_unchanged, beta)
-#     delta_h = d_en + ensemble.pressure*(volume_changed-volume_unchanged)
-#     prob_val = exp(-delta_h*beta + N*log(volume_changed/volume_unchanged))
-#     T = typeof(prob_val)
-#     return ifelse(prob_val > 1, T(1), prob_val)
-# end
-#=
-TODO:
-Elke:
-I think that this is a bit chaotic. Would it make sense to separate last method from first
-two as they do different things. First two could be renamed to get_metropolis_probability or
-something like this.
-
-Documentation has to be updated anyway as only three methods left.
-Suggestions:
-
-- metropolis_condition(movetype ...)
-- Returns probability for given move_type (atom, volume or atom swap moves). Perhaps provide
-  formulae here?
-- get_metropolis_probability(...)
-- get_metropolis_probability(...)
-- Return probability for atom or atom swap moves (1st method) or volume move(2nd method)
-=#
 """
-    metropolis_condition(delta_energy::Number, beta::Number)
-    metropolis_condition(ensemble::NPT, delta_energy::Float64, volume_changed::Float64, volume_unchanged::Float64, beta::Float64)
-    metropolis_condition(movetype::String, mc_state::MCState, ensemble)
-
-Function returning the probability value associated with a trial move. Four methods included. The last two methods are separatig functions taking a `movetype`, `mc_state` and `ensemble` and separating them into volume and atom moves defined in the first two functions, namely:
--   accepts `delta_energy` and `beta` and determines the thermodynamic probability of the single-atom move
--   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of `volume_changed` and `volume_unchanged` and `beta` and calculates the thermodynamic probability of the volume move.
+    get_metropolis_probability(
+        delta_energy::Number,
+        beta::Number
+    )
+    get_metropolis_probability(
+        ensemble::NPT,
+        delta_energy::Float64,
+        volume_changed::Float64,
+        volume_unchanged::Float64,
+        beta::Float64
+    )
+    get_metropolis_probability(
+        ensemble::NPT,
+        delta_energy::Float64,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
+        beta::Float64,
+        reference_length::Float64=15.8 
+    )
+Function returning the probability value associated with a trial move. 
+Three methods included, one for NVT, one for NPT, one for NσT. 
 """
-function metropolis_condition(delta_energy::Number, beta::Number)
+function get_metropolis_probability(delta_energy::Number, beta::Number)
     prob_val = exp(-delta_energy * beta)
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
-function metropolis_condition(
+
+function get_metropolis_probability(
     ensemble::NPT,
     delta_energy::Float64,
     volume_changed::Float64,
@@ -88,30 +64,89 @@ function metropolis_condition(
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
 end
+
+function get_metropolis_probability(
+    ensemble::NPT,
+    delta_energy::Float64,
+    volume_changed::Float64,
+    xy_changed::Float64,
+    z_changed::Float64,
+    volume_unchanged::Float64,
+    xy_unchanged::Float64,
+    z_unchanged::Float64,
+    beta::Float64,
+    reference_length::Float64,
+)
+    delta_h =
+        delta_energy +
+        ensemble.pressure * (volume_changed - volume_unchanged) +
+        reference_length^3 *
+        ensemble.stress_tensor[1] *
+        (xy_unchanged + xy_changed) *
+        (xy_changed - xy_unchanged) / (reference_length)^2 +
+        reference_length^3 *
+        ensemble.stress_tensor[2] *
+        0.5 *
+        (z_unchanged + z_changed) *
+        (z_changed - z_unchanged) / (reference_length)^2
+    prob_val = exp(
+        -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+    )
+    T = typeof(prob_val)
+    return min(prob_val, one(prob_val))
+end
+
+"""
+    metropolis_condition(
+    movetype::String,
+    mc_state::MCState,
+    ensemble
+)
+Separating functions taking a `movetype`, `mc_state` and `ensemble` and separating them
+into volume and atom moves defined in [`get_metropolis_probability`](@ref) namely:
+-   accepts `delta_energy` and `beta` and determines the thermodynamic probability of
+the single-atom move
+-   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of
+`volume_changed` and `volume_unchanged` and `beta` and determines the thermodynamic
+probability of the volume move.
+-   accepts pressure and stress by way of `ensemble`, `delta_energy`, `delta_volume`, 
+`delta_xy`, `delta_z`, and `reference length` and determines the thermodynamic property of
+the deformation move.
+"""
 function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
     if movetype == "atommove"
-        return metropolis_condition((mc_state.new_en - mc_state.en_tot), mc_state.beta)
+        return get_metropolis_probability(mc_state.new_en - mc_state.en_tot, mc_state.beta)
     elseif movetype == "volumemove"
-        #return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.boundary_condition.box_length^3,mc_state.config.boundary_condition.box_length^3,mc_state.beta )
-        return metropolis_condition(
-            ensemble,
-            (mc_state.new_en - mc_state.en_tot),
-            volume(mc_state.ensemble_variables.trial_config.boundary_condition),
-            volume(mc_state.config.boundary_condition),
-            mc_state.beta,
-        )
+        if iszero(ensemble.reference_length)
+            return get_metropolis_probability(
+                ensemble,
+                (mc_state.new_en - mc_state.en_tot),
+                volume(mc_state.ensemble_variables.trial_config.boundary_condition),
+                volume(mc_state.config.boundary_condition),
+                mc_state.beta,
+            )
+        else
+            return get_metropolis_probability(
+                ensemble,
+                (mc_state.new_en - mc_state.en_tot),
+                volume(mc_state.ensemble_variables.trial_config.boundary_condition),
+                mc_state.ensemble_variables.trial_config.boundary_condition.box_length,
+                mc_state.ensemble_variables.trial_config.boundary_condition.box_height,
+                volume(mc_state.config.boundary_condition),
+                mc_state.config.boundary_condition.box_length,
+                mc_state.config.boundary_condition.box_height,
+                mc_state.beta,
+                ensemble.reference_length,
+            )
+        end
     elseif movetype == "atomswap"
-        return metropolis_condition((mc_state.new_en - mc_state.en_tot), mc_state.beta)
+        return get_metropolis_probability(
+            (mc_state.new_en - mc_state.en_tot), mc_state.beta
+        )
     else
         error("chosen move_type not implemented yet (see Exchange.jl)")
     end
 end
-# function metropolis_condition(::atommove,mc_state,ensemble)
-#     return metropolis_condition((mc_state.new_en - mc_state.en_tot),mc_state.beta)
-# end
-# function metropolis_condition(::volumemove,mc_state,ensemble)
-#     return metropolis_condition(ensemble,(mc_state.new_en - mc_state.en_tot),mc_state.ensemble_variables.trial_config.boundary_condition.box_length^3,mc_states.config.boundary_condition.box_length^3,mc_state.beta )
-# end
 """
     exc_acceptance(beta_1::Number, beta_2::Number, en_1::Number, en_2::Number)
 Returns probability to exchange configurations of two trajectories with energies `en_1` and `en_2`
@@ -141,9 +176,14 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
 end
 
 """
-    parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NVT) where T <: MCState
-    parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NPT) where T <: MCState
-These functions take a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
+    parallel_tempering_exchange!(
+        mc_states::Vector{<:MCState}, mc_params::MCParams, ensemble::NVT
+    )
+    parallel_tempering_exchange!(
+        mc_states::Vector{<:MCState}, mc_params::MCParams, ensemble::NPT
+    )
+These functions take a vector `mc_states` as well as the parameters of the simulation
+and attempt to swap two trajectories according to the parallel tempering method.
 The second method uses enthalpy instead of energy to determine acceptance.
 """
 function parallel_tempering_exchange!(
@@ -178,7 +218,6 @@ function parallel_tempering_exchange!(
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc + 1].count_exc[1] += 1
 
-    #if exc_acceptance(mc_states[n_exc].beta, mc_states[n_exc+1].beta, (mc_states[n_exc].en_tot + ensemble.pressure * mc_states[n_exc].config.boundary_condition.box_length^3),  (mc_states[n_exc+1].en_tot + ensemble.pressure * mc_states[n_exc+1].config.boundary_condition.box_length^3)) > rand()
     if exc_acceptance(
         mc_states[n_exc].beta,
         mc_states[n_exc + 1].beta,
@@ -203,14 +242,28 @@ function parallel_tempering_exchange!(
 end
 
 """
-    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number)
-    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble, min_acc::Number, max_acc::Number)
-Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
-if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles;
-each cycle consists of `a` atom, `v` volume moves.
-Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).
+    update_max_stepsize!(
+    mc_state::MCState,
+    n_update::Int,
+    ensemble::NPT,
+    min_acc::Number,
+    max_acc::Number
+    )
+    update_max_stepsize!(
+    mc_state::MCState,
+    n_update::Int,
+    ensemble,
+    min_acc::Number,
+    max_acc::Number
+    )
+Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90%
+of old values if acceptance rate is >60%/<40%. Acceptance rate is calculated after 
+`n_update` MC cycles; each cycle consists of `a` atom and `v` volume moves.
+Information on actual max. displacement and accepted moves between updates is contained in
+`mc_state`, see [`MCState`](@ref).
 
-Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble.
+Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing 
+with the NVT ensemble.
 """
 function update_max_stepsize!(
     mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number
