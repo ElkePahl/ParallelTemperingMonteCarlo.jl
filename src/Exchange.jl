@@ -17,24 +17,6 @@ using ..Ensembles
 export get_metropolis_probability, metropolis_condition, exc_acceptance, exc_trajectories!
 
 export parallel_tempering_exchange!, update_max_stepsize!
-
-#=
-TODO:
-Elke:
-I think that this is a bit chaotic. Would it make sense to separate last method from first
-three as they do different things. First three could be renamed to get_metropolis_probability or
-something like this.
-
-Documentation has to be updated anyway as only three methods left.
-Suggestions:
-
-- metropolis_condition(movetype ...)
-- Returns probability for given move_type (atom, volume or atom swap moves). Perhaps provide
-  formulae here?
-- get_metropolis_probability(...)
-- get_metropolis_probability(...)
-- Return probability for atom or atom swap moves (1st method) or volume move(2nd method)
-=#
 """
     get_metropolis_probability(
         delta_energy::Number,

@@ -71,9 +71,10 @@ Isothermal, isobaric ensemble.
     -   `separated_volume::Bool`: allows independent volume changes in different directions.
     -   `stress_tensor::SVector{2, Float64}`: the fixed internal stress of the system. First entry
     corresponds to the stress in the x and y directions, assumed the same, second entry is z.
+    This is set to zero by default.
     -   `reference_length::Float64`: This is a specialised variable specifically related
     to NσT ensemble. In order to discuss strain, one needs to make reference to an 
-    unstrained length, which is what this parameter encodes.
+    unstrained length, which is what this parameter encodes. This is set to zero by default.
 """
 struct NPT <: AbstractEnsemble
     n_atoms::Int64
