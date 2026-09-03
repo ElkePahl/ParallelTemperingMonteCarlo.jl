@@ -82,7 +82,7 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
     separated_volume::Bool
-    stress_tensor::SVector{2, Float64}
+    stress_tensor::SVector{2,Float64}
     reference_length::Float64
 end
 #= This first method is to ensure that any prior code which constructed an NPT ensemble
@@ -93,7 +93,7 @@ function NPT(
     n_volume_moves::Int64,
     n_atom_swaps::Int64,
     pressure::Float64,
-    separated_volume::Bool
+    separated_volume::Bool,
 )
     return NPT(
         n_atoms,
@@ -103,7 +103,7 @@ function NPT(
         pressure,
         separated_volume,
         [0, 0],
-        0
+        0,
     )
 end
 # This generates the appropriate ensemble by assuming omitted parameters take on default values.
@@ -111,28 +111,17 @@ function NPT(
     n_atoms::Int64,
     pressure::Float64;
     separated_volume::Bool=false,
-    stress_tensor::Vector{Float64}=[0,0],
-    reference_length::Float64=0.0
-    )
+    stress_tensor::Vector{Float64}=[0, 0],
+    reference_length::Float64=0.0,
+)
     return NPT(
-        n_atoms,
-        n_atoms,
-        1,
-        0,
-        pressure,
-        separated_volume,
-        stress_tensor,
-        reference_length
+        n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress_tensor, reference_length
     )
 end
 #=For users who are using regular NPT, this function allows a shortcut for constructing
 a separated volume NPT ensemble.=#
-function NPT(
-    n_atoms,
-    pressure,
-    separated_volume
-)
-return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0,0], 0)
+function NPT(n_atoms, pressure, separated_volume)
+    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0, 0], 0)
 end
 """
     NPTVariables <: AbstractEnsembleVariables

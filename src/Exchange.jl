@@ -93,7 +93,7 @@ function get_metropolis_probability(
     xy_unchanged::Float64,
     z_unchanged::Float64,
     beta::Float64,
-    reference_length::Float64
+    reference_length::Float64,
 )
     delta_h =
         delta_energy +
@@ -154,8 +154,8 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
                 mc_state.config.boundary_condition.box_length,
                 mc_state.config.boundary_condition.box_height,
                 mc_state.beta,
-                ensemble.reference_length
-                )
+                ensemble.reference_length,
+            )
         end
     elseif movetype == "atomswap"
         return get_metropolis_probability(
