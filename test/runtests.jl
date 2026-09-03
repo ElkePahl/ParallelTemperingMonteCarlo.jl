@@ -303,8 +303,8 @@ end
         include(joinpath(@__DIR__, "../scripts/cu38.jl"))
         @test true
     end
-end
-
-@safetestset "NsigT run" begin
-    include(joinpath(@__DIR__, "ar96pbcstress_test.jl"))
+    @safetestset "NsigT run" begin
+        include(joinpath(@__DIR__, "ar96pbcstress_test.jl"))
+        @test true
+    end
 end
