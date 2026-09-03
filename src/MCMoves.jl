@@ -53,16 +53,14 @@ function MoveStrategy(ensemble::NNVT)
 end
 Base.length(ms::MoveStrategy) = sum(ms.weights)
 
-function mc_move!(mc_state::MCState, move_strat::MoveStrategy)
-    selection = rand(1:length(move_strat))
-    index = 0
-    while selection > 0
-        selection -= move_strat.weights[index+1]
-        index += 1
-    end
-    return mc_move!(move_strat.moves[index], mc_state)
+function mc_move!(
+    mc_state::MCState, move_strat::MoveStrategy, selected=rand(1:length(move_strat))
+)
+    return _perform_move!(
+        mc_state, move_strat.moves, move_strat.weights, selected, false
+    )
 end
-function mc_move!(move, mc_state)
+@inline function mc_move!(move, mc_state)
     generate_move!(move, mc_state)
     get_energy!(move, mc_state)
     if rand() ≤ metropolis_probability(move, mc_state)
@@ -70,6 +68,15 @@ function mc_move!(move, mc_state)
         return true
     else
         return false
+    end
+end
+@inline _perform_move!(_, ::Tuple{}, ::Tuple{}, _, _) = false
+@inline function _perform_move!(mc_state, (m, ms...), (w, ws...), selected, done)
+    selected -= w
+    if !done && selected ≤ 0
+        return mc_move!(m, mc_state) | _perform_move!(mc_state, ms, ws, selected, true)
+    else
+        return _perform_move!(mc_state, ms, ws, selected, false)
     end
 end
 
@@ -390,8 +397,8 @@ end
 function swap_config!(::VolumeChange, mc_state)
     trial_config = mc_state.ensemble_variables.trial_config
 
-    mc_state.config = Config(trial_config, trial_config.boundary_condition)
     # TODO: swap instead of copying
+    mc_state.config = deepcopy(trial_config)
     mc_state.dist2_mat .= mc_state.ensemble_variables.new_dist2_mat
 
     # if xy_or_z == 0, tangents don't change.
