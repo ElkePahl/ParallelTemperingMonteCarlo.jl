@@ -72,7 +72,7 @@ mc_states, results = ptmc_run!(
 
 energies, histogramdata, T, Z, Cv, dCv, S = postprocess();
 for temperature in 1:25
-    open("./checkpoint/Configurations100000T$temperature.xyz", "r") do file
+    open("./checkpoint/Configurations1000T$temperature.xyz", "r") do file
         readline(file) # skip first line
         readline(file) # skip second line
         atom_count = 1 # tracks which atom index we are up to
