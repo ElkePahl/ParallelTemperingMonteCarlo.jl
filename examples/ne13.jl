@@ -1,4 +1,4 @@
-# Example 1: Melting a 13-Atoms Neon Cluster 
+# Example 1: Melting a 13-Atom Neon Cluster 
 # ==========================================
 
 #= This is an example calculation for finding the melting temperature of a 
@@ -90,15 +90,14 @@ but also more expensive.
 The maximum displacement is automatically adjusted, guaranteeing a 40-60% acceptance rate.
 - `n_adjust` is the number of moves after which the step size of atom moves is adjusted. =#
 
-mc_cycles = 100_000;
+mc_cycles = 10_000;
 mc_sample = 1;
 displ_atom = 0.1;
 max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj];
 n_adjust = 100;
 
 # Next we include parameters that characterise how often the configuration is saved:
-save_configuration = true
-save_frequency = 20_000
+save_frequency = false
 file_name = "Configurations"
 
 # For neatness, all parameters are collected in a `MCParams` struct:
@@ -111,7 +110,6 @@ This allows us to derive a MoveStrategy to feed into the PTMC simulation.
 Here, we do `n_atoms` atom displacements of randomy chosen atoms per Monte Carlo cycle. =#
 
 ensemble = NVT(n_atoms);
-move_strat = MoveStrategy(ensemble)
 
 # ## Running the Simulation
 

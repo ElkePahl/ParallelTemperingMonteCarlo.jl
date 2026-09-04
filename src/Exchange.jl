@@ -1,7 +1,10 @@
 """
     module Exchange
 
-Here we include methods for calculating the metropolis condition and other exchange criteria required for Monte Carlo steps. This further declutters the MCRun module and allows us to split the cycle. Includes [`update_max_stepsize!`](@ref) which controls the frequency of
+Here we include methods for calculating the metropolis condition and other exchange
+criteria required for Monte Carlo steps. This further declutters the MCRun module and
+allows us to split the cycle. Includes [`update_max_stepsize!`](@ref) which controls the
+frequency of.
 """
 module Exchange
 
@@ -14,7 +17,6 @@ using ..Ensembles
 export exc_acceptance, exc_trajectories!
 
 export parallel_tempering_exchange!, update_max_stepsize!
-
 
 """
     exc_acceptance(beta_1::Number, beta_2::Number, en_1::Number, en_2::Number)
@@ -45,9 +47,14 @@ function exc_trajectories!(state_1::MCState, state_2::MCState)
 end
 
 """
-    parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NVT) where T <: MCState
-    parallel_tempering_exchange!(mc_states::Vector{T},mc_params::MCParams,ensemble::NPT) where T <: MCState
-These functions take a vector `mc_states` as well as the parameters of the simulation and attempts to swap two trajectories according to the parallel tempering method.
+    parallel_tempering_exchange!(
+        mc_states::Vector{<:MCState}, mc_params::MCParams, ensemble::NVT
+    )
+    parallel_tempering_exchange!(
+        mc_states::Vector{<:MCState}, mc_params::MCParams, ensemble::NPT
+    )
+These functions take a vector `mc_states` as well as the parameters of the simulation
+and attempt to swap two trajectories according to the parallel tempering method.
 The second method uses enthalpy instead of energy to determine acceptance.
 """
 function parallel_tempering_exchange!(
@@ -80,14 +87,28 @@ function parallel_tempering_exchange!(
 end
 
 """
-    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number)
-    update_max_stepsize!(mc_state::MCState, n_update::Int, ensemble, min_acc::Number, max_acc::Number)
-Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90% of old values
-if acceptance rate is >60%/<40%. Acceptance rate is calculated after `n_update` MC cycles;
-each cycle consists of `a` atom, `v` volume moves.
-Information on actual max. displacement and accepted moves between updates is contained in `mc_state`, see [`MCState`](@ref).
+    update_max_stepsize!(
+    mc_state::MCState,
+    n_update::Int,
+    ensemble::NPT,
+    min_acc::Number,
+    max_acc::Number
+    )
+    update_max_stepsize!(
+    mc_state::MCState,
+    n_update::Int,
+    ensemble,
+    min_acc::Number,
+    max_acc::Number
+    )
+Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90%
+of old values if acceptance rate is >60%/<40%. Acceptance rate is calculated after
+`n_update` MC cycles; each cycle consists of `a` atom and `v` volume moves.
+Information on actual max. displacement and accepted moves between updates is contained in
+`mc_state`, see [`MCState`](@ref).
 
-Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing with the NVT ensemble.
+Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing
+with the NVT ensemble.
 """
 function update_max_stepsize!(
     mc_state::MCState, n_update::Int, ensemble::NPT, min_acc::Number, max_acc::Number

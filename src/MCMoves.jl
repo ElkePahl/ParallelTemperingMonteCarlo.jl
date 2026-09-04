@@ -314,10 +314,32 @@ function metropolis_probability(::Union{AtomDisplacement,AtomSwap}, mc_state)
 end
 function metropolis_probability(::VolumeChange, mc_state)
     ensemble = mc_state.ensemble::NPT
-    new_volume = volume(mc_state.ensemble_variables.trial_config.boundary_condition)
-    old_volume = volume(mc_state.config.boundary_condition)
+
+    reference_length = ensemble.reference_length
+    old_bc = mc_state.config.boundary_condition
+    new_bc = mc_state.ensemble_variables.trial_config.boundary_condition
+
     delta_energy = mc_state.new_en - mc_state.en_tot
-    delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
+    new_volume = volume(new_bc)
+    old_volume = volume(old_bc)
+    new_xy = new_bc.box_length
+    new_z = new_bc.box_height
+    old_xy = old_bc.box_length
+    old_z = old_bc.box_height
+
+    delta_h =
+        delta_energy +
+        ensemble.pressure * (new_volume - old_volume) +
+        reference_length^3 *
+        ensemble.stress_tensor[1] *
+        (old_xy + new_xy) *
+        (new_xy - old_xy) / (reference_length)^2 +
+        reference_length^3 *
+        ensemble.stress_tensor[2] *
+        0.5 *
+        (old_z + new_z) *
+        (new_z - old_z) / (reference_length)^2
+
     probability = exp(
         -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_volume / old_volume)
     )

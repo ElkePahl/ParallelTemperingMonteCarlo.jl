@@ -26,7 +26,9 @@ function writeparams(savefile::IO, params::MCParams, temp::TempGrid)
         "cycles:" "sample_rate:" "n_traj:" "n_atoms:" "n_adjust" "n_bins" "min_acc:" "max_acc" "t_i:" "t_f"
     ]
     paramsvec = [
-        params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(temp.t_grid) last(temp.t_grid)
+        params.mc_cycles params.mc_sample params.n_traj params.n_atoms params.n_adjust params.n_bin params.min_acc params.max_acc first(
+            temp.t_grid
+        ) last(temp.t_grid)
     ]
     return writedlm(savefile, [headersvec, paramsvec], ' ')
 end
