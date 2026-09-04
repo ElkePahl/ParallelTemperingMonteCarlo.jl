@@ -135,7 +135,7 @@ function magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min 
     end
     data = readdlm(joinpath(@__DIR__, "../data/", filename))
     points = map(axes(data, 1)) do i
-        SVector{3,Float64}(data[i, :]...)
+        return SVector{3,Float64}(data[i, :]...)
     end
     recentre!(points)
     scale_factor = r_min / min_distance(points)
