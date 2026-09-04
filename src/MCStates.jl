@@ -14,22 +14,22 @@ export MCState, max_length#, NNPState
     MCState(
         temp,
         beta,
-        config,
-        dist2_mat,
-        new_dist2_vec,
+        config::Config,
+        dist2_mat::Matrix,
+        new_dist2_vec::VorS,
         new_en,
         en_tot,
-        potential,
-        potential_variables,
-        ensemble,
-        ensemble_variables;
+        potentialvariables::AbstractPotentialVariables,
+        ensemble_variables::AbstractEnsembleVariables;
         max_displ = [0.1, 0.1, 1.0],
         max_boxlength = max_length(config.boundary_condition),
         count_atom = [0, 0],
         count_vol = [0, 0],
         count_exc = [0, 0]
     )
-    MCState(temp, config, ensemble, potential; kwargs...)
+    MCState(temp, beta, config::Config, ensemble, pot; kwargs...)
+
+Creates an MC state vector at a given temperature `temp` containing temperature-dependent information
 
 Monte Carlo state for a given temperature `temp` containing all information required to
 perform a Monte Carlo step.
