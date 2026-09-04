@@ -245,12 +245,21 @@ function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
 end
 
 function hamiltonian(state, ensemble::NPT)
-    xy = state.config.box_length
-    z = state.config.box_height
-    L0 = ensemble.reference_length
+    V = volume(state.config.boundary_condition)
     p = ensemble.pressure
     E = state.en_tot
     σ = ensemble.stress_tensor
+    if ensemble.separated_volume
+        xy = state.config.boundary_condition.box_length
+        z = state.config.boundary_condition.box_height
+        L0 = ensemble.reference_length
+    else
+        # If separated volume is zero, this stuff does not make sense.
+        @assert iszero(σ)
+        xy = 0.0
+        z = 0.0
+        L0 = 0.0
+    end
 
     return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
 end
