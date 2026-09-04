@@ -214,6 +214,7 @@ function mc_cycle!(
 
     return mc_states
 end
+
 """
     check_e_bounds(energy::Number, ebounds::VorS)
 Function to determine if an energy value is greater than or less than the min/max, used in equilibration cycle.
@@ -275,7 +276,6 @@ function equilibration_cycle!(
     return mc_states, results
 end
 
-#TODO: why is restart not functional?
 """
     equilibration(mc_states::MCStateVector, move_strat::MoveStrategy{N, E}, mc_params::MCParams, pot, ensemble, n_steps::Int, results::Output, restart::Bool) where {N, E}
 While initialisation sets `mc_states`, `params` etc. we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the [`equilibration_cycle!`](@ref) function that optionally removes the thermalisation from restart.
@@ -305,6 +305,7 @@ function equilibration(
         )
     end
 end
+
 """
     (ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential, ensemble; rdfsave = false, restart = false, save = false, saveconfigs = false, configsname = "configuration", workingdirectory = pwd()))
     ptmc_run!(restart::Bool; rdfsave = false, save = 1000, eq_cycles = 0.2, saveconfigs = false, configsname = "configuration")
@@ -443,6 +444,7 @@ function ptmc_run!(
 
     return mc_states, results
 end
+
 #---------------------------------------------------------#
 #-------------Notes for Future Implementation-------------#
 #---------------------------------------------------------#
