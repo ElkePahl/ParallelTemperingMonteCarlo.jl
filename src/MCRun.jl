@@ -397,11 +397,12 @@ function ptmc_run!(
     # Main loop
     progress = Progress(
         length(start_counter:(mc_params.mc_cycles));
-        desc="Main loop", enabled=isinteractive(),
+        desc="Main loop",
+        enabled=isinteractive(),
     )
     # Set up Arrow writer if needed.
     if flush_interval < mc_params.mc_cycles
-        writer = open(Arrow.Writer, stats_filename, compress=:zstd)
+        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
     else
         writer = nothing
     end

@@ -143,7 +143,7 @@ function check_boundary(bc::SphericalBC, position)
     end
 end
 
-report_stats(bc::SphericalBC) = (; radius=√bc.radius2)
+report_stats(bc::SphericalBC) = (; radius=(√bc.radius2))
 
 """
     PeriodicBC{T}
