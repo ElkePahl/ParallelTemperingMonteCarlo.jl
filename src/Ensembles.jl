@@ -245,7 +245,14 @@ function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
 end
 
 function hamiltonian(state, ensemble::NPT)
-    return state.en_tot + ensemble.pressure * volume(state.config.boundary_condition)
+    xy = state.config.box_length
+    z = state.config.box_height
+    L0 = ensemble.reference_length
+    p = ensemble.pressure
+    E = state.en_tot
+    σ = ensemble.stress_tensor
+
+    return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
 end
 
 """
