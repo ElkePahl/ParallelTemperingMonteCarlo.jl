@@ -22,6 +22,7 @@ include("MCRun.jl")
 include("multihist.jl")
 include("multihist_NPT.jl")
 include("multihist_NVT.jl")
+include("multihistogram_analysis.jl")
 
 @reexport using .CustomTypes
 @reexport using .BoundaryConditions
@@ -41,5 +42,6 @@ include("multihist_NVT.jl")
 @reexport using .Multihistogram
 @reexport using .Multihistogram_NPT
 @reexport using .Multihistogram_NVT
+@reexport using .MultiHistogramAnalysis
 
 end
