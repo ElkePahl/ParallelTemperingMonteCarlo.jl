@@ -1,4 +1,5 @@
-using Random
+using ParallelTemperingMonteCarlo
+using Random, Test, StaticArrays
 
 @testset "States" begin
     v1 = SVector(1.0, 2.0, 3.0)
@@ -14,8 +15,8 @@ using Random
 
     temp = TempGrid{2}(10, 15)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf1, ensemble, pot1)
-    state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf1, ensemble, pot1)
+    state = MCState(temp.t_grid[1], conf1, ensemble, pot1)
+    state2 = MCState(temp.t_grid[2], conf1, ensemble, pot1)
     @test state.ensemble_variables isa NVTVariables{Float64}
     @test state.potential_variables isa DimerPotentialVariables
 
@@ -25,9 +26,9 @@ using Random
     state.ensemble_variables.index = 1
 
     Random.seed!(1234)
-    generate_move!(state, "atommove", ensemble)
+    generate_move!(state, "atommove")
 
-    state = get_energy!(state, pot1, "atommove")
+    state = get_energy!(state, "atommove")
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
     @test metropolis_condition("atommove", state, ensemble) == 1.0
     @test_throws ErrorException metropolis_condition("evommota", state, ensemble)
@@ -58,8 +59,8 @@ end
 
     temp = TempGrid{2}(10, 15)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf1, ensemble, pot1)
-    state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf1, ensemble, pot1)
+    state = MCState(temp.t_grid[1], conf1, ensemble, pot1)
+    state2 = MCState(temp.t_grid[2], conf1, ensemble, pot1)
 
     @test state.ensemble_variables isa NPTVariables{Float64}
     @test state.potential_variables isa DimerPotentialVariables
@@ -71,9 +72,9 @@ end
     Random.seed!(1234)
 
     Random.seed!(1234)
-    generate_move!(state, "atommove", ensemble)
+    generate_move!(state, "atommove")
 
-    state = get_energy!(state, pot1, "atommove")
+    state = get_energy!(state, "atommove")
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
     @test metropolis_condition("atommove", state, ensemble) == 1.0
 
@@ -105,9 +106,9 @@ end
     nnvtens = NNVT([4, 2])
     temp = TempGrid{2}(500, 650)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf, nnvtens, runnerpotential)
-    state2 = MCState(temp.t_grid[2], temp.beta_grid[2], conf, nnvtens, runnerpotential)
-    refstate = MCState(temp.t_grid[1], temp.beta_grid[1], conf, nnvtens, runnerpotential)
+    state = MCState(temp.t_grid[1], conf, nnvtens, runnerpotential)
+    state2 = MCState(temp.t_grid[2], conf, nnvtens, runnerpotential)
+    refstate = MCState(temp.t_grid[1], conf, nnvtens, runnerpotential)
 
     @test isa(state.ensemble_variables, NNVTVariables)
     @test isa(state.potential_variables, NNPVariables2a)
@@ -128,9 +129,9 @@ end
 
     #test moves
     Random.seed!(123)
-    generate_move!(state, "atommove", nnvtens)
+    generate_move!(state, "atommove")
 
-    state = get_energy!(state, runnerpotential, "atommove")
+    state = get_energy!(state, "atommove")
     delen = state.new_en - state.en_tot
     @test delen ≈ -7.5971516e-5
     #test exc after atom move
@@ -146,11 +147,11 @@ end
     Random.seed!(123)
     MCMoves.swap_atoms(state)
     @test state.ensemble_variables.swap_indices[2] > 4
-    state = get_energy!(state, runnerpotential, "atomswap")
+    state = get_energy!(state, "atomswap")
     delen2 = state.new_en - state.en_tot
     @test delen2 ≈ -0.0017084901948
 
-    MCRun.acc_test!(state, nnvtens, "atomswap")
+    MCRun.acc_test!(state, "atomswap")
 
     refmat = copy(refstate.dist2_mat[6, :])
     refmat[6] = refstate.dist2_mat[6, 3]
