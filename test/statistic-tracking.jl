@@ -68,9 +68,14 @@ function run_full_computation(; flush_interval)
     boundary_condition = CubicBC(box_length)
 
     start_config = Config(positions, boundary_condition)
-    ptmc_run!(
-        mc_params, temp, start_config, pot, ensemble;
-        stats_filename="test.arrow", flush_interval,
+    return ptmc_run!(
+        mc_params,
+        temp,
+        start_config,
+        pot,
+        ensemble;
+        stats_filename="test.arrow",
+        flush_interval,
     )
 end
 
