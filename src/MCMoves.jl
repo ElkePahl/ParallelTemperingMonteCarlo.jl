@@ -56,19 +56,10 @@ Base.length(ms::MoveStrategy) = sum(ms.weights)
 function mc_move!(
     mc_state::MCState, move_strat::MoveStrategy, selected=rand(1:length(move_strat))
 )
+    mc_state.ensemble_variables.index = selected
     return _perform_move!(
         mc_state, move_strat.moves, move_strat.weights, selected, false
     )
-end
-@inline function mc_move!(move, mc_state)
-    generate_move!(move, mc_state)
-    get_energy!(move, mc_state)
-    if rand() ≤ metropolis_probability(move, mc_state)
-        swap_config!(move, mc_state)
-        return true
-    else
-        return false
-    end
 end
 @inline _perform_move!(_, ::Tuple{}, ::Tuple{}, _, _) = false
 @inline function _perform_move!(mc_state, (m, ms...), (w, ws...), selected, done)
@@ -77,6 +68,20 @@ end
         return mc_move!(m, mc_state) | _perform_move!(mc_state, ms, ws, selected, true)
     else
         return _perform_move!(mc_state, ms, ws, selected, false)
+    end
+end
+
+@inline function mc_move!(move, mc_state)
+    generate_move!(move, mc_state)
+    get_energy!(move, mc_state)
+    prob = metropolis_probability(move, mc_state)
+    if isnan(prob)
+        error("metropolis probability NaN!")
+    elseif rand() ≤ metropolis_probability(move, mc_state)
+        swap_config!(move, mc_state)
+        return true
+    else
+        return false
     end
 end
 
@@ -187,7 +192,7 @@ function generate_move!(::VolumeChange{false}, mc_state)
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-    return mc_state
+    return
 end
 
 function generate_move!(vol_move::VolumeChange{true}, mc_state)
@@ -234,7 +239,7 @@ function generate_move!(vol_move::VolumeChange{true}, mc_state)
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-    return mc_state
+    return
 end
 
 """
@@ -327,18 +332,22 @@ function metropolis_probability(::VolumeChange, mc_state)
     old_xy = old_bc.box_length
     old_z = old_bc.box_height
 
-    delta_h =
-        delta_energy +
-        ensemble.pressure * (new_volume - old_volume) +
-        reference_length^3 *
-        ensemble.stress_tensor[1] *
-        (old_xy + new_xy) *
-        (new_xy - old_xy) / (reference_length)^2 +
-        reference_length^3 *
-        ensemble.stress_tensor[2] *
-        0.5 *
-        (old_z + new_z) *
-        (new_z - old_z) / (reference_length)^2
+    if reference_length ≠ 0
+        delta_h =
+            delta_energy +
+            ensemble.pressure * (new_volume - old_volume) +
+            reference_length^3 *
+            ensemble.stress_tensor[1] *
+            (old_xy + new_xy) *
+            (new_xy - old_xy) / (reference_length)^2 +
+            reference_length^3 *
+            ensemble.stress_tensor[2] *
+            0.5 *
+            (old_z + new_z) *
+            (new_z - old_z) / (reference_length)^2
+    else
+        delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
+    end
 
     probability = exp(
         -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_volume / old_volume)

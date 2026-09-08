@@ -32,8 +32,10 @@ function mc_step!(mc_states, move_strat, n_steps::Int, stats)
         state = mc_states[trajectory_id]
         n_accepted = 0
 
+        indices = Int[]
         for i_step in 1:n_steps
             n_accepted += mc_move!(state, move_strat)
+            push!(indices, state.ensemble_variables.index)
         end
 
         state.step += 1
@@ -45,6 +47,7 @@ function mc_step!(mc_states, move_strat, n_steps::Int, stats)
             hamiltonian=hamiltonian_value(state, state.ensemble),
             total_energy=state.en_tot,
             acceptance=Float32(state.acceptance),
+            indices,
             report_stats(state, state.ensemble)...,
         )
     end
