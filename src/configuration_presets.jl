@@ -106,7 +106,8 @@ end
 """
     radius(positions)
 
-Return the radius of cluster.
+Return the radius of the smallest sphere centered at the origin that contains all
+`positions`.
 """
 function radius(positions)
     return maximum(norm, positions)
@@ -116,7 +117,8 @@ end
     magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min/2)
 
 Create magic number cluster configuration cells. The atoms are placed such that the smallest
-distance between atoms is `r_min`. The first argument is the magic number index (see below).
+distance between atoms is `r_min`. The first argument is the magic number index (see below),
+which corresponds to the number of shells around the central atom.
 
 `delta_r` sets the difference between the binding sphere radius and the cluster radius,
 where the cluster radius is the radius of the smallest sphere the cluster would fit in.
