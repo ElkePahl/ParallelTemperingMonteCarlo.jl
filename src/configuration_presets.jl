@@ -114,7 +114,7 @@ function radius(positions)
 end
 
 """
-    magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min/2)
+    magic_cluster(magic_number_index; r_min=1, delta_r=r_min/2)
 
 Create magic number cluster configuration cells. The atoms are placed such that the smallest
 distance between atoms is `r_min`. The first argument is the magic number index (see below),
@@ -131,7 +131,7 @@ where the cluster radius is the radius of the smallest sphere the cluster would 
 - `magic_number_index=5`: 561
 - `magic_number_index=6`: 923
 """
-function magic_cluster(magic_number_index; r_min=1, delta_radius=r_min / 2)
+function magic_cluster(magic_number_index; r_min=1, delta_r=r_min / 2)
     if magic_number_index == 1
         filename = "13.txt"
     elseif magic_number_index == 2
@@ -156,10 +156,10 @@ function magic_cluster(magic_number_index; r_min=1, delta_radius=r_min / 2)
     scale_factor = r_min / min_distance(points)
     map!(p -> scale_factor * p, points)
 
-    bc = SphericalBC(; radius=delta_radius + radius(points))
+    bc = SphericalBC(; radius=delta_r + radius(points))
 
     if any(p -> isnothing(check_boundary(bc, p)), points)
-        throw(ArgumentError("`binding_sphere_radius` too small for cluster."))
+        throw(ArgumentError("`delta_r` too small for cluster."))
     end
 
     return Config(points, bc)
