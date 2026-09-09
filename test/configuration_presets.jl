@@ -19,7 +19,10 @@ using Test
 
     @test_throws ArgumentError face_centred_cubic(4; boundary_condition=SphericalBC)
     @test_throws ArgumentError face_centred_cubic(10)
-    @test begin face_centred_cubic(10; allow_huge=true); true end
+    @test begin
+        face_centred_cubic(10; allow_huge=true)
+        true
+    end
 end
 
 @testset "body-centred cubic" begin
@@ -40,7 +43,10 @@ end
 
     @test_throws ArgumentError body_centred_cubic(4; boundary_condition=SphericalBC)
     @test_throws ArgumentError body_centred_cubic(10)
-    @test begin body_centred_cubic(10; allow_huge=true); true end
+    @test begin
+        body_centred_cubic(10; allow_huge=true)
+        true
+    end
 end
 
 @testset "magic_cluster" begin

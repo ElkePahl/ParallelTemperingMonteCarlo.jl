@@ -22,7 +22,11 @@ function face_centred_cubic(
     cell_size; r_min=1, boundary_condition=CubicBC, allow_huge=false
 )
     if !allow_huge && cell_size > 6
-        throw(ArgumentError("`cell_size=$cell_size` would result in a very large configuration. Call with `allow_huge=true` if this was intended."))
+        throw(
+            ArgumentError(
+                "`cell_size=$cell_size` would result in a very large configuration. Call with `allow_huge=true` if this was intended.",
+            ),
+        )
     end
     T = SVector{3,Float64}
     points = T[]
@@ -64,7 +68,11 @@ function body_centred_cubic(
     cell_size; r_min=1, boundary_condition=CubicBC, allow_huge=false
 )
     if !allow_huge && cell_size > 7
-        throw(ArgumentError("`cell_size=$cell_size` would result in a very large configuration. Call with `allow_huge=true` if this was intended."))
+        throw(
+            ArgumentError(
+                "`cell_size=$cell_size` would result in a very large configuration. Call with `allow_huge=true` if this was intended.",
+            ),
+        )
     end
 
     T = SVector{3,Float64}
