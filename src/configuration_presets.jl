@@ -5,7 +5,7 @@ using LinearAlgebra
 export magic_cluster, face_centred_cubic, body_centred_cubic
 
 """
-    face_cented_cubic(cell_size; r_min=1, boundary_condition=Cubic)
+    face_cented_cubic(cell_size; r_min=1, boundary_condition=Cubic, allow_huge=false)
 
 Create face-centred cubic configuration with `cell_size` cells. The atoms are placed such
 that the smallest distance between atoms is `r_min`.
@@ -15,9 +15,15 @@ Number of atoms per `cell_size`:
 - `cell_size=1`: 32
 - `cell_size=2`: 108
 - `cell_size=3`: 256
-There is no limit to `cell_size`.
+There is no limit to `cell_size`, however for large configurations, `allow_huge` must be set
+to `true`.
 """
-function face_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC)
+function face_centred_cubic(
+    cell_size; r_min=1, boundary_condition=CubicBC, allow_huge=false
+)
+    if !allow_huge && cell_size > 6
+        throw(ArgumentError("`cell_size=$cell_size` would result in a very large configuration. Call with `allow_huge=true` if this was intended."))
+    end
     T = SVector{3,Float64}
     points = T[]
     for x in 0:cell_size, y in 0:cell_size, z in 0:cell_size
@@ -41,7 +47,7 @@ function face_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC)
 end
 
 """
-    body_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC)
+    body_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC, allow_huge=false)
 
 Create body-centred cubic configuration with `cell_size` cells. The atoms are placed such
 that the smallest distance between atoms is `r_min`.
@@ -51,9 +57,16 @@ Number of atoms per `cell_size`:
 - `cell_size=1`: 16
 - `cell_size=2`: 54
 - `cell_size=3`: 128
-There is no limit to `cell_size`.
+There is no limit to `cell_size`, however for large configurations, `allow_huge` must be set
+to `true`.
 """
-function body_centred_cubic(cell_size; r_min=1, boundary_condition=CubicBC)
+function body_centred_cubic(
+    cell_size; r_min=1, boundary_condition=CubicBC, allow_huge=false
+)
+    if !allow_huge && cell_size > 7
+        throw(ArgumentError("`cell_size=$cell_size` would result in a very large configuration. Call with `allow_huge=true` if this was intended."))
+    end
+
     T = SVector{3,Float64}
     points = T[]
     for x in 0:cell_size, y in 0:cell_size, z in 0:cell_size
@@ -103,10 +116,10 @@ end
     magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min/2)
 
 Create magic number cluster configuration cells. The atoms are placed such that the smallest
-distance between atoms is `r_min`.
-The first argument is the magic number index (see below).
-`binding_sphere_radius` sets the how much the radius of binding sphere is extended top of
-the radius of the cluster.
+distance between atoms is `r_min`. The first argument is the magic number index (see below).
+
+`delta_r` sets the difference between the binding sphere radius and the cluster radius,
+where the cluster radius is the radius of the smallest sphere the cluster would fit in.
 
 ## Number of atoms per `magic_number_index`:
 - `magic_number_index=1`: 13
@@ -116,7 +129,7 @@ the radius of the cluster.
 - `magic_number_index=5`: 561
 - `magic_number_index=6`: 923
 """
-function magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min / 2)
+function magic_cluster(magic_number_index; r_min=1, delta_radius=r_min / 2)
     if magic_number_index == 1
         filename = "13.txt"
     elseif magic_number_index == 2
@@ -141,7 +154,7 @@ function magic_cluster(magic_number_index; r_min=1, binding_sphere_radius=r_min 
     scale_factor = r_min / min_distance(points)
     map!(p -> scale_factor * p, points)
 
-    bc = SphericalBC(; radius=binding_sphere_radius + radius(points))
+    bc = SphericalBC(; radius=delta_radius + radius(points))
 
     if any(p -> isnothing(check_boundary(bc, p)), points)
         throw(ArgumentError("`binding_sphere_radius` too small for cluster."))
