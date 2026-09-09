@@ -2,14 +2,15 @@ module Ensembles
 
 using ..Configurations
 using ..BoundaryConditions
+import ..BoundaryConditions: report_stats
 using StaticArrays, Random
 
 export AbstractEnsemble, NVT, NPT, NNVT
 
 export AbstractEnsembleVariables,
-    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables
+    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables, hamiltonian
 
-export MoveType, atommove, volumemove, atomswap
+export MoveType, atommove, volumemove, atomswap, report_stats
 export MoveStrategy
 
 """
@@ -21,6 +22,16 @@ Abstract type for ensemble:
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
+
+"""
+    report_stats(mc_state, ensemble)
+
+Return a `NamedTuple` of statistics to report in the result table. The default
+implementation used by [`NVT`](@ref), [`NNVT`](@ref) returns an empty `NamedTuple`.
+"""
+function report_stats(_, ::AbstractEnsemble)
+    return NamedTuple()
+end
 
 """
     AbstractEnsembleVariables
@@ -73,7 +84,7 @@ Isothermal, isobaric ensemble.
     corresponds to the stress in the x and y directions, assumed the same, second entry is z.
     This is set to zero by default.
     -   `reference_length::Float64`: This is a specialised variable specifically related
-    to NσT ensemble. In order to discuss strain, one needs to make reference to an 
+    to NσT ensemble. In order to discuss strain, one needs to make reference to an
     unstrained length, which is what this parameter encodes. This is set to zero by default.
 """
 struct NPT <: AbstractEnsemble
@@ -124,6 +135,11 @@ a separated volume NPT ensemble.=#
 function NPT(n_atoms, pressure, separated_volume)
     return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0, 0], 0)
 end
+function report_stats(mc_state, ::NPT)
+    bc = mc_state.config.boundary_condition
+    return (; volume=volume(bc), report_stats(bc)...)
+end
+
 """
     NPTVariables <: AbstractEnsembleVariables
 
@@ -193,6 +209,10 @@ end
 #---------------------------------------------------------------------#
 #------------------------global functions-----------------------------#
 #---------------------------------------------------------------------#
+function hamiltonian(state, ::AbstractEnsemble)
+    return state.en_tot
+end
+
 """
     set_ensemble_variables(config::Config, ensemble::NVT)
     set_ensemble_variables(config::Config, ensemble::NPT)
@@ -222,6 +242,26 @@ function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
     return NNVTVariables{T,length(config),N1,N2}(
         1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1)
     )
+end
+
+function hamiltonian(state, ensemble::NPT)
+    V = volume(state.config.boundary_condition)
+    p = ensemble.pressure
+    E = state.en_tot
+    σ = ensemble.stress_tensor
+    if ensemble.separated_volume
+        xy = state.config.boundary_condition.box_length
+        z = state.config.boundary_condition.box_height
+        L0 = ensemble.reference_length
+    else
+        # If separated volume is zero, this stuff does not make sense.
+        @assert iszero(σ)
+        xy = 0.0
+        z = 0.0
+        L0 = 0.0
+    end
+
+    return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
 end
 
 """

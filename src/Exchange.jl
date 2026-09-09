@@ -1,8 +1,8 @@
 """
     module Exchange
 
-Here we include methods for calculating the metropolis condition and other exchange 
-criteria required for Monte Carlo steps. This further declutters the MCRun module and 
+Here we include methods for calculating the metropolis condition and other exchange
+criteria required for Monte Carlo steps. This further declutters the MCRun module and
 allows us to split the cycle. Includes [`update_max_stepsize!`](@ref) which controls the
 frequency of.
 """
@@ -39,10 +39,10 @@ export parallel_tempering_exchange!, update_max_stepsize!
         xy_unchanged::Float64,
         z_unchanged::Float64,
         beta::Float64,
-        reference_length::Float64=15.8 
+        reference_length::Float64=15.8
     )
-Function returning the probability value associated with a trial move. 
-Three methods included, one for NVT, one for NPT, one for NσT. 
+Function returning the probability value associated with a trial move.
+Three methods included, one for NVT, one for NPT, one for NσT.
 """
 function get_metropolis_probability(delta_energy::Number, beta::Number)
     prob_val = exp(-delta_energy * beta)
@@ -109,7 +109,7 @@ the single-atom move
 -   accepts pressure by way of `ensemble`, `delta_energy`, `delta_volume` by way of
 `volume_changed` and `volume_unchanged` and `beta` and determines the thermodynamic
 probability of the volume move.
--   accepts pressure and stress by way of `ensemble`, `delta_energy`, `delta_volume`, 
+-   accepts pressure and stress by way of `ensemble`, `delta_energy`, `delta_volume`,
 `delta_xy`, `delta_z`, and `reference length` and determines the thermodynamic property of
 the deformation move.
 """
@@ -187,58 +187,32 @@ and attempt to swap two trajectories according to the parallel tempering method.
 The second method uses enthalpy instead of energy to determine acceptance.
 """
 function parallel_tempering_exchange!(
-    mc_states::MCStateVector, mc_params::MCParams, ensemble::AbstractEnsemble
+    mc_states, mc_params::MCParams, ensemble::AbstractEnsemble
 )
     n_exc = rand(1:(mc_params.n_traj - 1))
 
     mc_states[n_exc].count_exc[1] += 1
     mc_states[n_exc + 1].count_exc[1] += 1
 
-    if exc_acceptance(
-        mc_states[n_exc].beta,
-        mc_states[n_exc + 1].beta,
-        mc_states[n_exc].en_tot,
-        mc_states[n_exc + 1].en_tot,
-    ) > rand()
+    success =
+        rand() < exc_acceptance(
+            mc_states[n_exc].beta,
+            mc_states[n_exc + 1].beta,
+            hamiltonian(mc_states[n_exc], ensemble),
+            hamiltonian(mc_states[n_exc + 1], ensemble),
+        )
+
+    if success
         mc_states[n_exc].count_exc[2] += 1
         mc_states[n_exc + 1].count_exc[2] += 1
 
         mc_states[n_exc], mc_states[n_exc + 1] = exc_trajectories!(
             mc_states[n_exc], mc_states[n_exc + 1]
         )
+        return n_exc
+    else
+        return 0
     end
-
-    return mc_states
-end
-function parallel_tempering_exchange!(
-    mc_states::MCStateVector, mc_params::MCParams, ensemble::NPT
-)
-    n_exc = rand(1:(mc_params.n_traj - 1))
-
-    mc_states[n_exc].count_exc[1] += 1
-    mc_states[n_exc + 1].count_exc[1] += 1
-
-    if exc_acceptance(
-        mc_states[n_exc].beta,
-        mc_states[n_exc + 1].beta,
-        (
-            mc_states[n_exc].en_tot +
-            ensemble.pressure * volume(mc_states[n_exc].config.boundary_condition)
-        ),
-        (
-            mc_states[n_exc + 1].en_tot +
-            ensemble.pressure * volume(mc_states[n_exc + 1].config.boundary_condition)
-        ),
-    ) > rand()
-        mc_states[n_exc].count_exc[2] += 1
-        mc_states[n_exc + 1].count_exc[2] += 1
-
-        mc_states[n_exc], mc_states[n_exc + 1] = exc_trajectories!(
-            mc_states[n_exc], mc_states[n_exc + 1]
-        )
-    end
-
-    return mc_states
 end
 
 """
@@ -257,12 +231,12 @@ end
     max_acc::Number
     )
 Increases/decreases the max. displacement of atom, volume, and rotation moves to 110%/90%
-of old values if acceptance rate is >60%/<40%. Acceptance rate is calculated after 
+of old values if acceptance rate is >60%/<40%. Acceptance rate is calculated after
 `n_update` MC cycles; each cycle consists of `a` atom and `v` volume moves.
 Information on actual max. displacement and accepted moves between updates is contained in
 `mc_state`, see [`MCState`](@ref).
 
-Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing 
+Methods split for NVT/NPT ensemble to ensure we don't consider volume moves when dealing
 with the NVT ensemble.
 """
 function update_max_stepsize!(
