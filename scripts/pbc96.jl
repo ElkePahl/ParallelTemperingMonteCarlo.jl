@@ -13,7 +13,7 @@ Random.seed!(1234)
 n_atoms = 96
 #pressure = 80000000000
 pressure = 101325
-#unit conversion, when using ELJ even potential, convert to bohr, when using look-up table, use angstrom by choosing "AtoBohr = 0"
+#unit conversion, when using ELJ even potential, convert to bohr, when using look-up table, use angstrom by choosing "AtoBohr = 1.0"
 #AtoBohr = 1.8897261259077824
 AtoBohr = 1.0
 

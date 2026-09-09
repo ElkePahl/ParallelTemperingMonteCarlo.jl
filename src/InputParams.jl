@@ -12,7 +12,8 @@ using ..Configurations
 using ..EnergyEvaluation
 using ..CustomTypes
 
-export MCParams, TempGrid
+export InputParameters
+export MCParams, TempGrid, TempGrid_customised
 export Output
 
 const kB = 3.16681196E-6  # in Hartree/K (3.166811429E-6)
@@ -92,6 +93,12 @@ function TempGrid{N}(ti::Number, tf::Number; tdistr=:geometric) where {N}
 end
 
 TempGrid(ti::Number, tf::Number, N::Int; tdistr=:geometric) = TempGrid{N}(ti, tf; tdistr)
+
+function TempGrid_customised(tgrid::Array{Float64})
+    N = length(tgrid)
+    betagrid = 1.0 ./ (kB .* tgrid)
+    return TempGrid{N,eltype(tgrid)}(SVector{N}(tgrid), SVector{N}(betagrid))
+end
 
 """
     Output{T}(n_bin; en_min = 0) where T <: Number
