@@ -63,12 +63,7 @@ Basic function utilised by the simulation. For each of the `n_steps` run a singl
 Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
 """
 function mc_cycle!(
-    mc_states,
-    move_strat,
-    mc_params::MCParams,
-    n_steps::Int,
-    index::Int,
-    stats,
+    mc_states, move_strat, mc_params::MCParams, n_steps::Int, index::Int, stats
 )
     mc_step!(mc_states, move_strat, n_steps, stats)
     ensemble = mc_states[1].ensemble
@@ -154,12 +149,7 @@ defined in `mc_params` are completed without updating the results before initial
 equilibration cycle.
 """
 function equilibration_cycle!(
-    mc_states,
-    move_strat,
-    mc_params::MCParams,
-    n_steps::Int,
-    results::Output,
-    stats,
+    mc_states, move_strat, mc_params::MCParams, n_steps::Int, results::Output, stats
 )
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies

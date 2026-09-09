@@ -1,11 +1,6 @@
 module MCMoves
 
-export atom_displacement, volume_change
-export scale_xy, scale_z, volume_change_xy, volume_change_z, volume_change_xyz, get_energy!
-export generate_move!, swap_config!, mc_move!
-
-export generate_move!, AtomDisplacement, AtomSwap, VolumeChange, metropolis_condition
-export MoveStrategy
+export MoveStrategy, mc_move!
 
 using StaticArrays
 
@@ -34,9 +29,7 @@ function MoveStrategy(pairs...)
 end
 
 function MoveStrategy(ensemble::NVT)
-    return MoveStrategy(
-        AtomDisplacement() => ensemble.n_atom_moves,
-    )
+    return MoveStrategy(AtomDisplacement() => ensemble.n_atom_moves)
 end
 function MoveStrategy(ensemble::NPT)
     n_atoms = ensemble.n_atoms
@@ -47,37 +40,41 @@ function MoveStrategy(ensemble::NPT)
 end
 function MoveStrategy(ensemble::NNVT)
     return MoveStrategy(
-        AtomDisplacement() => ensemble.n_atom_moves,
-        AtomSwap() => ensemble.n_atom_swaps,
+        AtomDisplacement() => ensemble.n_atom_moves, AtomSwap() => ensemble.n_atom_swaps
     )
 end
 Base.length(ms::MoveStrategy) = sum(ms.weights)
 
-function mc_move!(
-    mc_state::MCState, move_strat::MoveStrategy, selected=rand(1:length(move_strat))
-)
+function mc_move!(mc_state::MCState, move_strat::MoveStrategy, accept=nothing)
+    selected = rand(1:length(move_strat))
     mc_state.ensemble_variables.index = selected
     return _perform_move!(
-        mc_state, move_strat.moves, move_strat.weights, selected, false
+        mc_state, move_strat.moves, move_strat.weights, selected, false, accept
     )
 end
-@inline _perform_move!(_, ::Tuple{}, ::Tuple{}, _, _) = false
-@inline function _perform_move!(mc_state, (m, ms...), (w, ws...), selected, done)
+@inline _perform_move!(_, ::Tuple{}, ::Tuple{}, _, _, _) = false
+@inline function _perform_move!(mc_state, (m, ms...), (w, ws...), selected, done, accept)
     selected -= w
     if !done && selected ≤ 0
-        return mc_move!(m, mc_state) | _perform_move!(mc_state, ms, ws, selected, true)
+        return mc_move!(m, mc_state, accept) |
+               _perform_move!(mc_state, ms, ws, selected, true, accept)
     else
-        return _perform_move!(mc_state, ms, ws, selected, false)
+        return _perform_move!(mc_state, ms, ws, selected, false, accept)
     end
 end
 
-@inline function mc_move!(move, mc_state)
+@inline function mc_move!(move, mc_state, accept)
     generate_move!(move, mc_state)
     get_energy!(move, mc_state)
     prob = metropolis_probability(move, mc_state)
     if isnan(prob)
         error("metropolis probability NaN!")
-    elseif rand() ≤ metropolis_probability(move, mc_state)
+    elseif isnothing(accept) && rand() ≤ metropolis_probability(move, mc_state)
+        swap_config!(move, mc_state)
+        return true
+    elseif isnothing(accept)
+        return false
+    elseif accept
         swap_config!(move, mc_state)
         return true
     else
@@ -192,7 +189,7 @@ function generate_move!(::VolumeChange{false}, mc_state)
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-    return
+    return nothing
 end
 
 function generate_move!(vol_move::VolumeChange{true}, mc_state)
@@ -239,7 +236,7 @@ function generate_move!(vol_move::VolumeChange{true}, mc_state)
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
-    return
+    return nothing
 end
 
 """
@@ -269,7 +266,7 @@ Returns the trial configuration and the amount it was scaled by.
 function volume_change_xy(conf::Config, max_vchange, max_length, max_height, max_asymmetry)
     scale = exp((rand() - 0.5) * max_vchange)^(1 / 2)
     lh_ratio = conf.boundary_condition.box_length / conf.boundary_condition.box_height
-    init_ratio = max_length / max_height
+    initial_ratio = max_length / max_height
 
     if lh_ratio >= initial_ratio * (1.0 + max_asymmetry) && scale > 1.0
         scale = 1 / scale
@@ -311,13 +308,26 @@ end
 """
     metropolis_probability(::AbstractMove, mc_state)
 
-Get the probability of accepting a given move.
+Get the probability of accepting a given move. This must be called after
+[`generate_move!`](@ref).
 """
 function metropolis_probability(::Union{AtomDisplacement,AtomSwap}, mc_state)
     delta_energy = mc_state.new_en - mc_state.en_tot
     return min(exp(-delta_energy * mc_state.beta), 1.0)
 end
-function metropolis_probability(::VolumeChange, mc_state)
+function metropolis_probability(::VolumeChange{false}, mc_state)
+    ensemble = mc_state.ensemble::NPT
+
+    old_volume = volume(mc_state.config.boundary_condition)
+    new_volume = volume(mc_state.ensemble_variables.trial_config.boundary_condition)
+    delta_energy = mc_state.new_en - mc_state.en_tot
+    delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
+    probability = exp(
+        -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_volume / old_volume)
+    )
+    return min(probability, 1.0)
+end
+function metropolis_probability(::VolumeChange{true}, mc_state)
     ensemble = mc_state.ensemble::NPT
 
     reference_length = ensemble.reference_length
@@ -325,17 +335,18 @@ function metropolis_probability(::VolumeChange, mc_state)
     new_bc = mc_state.ensemble_variables.trial_config.boundary_condition
 
     delta_energy = mc_state.new_en - mc_state.en_tot
-    new_volume = volume(new_bc)
     old_volume = volume(old_bc)
-    new_xy = new_bc.box_length
-    new_z = new_bc.box_height
+    new_volume = volume(new_bc)
     old_xy = old_bc.box_length
     old_z = old_bc.box_height
+    new_xy = new_bc.box_length
+    new_z = new_bc.box_height
     σ = ensemble.stress_tensor
 
     if reference_length ≠ 0
         delta_h =
-            delta_energy + ensemble.pressure * (new_volume - old_volume) +
+            delta_energy +
+            ensemble.pressure * (new_volume - old_volume) +
             reference_length * (
                 σ[1] * (old_xy + new_xy) * (new_xy - old_xy) +
                 σ[2] * (old_z + new_z) * (new_z - old_z) / 2
@@ -356,7 +367,7 @@ end
 Update the energy `mc_state.en_new` according to the move.
 """
 function get_energy!(::AtomDisplacement, mc_state)
-    mc_state.potential_variables, mc_state.new_en = energy_update!(
+    return mc_state.potential_variables, mc_state.new_en = energy_update!(
         mc_state.ensemble_variables,
         mc_state.config,
         mc_state.potential_variables,
@@ -367,7 +378,7 @@ function get_energy!(::AtomDisplacement, mc_state)
     )
 end
 function get_energy!(::AtomSwap, mc_state)
-    mc_state.potential_variables, mc_state.new_en = swap_energy_update(
+    return mc_state.potential_variables, mc_state.new_en = swap_energy_update(
         mc_state.ensemble_variables,
         mc_state.config,
         mc_state.potential_variables,
@@ -377,7 +388,7 @@ function get_energy!(::AtomSwap, mc_state)
     )
 end
 function get_energy!(::VolumeChange, mc_state)
-    mc_state.new_en = dimer_energy_config(
+    return mc_state.new_en = dimer_energy_config(
         mc_state.ensemble_variables.trial_config,
         mc_state.ensemble_variables.new_dist2_mat,
         mc_state.potential_variables,
@@ -418,7 +429,8 @@ function swap_config!(::AtomSwap, mc_state)
 
     #swap en_atom_vec and gmat
     pot_vars = mc_state.potential_variables
-    pot_vars.en_atom_vec, pot_vars.new_en_atom = pot_vars.new_en_atom, pot_vars.en_atom_vec
+    return pot_vars.en_atom_vec, pot_vars.new_en_atom = pot_vars.new_en_atom,
+    pot_vars.en_atom_vec
 end
 function swap_config!(::VolumeChange, mc_state)
     trial_config = mc_state.ensemble_variables.trial_config
