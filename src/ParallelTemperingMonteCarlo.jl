@@ -23,6 +23,8 @@ include("multihist.jl")
 include("multihist_NPT.jl")
 include("multihist_NVT.jl")
 
+include("configuration_presets.jl")
+
 @reexport using .CustomTypes
 @reexport using .BoundaryConditions
 @reexport using .Configurations
