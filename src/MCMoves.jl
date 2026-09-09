@@ -331,20 +331,15 @@ function metropolis_probability(::VolumeChange, mc_state)
     new_z = new_bc.box_height
     old_xy = old_bc.box_length
     old_z = old_bc.box_height
+    σ = ensemble.stress_tensor
 
     if reference_length ≠ 0
         delta_h =
-            delta_energy +
-            ensemble.pressure * (new_volume - old_volume) +
-            reference_length^3 *
-            ensemble.stress_tensor[1] *
-            (old_xy + new_xy) *
-            (new_xy - old_xy) / (reference_length)^2 +
-            reference_length^3 *
-            ensemble.stress_tensor[2] *
-            0.5 *
-            (old_z + new_z) *
-            (new_z - old_z) / (reference_length)^2
+            delta_energy + ensemble.pressure * (new_volume - old_volume) +
+            reference_length * (
+                σ[1] * (old_xy + new_xy) * (new_xy - old_xy) +
+                σ[2] * (old_z + new_z) * (new_z - old_z) / 2
+            )
     else
         delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
     end

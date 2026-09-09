@@ -123,7 +123,7 @@ function NPT(
     n_atoms::Int64,
     pressure::Float64;
     separated_volume::Bool=false,
-    stress_tensor::Vector{Float64}=[0, 0],
+    stress_tensor=[0, 0],
     reference_length::Float64=0.0,
 )
     return NPT(
@@ -211,9 +211,6 @@ end
 #---------------------------------------------------------------------#
 function hamiltonian(state, ::AbstractEnsemble)
     return state.en_tot
-end
-function trial_hamiltonian(state, ::AbstractEnsemble)
-    return state.new_en
 end
 
 """
