@@ -218,22 +218,51 @@ function equilibration(
     end
 end
 """
-    ptmc_run!(mc_params::MCParams, temp::TempGrid, start_config::Config, potential, ensemble; rdfsave = false, restart = false, save = false, saveconfigs = false, configsname = "configuration", workingdirectory = pwd())
-    ptmc_run!(restart::Bool; rdfsave = false, save = 1000, eq_cycles = 0.2, saveconfigs = false, configsname = "configuration")
+    ptmc_run!(
+        mc_params::MCParams,
+        temp::TempGrid,
+        start_config::Config,
+        potential,
+        ensemble;
+        rdfsave = false,
+        restart = false,
+        save = false,
+        saveconfigs = false,
+        configsname = "configuration",
+        workingdirectory = pwd(),
+        stats_filename = nothing,
+        flush_interval = 1_000_000,
+    )
+    ptmc_run!(
+        restart::Bool;
+        rdfsave = false
+        save = 1000
+        eq_cycles = 0.2
+        saveconfigs = false
+        configsname = "configuration"
+    )
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs.
 -   Second method:
 The second method relies on a series of checkpoint files -see Checkpoint module [`ReadSave`](@ref)- to autoinitialise an MC cycle. Still accepts restart as an argument to indicate whether this is a clean start with configs or a restart from a checkpoint at a given index.
 
 
--   kwargs currently implemented are:
-    -   `rdfsave::Bool` : tells the simulation whether or not to generate and save radial distribution functions (a resource intensive step) -- set to false
-    -   `restart::Bool` : tells the simulation whether or not we are beginning from a partially complete simulation - set false for method one.
-    -   `acc::Vector` : sets the min and max acceptance rates used to adjust stepsize for the simulation - set [0.4 0.6] for a target of 40-60% acceptance
-    -   `save::Bool` or `Int` : tells the simulation whether to write checkpoints - set false for no save or integer expressing save frequency
-    -   `saveconfigs::Bool` or `Int` : tells the simulation whether to save configurations - set false for no save or integer expressing save frequency
-    -   `configsname::AbstractString` : tells the simulation what name to save configuration files under.
+## Keyword arguments
 
+- `rdfsave=false`: tells the simulation whether or not to generate and save radial
+  distribution functions (a resource intensive step).
+- `restart=false`: tells the simulation whether or not we are beginning from a partially
+  complete simulation.
+- `save::Bool` or `Int`: tells the simulation whether to write checkpoints - set false for
+  no save or integer expressing save frequency.
+- `saveconfigs::Bool` or `Int` : tells the simulation whether to save configurations - set
+  false for no save or integer expressing save frequency
+- `configsname::AbstractString` : tells the simulation what name to save configuration files
+  under.
+- `stats_filename=nothing`: if set to an arrow filename, the stats will be written to that
+  file.
+- `flush_interval=1_000_000`: if `stats_filename ≢ nothing`, the stats will be periodically
+  flushed to disk.
 """
 function ptmc_run!(
     mc_params::MCParams,
@@ -247,8 +276,8 @@ function ptmc_run!(
     saveconfigs=false,
     configsname="configuration",
     workingdirectory=pwd(),
-    flush_interval=1_000_000,
     stats_filename=nothing,
+    flush_interval=1_000_000,
 )
     # Initialisation
     cd(workingdirectory)
