@@ -20,6 +20,27 @@ struct RuNNerPotential{Nrad,Nang} <: AbstractMachineLearningPotential
     r_cut::Float64
     boundary::Float64
 end
+
+"""
+    RuNNerPotentialWithNeighbourhood{Nrad,Nang} <: AbstractMachineLearningPotential
+
+Neighbour-restricted variant of [`RuNNerPotential`](@ref).
+
+Contains the fixed information required for the RuNNer neural-network
+potential, including the neural network, radial and angular symmetry functions,
+cutoff radius, and minimum interatomic boundary.
+
+Mutable information that differs between PTMC trajectories is stored in
+[`NNPVariablesWithNeighbourhood`](@ref).
+"""
+struct RuNNerPotentialWithNeighbourhood{Nrad,Nang} <: AbstractMachineLearningPotential
+    nnp::NeuralNetworkPotential
+    radsymfunctions::StructVector{RadialType2{Float64}}
+    angsymfunctions::StructVector{AngularType3{Float64}}
+    r_cut::Float64
+    boundary::Float64
+end
+
 """
     RuNNerPotential(nnp::NeuralNetworkPotential,radsymvec,angsymvec)
 RuNNerPotential constructor/initializer function, given a neural network potential `nnp` and the symmetry functions `radsymvec,angsymvec` and the cutoff radius `r_cut`.
@@ -46,6 +67,106 @@ function RuNNerPotential(nnp, radsymvec, angsymvec, boundary)
     return RuNNerPotential{nrad,nang}(nnp, radvec, angvec, r_cut, boundary * boundary)
 end
 
+"""
+    RuNNerPotentialWithNeighbourhood(
+        nnp::NeuralNetworkPotential,
+        radsymvec,
+        angsymvec,
+    )
+
+    RuNNerPotentialWithNeighbourhood(
+        nnp,
+        radsymvec,
+        angsymvec,
+        boundary,
+    )
+
+Constructs a neighbour-restricted RuNNer neural-network potential.
+
+The potential stores the neural-network parameters, radial and angular
+symmetry-function definitions, cutoff radius, and optional minimum interatomic
+boundary. Step-dependent neural-network state is stored separately in
+[`NNPVariablesWithNeighbourhood`](@ref).
+
+The three-argument constructor uses a zero boundary. The four-argument
+constructor stores the squared value of `boundary`, consistent with
+[`RuNNerPotential`](@ref).
+"""
+function RuNNerPotentialWithNeighbourhood(
+    nnp::NeuralNetworkPotential,
+    radsymvec::Vector{RadialType2{N}},
+    angsymvec::Vector{AngularType3{N}},
+) where {N<:Real}
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    radvec = StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+
+    return RuNNerPotentialWithNeighbourhood{nrad,nang}(
+        nnp,
+        radvec,
+        angvec,
+        r_cut,
+        0.0,
+    )
+end
+
+function RuNNerPotentialWithNeighbourhood(nnp, radsymvec, angsymvec, boundary)
+    r_cut = radsymvec[1].r_cut
+    nrad = length(radsymvec)
+    nang = length(angsymvec)
+    radvec = StructVector([rsymm for rsymm in radsymvec])
+    angvec = StructVector([asymm for asymm in angsymvec])
+
+    return RuNNerPotentialWithNeighbourhood{nrad,nang}(
+        nnp,
+        radvec,
+        angvec,
+        r_cut,
+        boundary * boundary,
+    )
+end
+
+
+"""
+    NNPVariables{T}
+Bundle of variables used for the NNP potential:
+-   `en_atom_vec::Vector{T}` -- the per-atom energy vector
+-   `new_en_atom::Vector{T}` -- the new per-atom energy vector
+-   `g_matrix::Matrix{T}` -- the G matrix
+-   `f_matrix::Matrix{T}` -- the F matrix
+-   `new_g_matrix::Matrix{T}` -- the new G matrix
+-   `new_f_vec::Vector{T}` -- the new F vector
+Todo: someone who knows what these are should write a better description
+"""
+mutable struct NNPVariables{T} <: AbstractPotentialVariables
+    en_atom_vec::Vector{T}
+    new_en_atom::Vector{T}
+    g_matrix::Matrix{T}
+    f_matrix::Matrix{T}
+    new_g_matrix::Matrix{T}
+    new_f_vec::Vector{T}
+end
+
+"""
+    NNPVariablesWithNeighbourhood{T} <: AbstractPotentialVariables
+
+Per-trajectory mutable variables used by
+[`RuNNerPotentialWithNeighbourhood`](@ref).
+
+Contains the neural-network energy, symmetry-function, and cutoff-function
+state used by [`RuNNerPotentialWithNeighbourhood`](@ref).
+"""
+mutable struct NNPVariablesWithNeighbourhood{T} <: AbstractPotentialVariables
+    en_atom_vec::Vector{T}
+    new_en_atom::Vector{T}
+    g_matrix::Matrix{T}
+    f_matrix::Matrix{T}
+    new_g_matrix::Matrix{T}
+    new_f_vec::Vector{T}
+end
+
 function set_variables(
     config::Config{T}, dist2_mat::Matrix{Float64}, pot::RuNNerPotential{nrad,nang}
 ) where {T,nrad,nang}
@@ -56,6 +177,51 @@ function set_variables(
     )
 
     return NNPVariables{T}(zeros(N), zeros(N), g_matrix, f_matrix, copy(g_matrix), zeros(N))
+end
+
+"""
+    set_variables(
+        config,
+        dist2_mat,
+        pot::RuNNerPotentialWithNeighbourhood,
+    )
+
+Initialises the potential variables for a
+[`RuNNerPotentialWithNeighbourhood`](@ref).
+
+Calculates the complete cutoff-function and symmetry-function matrices for the
+initial configuration and creates an independent mutable potential-variables
+object for the trajectory.
+
+Returns an [`NNPVariablesWithNeighbourhood`](@ref) object.
+"""
+function set_variables(
+    config::Config{T},
+    dist2_mat::Matrix{Float64},
+    pot::RuNNerPotentialWithNeighbourhood{nrad,nang},
+) where {T,nrad,nang}
+    N = length(config)
+
+    f_matrix = cutoff_function.(sqrt.(dist2_mat), Ref(pot.r_cut))
+
+    g_matrix = total_symm_calc(
+        config,
+        dist2_mat,
+        f_matrix,
+        pot.radsymfunctions,
+        pot.angsymfunctions,
+        nrad,
+        nang,
+    )
+
+    return NNPVariablesWithNeighbourhood{T}(
+        zeros(N),
+        zeros(N),
+        g_matrix,
+        f_matrix,
+        copy(g_matrix),
+        zeros(N)
+    )
 end
 
 function initialise_energy(
@@ -69,6 +235,24 @@ function initialise_energy(
         potential_variables.g_matrix, length(config), pot.nnp
     )
     en_tot = sum(potential_variables.en_atom_vec)
+    return en_tot, potential_variables
+end
+
+function initialise_energy(
+    config::Config,
+    dist2_mat::Matrix{Float64},
+    potential_variables::NNPVariablesWithNeighbourhood,
+    ensemble_variables::AbstractEnsembleVariables,
+    pot::RuNNerPotentialWithNeighbourhood,
+)
+    potential_variables.en_atom_vec = forward_pass(
+        potential_variables.g_matrix,
+        length(config),
+        pot.nnp,
+    )
+
+    en_tot = sum(potential_variables.en_atom_vec)
+
     return en_tot, potential_variables
 end
 
@@ -102,25 +286,7 @@ function energy_update!(
     return potential_variables, new_energy
 end
 
-"""
-    NNPVariables{T}
-Bundle of variables used for the NNP potential:
--   `en_atom_vec::Vector{T}` -- the per-atom energy vector
--   `new_en_atom::Vector{T}` -- the new per-atom energy vector
--   `g_matrix::Matrix{T}` -- the G matrix
--   `f_matrix::Matrix{T}` -- the F matrix
--   `new_g_matrix::Matrix{T}` -- the new G matrix
--   `new_f_vec::Vector{T}` -- the new F vector
-Todo: someone who knows what these are should write a better description
-"""
-mutable struct NNPVariables{T} <: AbstractPotentialVariables
-    en_atom_vec::Vector{T}
-    new_en_atom::Vector{T}
-    g_matrix::Matrix{T}
-    f_matrix::Matrix{T}
-    new_g_matrix::Matrix{T}
-    new_f_vec::Vector{T}
-end
+
 """
     get_new_state_vars!(trial_pos::PositionVector,atomindex::Int,config::Config,potential_variables::NNPVariables,dist2_mat::Matrix{Float64},new_dist2_vec::Vector{Float64},pot::RuNNerPotential{Nrad,Nang}) where {Nrad,Nang}
 Function for finding the new state variables for calculating an NNP. Redefines `new_f` and `new_g` matrices based on the `trial_pos` of atom at `atomindex` and adjusts the parameters in the `potential_variables` according to the variables in `pot`.
@@ -163,6 +329,36 @@ function calc_new_runner_energy!(potential_variables::NNPVariables, pot::RuNNerP
     new_en = sum(potential_variables.new_en_atom)
     return potential_variables, new_en
 end
+
+"""
+    calc_new_runner_energy!(
+        potential_variables::NNPVariablesWithNeighbourhood,
+        pot::RuNNerPotentialWithNeighbourhood,
+    )
+
+Calculates the proposed RuNNer neural-network energy following a
+neighbourhood-restricted symmetry-function update.
+
+The proposed symmetry-function matrix `new_g_matrix` is passed through the
+neural network to obtain the proposed per-atom energies and total energy.
+
+Returns `(potential_variables, new_en)`.
+"""
+function calc_new_runner_energy!(
+    potential_variables::NNPVariablesWithNeighbourhood,
+    pot::RuNNerPotentialWithNeighbourhood,
+)
+    potential_variables.new_en_atom = forward_pass(
+        potential_variables.new_g_matrix,
+        length(potential_variables.en_atom_vec),
+        pot.nnp,
+    )
+
+    new_en = sum(potential_variables.new_en_atom)
+
+    return potential_variables, new_en
+end
+
 #----------------------------------------------------------#
 #--------------------NNP with two atoms--------------------#
 #----------------------------------------------------------#
@@ -399,6 +595,122 @@ function calc_new_runner_energy!(
     end
 
     new_en = sum(potential_variables.new_en_atom)
+
+    return potential_variables, new_en
+end
+
+"""
+    get_new_state_vars_neigh!(
+        trial_pos,
+        atomindex,
+        config,
+        potential_variables::NNPVariablesWithNeighbourhood,
+        dist2_mat,
+        new_dist2_vec,
+        pot::RuNNerPotentialWithNeighbourhood,
+    )
+
+Updates the proposed neural-network state variables following an atom move.
+
+Calculates the proposed cutoff-function vector for the moved atom, determines
+the union of atoms inside its cutoff before or after the move, and updates only
+the affected radial and angular symmetry-function values in `new_g_matrix`.
+
+Returns the updated `potential_variables`.
+"""
+function get_new_state_vars_neigh!(
+    trial_pos::PositionVector,
+    atomindex::Int,
+    config::Config,
+    potential_variables::NNPVariablesWithNeighbourhood,
+    dist2_mat::Matrix{Float64},
+    new_dist2_vec::Vector{Float64},
+    pot::RuNNerPotentialWithNeighbourhood{Nrad,Nang}
+) where {Nrad,Nang}
+
+    potential_variables.new_f_vec = cutoff_function.(sqrt.(new_dist2_vec), Ref(pot.r_cut))
+
+    neighbour_indices_from_f = neighbour_union_from_cutoff_vectors(
+        potential_variables.f_matrix[atomindex, :],
+        potential_variables.new_f_vec,
+        atomindex
+    )
+
+
+    potential_variables.new_g_matrix = copy(potential_variables.g_matrix)
+
+    potential_variables.new_g_matrix = total_symm_neigh!(
+        potential_variables.new_g_matrix,
+        config.positions,
+        trial_pos,
+        dist2_mat,
+        new_dist2_vec,
+        potential_variables.f_matrix,
+        potential_variables.new_f_vec,
+        atomindex,
+        neighbour_indices_from_f,
+        pot.radsymfunctions,
+        pot.angsymfunctions,
+        Nrad,
+        Nang
+    )
+
+    return potential_variables
+end
+
+"""
+    energy_update!(
+        ensemblevariables,
+        config,
+        potential_variables::NNPVariablesWithNeighbourhood,
+        dist2_mat,
+        new_dist2_vec,
+        en_tot,
+        pot::RuNNerPotentialWithNeighbourhood,
+    )
+
+Updates the proposed energy following an atom move for a
+[`RuNNerPotentialWithNeighbourhood`](@ref).
+
+If the proposed configuration violates the minimum interatomic boundary, a high
+trial energy is assigned. Otherwise, only symmetry-function values affected by
+the moved atom and its neighbourhood are recalculated before evaluating the
+proposed neural-network energy.
+
+Returns `(potential_variables, new_en)`.
+"""
+function energy_update!(
+    ensemblevariables::Etype,
+    config::Config,
+    potential_variables::NNPVariablesWithNeighbourhood,
+    dist2_mat::Matrix{Float64},
+    new_dist2_vec::Vector{Float64},
+    en_tot::Number,
+    pot::RuNNerPotentialWithNeighbourhood,
+) where {Etype<:AbstractEnsembleVariables}
+
+    if any(
+        new_dist2_vec[i] < pot.boundary
+        for i in eachindex(new_dist2_vec)
+        if i != ensemblevariables.index
+    )
+        new_en = 100.0
+    else
+        potential_variables = get_new_state_vars_neigh!(
+            ensemblevariables.trial_move,
+            ensemblevariables.index,
+            config,
+            potential_variables,
+            dist2_mat,
+            new_dist2_vec,
+            pot,
+        )
+
+        potential_variables, new_en = calc_new_runner_energy!(
+            potential_variables,
+            pot,
+        )
+    end
 
     return potential_variables, new_en
 end

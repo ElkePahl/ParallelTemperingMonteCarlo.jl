@@ -1,23 +1,26 @@
 """
-    module DeltaMatrix 
-A module designed to update an existing matrix of symmetry function values based on a small perturbation in the positions. 
+    module DeltaMatrix
+A module designed to update an existing matrix of symmetry function values based on a small perturbation in the positions.
 """
 module DeltaMatrix
 
 using ..Cutoff
 using ..SymmetryFunctions
 
-using StaticArrays, LinearAlgebra
+using StaticArrays,LinearAlgebra
 
-export total_symm!, total_thr_symm!
-export calc_delta_matrix, calc_swap_matrix
+export calc_delta_matrix,calc_swap_matrix
+
+export total_symm!, total_thr_symm!, total_symm_neigh!
+export neighbour_union_from_cutoff_vectors
+export radial_symmetry_calculation_neigh!, angular_symmetry_calculation_neigh!
 
 #----------------------------------------------------------------------#
 #------------------------ New Format Functions ------------------------#
 #----------------------------------------------------------------------#
 """
     new_radial_symm_val!(rnew_ij,r2_ij,fnew_ij,f2_ij,η)
-Function to calculate the updated value of a radial symmetry function: That is, how much does the radial symmetry value calculated using the old distance r2_ij change when using the new distance rnew_ij using the old and new cutoff values f2_ij,fnew_ij and the parameter η. 
+Function to calculate the updated value of a radial symmetry function: That is, how much does the radial symmetry value calculated using the old distance r2_ij change when using the new distance rnew_ij using the old and new cutoff values f2_ij,fnew_ij and the parameter η.
 
 """
 function new_radial_symm_val!(rnew_ij, r2_ij, fnew_ij, f2_ij, η)
@@ -64,7 +67,7 @@ end
     calc_delta_symm_val!(g_vector,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,n1,n2,η,g_norm)
     calc_delta_symm_val!(g_vector,positions,newposition,atomindex,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,n1,n2,η,λ,ζ,tpz)
 
-Generic function to calculate the total update to the vector of symmetry values having moved a single atom defined by atomindex. The first method calculates the changes to a vector of radial symmetry values, the second calculates the changes to a vector of angular symmetry values. 
+Generic function to calculate the total update to the vector of symmetry values having moved a single atom defined by atomindex. The first method calculates the changes to a vector of radial symmetry values, the second calculates the changes to a vector of angular symmetry values.
 """
 function calc_delta_symm_val!(
     g_vector,
@@ -578,7 +581,7 @@ end
 
 """
     calc_swap_matrix(g_mat,positions,atomindex1,atomindex2,dist2_mat,f_mat,radsymmfunctions,angsymmfunctions,nrad,nang,n1,n2)
-having swapped atom at atomindex1 and atomindex2 in a system with n1 atoms of type 1 and n2 atoms of type 2, with nrad radial and nang angular symmetry functions, we calculate the changes to g_mat based on the swap. 
+having swapped atom at atomindex1 and atomindex2 in a system with n1 atoms of type 1 and n2 atoms of type 2, with nrad radial and nang angular symmetry functions, we calculate the changes to g_mat based on the swap.
 """
 function calc_swap_matrix(
     g_mat,
@@ -634,7 +637,7 @@ end
 # These are the old/defunct functions, they will have to go, but getenergy has matching methods, so not yet#
 """
     adjust_symm_val!(g_value,r_sum,f_prod,η,g_norm)
-Designed to update the radial symmetry function value `g_value`. Accepts the hyperparameter `η` as well as `r_sum`, `f_prod` and `g_norm` and adds the individual contribution of `g_{ij}`. 
+Designed to update the radial symmetry function value `g_value`. Accepts the hyperparameter `η` as well as `r_sum`, `f_prod` and `g_norm` and adds the individual contribution of `g_{ij}`.
 """
 function adjust_symm_val!(g_value, r_sum, f_prod, η, g_norm)
     #adjusts radial type 2 symmetry function
@@ -659,7 +662,7 @@ end
     adjust_angular_symm_val!(g_value,θ_new,θ_old,exp_new,exp_old,tpz)
     adjust_angular_symm_val!(g_value,exp_old,exp_new,θ_old,θ_new,λ,ζ,tpz)
 
-Functions for adjusting angular symmetry function value from `g_value` by calculating the exponential component `exp_old,exp_new`, theta components `θ_val_old,θ_val_new` from the angles `θ_old,θ_new` and the normalisaiton factor `tpz` These are used to subtract the old `g` value and add the new one. 
+Functions for adjusting angular symmetry function value from `g_value` by calculating the exponential component `exp_old,exp_new`, theta components `θ_val_old,θ_val_new` from the angles `θ_old,θ_new` and the normalisaiton factor `tpz` These are used to subtract the old `g` value and add the new one.
 """
 function adjust_angular_symm_val!(g_value, θ_new, θ_old, exp_new, exp_old, tpz)
     g_value += exp_new * θ_new * tpz
@@ -677,7 +680,7 @@ end
 #---------------------------------------------------------------------------#
 """
     calc_new_symmetry_value!(g_vector,indexi,indexj,dist2_mat,new_dist2_vector,f_matrix,new_f_vector,η,g_norm)
-Call for the radial symmetry value designed to curry the input from `g_vector` at positions `indexi,indexj` to the [`adjust_radial_symm_val!`](@ref) function. It unpacks the radial distances from `dist2_mat,new_dist2_vector` and the cutoff functions from `f_matrix,new_f_vec` as well as the hyperparameters `η,g_norm` and gives these values to the lower level functions. 
+Call for the radial symmetry value designed to curry the input from `g_vector` at positions `indexi,indexj` to the [`adjust_radial_symm_val!`](@ref) function. It unpacks the radial distances from `dist2_mat,new_dist2_vector` and the cutoff functions from `f_matrix,new_f_vec` as well as the hyperparameters `η,g_norm` and gives these values to the lower level functions.
 """
 function calc_new_symmetry_value!(
     g_vector, indexi, indexj, dist2_mat, new_dist2_vector, f_matrix, new_f_vector, η, g_norm
@@ -820,6 +823,65 @@ function radial_symmetry_calculation!(
     end
     return g_vector
 end
+
+"""
+    radial_symmetry_calculation_neigh!(
+        g_vector,
+        atomindex,
+        neighbour_indices,
+        dist2_mat,
+        new_dist2_vector,
+        f_matrix,
+        new_f_vector,
+        symmetry_function,
+    )
+
+Neighbour-restricted counterpart of
+[`radial_symmetry_calculation!`](@ref).
+
+Updates one radial symmetry-function channel following a proposed move of the
+atom at `atomindex`. Rather than iterating over every atom, the calculation is
+restricted to `neighbour_indices`, containing the union of atoms within the
+cutoff radius before or after the move.
+
+For each affected neighbour, calls [`calc_new_symmetry_value!`](@ref) using the
+old and proposed distance and cutoff-function data.
+
+Returns the updated `g_vector`.
+"""
+function radial_symmetry_calculation_neigh!(
+    g_vector,
+    atomindex,
+    neighbour_indices,
+    dist2_mat,
+    new_dist2_vector,
+    f_matrix,
+    new_f_vector,
+    symmetry_function
+)
+    if symmetry_function.type_vec == Int(11)
+        η = symmetry_function.eta
+        g_norm = symmetry_function.G_norm
+
+        for index2 in neighbour_indices
+            calc_new_symmetry_value!(
+                g_vector,
+                atomindex,
+                index2,
+                dist2_mat,
+                new_dist2_vector,
+                f_matrix,
+                new_f_vector,
+                η,
+                g_norm
+            )
+        end
+    end
+
+    return g_vector
+end
+
+
 """
     angular_symmetry_calculation!(g_vector, atomindex, newposition, position, dist2_mat, new_dis_vector, f_matrix, new_f_vector, symmetry_function::AngularType3)
 This method is designed to do the same as the radial symmetry function for the angular symmetry function using the same inputs. Double loop over all `j,k` and use [`calc_new_symmetry_value!`](@ref) over `g_vector`.
@@ -870,21 +932,89 @@ function angular_symmetry_calculation!(
 
     return g_vector
 end
-"""
-    total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined [`radial_symmetry_calculation!`](@ref) and [`angular_symmetry_calculation!`](@ref) functions. 
-"""
-# function total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-#     for g_index in eachindex(total_symmetry_vector)
-#         g_matrix[g_index,:] = symmetry_calculation!(g_matrix[g_index,:],atomindex,new_position,position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,total_symmetry_vector[g_index])
-#     end
-
-#     return g_matrix
-# end
 
 """
+    angular_symmetry_calculation_neigh!(
+        g_vector,
+        atomindex,
+        neighbour_indices,
+        newposition,
+        positions,
+        dist2_mat,
+        new_dist2_vector,
+        f_matrix,
+        new_f_vector,
+        symmetry_function,
+    )
+
+Neighbour-restricted counterpart of [`angular_symmetry_calculation!`](@ref).
+
+Updates the angular symmetry-function values affected by a proposed move of
+`atomindex`. Only atom pairs drawn from `neighbour_indices` are considered,
+reducing the angular update to triplets involving the moved atom and two atoms
+within its old or new neighbourhood.
+
+For symmetry functions with `type_vec == 111`, each unique neighbour pair is
+examined. If the neighbour-neighbour cutoff value is nonzero, the corresponding
+old and proposed angular contributions are updated using
+[`calc_new_symmetry_value!`](@ref).
+
+Returns the updated `g_vector`.
+"""
+function angular_symmetry_calculation_neigh!(
+    g_vector,
+    atomindex,
+    neighbour_indices,
+    newposition,
+    positions,
+    dist2_mat,
+    new_dist2_vector,
+    f_matrix,
+    new_f_vector,
+    symmetry_function
+)
+    if symmetry_function.type_vec == Int(111)
+
+        η = symmetry_function.eta
+        λ = symmetry_function.lambda
+        ζ = symmetry_function.zeta
+        tpz = symmetry_function.tpz
+
+        for a in 1:length(neighbour_indices)-1
+            j_index = neighbour_indices[a]
+
+            for b in a+1:length(neighbour_indices)
+                k_index = neighbour_indices[b]
+
+                # If j-k is outside the cutoff, both old and new angular products are zero.
+                if f_matrix[j_index, k_index] != 0.0
+                    g_vector = calc_new_symmetry_value!(
+                        g_vector,
+                        atomindex,
+                        j_index,
+                        k_index,
+                        newposition,
+                        positions,
+                        dist2_mat,
+                        new_dist2_vector,
+                        f_matrix,
+                        new_f_vector,
+                        η,
+                        λ,
+                        ζ,
+                        tpz
+                    )
+                end
+            end
+        end
+    end
+
+    return g_vector
+end
+
+"""
     total_symm!(g_matrix,position,new_position,dist2_matrix,new_dist_vector,f_matrix,new_f_vector,atomindex,total_symmetry_vector)
-Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined [`radial_symmetry_calculation!`](@ref) and [`angular_symmetry_calculation!`](@ref) functions. 
+Top level function to calculate the total change to the matrix of symmetry function values `g_matrix`. Given `position,dist2_matrix,f_matrix` containing the original state of the system, and `new_position,new_dist_vector,new_f_vector` the change to this state based on the motion of `atomindex`, we iterate over the `total_symmetry_vector` using the defined [`radial_symmetry_calculation!`](@ref) and [`angular_symmetry_calculation!`](@ref) functions.
 """
 function total_symm!(
     g_matrix,
@@ -974,4 +1104,116 @@ function total_thr_symm!(
     return g_matrix
 end
 
+"""
+    total_symm_neigh!(
+        g_matrix,
+        positions,
+        new_position,
+        dist2_mat,
+        new_dist2_vector,
+        f_matrix,
+        new_f_vector,
+        atomindex,
+        neighbour_indices,
+        radsymmfunctions,
+        angsymmfunctions,
+        Nrad,
+        Nang,
+    )
+
+Neighbour-restricted counterpart of [`total_symm!`](@ref).
+
+Updates the symmetry-function matrix `g_matrix` following a proposed move of
+the atom at `atomindex`. Only symmetry-function values affected by the union of
+the moved atom's old and new neighbourhoods are recalculated.
+
+Radial channels are updated using
+[`radial_symmetry_calculation_neigh!`](@ref), and angular channels are updated
+using [`angular_symmetry_calculation_neigh!`](@ref).
+
+The remaining arguments contain the old configuration, proposed position,
+current and proposed distance data, cutoff-function data, and the radial and angular
+symmetry-function definitions.
+
+Returns the updated `g_matrix`.
+"""
+function total_symm_neigh!(
+    g_matrix,
+    positions,
+    new_position,
+    dist2_mat,
+    new_dist2_vector,
+    f_matrix,
+    new_f_vector,
+    atomindex,
+    neighbour_indices,
+    radsymmfunctions,
+    angsymmfunctions,
+    Nrad,
+    Nang
+)
+    for g_index in 1:Nrad
+        g_matrix[g_index, :] = radial_symmetry_calculation_neigh!(
+            g_matrix[g_index, :],
+            atomindex,
+            neighbour_indices,
+            dist2_mat,
+            new_dist2_vector,
+            f_matrix,
+            new_f_vector,
+            radsymmfunctions[g_index]
+        )
+    end
+
+    for g_index in 1:Nang
+        true_index = g_index + Nrad
+
+        g_matrix[true_index, :] = angular_symmetry_calculation_neigh!(
+            g_matrix[true_index, :],
+            atomindex,
+            neighbour_indices,
+            new_position,
+            positions,
+            dist2_mat,
+            new_dist2_vector,
+            f_matrix,
+            new_f_vector,
+            angsymmfunctions[g_index]
+        )
+    end
+
+    return g_matrix
+end
+
+"""
+    neighbour_union_from_cutoff_vectors(
+        f_old_row,
+        f_new_vec,
+        atomindex,
+    )
+
+Constructs the union of the moved atom's neighbourhood before and after a
+proposed move.
+
+An atom index is included when its cutoff-function value relative to
+`atomindex` is nonzero in either `f_old_row` or `f_new_vec`. The moved atom
+itself is excluded.
+
+Including both the old and new neighbourhood ensures that symmetry-function
+contributions are updated for atoms entering, leaving, or remaining within the
+cutoff radius.
+
+Returns a vector of neighbour atom indices.
+"""
+function neighbour_union_from_cutoff_vectors(f_old_row, f_new_vec, atomindex)
+    neighbours = Int[]
+
+    for j in eachindex(f_new_vec)
+        if j != atomindex && (f_old_row[j] != 0.0 || f_new_vec[j] != 0.0)
+            push!(neighbours, j)
+        end
+    end
+
+    return neighbours
+end
 end
