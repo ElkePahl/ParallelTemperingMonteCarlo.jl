@@ -11,11 +11,21 @@ using ..Ensembles
 using ..EnergyEvaluation
 using ..CustomTypes
 
-#TODO: better doc
 """
-    MoveStrategy(moves, weights)
+    MoveStrategy(move1 => weight1, move2 => weight2, ...)
 
-Used to (randomly) select moves on each MC cycle.
+Used to (randomly) select moves on each MC cycle. Each `move` is an [`AbstractMove`](@ref)
+and the weight is an integer weight that corresponds to the probability of picking that
+move. For example a move strategy that (on average) performs 30 atom displacements and 1
+volume change per cycle is constructed as
+```julia
+MoveStrategy(AtomDisplacement() => 30, VolumeChange() => 1)
+```
+
+## See also
+
+[`AbstractMove`](@ref), [`AtomDisplacement`](@ref), [`AtomSwap`](@ref),
+[`VolumeChange`](@ref).
 """
 struct MoveStrategy{N,T<:Tuple}
     moves::T
@@ -85,8 +95,11 @@ end
 """
     abstract type AbstractMove end
 
-Abstract type representing moves. Each move must implement
-[`generate_move!(::AbstractMove, ::MCState)`](@ref).
+Abstract type representing moves. Each move must implement the following
+- [`generate_move!(::AbstractMove, ::MCState)`](@ref)
+- [`get_energy!(::AbstractMove, ::MCState)`](@ref)
+- [`metropolis_probability(::AbstractMove, ::MCState)`](@ref)
+- [`swap_config!(::AbstractMove, ::MCState)`](@ref)
 
 Currently supported move types:
 - [`AtomDisplacement`](@ref)
@@ -94,6 +107,41 @@ Currently supported move types:
 - [`VolumeChange`](@ref)
 """
 abstract type AbstractMove end
+
+"""
+    generate_move!(::AbstractMove, ::MCState)
+
+"""
+generate_move!
+
+"""
+    get_energy!(::AbstractMove, ::MCState)
+
+Get the energy after performing the trial move that was set up by [`generate_move!`](@ref).
+
+This function must be called _after_ [`generate_move!`](@ref).
+"""
+get_energy!
+
+"""
+    metropolis_probability(::AbstractMove, ::MCState)
+
+Get the probability of accepting the trial move set up by [`generate_move!`](@ref) and
+[`get_energy!`](@ref).
+
+This function must be called _after_ [`generate_move!`](@ref) and [`get_energy!`](@ref).
+"""
+metropolis_probability
+
+"""
+    swap_config!(::AbstractMove, ::MCState)
+
+Accept the trial move that was set up by [`generate_move!`](@ref), [`get_energy!`](@ref).
+
+This function must be called _after_ [`generate_move!`](@ref) and [`get_energy!`](@ref).
+"""
+swap_config
+
 
 """
     AtomDisplacement() <: AbstractMove
@@ -168,7 +216,7 @@ by `mc_state.max_boxlength` and `mc_state.max_boxheight`.
   `mc_state.max_displ[4]` (in `z`).
 - `max_asymmetry`: controls how asymmetric the configuration is allowed to become. It limits
   the ratio between box length and box height to ``R/(1 + max_asymmetry)``and ``R (1 +
-  max_asymmetry)``, where ``R`` is the lenth to height ratio of the initial configuration.
+  max_asymmetry)``, where ``R`` is the length to height ratio of the initial configuration.
 """
 struct VolumeChange{separated} <: AbstractMove
     max_asymmetry::Float64
