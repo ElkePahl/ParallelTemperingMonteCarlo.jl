@@ -142,7 +142,6 @@ This function must be called _after_ [`generate_move!`](@ref) and [`get_energy!`
 """
 swap_config
 
-
 """
     AtomDisplacement() <: AbstractMove
 
