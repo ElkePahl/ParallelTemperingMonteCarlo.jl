@@ -11,7 +11,7 @@ end
 
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))
-    @test length(x.movestrat) == length(x)
+    @test length(x) == length(x)
 
     bc = SphericalBC(; radius=2.0)
     v1 = SVector(1.0, 2.0, 3.0)
@@ -23,14 +23,14 @@ end
     @test length(envars_nvt.trial_move) == 3
 
     y = MoveStrategy(NPT(5, 101325, false))
-    @test length(y.movestrat) == length(y)
+    @test length(y) == length(y)
     conf2 = Config([v1, v1, v1], CubicBC(8.7674))
     envars_npt = set_ensemble_variables(conf2, NPT(3, 101325, false))
 
     @test size(envars_npt.new_dist2_mat) == (3, 3)
 
     z = MoveStrategy(NPT(5, 101325, false))
-    @test length(z.movestrat) == length(y)
+    @test length(z) == length(y)
     conf3 = Config([v1, v1, v1], RhombicBC(10.0, 10.0))
     envars_npt = set_ensemble_variables(conf3, NPT(3, 101325, false))
 
@@ -40,10 +40,10 @@ end
     envars_npt = set_ensemble_variables(conf4, NPT(3, 101325, false))
 
     nnvtens = NNVT([8, 2])
-    @test sum(nnvtens.natoms) == 10
+    @test sum(nnvtens.n_atoms) == 10
     envars_nnvt = set_ensemble_variables(conf, nnvtens)
 
-    @test envars_nnvt.swap_indices[2] > nnvtens.natoms[1]
+    @test envars_nnvt.swap_indices[2] > nnvtens.n_atoms[1]
 end
 
 @testset "Config" begin
@@ -95,7 +95,7 @@ end
     @test d2mat[2, 1] == d2mat[1, 2]
 
     max_v = 0.1
-    trial_config, scale = volume_change_xyz(conf2, max_v, 50)
+    trial_config, scale = MCMoves.volume_change_xyz(conf2, max_v, 50)
     @test trial_config.boundary_condition.box_length / bc.box_length <=
         exp(0.5 * max_v)^(1 / 3)
     @test trial_config.boundary_condition.box_length / bc.box_length >=
@@ -131,7 +131,7 @@ end
     @test d2mat[2, 1] == d2mat[1, 2]
 
     max_v = 0.1
-    trial_config, scale = volume_change_xyz(conf2, max_v, 50)
+    trial_config, scale = MCMoves.volume_change_xyz(conf2, max_v, 50)
     @test trial_config.boundary_condition.box_length / bc.box_length <=
         exp(0.5 * max_v)^(1 / 3)
     @test trial_config.boundary_condition.box_length / bc.box_length >=

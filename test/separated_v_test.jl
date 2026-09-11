@@ -1,5 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Random, Test, StaticArrays
+using ParallelTemperingMonteCarlo.MCMoves:
+    volume_change_xy, volume_change_z, VolumeChange, generate_move!
 
 @testset "separated_scale" begin
     v1 = SVector(1.0, 2.0, 3.0)
@@ -20,13 +22,11 @@ end
     bc = RhombicBC(10.0, 10.0)
     conf = Config([v1, v2, v3], bc)
 
-    trial_config_xy, scale1 = volume_change_xy(
-        conf, 0.1, 12.0, bc.box_length / bc.box_height
-    )
+    trial_config_xy, scale1 = MCMoves.volume_change_xy(conf, 0.1, 12.0, 12.0, 0.1)
     @test trial_config_xy[1][1] == conf[1][1] * scale1
     @test trial_config_xy[1][3] == conf[1][3]
 
-    trial_config_z, scale2 = volume_change_z(conf, 0.1, 12.0, bc.box_length / bc.box_height)
+    trial_config_z, scale2 = MCMoves.volume_change_z(conf, 0.1, 12.0, 12.0, 0.1)
     @test trial_config_z[1][1] == conf[1][1]
     @test abs(trial_config_z[1][3] - conf[1][3] / scale2) < 1e-12
 end
@@ -47,32 +47,23 @@ end
 
     state = MCState(temp.t_grid[1], conf, ensemble, pot1)
 
-    state_new = volume_change(state)
-
     # Position scaled as much as boundary condition
     config = state.config
-    trial_config = state_new.ensemble_variables.trial_config
-
-    @test trial_config[1][1] / config[1][1] ≈
-        trial_config.boundary_condition.box_length / config.boundary_condition.box_length
-    @test trial_config[1][3] / config[1][3] ≈
-        trial_config.boundary_condition.box_height / config.boundary_condition.box_height
-    @test trial_config[1][3] / config[1][3] ≈ trial_config[1][1] / config[1][1]
-
-    state_new_xyz = volume_change(state, true)
-    trial_config_xyz = state_new_xyz.ensemble_variables.trial_config
-
-    @test trial_config_xyz[1][1] / config[1][1] ≈
-        trial_config_xyz.boundary_condition.box_length /
-          config.boundary_condition.box_length
-    @test trial_config_xyz[1][3] / config[1][3] ≈
-        trial_config_xyz.boundary_condition.box_height /
-          config.boundary_condition.box_height
 
     for i in 1:100
-        state_new = volume_change(state, true)
-        ensemble_variables = state_new.ensemble_variables
+        generate_move!(VolumeChange(; separated=true), state)
+        ensemble_variables = state.ensemble_variables
         trial_config = ensemble_variables.trial_config
+
+        # These always hold
+        @test trial_config[1][1] / config[1][1] ≈
+            trial_config.boundary_condition.box_length /
+              config.boundary_condition.box_length
+        @test trial_config[1][3] / config[1][3] ≈
+            trial_config.boundary_condition.box_height /
+              config.boundary_condition.box_height
+        @test trial_config[1][2] / config[1][2] ≈ trial_config[1][1] / config[1][1]
+
         if ensemble_variables.xy_or_z == 2
             @test trial_config[2][3] ≠ config[2][3]
             @test trial_config[2][1] == config[2][1]
@@ -110,17 +101,37 @@ end
 
     @test state.potential_variables.tan_mat[1, 2] ≈ 0.7453559924999299 #TODO: sign difference
     @test state.potential_variables.tan_mat[1, 3] ≈ 0.47140452079103173
-
     @test state.en_tot == -0.00016263185592172208
 
-    state_new = volume_change(state, ensemble.separated_volume)
+    generate_move!(VolumeChange(; separated=true), state)
+    config = state.config
 
-    @test metropolis_condition("volumemove", state_new, ensemble) ≈
-        get_metropolis_probability(
-        ensemble,
-        state_new.new_en - state.en_tot,
-        volume(state_new.ensemble_variables.trial_config.boundary_condition),
-        volume(state.config.boundary_condition),
-        state.beta,
-    )
+    for i in 1:100
+        generate_move!(VolumeChange(; separated=true), state)
+        ensemble_variables = state.ensemble_variables
+        trial_config = ensemble_variables.trial_config
+
+        # These always hold
+        @test trial_config[1][1] / config[1][1] ≈
+            trial_config.boundary_condition.box_length /
+              config.boundary_condition.box_length
+        @test trial_config[1][3] / config[1][3] ≈
+            trial_config.boundary_condition.box_height /
+              config.boundary_condition.box_height
+        @test trial_config[1][2] / config[1][2] ≈ trial_config[1][1] / config[1][1]
+
+        if ensemble_variables.xy_or_z == 2
+            @test trial_config[2][3] ≠ config[2][3]
+            @test trial_config[2][1] == config[2][1]
+            @test trial_config[2][2] == config[2][2]
+        elseif ensemble_variables.xy_or_z == 1
+            @test trial_config[2][3] == config[2][3]
+            @test trial_config[2][1] ≠ config[2][1]
+            @test trial_config[2][2] ≠ config[2][2]
+        elseif ensemble_variables.xy_or_z == 0
+            @test trial_config[2][3] ≠ config[2][3]
+            @test trial_config[2][1] ≠ config[2][1]
+            @test trial_config[2][2] ≠ config[2][2]
+        end
+    end
 end
