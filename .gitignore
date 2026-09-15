@@ -26,6 +26,7 @@ Manifest.toml
 
 
 checkpoint/
+scripts/nathan_honours_2026
 analysis.NVT
 Sol.X
 fortran/
@@ -43,4 +44,3 @@ scripts/*.data
 
 /statprof/
 /scripts/tests.ipynb
-
