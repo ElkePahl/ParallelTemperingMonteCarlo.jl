@@ -430,7 +430,7 @@ function ptmc_run!(
         enabled=isinteractive(),
     )
     # Set up Arrow writer if needed.
-    if flush_interval ≤ mc_params.mc_cycles
+    if flush_interval ≤ mc_params.mc_cycles && !isnothing(stats_filename)
         writer = open(Arrow.Writer, stats_filename; compress=:zstd)
     else
         writer = nothing
