@@ -151,7 +151,7 @@ function get_distance2_mat!(dest, config::Config)
             ),
         )
     end
-    @inbounds for i in 1:eachindex(config), j in (i + 1):eachindex(config)
+    @inbounds for i in eachindex(config), j in eachindex(config)[i+1, end]
         dest[i, j] = dest[j, i] = distance2(config[i], config[j], config.boundary_condition)
     end
     @inbounds for i in eachindex(config)
@@ -227,7 +227,7 @@ function get_tantheta_mat!(dest, config::Config)
             ),
         )
     end
-    @inbounds for i in 1:eachindex(config), j in (i + 1):eachindex(config)
+    @inbounds for i in eachindex(config), j in eachindex(config)[i+1, end]
         dest[i, j] = dest[j, i] = get_tan(config[i], config[j], config.boundary_condition)
     end
     @inbounds for i in eachindex(config)
