@@ -102,9 +102,9 @@ Return the minimum distance between any pair of `positions`.
 """
 function min_distance(positions)
     dist = Inf
-    for i in 1:eachindex(positions)
+    for i in eachindex(positions)
         p1 = positions[i]
-        for j in (i + 1):eachindex(positions)
+        for j in eachindex(positions)[i+1, end]
             p2 = positions[j]
             dist = min(dist, norm(p1 - p2))
         end
