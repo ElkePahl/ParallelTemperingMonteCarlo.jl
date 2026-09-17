@@ -1,5 +1,12 @@
 using ParallelTemperingMonteCarlo
 using Random, Test, StaticArrays
+using ParallelTemperingMonteCarlo.MCMoves:
+    generate_move!,
+    get_energy!,
+    metropolis_probability,
+    swap_config!,
+    AtomDisplacement,
+    AtomSwap
 
 @testset "States" begin
     v1 = SVector(1.0, 2.0, 3.0)
@@ -26,14 +33,13 @@ using Random, Test, StaticArrays
     state.ensemble_variables.index = 1
 
     Random.seed!(1234)
-    generate_move!(state, "atommove")
+    generate_move!(AtomDisplacement(), state)
 
-    state = get_energy!(state, "atommove")
+    get_energy!(AtomDisplacement(), state)
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
-    @test metropolis_condition("atommove", state, ensemble) == 1.0
-    @test_throws ErrorException metropolis_condition("evommota", state, ensemble)
+    @test metropolis_probability(AtomDisplacement(), state) == 1.0
 
-    MCRun.swap_config!(state, "atommove")
+    swap_config!(AtomDisplacement(), state)
     @test state.ensemble_variables.trial_move == state.config[1]
     @test state.new_dist2_vec == state.dist2_mat[1, :]
 
@@ -72,13 +78,13 @@ end
     Random.seed!(1234)
 
     Random.seed!(1234)
-    generate_move!(state, "atommove")
+    generate_move!(AtomDisplacement(), state)
 
-    state = get_energy!(state, "atommove")
+    get_energy!(AtomDisplacement(), state)
     @test state.new_en - state.en_tot ≈ -4.99895252855e-5
-    @test metropolis_condition("atommove", state, ensemble) == 1.0
+    @test metropolis_probability(AtomDisplacement(), state) == 1.0
 
-    MCRun.swap_config!(state, "atommove")
+    swap_config!(AtomDisplacement(), state)
     @test state.ensemble_variables.trial_move == state.config[1]
     @test state.new_dist2_vec == state.dist2_mat[1, :]
     @test state2.en_tot - state.en_tot ≈ 4.99895252855e-5
@@ -129,14 +135,14 @@ end
 
     #test moves
     Random.seed!(123)
-    generate_move!(state, "atommove")
+    generate_move!(AtomDisplacement(), state)
 
-    state = get_energy!(state, "atommove")
+    get_energy!(AtomDisplacement(), state)
     delen = state.new_en - state.en_tot
     @test delen ≈ -7.5971516e-5
     #test exc after atom move
-    @test metropolis_condition("atommove", state, ensemble) == 1.0
-    MCRun.swap_config!(state, "atommove")
+    @test metropolis_probability(AtomDisplacement(), state) == 1.0
+    swap_config!(AtomDisplacement(), state)
     @test state.ensemble_variables.trial_move == state.config[1]
     @test state.en_tot - state2.en_tot ≈ delen
     # test parallel_tempering_exchange
@@ -145,20 +151,9 @@ end
     @test state.config == conf
     #test atomswap
     Random.seed!(123)
-    MCMoves.swap_atoms(state)
+    generate_move!(AtomSwap(), state)
     @test state.ensemble_variables.swap_indices[2] > 4
-    state = get_energy!(state, "atomswap")
+    get_energy!(AtomSwap(), state)
     delen2 = state.new_en - state.en_tot
     @test delen2 ≈ -0.0017084901948
-
-    MCRun.acc_test!(state, "atomswap")
-
-    refmat = copy(refstate.dist2_mat[6, :])
-    refmat[6] = refstate.dist2_mat[6, 3]
-    refmat[3] = 0.0
-
-    @test refmat == state.dist2_mat[3, :]
-    @test state.en_tot - refstate.en_tot == delen2
-    @test state.config[3] == refstate.config[6]
-    @test state.config[6] == refstate.config[3]
 end

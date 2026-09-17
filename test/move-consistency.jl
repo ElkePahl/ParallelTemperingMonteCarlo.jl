@@ -8,25 +8,6 @@ using StaticArrays
 using LinearAlgebra
 
 """
-    mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
-
-Like `mc_move!`, but accepts the step if `accept ≡ true`. Returns move name for easier
-debugging.
-"""
-function mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
-    mc_state.ensemble_variables.index = index = rand(eachindex(move_strat.movestrat))
-    move = move_strat.movestrat[index]
-
-    generate_move!(mc_state, move)
-    get_energy!(mc_state, move)
-
-    if accept
-        swap_config!(mc_state, move)
-    end
-    return move
-end
-
-"""
     generate_config(ensemble, boundary_condition)
 
 Generate a (uniform) random configuration that fits into boundary condition.
@@ -131,9 +112,7 @@ end
 
             for i in 1:10_000
                 accept = iseven(i)
-                move = mc_move_deterministic!(
-                    accept, mc_state, move_strategy, potential, ensemble
-                )
+                move = mc_move!(mc_state, move_strategy, accept)
 
                 updated_dist2 = mc_state.dist2_mat
                 true_dist2 = get_distance2_mat(mc_state.config)

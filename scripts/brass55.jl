@@ -162,7 +162,7 @@ weights2 = readdlm(file2)
 close(file2)
 weights2 = vec(weights2)
 nnpzn = NeuralNetworkPotential(num_nodes, activation_functions, weights2)
-ensemble = NNVT([50, 5]; natomswaps=2)
+ensemble = NNVT([50, 5]; n_atom_swaps=2)
 
 runnerpotential = RuNNerPotential2Atom(nnpcu, nnpzn, radsymmvec, angularsymmvec, 50, 5)
 

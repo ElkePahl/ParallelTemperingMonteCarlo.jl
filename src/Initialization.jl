@@ -32,7 +32,7 @@ Inputs for method two are:
 
 Method one and two return the following structs:
 -   `mc_states`: a vector of [`MCState`](@ref) structs each at a different temperature
--   `move_strategy`: struct containing a vector of [`MoveType`](@ref)
+-   `move_strategy`: see [`MoveStrategy`](@ref).
 -   `results`: struct countaining the output such as Cv and histograms
 -   `start_counter`: where to begin the sims
 -   `n_steps`: total moves per mc_cycle

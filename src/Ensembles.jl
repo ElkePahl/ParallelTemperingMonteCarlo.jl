@@ -10,7 +10,7 @@ export AbstractEnsemble, NVT, NPT, NNVT
 export AbstractEnsembleVariables,
     NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables, hamiltonian
 
-export MoveType, atommove, volumemove, atomswap, report_stats
+export report_stats
 export MoveStrategy
 
 """
@@ -123,7 +123,7 @@ function NPT(
     n_atoms::Int64,
     pressure::Float64;
     separated_volume::Bool=false,
-    stress_tensor::Vector{Float64}=[0, 0],
+    stress_tensor=[0, 0],
     reference_length::Float64=0.0,
 )
     return NPT(
@@ -168,26 +168,26 @@ end
 #---------------------------------------------------------------------#
 """
     NNVT <: AbstractEnsemble
+
 Ensemble designed for systems with two types of atoms.
--   Field names:
-    -   atomtypes: vector specifying the atomic number of the species
-    -   natoms: vector specifying how much of each species we have in the system
-    -   n_atom_moves: defaults to n_total
-    -   n_atom_swaps: defaults to 1 per cycle
+
+## Field names:
+- `n_atoms`: vector specifying how much of each species we have in the system
+- `n_atom_moves`: defaults to n_total
+- `n_atom_swaps`: defaults to 1 per cycle
 """
 struct NNVT <: AbstractEnsemble
-    # atomtypes::SVector{2,Int}
-    natoms::SVector{2,Int}
+    n_atoms::SVector{2,Int}
     n_atom_moves::Int
     n_atom_swaps::Int
 end
-function NNVT(natomsvec; natomswaps=1, natommoves=sum(natomsvec))
-    if isa(natomsvec, Vector)
-        natoms = SVector{2}(natomsvec)
-    elseif isa(natomsvec, SVector)
-        natoms = natomsvec
+function NNVT(n_atoms_vec; n_atom_swaps=1, n_atom_moves=sum(n_atoms_vec))
+    if isa(n_atoms_vec, Vector)
+        n_atoms = SVector{2}(n_atoms_vec)
+    elseif isa(n_atoms_vec, SVector)
+        n_atoms = n_atoms_vec
     end
-    return NNVT(natoms, natommoves, natomswaps)
+    return NNVT(n_atoms, n_atom_moves, n_atom_swaps)
 end
 
 """
@@ -238,7 +238,7 @@ function set_ensemble_variables(config::Config{T}, ensemble::NPT) where {T}
     )
 end
 function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
-    N1, N2 = ensemble.natoms[1], ensemble.natoms[2]
+    N1, N2 = ensemble.n_atoms[1], ensemble.n_atoms[2]
     return NNVTVariables{T,length(config),N1,N2}(
         1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1)
     )
@@ -248,97 +248,16 @@ function hamiltonian(state, ensemble::NPT)
     V = volume(state.config.boundary_condition)
     p = ensemble.pressure
     E = state.en_tot
-    σ = ensemble.stress_tensor
     if ensemble.separated_volume
+        σ = ensemble.stress_tensor
         xy = state.config.boundary_condition.box_length
         z = state.config.boundary_condition.box_height
         L0 = ensemble.reference_length
+
+        return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
     else
-        # If separated volume is zero, this stuff does not make sense.
-        @assert iszero(σ)
-        xy = 0.0
-        z = 0.0
-        L0 = 0.0
+        return E + p*V
     end
-
-    return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
 end
-
-"""
-    MoveType
-
-Defines the abstract type for moves to establish the [`MoveStrategy`](@ref) struct. Basic types are:
-    -   `atommove::MoveType`: basic move of a single atom
-    -   `volumemove::MoveType`: NPT ensemble requires volume changes to maintain pressure as constant
-    -   `atomswap::MoveType`: for systems with different atom types we need to exchange atoms (not yet implemented)
-"""
-@enum MoveType atommove volumemove atomswap
-
-"""
-    MoveStrategy{N,AbstractEnsemble}
-
-A struct to define the types of moves performed per MC cycle.
--   Field names:
-    -   `ensemble::AbstractEnsemble`: type of ensemble (NVT, NPT)
-    -   `movestrat::Vector{String}`: vector of strings that describes moves made per MC cycle (see `MoveType`)
-Constructors:
--   MoveStrategy(ensemble::NPT)
--   MoveStrategy(ensemble::NVT)
--   MoveStrategy(ensemble::NNVT)
-"""
-struct MoveStrategy{N,E} # for the time being we substitute 0,1,2 as the basic input for atom,volume and swaps.
-    ensemble::E
-    movestrat::Vector{String}
-end
-
-function MoveStrategy(ensemble::NPT)
-    movestrat = []
-    for m_index in 1:(ensemble.n_atom_moves)
-        push!(movestrat, "atommove")
-    end
-    for m_index in 1:(ensemble.n_volume_moves)
-        push!(movestrat, "volumemove")
-    end
-    for m_index in 1:(ensemble.n_atom_swaps)
-        push!(movestrat, "atomswap")
-    end
-
-    return MoveStrategy{
-        ensemble.n_atom_moves + ensemble.n_atom_swaps + ensemble.n_volume_moves,
-        typeof(ensemble),
-    }(
-        ensemble, movestrat
-    )
-end
-
-function MoveStrategy(ensemble::NVT)
-    movestrat = []
-    for m_index in 1:(ensemble.n_atom_moves)
-        push!(movestrat, "atommove")
-    end
-    for m_index in 1:(ensemble.n_atom_swaps)
-        push!(movestrat, "atomswap")
-    end
-
-    return MoveStrategy{ensemble.n_atom_moves + ensemble.n_atom_swaps,typeof(ensemble)}(
-        ensemble, movestrat
-    )
-end
-
-function MoveStrategy(ensemble::NNVT)
-    movestrat = []
-    for m_index in 1:(ensemble.n_atom_moves)
-        push!(movestrat, "atommove")
-    end
-    for m_index in 1:(ensemble.n_atom_swaps)
-        push!(movestrat, "atomswap")
-    end
-
-    return MoveStrategy{ensemble.n_atom_moves + ensemble.n_atom_swaps,typeof(ensemble)}(
-        ensemble, movestrat
-    )
-end
-
-Base.length(::MoveStrategy{N}) where {N} = N
 
 end
