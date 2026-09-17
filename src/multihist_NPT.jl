@@ -170,6 +170,8 @@ function multihistogram_NPT(
         update!(progress, delta)
         if delta < conv_threshold
             break             #if converged, exit the loop
+        elseif isnan(delta)
+            break
         end
     end
 
@@ -237,7 +239,7 @@ function multihistogram_NPT(
         vol[i] = evolume
     end
 
-    return (; T=temp_result, C=cp, V=vol)
+    return (; temperature=temp_result, heat_capacity=cp, volume=vol)
 end
 
 end

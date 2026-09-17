@@ -98,13 +98,13 @@ function calc_components(
 
     return new_component_vec
 end
+# function calc_energies_from_components(component_vector,ean,ecam)
+# @views    return sum(ean.*component_vector[:,1] - ecam*sqrt.(component_vector[:,2]))
+# end
 """
     calc_energies_from_components(component_vector,ean::Float64,ecam::Float64)
 Takes a `component_vector` containing ϕ,ρ for each atom. Using the multiplicative factors `ean,ecam` we sum the atomic contributions and return the energy. Commented version used more allocations due to broadcasting defaulting to copying arrays. New version uses minimal allocations.
 """
-# function calc_energies_from_components(component_vector,ean,ecam)
-# @views    return sum(ean.*component_vector[:,1] - ecam*sqrt.(component_vector[:,2]))
-# end
 function calc_energies_from_components(component_vector, ean::Float64, ecam::Float64)
     en_val = 0.0
     for componentrow in eachrow(component_vector)
