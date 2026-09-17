@@ -104,7 +104,7 @@ function min_distance(positions)
     dist = Inf
     for i in eachindex(positions)
         p1 = positions[i]
-        for j in eachindex(positions)[i+1, end]
+        for j in eachindex(positions)[(i + 1):end]
             p2 = positions[j]
             dist = min(dist, norm(p1 - p2))
         end
