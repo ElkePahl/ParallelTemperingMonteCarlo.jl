@@ -91,7 +91,7 @@ end
 end
 
 @testset "States NNVT" begin
-#    include(joinpath(@__DIR__, "potentialfile.jl"))
+    include(joinpath(@__DIR__, "potentialfile.jl"))
 
     v1 = SVector(2.36, 2.36, 0.0)
     v2 = SVector(6.99, 2.33, 0.0)
