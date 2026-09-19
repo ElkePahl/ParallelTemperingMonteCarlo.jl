@@ -8,21 +8,18 @@ include("Configurations.jl")
 include("Ensembles.jl")
 include("../MachineLearningPotential/MachineLearningPotential.jl")
 include("energy_evaluation/EnergyEvaluation.jl")
-
 include("MCStates.jl")
 include("InputParams.jl")
-
 include("MCMoves.jl")
 include("Exchange.jl")
 include("Sampling.jl")
 include("ReadSave.jl")
-
 include("Initialization.jl")
 include("MCRun.jl")
 include("multihist.jl")
 include("multihist_NPT.jl")
 include("multihist_NVT.jl")
-
+include("multihistogram_analysis.jl")
 include("configuration_presets.jl")
 
 @reexport using .CustomTypes
@@ -43,5 +40,5 @@ include("configuration_presets.jl")
 @reexport using .Multihistogram
 @reexport using .Multihistogram_NPT
 @reexport using .Multihistogram_NVT
-
+@reexport using .MultiHistogramAnalysis
 end

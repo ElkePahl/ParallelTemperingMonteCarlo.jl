@@ -14,9 +14,56 @@ using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 using ..Ensembles
-export get_metropolis_probability, metropolis_condition, exc_acceptance, exc_trajectories!
+export get_metropolis_probability,
+    metropolis_condition,
+    exc_acceptance,
+    exc_trajectories!,
+    get_enthalpy_change,
+    get_enthalpy_from_energy
 
 export parallel_tempering_exchange!, update_max_stepsize!
+"""
+    get_enthalpy_change(
+        ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64,
+    )
+    get_enthalpy_change(
+        ΔE::Float64,
+        ensemble::NPT,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
+    )
+Compute the change in enthalpy of a trial move. Two methods, one for NPT, one for NσT.
+"""
+function get_enthalpy_change(
+    ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64
+)
+    ΔH = ΔE + ensemble.pressure * (volume_changed - volume_unchanged)
+    return ΔH
+end
+
+function get_enthalpy_change(
+    ΔE::Float64,
+    ensemble::NPT,
+    volume_changed::Float64,
+    xy_changed::Float64,
+    z_changed::Float64,
+    volume_unchanged::Float64,
+    xy_unchanged::Float64,
+    z_unchanged::Float64,
+)
+    crude_ΔH = get_enthalpy_change(ΔE, ensemble, volume_changed, volume_unchanged)
+    stress_correction =
+        ensemble.reference_length * (
+            ensemble.stress_tensor[1] * (xy_changed^2 - xy_unchanged^2) +
+            ensemble.stress_tensor[2] * 0.5 * (z_changed^2 - z_unchanged^2)
+        )
+    full_ΔH = crude_ΔH + stress_correction
+    return full_ΔH
+end
 """
     get_metropolis_probability(
         delta_energy::Number,
@@ -39,7 +86,6 @@ export parallel_tempering_exchange!, update_max_stepsize!
         xy_unchanged::Float64,
         z_unchanged::Float64,
         beta::Float64,
-        reference_length::Float64=15.8
     )
 Function returning the probability value associated with a trial move.
 Three methods included, one for NVT, one for NPT, one for NσT.
@@ -52,14 +98,14 @@ end
 
 function get_metropolis_probability(
     ensemble::NPT,
-    delta_energy::Float64,
+    ΔE::Float64,
     volume_changed::Float64,
     volume_unchanged::Float64,
     beta::Float64,
 )
-    delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged)
+    ΔH = get_enthalpy_change(ΔE, ensemble, volume_changed, volume_unchanged)
     prob_val = exp(
-        -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+        -ΔH * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
     )
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
@@ -67,7 +113,7 @@ end
 
 function get_metropolis_probability(
     ensemble::NPT,
-    delta_energy::Float64,
+    ΔE::Float64,
     volume_changed::Float64,
     xy_changed::Float64,
     z_changed::Float64,
@@ -75,24 +121,20 @@ function get_metropolis_probability(
     xy_unchanged::Float64,
     z_unchanged::Float64,
     beta::Float64,
-    reference_length::Float64,
 )
-    delta_h =
-        delta_energy +
-        ensemble.pressure * (volume_changed - volume_unchanged) +
-        reference_length^3 *
-        ensemble.stress_tensor[1] *
-        (xy_unchanged + xy_changed) *
-        (xy_changed - xy_unchanged) / (reference_length)^2 +
-        reference_length^3 *
-        ensemble.stress_tensor[2] *
-        0.5 *
-        (z_unchanged + z_changed) *
-        (z_changed - z_unchanged) / (reference_length)^2
-    prob_val = exp(
-        -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+    ΔH = get_enthalpy_change(
+        ΔE,
+        ensemble,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
     )
-    T = typeof(prob_val)
+    prob_val = exp(
+        -ΔH * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+    )
     return min(prob_val, one(prob_val))
 end
 
@@ -136,7 +178,6 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
                 mc_state.config.boundary_condition.box_length,
                 mc_state.config.boundary_condition.box_height,
                 mc_state.beta,
-                ensemble.reference_length,
             )
         end
     elseif movetype == "atomswap"
@@ -304,6 +345,31 @@ function update_max_stepsize!(
     mc_state.count_atom[2] = 0
 
     return mc_state
+end
+"""
+    get_enthalpy_from_energy(
+        energy::Number,
+        mc_state::MCState, 
+        ensemble::NPT
+    )
+This function is not used in the main program, but instead exists for testing purposes, in
+particular, for checking that the enthalpy is correctly updated. It simply calculates the
+enthalpy for an [`MCState`](@ref) by using an external value for the energy, and the
+relevant [`NPT`](@ref) ensemble variables.
+"""
+function get_enthalpy_from_energy(energy::Number, mc_state::MCState, ensemble::NPT)
+    simple_H = energy + volume(mc_state.config.boundary_condition) * ensemble.pressure
+    if iszero(ensemble.stress_tensor)
+        return simple_H
+    else
+        xy = mc_state.config.boundary_condition.box_length
+        z = mc_state.config.boundary_condition.box_height
+        σ = ensemble.stress_tensor
+        L0 = ensemble.reference_length
+        correction = L0 * (σ[1] * xy^2 + σ[2] * z^2 * 0.5)
+        proper_H = simple_H + correction
+        return proper_H
+    end
 end
 
 end
