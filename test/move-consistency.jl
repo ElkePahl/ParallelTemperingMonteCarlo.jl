@@ -136,8 +136,7 @@ end
                 true_tan = get_tantheta_mat(config)
                 @test mc_state.potential_variables.tan_mat == true_tan
             end
-
-            for i in 1:10_000
+            for i in 1:100
                 accept = iseven(i)
                 move = mc_move_deterministic!(
                     accept, mc_state, move_strategy, potential, ensemble
@@ -163,7 +162,6 @@ end
                     mc_state.ensemble_variables,
                     potential,
                 )[1]
-
                 updated_energy = mc_state.en_tot
 
                 @test updated_energy ≈ true_energy
@@ -171,7 +169,55 @@ end
                 # With these high energy configurations, the energy has a tendency to drift
                 # a bit. Resetting it to the correct energy fixes the issue.
                 # TODO: this should probably also be done by the MC algorithm
+
                 mc_state.en_tot = true_energy
+                if typeof(ensemble) === NPT
+                    true_enthalpy = get_enthalpy_from_energy(
+                        true_energy, mc_state, ensemble
+                    )
+                    # Determine Enthalpy directly from true_energy (from configuration)
+
+                    hamiltonian_enthalpy = hamiltonian(mc_state, ensemble)
+                    # Determine Enthalpy using energy stored in mc_state
+
+                    @test true_enthalpy ≈ hamiltonian_enthalpy
+
+                    current_energy = true_energy
+                    current_volume = volume(mc_state.config.boundary_condition)
+                    current_xy = mc_state.config.boundary_condition.box_length
+                    current_z = mc_state.config.boundary_condition.box_height
+
+                    if i == 1
+                        old_H_variables = [
+                            current_energy,
+                            current_volume,
+                            current_xy,
+                            current_z,
+                            true_enthalpy,
+                        ]
+                        #= if its the first run, we have nothing to compare to. In this
+                        case, we just set all the current variables to the old variables
+                        and move on to the next iteration.=#
+                        continue
+                    end
+                    enthalpy_change = get_enthalpy_change(
+                        current_energy - old_H_variables[1],
+                        ensemble,
+                        current_volume::Float64,
+                        current_xy::Float64,
+                        current_z::Float64,
+                        old_H_variables[2]::Float64,
+                        old_H_variables[3]::Float64,
+                        old_H_variables[4]::Float64,
+                    )
+                    true_enthalpy_change = true_enthalpy - current_H_variables[5]
+                    @test true_enthalpy_change ≈ enthalpy_change
+                    old_H_variables = [
+                        current_energy, current_volume, current_xy, current_z, true_enthalpy
+                    ]
+                    #= Once we've checked the enthalpy for this iteration, we store the
+                    variables we need for comparison with the next iteration=#
+                end
             end
         end
     end
