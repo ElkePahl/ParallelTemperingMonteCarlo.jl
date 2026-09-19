@@ -176,7 +176,6 @@ end
 
                 mc_state.en_tot = true_energy
                 if typeof(ensemble) === NPT && boundary_condition isa RectangularBC
-                    old_H_variables = zeros(Float64, 5)
                     true_enthalpy = get_enthalpy_from_energy(
                         true_energy, mc_state, ensemble
                     )
@@ -193,7 +192,7 @@ end
                     current_z = mc_state.config.boundary_condition.box_height
 
                     if i == 1
-                        old_H_variables = [
+                        global old_H_variables = [
                             current_energy,
                             current_volume,
                             current_xy,
