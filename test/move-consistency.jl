@@ -83,7 +83,15 @@ function generate_test_cases(n_atoms)
             elseif bc isa CubicBC && ensemble_type === NPT
                 ensemble = NPT(n_atoms, 0.01, false)
             elseif ensemble_type == NPT
-                ensemble = NPT(n_atoms, 0.01, true)
+                for stress in [true, false]
+                    if stress
+                        ensemble = NPT(
+                            n_atoms, n_atoms, 1, 0, 50e9, true, [0.05, -0.1], 23.0
+                        )
+                    else
+                        ensemble = NPT(n_atoms, 0.01, true)
+                    end
+                end
             else
                 ensemble = ensemble_type(n_atoms)
             end
