@@ -1,3 +1,14 @@
+"""
+    module MCStates
+
+This module primarily defines the custom type MCState, containing all relevant parameters
+which encode the state of the simulation at a given moment.
+
+## Exported types
+-   [`MCState`](@ref)
+## Exported functions
+-   [`max_length`](@ref)
+"""
 module MCStates
 
 using ..BoundaryConditions
