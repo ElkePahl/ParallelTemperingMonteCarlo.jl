@@ -78,22 +78,26 @@ function generate_test_cases(n_atoms)
             RectangularBC(5.0, 5.0),
             RhombicBC(5.0, 5.0),
         )
-            if bc isa SphericalBC && ensemble_type === NPT
-                continue
-            elseif bc isa CubicBC && ensemble_type === NPT
-                ensemble = NPT(n_atoms, 0.01, false)
-            elseif ensemble_type == NPT
-                for stress in [true, false]
-                    if stress
-                        ensemble = NPT(
-                            n_atoms, n_atoms, 1, 0, 50e9, true, [0.05, -0.1], 23.0
-                        )
-                    else
-                        ensemble = NPT(n_atoms, 0.01, true)
+            if ensemble_type === NPT
+                if bc isa SphericalBC
+                    continue
+                elseif bc isa CubicBC
+                    ensemble = NPT(n_atoms, 0.01, false)
+                elseif bc isa RectangularBC
+                    for stressed in [true, false]
+                        if stressed
+                            ensemble = NPT(
+                                n_atoms, n_atoms, 1, 0, 50e9, true, [0.05, -0.1], 23.0
+                            )
+                        else
+                            ensemble = NPT(n_atoms, 0.01, true)
+                        end
                     end
+                elseif bc isa RhombicBC
+                    ensemble = NPT(n_atoms, 0.01, true)
                 end
             else
-                ensemble = ensemble_type(n_atoms)
+                ensemble = NVT(n_atoms)
             end
             for potential in (
                 # TODO: RuNNer
@@ -171,7 +175,8 @@ end
                 # TODO: this should probably also be done by the MC algorithm
 
                 mc_state.en_tot = true_energy
-                if typeof(ensemble) === NPT
+                if typeof(ensemble) === NPT && boundary_condition isa RectangularBC
+                    old_H_variables = zeros(Float64, 5)
                     true_enthalpy = get_enthalpy_from_energy(
                         true_energy, mc_state, ensemble
                     )
@@ -210,7 +215,7 @@ end
                         old_H_variables[3]::Float64,
                         old_H_variables[4]::Float64,
                     )
-                    true_enthalpy_change = true_enthalpy - current_H_variables[5]
+                    true_enthalpy_change = true_enthalpy - old_H_variables[5]
                     @test true_enthalpy_change ≈ enthalpy_change
                     old_H_variables = [
                         current_energy, current_volume, current_xy, current_z, true_enthalpy

@@ -359,7 +359,7 @@ relevant [`NPT`](@ref) ensemble variables.
 """
 function get_enthalpy_from_energy(energy::Number, mc_state::MCState, ensemble::NPT)
     simple_H = energy + volume(mc_state.config.boundary_condition) * ensemble.pressure
-    if iszero(ensemble.stress)
+    if iszero(ensemble.stress_tensor)
         return simple_H
     else
         xy = mc_state.config.boundary_condition.box_length
