@@ -18,6 +18,48 @@ export get_metropolis_probability, metropolis_condition, exc_acceptance, exc_tra
 
 export parallel_tempering_exchange!, update_max_stepsize!
 """
+    get_enthalpy_change(
+        ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64,
+    )
+    get_enthalpy_change(
+        ΔE::Float64,
+        ensemble::NPT,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
+    )
+Compute the change in enthalpy of a trial move. Two methods, one for NPT, one for NσT.
+"""
+function get_enthalpy_change(
+    ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64
+)
+    ΔH = ΔE + ensemble.pressure * (volume_changed - volume_unchanged)
+    return ΔH
+end
+
+function get_enthalpy_change(
+    ΔE::Float64,
+    ensemble::NPT,
+    volume_changed::Float64,
+    xy_changed::Float64,
+    z_changed::Float64,
+    volume_unchanged::Float64,
+    xy_unchanged::Float64,
+    z_unchanged::Float64,
+)
+    crude_ΔH = get_enthalpy_change(ΔE, ensemble, volume_changed, volume_unchanged)
+    stress_correction =
+        ensemble.reference_length * (
+            ensemble.stress_tensor[1] * (xy_changed^2 - xy_unchanged^2) +
+            ensemble.stress_tensor[2] * 0.5 * (z_changed^2 - z_unchanged^2)
+        )
+    full_ΔH = crude_ΔH + stress_correction
+    return full_ΔH
+end
+"""
     get_metropolis_probability(
         delta_energy::Number,
         beta::Number
@@ -39,7 +81,6 @@ export parallel_tempering_exchange!, update_max_stepsize!
         xy_unchanged::Float64,
         z_unchanged::Float64,
         beta::Float64,
-        reference_length::Float64=15.8
     )
 Function returning the probability value associated with a trial move.
 Three methods included, one for NVT, one for NPT, one for NσT.
@@ -52,14 +93,14 @@ end
 
 function get_metropolis_probability(
     ensemble::NPT,
-    delta_energy::Float64,
+    ΔE::Float64,
     volume_changed::Float64,
     volume_unchanged::Float64,
     beta::Float64,
 )
-    delta_h = delta_energy + ensemble.pressure * (volume_changed - volume_unchanged)
+    ΔH = get_enthalpy_change(ΔE, ensemble, volume_changed, volume_unchanged)
     prob_val = exp(
-        -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+        -ΔH * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
     )
     T = typeof(prob_val)
     return ifelse(prob_val > 1, T(1), prob_val)
@@ -67,7 +108,7 @@ end
 
 function get_metropolis_probability(
     ensemble::NPT,
-    delta_energy::Float64,
+    ΔE::Float64,
     volume_changed::Float64,
     xy_changed::Float64,
     z_changed::Float64,
@@ -75,24 +116,20 @@ function get_metropolis_probability(
     xy_unchanged::Float64,
     z_unchanged::Float64,
     beta::Float64,
-    reference_length::Float64,
 )
-    delta_h =
-        delta_energy +
-        ensemble.pressure * (volume_changed - volume_unchanged) +
-        reference_length^3 *
-        ensemble.stress_tensor[1] *
-        (xy_unchanged + xy_changed) *
-        (xy_changed - xy_unchanged) / (reference_length)^2 +
-        reference_length^3 *
-        ensemble.stress_tensor[2] *
-        0.5 *
-        (z_unchanged + z_changed) *
-        (z_changed - z_unchanged) / (reference_length)^2
-    prob_val = exp(
-        -delta_h * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+    ΔH = get_enthalpy_change(
+        ΔE,
+        ensemble,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
     )
-    T = typeof(prob_val)
+    prob_val = exp(
+        -ΔH * beta + (ensemble.n_atoms + 1) * log(volume_changed / volume_unchanged)
+    )
     return min(prob_val, one(prob_val))
 end
 
@@ -136,7 +173,6 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
                 mc_state.config.boundary_condition.box_length,
                 mc_state.config.boundary_condition.box_height,
                 mc_state.beta,
-                ensemble.reference_length,
             )
         end
     elseif movetype == "atomswap"
