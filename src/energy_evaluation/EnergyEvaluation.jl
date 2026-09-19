@@ -23,7 +23,6 @@ using ..Configurations
 using ..Ensembles
 using ..BoundaryConditions
 using ..CustomTypes
-using ..MCStates
 import ..BoundaryConditions.long_range_correction
 
 export AbstractPotential,
@@ -42,16 +41,13 @@ export AbstractPotentialVariables,
     NNPVariables,
     NNPVariables2a
 export dimer_energy,
-    energy_update!,
-    set_variables,
-    initialise_energy,
-    get_enthalpy_from_energy
-    dimer_energy_config,
-    calc_components,
-    calc_energies_from_components,
-    get_new_state_vars!,
-    calc_new_runner_energy!,
-    swap_energy_update
+    energy_update!, set_variables, initialise_energy, get_enthalpy_from_energy
+dimer_energy_config,
+calc_components,
+calc_energies_from_components,
+get_new_state_vars!,
+calc_new_runner_energy!,
+swap_energy_update
 
 include("abstract.jl")
 include("ELJPotentials.jl")
