@@ -1,4 +1,3 @@
-using ..MCStates
 """
     AbstractPotential
 

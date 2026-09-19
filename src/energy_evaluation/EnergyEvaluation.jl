@@ -23,7 +23,7 @@ using ..Configurations
 using ..Ensembles
 using ..BoundaryConditions
 using ..CustomTypes
-using ..MCStates
+import ..MCStates.MCState
 import ..BoundaryConditions.long_range_correction
 
 export AbstractPotential,
@@ -45,6 +45,7 @@ export dimer_energy,
     energy_update!,
     set_variables,
     initialise_energy,
+    get_enthalpy_from_energy
     dimer_energy_config,
     calc_components,
     calc_energies_from_components,
