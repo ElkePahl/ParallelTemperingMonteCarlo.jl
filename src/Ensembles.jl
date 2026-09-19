@@ -261,7 +261,7 @@ function hamiltonian(state, ensemble::NPT)
         L0 = 0.0
     end
 
-    return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
+    return E + p*V + L0^2 * (2σ[1] * xy + σ[2] * z)
 end
 
 """
