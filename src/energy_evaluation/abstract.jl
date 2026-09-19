@@ -165,21 +165,6 @@ function initialise_energy(
     potential_variables
 end
 
-function get_enthalpy_from_energy(energy::Number, mc_state::MCState, ensemble::NPT)
-    simple_H = energy + volume(mc_state.config.boundary_condition) * ensemble.pressure
-    if iszero(ensemble.stress)
-        return simple_H
-    else
-        xy = mc_state.config.boundary_condition.box_length
-        z = mc_state.config.boundary_condition.box_height
-        σ = ensemble.stress_tensor
-        L0 = ensemble.reference_length
-        correction = L0 * (σ[1] * xy^2 + σ[2] * z^2 * 0.5)
-        proper_H = simple_H + correction
-        return proper_H
-    end
-end
-
 """
     dimer_energy_atom(potential::AbstractDimerPotential, index, cutoff, dist2)
     dimer_energy_atom(potential::AbstractDimerPotentialB, index, cutoff, dist2, tan)

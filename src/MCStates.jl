@@ -17,9 +17,7 @@ using ..MachineLearningPotential
 using ..EnergyEvaluation
 using ..Ensembles
 using ..CustomTypes
-#using ..InputParams
-
-export MCState, max_length#, NNPState
+export MCState, max_length
 
 """
     MCState(
