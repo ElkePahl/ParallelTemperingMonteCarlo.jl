@@ -23,7 +23,7 @@ using ..Configurations
 using ..Ensembles
 using ..BoundaryConditions
 using ..CustomTypes
-import ..MCStates.MCState
+using ..MCStates
 import ..BoundaryConditions.long_range_correction
 
 export AbstractPotential,
