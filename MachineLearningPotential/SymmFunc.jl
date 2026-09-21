@@ -501,7 +501,7 @@ function total_symm_calc(
             positions, dist2_mat, f_mat, g_mat[g_index, :], radsymmfunctions[g_index]
         )
     end
-    for g_index in (Nrad + 1):Nang
+    for g_index in (Nrad + 1):(Nrad + Nang)
         g_mat[g_index, :] = calc_symm_vals!(
             positions, dist2_mat, f_mat, g_mat[g_index, :], angsymmfunctions[g_index - Nrad]
         )
