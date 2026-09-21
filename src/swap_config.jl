@@ -161,6 +161,37 @@ function swap_vars!(i_atom::Int, potential_variables::NNPVariables2a)
     potential_variables.f_matrix[:, i_atom] = potential_variables.new_f_vec
     return nothing
 end
+
+"""
+    swap_vars!(
+        i_atom::Int,
+        potential_variables::NNPVariablesWithNeighbourhood,
+    )
+
+Commits the proposed neural-network variables following an accepted atom move.
+
+Swaps the current and proposed symmetry-function matrices and updates the row
+and column of the cutoff-function matrix associated with the moved atom using
+the proposed cutoff-function vector.
+
+Returns `nothing`.
+"""
+function swap_vars!(
+    i_atom::Int,
+    potential_variables::NNPVariablesWithNeighbourhood,
+)
+    potential_variables.g_matrix, potential_variables.new_g_matrix =
+        potential_variables.new_g_matrix, potential_variables.g_matrix
+
+    potential_variables.f_matrix[i_atom, :] =
+        potential_variables.new_f_vec
+
+    potential_variables.f_matrix[:, i_atom] =
+        potential_variables.new_f_vec
+
+    return nothing
+end
+
 """
     swap_move_config!(mc_state::MCState,indices::VorS)
 Function designed to exchange relevant variables when swapping an atom. Accepts the `mc_state` and the atom `indices` and exchanges atom `indices[1]` with atom `indices[2]`
