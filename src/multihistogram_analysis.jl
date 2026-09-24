@@ -19,7 +19,7 @@ function check_trajectory_temperature_consistency(traj_id, temperature)
     num_traj = maximum(traj_id)
     seen = fill(false, num_traj)
     temp_of_traj = fill(NaN, num_traj)
-    @inbounds for i in eachindex(traj_id, temperature)
+    @inbounds for i in 1:length(traj_id)
         t = traj_id[i]
         T = temperature[i]
         if !seen[t]
@@ -106,13 +106,13 @@ function MultiHistogram(
         throw(ArgumentError("`skip_ratio` must be in range [0, 1)"))
     end
 
-    max_cycle = maximum(cycle)
+    max_cycle = maximum(cycle; init=0)
     first_used = round(Int, max_cycle * skip_ratio)
 
     # Find range of data, excluding initial equilibration phase
     lo = Inf
     hi = -Inf
-    for i in eachindex(hamiltonian)
+    for i in 1:length(hamiltonian)
         if cycle[i] > first_used
             lo = min(lo, hamiltonian[i])
             hi = max(hi, hamiltonian[i])
@@ -124,14 +124,14 @@ function MultiHistogram(
         )
     end
 
-    num_traj = maximum(traj_id)
+    num_traj = maximum(traj_id; init=0)
     unique_temps = check_trajectory_temperature_consistency(traj_id, temperature)
 
     ΔH = (hi - lo) / num_bins
     edges = collect(range(lo, hi; length=num_bins + 1))
     weights = zeros(Int, num_bins, num_traj)
 
-    for j in eachindex(hamiltonian)
+    for j in 1:length(hamiltonian)
         if cycle[j] > first_used
             H = hamiltonian[j]
             traj = traj_id[j]
