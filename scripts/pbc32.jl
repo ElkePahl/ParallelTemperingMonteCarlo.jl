@@ -44,6 +44,7 @@ pot = ELJPotentialEven{6}(c)
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
 separated_volume = false
+# The 2.294 conversion factor: Joule to Hartree
 ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
 
 #-------------------------------------------------------------#
