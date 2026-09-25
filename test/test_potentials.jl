@@ -1,3 +1,6 @@
+using Test
+using ParallelTemperingMonteCarlo
+using StaticArrays
 using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
 
 @testset "ELJPotentials" begin

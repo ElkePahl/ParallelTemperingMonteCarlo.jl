@@ -17,8 +17,9 @@ using ..ReadSave
 using ..Ensembles
 
 """
-    initialisation(mc_params::MCParams,temp::TempGrid,start_config::Config,potential,ensemble::NVT)
-    initialisation(restart::Bool;eq_cycles::Number)
+    initialisation(mc_params, temp, start_config, potential, ensemble)
+    initialisation(restart::Bool; eq_cycles)
+
 Basic function for establishing the structs and parameters required for the simulation. Inputs for method one are:
 -   `mc_params`: the basic values and parameters concerning how long our simulation runs.
 -   `temp`: a grid of temp and beta values passed to the mc_states struct.
@@ -64,11 +65,7 @@ function initialisation(
     move_strategy = MoveStrategy(ensemble)
     mc_states = map(1:(mc_params.n_traj)) do i
         return MCState(
-            temp.t_grid[i],
-            temp.beta_grid[i],
-            start_config[mod1(i, length(start_config))],
-            ensemble,
-            potential,
+            temp.t_grid[i], start_config[mod1(i, length(start_config))], ensemble, potential
         )
     end
     results = Output{Float64}(mc_params.n_bin)

@@ -1,4 +1,5 @@
-using Random
+using ParallelTemperingMonteCarlo
+using Random, Test, StaticArrays
 
 @testset "separated_scale" begin
     v1 = SVector(1.0, 2.0, 3.0)
@@ -44,7 +45,7 @@ end
 
     temp = TempGrid{2}(10, 15)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf, ensemble, pot1)
+    state = MCState(temp.t_grid[1], conf, ensemble, pot1)
 
     state_new = volume_change(state)
 
@@ -105,7 +106,7 @@ end
 
     temp = TempGrid{2}(10, 15)
 
-    state = MCState(temp.t_grid[1], temp.beta_grid[1], conf, ensemble, potB)
+    state = MCState(temp.t_grid[1], conf, ensemble, potB)
 
     @test state.potential_variables.tan_mat[1, 2] ≈ 0.7453559924999299 #TODO: sign difference
     @test state.potential_variables.tan_mat[1, 3] ≈ 0.47140452079103173

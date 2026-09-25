@@ -44,7 +44,7 @@ pot = ELJPotentialEven{6}(c)
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
 separated_volume = false
-ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^2, separated_volume)
+ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
 move_strat = MoveStrategy(ensemble)
 
 #-------------------------------------------------------------#
@@ -96,4 +96,4 @@ start_config = Config(positions, boundary_condition)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
-T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false)
