@@ -1,6 +1,6 @@
 module MCRun
 
-export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!, get_energy!
+export metropolis_condition, mc_cycle!, ptmc_run!, get_energy!
 export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
@@ -142,7 +142,7 @@ end
     mc_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, index)
     mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, results, idx, rdfsave)
 
-Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `move_strat`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
+Basic function utilised by the simulation. For each of the `n_steps` run a single step on the `mc_states` according to `move_strat`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
 
 Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
 """
