@@ -146,6 +146,10 @@ end
     ) <= 10^(-15)
 end
 
+@safetestset "Configuration presets" begin
+    include("configuration_presets.jl")
+end
+
 @testset "Tangent" begin
     # TODO: tests broken because tan now returns absolute values
     bc = SphericalBC(; radius=10.0)
@@ -215,7 +219,7 @@ end
         (temp1.t_grid[n_traj] - temp1.t_grid[n_traj - 1])
 end
 
-@testset "Separated_volume_change" begin
+@safetestset "Separated_volume_change" begin
     include("separated_v_test.jl")
 end
 
@@ -223,21 +227,17 @@ end
     include("test_runner_forward.jl")
 end
 
-@testset "Potentials" begin
+@safetestset "Potentials" begin
     include("test_potentials.jl")
 end
 
-@testset "States" begin
+@safetestset "States" begin
     include("test_states.jl")
 end
 
 #@testset "Checkpoints" begin
 #include("checkpoint_test.jl")
 #end
-
-@safetestset "RuNNer" begin
-    include("test_runner_forward.jl")
-end
 
 # @safetestset "script testing" begin
 #     function read_save_data(filename)
@@ -275,11 +275,19 @@ end
 end
 
 @safetestset "Saveconfigs" begin
-    include(joinpath(@__DIR__, "ne13_test.jl"))
+    include("ne13_test.jl")
 end
 
 @safetestset "Move consistency" begin
-    include(joinpath(@__DIR__, "move-consistency.jl"))
+    include("move-consistency.jl")
+end
+
+@safetestset "Statistic tracking" begin
+    include("statistic-tracking.jl")
+end
+
+@safetestset "Multihistogram analysis" begin
+    include("multihistogram_analysis.jl")
 end
 
 @testset "scripts run without errors" begin
@@ -301,6 +309,10 @@ end
     end
     @safetestset "cu38.jl" begin
         include(joinpath(@__DIR__, "../scripts/cu38.jl"))
+        @test true
+    end
+    @safetestset "NsigT run" begin
+        include(joinpath(@__DIR__, "ar96pbcstress_test.jl"))
         @test true
     end
 end

@@ -2,25 +2,36 @@ module Ensembles
 
 using ..Configurations
 using ..BoundaryConditions
+import ..BoundaryConditions: report_stats
 using StaticArrays, Random
 
 export AbstractEnsemble, NVT, NPT, NNVT
 
 export AbstractEnsembleVariables,
-    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables
+    NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables, hamiltonian
 
-export MoveType, atommove, volumemove, atomswap
+export MoveType, atommove, volumemove, atomswap, report_stats
 export MoveStrategy
 
 """
     AbstractEnsemble
 Abstract type for ensemble:
 -   [`NVT`](@ref): canonical ensemble
--   [`NPT`](@ref): isothermal,isobaric ensemble
+-   [`NPT`](@ref): isothermal,isobaric ensemble, with option to include isostress.
 
 Each subtype requires a corresponding [`AbstractEnsembleVariables`](@ref) struct.
 """
 abstract type AbstractEnsemble end
+
+"""
+    report_stats(mc_state, ensemble)
+
+Return a `NamedTuple` of statistics to report in the result table. The default
+implementation used by [`NVT`](@ref), [`NNVT`](@ref) returns an empty `NamedTuple`.
+"""
+function report_stats(_, ::AbstractEnsemble)
+    return NamedTuple()
+end
 
 """
     AbstractEnsembleVariables
@@ -34,7 +45,7 @@ Canonical ensemble.
 -   Fieldnames:
     -   `n_atoms::Int64`: number of atoms
     -   `n_atom_moves::Int64`: number of atom moves; defaults to `n_atoms`
-    -   `n_swap_moves::Int64`: number of atom exchanges made; defaults to 0
+    -   `n_atom_swaps::Int64`: number of atom exchanges made; defaults to 0
 """
 struct NVT <: AbstractEnsemble
     n_atoms::Int64
@@ -66,8 +77,15 @@ Isothermal, isobaric ensemble.
     -   `n_atoms::Int64`: number of atoms
     -   `n_atom_moves::Int64`: number of atom moves; defaults to `n_atoms`
     -   `n_volume_moves::Int64`: number of volume moves; defaults to 1
-    -   `n_swap_moves::Int64`: number of atom exchanges made; defaults to 0
+    -   `n_atom_swaps::Int64`: number of atom exchanges made; defaults to 0
     -   `pressure::Float64`: the fixed pressure of the system
+    -   `separated_volume::Bool`: allows independent volume changes in different directions.
+    -   `stress_tensor::SVector{2, Float64}`: the fixed internal stress of the system. First entry
+    corresponds to the stress in the x and y directions, assumed the same, second entry is z.
+    This is set to zero by default.
+    -   `reference_length::Float64`: This is a specialised variable specifically related
+    to NσT ensemble. In order to discuss strain, one needs to make reference to an
+    unstrained length, which is what this parameter encodes. This is set to zero by default.
 """
 struct NPT <: AbstractEnsemble
     n_atoms::Int64
@@ -76,10 +94,50 @@ struct NPT <: AbstractEnsemble
     n_atom_swaps::Int64
     pressure::Float64
     separated_volume::Bool
+    stress_tensor::SVector{2,Float64}
+    reference_length::Float64
 end
-
+#= This first method is to ensure that any prior code which constructed an NPT ensemble
+using 6 variables continues to construct the correct ensemble now that there are 8 options.=#
+function NPT(
+    n_atoms::Int64,
+    n_atom_moves::Int64,
+    n_volume_moves::Int64,
+    n_atom_swaps::Int64,
+    pressure::Float64,
+    separated_volume::Bool,
+)
+    return NPT(
+        n_atoms,
+        n_atom_moves,
+        n_volume_moves,
+        n_atom_swaps,
+        pressure,
+        separated_volume,
+        [0, 0],
+        0,
+    )
+end
+# This generates the appropriate ensemble by assuming omitted parameters take on default values.
+function NPT(
+    n_atoms::Int64,
+    pressure::Float64;
+    separated_volume::Bool=false,
+    stress_tensor::Vector{Float64}=[0, 0],
+    reference_length::Float64=0.0,
+)
+    return NPT(
+        n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress_tensor, reference_length
+    )
+end
+#=For users who are using regular NPT, this function allows a shortcut for constructing
+a separated volume NPT ensemble.=#
 function NPT(n_atoms, pressure, separated_volume)
-    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume)
+    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0, 0], 0)
+end
+function report_stats(mc_state, ::NPT)
+    bc = mc_state.config.boundary_condition
+    return (; volume=volume(bc), report_stats(bc)...)
 end
 
 """
@@ -151,6 +209,10 @@ end
 #---------------------------------------------------------------------#
 #------------------------global functions-----------------------------#
 #---------------------------------------------------------------------#
+function hamiltonian(state, ::AbstractEnsemble)
+    return state.en_tot
+end
+
 """
     set_ensemble_variables(config::Config, ensemble::NVT)
     set_ensemble_variables(config::Config, ensemble::NPT)
@@ -180,6 +242,26 @@ function set_ensemble_variables(config::Config{T}, ensemble::NNVT) where {T}
     return NNVTVariables{T,length(config),N1,N2}(
         1, SVector{3}(zeros(3)), SVector{2}(1, N1 + 1)
     )
+end
+
+function hamiltonian(state, ensemble::NPT)
+    V = volume(state.config.boundary_condition)
+    p = ensemble.pressure
+    E = state.en_tot
+    σ = ensemble.stress_tensor
+    if ensemble.separated_volume
+        xy = state.config.boundary_condition.box_length
+        z = state.config.boundary_condition.box_height
+        L0 = ensemble.reference_length
+    else
+        # If separated volume is zero, this stuff does not make sense.
+        @assert iszero(σ)
+        xy = 0.0
+        z = 0.0
+        L0 = 0.0
+    end
+
+    return E + p*V + L0 * (σ[1] * xy^2 + σ[2] * z^2 * 0.5)
 end
 
 """

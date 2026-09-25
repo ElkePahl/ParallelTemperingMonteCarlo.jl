@@ -151,7 +151,7 @@ function get_distance2_mat!(dest, config::Config)
             ),
         )
     end
-    @inbounds for i in 1:length(config), j in (i + 1):length(config)
+    @inbounds for i in eachindex(config), j in eachindex(config)[(i + 1):end]
         dest[i, j] = dest[j, i] = distance2(config[i], config[j], config.boundary_condition)
     end
     @inbounds for i in eachindex(config)
@@ -227,7 +227,7 @@ function get_tantheta_mat!(dest, config::Config)
             ),
         )
     end
-    @inbounds for i in 1:length(config), j in (i + 1):length(config)
+    @inbounds for i in eachindex(config), j in eachindex(config)[(i + 1):end]
         dest[i, j] = dest[j, i] = get_tan(config[i], config[j], config.boundary_condition)
     end
     @inbounds for i in eachindex(config)
@@ -242,7 +242,7 @@ function scale_xyz(config::Config, α)
 end
 function scale_xy(pos, scale)
     new_pos = map(pos) do p
-        SVector(p[1] * scale, p[2] * scale, p[3])
+        return SVector(p[1] * scale, p[2] * scale, p[3])
     end
     return new_pos
 end
@@ -253,7 +253,7 @@ function scale_xy(config::Config, scale)
 end
 function scale_z(pos, scale)
     new_pos = map(pos) do p
-        SVector(p[1], p[2], p[3] * scale)
+        return SVector(p[1], p[2], p[3] * scale)
     end
     return new_pos
 end

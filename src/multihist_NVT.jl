@@ -1,6 +1,6 @@
 module Multihistogram_NVT
 
-using DelimitedFiles, LinearAlgebra, StaticArrays
+using DelimitedFiles, LinearAlgebra, StaticArrays, ProgressMeter
 
 using ..InputParams
 using ..EnergyEvaluation
@@ -80,15 +80,13 @@ function quasiprob(
         denom = denom + ncycles[i] * exp(-beta[i] * energy_t - free_energy[i] - offset)
     end
 
-    quasiprob = quasiprob / denom * exp(-betat * energy_t - offset)
-    return quasiprob
+    return quasiprob / denom * exp(-betat * energy_t - offset)
 end
 
 """
-    multihistogram_NVT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; debug = false)
+    multihistogram_NVT(ensemble::AbstractEnsemble, temp::TempGrid, results::Output, conv_threshold::Number, readfile::Bool; show_progress=true)
 Multihistogram analysis for NVT:
 -   `conv_threshold` is the convergence threshold, which user can choose.
--   `debug` kwarg determines whether to print debug information. Defaults to false.
 -   `readfile` can only be false.
 -   Example: `multihistogram_NVT(ensemble, temp, results, 10^(-3), false)`
 """
@@ -98,7 +96,8 @@ function multihistogram_NVT(
     results::Output,
     conv_threshold::Number,
     readfile::Bool;
-    debug=false,
+    max_iter=1000,
+    show_progress=isinteractive(),
 )
     if readfile == false
         tempnumber, tempnumber_result = temp_trajectories(temp)
@@ -114,10 +113,9 @@ function multihistogram_NVT(
         ENhistogram, Ebins, tempnumber, tempnumber_result
     )
 
-    for it in 1:1000
-        println("iteration=", it)
+    progress = ProgressThresh(conv_threshold; enabled=show_progress)
+    for it in 1:max_iter
         for i in 1:tempnumber
-            local betat
             betat = beta[i]
             new_free_energy[i] = 0
             for m in 1:Ebins
@@ -134,24 +132,18 @@ function multihistogram_NVT(
                         free_energy,
                     )
             end
-
-            #println(new_free_energy[i])
             new_free_energy[i] = log(new_free_energy[i])
-            #println(new_free_energy[i])
         end
 
-        local delta
-        delta = 0
+        delta = 0.0
         for i in 1:tempnumber
             delta = delta + abs(new_free_energy[i] - free_energy[i])^2
             free_energy[i] = new_free_energy[i]
         end
-        println(delta)
-        println()
 
+        update!(progress, delta)
         if delta < conv_threshold
-            println("iteration finished")
-            break             #if converged, exit the loop
+            break
         end
     end
 
@@ -174,6 +166,8 @@ function multihistogram_NVT(
     end
 
     cv = zeros(tempnumber_result)
+    ee = zeros(tempnumber_result)
+    ee2 = zeros(tempnumber_result)
     for i in 1:tempnumber_result
         betat = beta_result[i]
         eenergy = 0
@@ -208,16 +202,11 @@ function multihistogram_NVT(
                     free_energy,
                 ) / normalconst[i] * energy_t^2
         end
-        println("temperature: ", temp_result[i])
-        println("energy: ", eenergy)
-        println("heat capacity: ", (eenergy2 - eenergy^2) / (k * temp_result[i]^2))
-        println()
         cv[i] = (eenergy2 - eenergy^2) / (k * temp_result[i]^2)
+        ee[i] = eenergy
+        ee2[i] = eenergy2
     end
-    println("temperature array: ", temp_result)
-    println("heat capacity array: ", cv)
-
-    return cv
+    return (; temperature=temp_result, heat_capacity=cv, energy=ee, energy_squared=ee2)
 end
 
 end

@@ -49,7 +49,7 @@ Generates the documentation markdown files for a (sub)module given the path of i
 function write_md(parent_module::String, module_name::String)
     fpath = joinpath(dirname(@__FILE__), "src", module_name * ".md")
     open(fpath, "w") do io
-        write(
+        return write(
             io,
             "# $module_name\n\n```@autodocs\nModules = [$parent_module.$module_name]\n```",
         )
@@ -58,7 +58,7 @@ end
 
 #Create home page
 open(joinpath(dirname(@__FILE__), "src", "index.md"), "w") do io
-    write(io, "# $main_module\n\n```@contents\n```")
+    return write(io, "# $main_module\n\n```@contents\n```")
 end
 
 #Dynamically create the documentation pages argument for makedocs.

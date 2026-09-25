@@ -1,6 +1,7 @@
 using ParallelTemperingMonteCarlo
 using Test
-
+using Random
+Random.seed!(1234)
 n_atoms = 13;
 
 c = [
@@ -43,14 +44,14 @@ tf = 16.0;
 n_traj = 25;
 temp = TempGrid{n_traj}(ti, tf)
 
-mc_cycles = 100_000;
+mc_cycles = 1000;
 mc_sample = 1;
 displ_atom = 0.1;
 max_displ_atom = [0.1 * sqrt(displ_atom * temp.t_grid[i]) for i in 1:n_traj];
 n_adjust = 100;
 
 save_configuration = true
-save_frequency = 20_000
+save_frequency = 200
 file_name = "Configurations"
 
 mc_params = MCParams(mc_cycles, n_traj, n_atoms; mc_sample=mc_sample, n_adjust=n_adjust)
@@ -71,7 +72,7 @@ mc_states, results = ptmc_run!(
 
 energies, histogramdata, T, Z, Cv, dCv, S = postprocess();
 for temperature in 1:25
-    open("./checkpoint/Configurations100000T$temperature.xyz", "r") do file
+    open("./checkpoint/Configurations1000T$temperature.xyz", "r") do file
         readline(file) # skip first line
         readline(file) # skip second line
         atom_count = 1 # tracks which atom index we are up to

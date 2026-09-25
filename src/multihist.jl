@@ -45,7 +45,8 @@ function readfile(xdir::String; debug=false)
     if debug
         println("Files Read")
     end
-    energyvector = [(j - 1) * de + emin for j in 1:NBins]
+    #energyvector = [(j - 1) * de + emin for j in 1:NBins]
+    energyvector = [(j - 0.5) * de + emin for j in 1:NBins]
 
     return HistArray, energyvector, beta, NTraj, NBins, kB
 end
@@ -246,6 +247,7 @@ function systemsolver(
     b, bmat = bvector(HistArray, energyvector, beta, nsum, NTraj, NBins)
     #solve the A matrix
     A = amatrix(HistArray, nsum, NTraj)
+
     #Check NaN
     c1 = nancheck(A)
     c2 = nancheck(b)
