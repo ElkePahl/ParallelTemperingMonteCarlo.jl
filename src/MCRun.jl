@@ -339,11 +339,11 @@ end
     )
     ptmc_run!(
         restart::Bool;
-        rdfsave = false
-        save = 1000
-        eq_cycles = 0.2
-        saveconfigs = false
-        configsname = "configuration"
+        rdfsave = false,
+        save = 1000,
+        eq_cycles = 0.2,
+        saveconfigs = false,
+        configsname = "configuration",
     )
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs.
@@ -365,7 +365,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
   under.
 - `stats_filename=nothing`: if set to an arrow filename, the stats will be written to that
   file.
-- `flush_interval=1_000_000`: if `stats_filename ≢ nothing`, the stats will be periodically
+- `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
 """
 function ptmc_run!(
@@ -381,7 +381,7 @@ function ptmc_run!(
     configsname="configuration",
     workingdirectory=pwd(),
     stats_filename=nothing,
-    flush_interval=1_000_000,
+    flush_interval=100_000,
 )
     # Initialisation
     cd(workingdirectory)
