@@ -11,8 +11,8 @@ pressure = 101325
 AtoBohr = 1.8897261259077824
 
 # temperature grid
-ti = 10
-tf = 25
+ti = 20
+tf = 35
 n_traj = 24
 temp = TempGrid{n_traj}(ti, tf)
 
