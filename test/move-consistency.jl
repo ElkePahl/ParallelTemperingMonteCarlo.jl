@@ -209,7 +209,11 @@ end
                     true_enthalpy_change = hamiltonian_enthalpy - old_H_variables[5]
                     @test true_enthalpy_change ≈ enthalpy_change
                     old_H_variables = [
-                        current_energy, current_volume, current_xy, current_z, hamiltonian_enthalpy
+                        current_energy,
+                        current_volume,
+                        current_xy,
+                        current_z,
+                        hamiltonian_enthalpy,
                     ]
                     #= Once we've checked the enthalpy for this iteration, we store the
                     variables we need for comparison with the next iteration=#
