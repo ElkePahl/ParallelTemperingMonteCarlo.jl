@@ -395,8 +395,8 @@ function metropolis_probability(::VolumeChange{true}, mc_state)
             delta_energy +
             ensemble.pressure * (new_volume - old_volume) +
             reference_length * (
-                σ[1] * (old_xy + new_xy) * (new_xy - old_xy) +
-                σ[2] * (old_z + new_z) * (new_z - old_z) / 2
+                σ[1] * (new_xy^2 - old_xy^2) +
+                σ[2] * (new_z^2 - old_z^2) / 2
             )
     else
         delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
