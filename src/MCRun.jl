@@ -139,36 +139,6 @@ function mc_move!(mc_state::MCState, move_strat::MoveStrategy{N,E}) where {N,E}
 end
 
 """
-    mc_step!(mc_states, move_strat::MoveStrategy, n_steps)
-
-Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a
-`move_strat`.
-"""
-function mc_step!(mc_states, move_strat::MoveStrategy{N,E}, n_steps::Int, stats) where {N,E}
-    Threads.@threads for trajectory_id in eachindex(mc_states)
-        state = mc_states[trajectory_id]
-        n_accepted = 0
-
-        for i_step in 1:n_steps
-            n_accepted += mc_move!(state, move_strat)
-        end
-
-        state.step += 1
-        state.acceptance = n_accepted / n_steps
-        state.last_stats = (;
-            cycle=state.step,
-            trajectory_id=Int16(trajectory_id), # Int16 to conserve RAM
-            temperature=state.temp,
-            hamiltonian=hamiltonian_value(state, state.ensemble),
-            total_energy=state.en_tot,
-            acceptance=Float32(state.acceptance),
-            report_stats(state, state.ensemble)...,
-        )
-    end
-    return mc_states
-end
-
-"""
     mc_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, index)
     mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, results, idx, rdfsave)
 
@@ -184,7 +154,27 @@ function mc_cycle!(
     index::Int,
     stats,
 ) where {N,E}
-    mc_step!(mc_states, move_strat, n_steps, stats)
+    Threads.@threads for trajectory_id in eachindex(mc_states)
+        state = mc_states[trajectory_id]
+        n_accepted = 0
+
+        for i_step in 1:n_steps
+            n_accepted += mc_move!(state, move_strat)
+        end
+
+        # stats get written to each state so we don't asynchronously push to the DataFrame
+        state.step += 1
+        state.acceptance = n_accepted / n_steps
+        state.last_stats = (;
+            cycle=state.step,
+            trajectory_id=Int16(trajectory_id), # Int16 to conserve RAM
+            temperature=state.temp,
+            hamiltonian=hamiltonian_value(state, state.ensemble),
+            total_energy=state.en_tot,
+            acceptance=Float32(state.acceptance),
+            report_stats(state, state.ensemble)...,
+        )
+    end
     ensemble = mc_states[1].ensemble
 
     if rand() < 0.1
