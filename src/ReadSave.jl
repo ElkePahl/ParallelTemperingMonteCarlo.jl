@@ -163,30 +163,26 @@ function checkpoint_config(filename, state::MCState)
     end
 end
 """
-    save_configs(mc_states::MCStateVector, filename::AbstractString="config")
+    save_configs(mc_states, filename::AbstractString="config")
 
 Function to save the configuration of each state in a vector of `mc_states`.
 Writes each configuration according to [`checkpoint_config`](@ref) into a file `filename.i`
 where `i` indicates the order of the states.
 Default file name is "config".
 """
-function save_configs(mc_states::MCStateVector, filename::AbstractString="config")
+function save_configs(mc_states, filename::AbstractString="config")
     for saveindex in eachindex(mc_states)
         checkpoint_file = string("./checkpoint/", filename, "T", saveindex, ".xyz")
         checkpoint_config(checkpoint_file, mc_states[saveindex])
     end
 end
 """
-    checkpoint(index::Int, mc_states::MCStateVector, results::Output, ensemble::AbstractEnsemble, rdfsave::Bool)
-    checkpoint(index::Int, mc_states::MCStateVector, results::Output, ensemble::NPT, rdfsave::Bool)
+    checkpoint(index::Int, mc_states, results::Output, ensemble::AbstractEnsemble, rdfsave::Bool)
+    checkpoint(index::Int, mc_states, results::Output, ensemble::NPT, rdfsave::Bool)
 Function to save relevant information about the current state of the system at step `index`. Saves the configurations in each `mc_state` [`save_configs`](@ref) as well as the histograms stored in `results`. Optionally stores the volume histograms if using the NPT ensemble and the radial distribution functions if desired.
 """
 function checkpoint(
-    index::Int,
-    mc_states::MCStateVector,
-    results::Output,
-    ensemble::AbstractEnsemble,
-    rdfsave::Bool,
+    index::Int, mc_states, results::Output, ensemble::AbstractEnsemble, rdfsave::Bool
 )
     indexfile = open("./checkpoint/index.txt", "w+")
     writedlm(indexfile, index)
@@ -202,9 +198,7 @@ function checkpoint(
     else
     end
 end
-function checkpoint(
-    index::Int, mc_states::MCStateVector, results::Output, ensemble::NPT, rdfsave::Bool
-)
+function checkpoint(index::Int, mc_states, results::Output, ensemble::NPT, rdfsave::Bool)
     indexfile = open("./checkpoint/index.txt", "w+")
     writedlm(indexfile, index)
     close(indexfile)
@@ -472,7 +466,6 @@ function rebuild_states(
 
         state = MCState(
             temps.t_grid[index],
-            temps.beta_grid[index],
             conf,
             ensemble,
             potential;
@@ -508,7 +501,7 @@ function build_states(
         end
 
         mc_states = [
-            MCState(temp.t_grid[i], temp.beta_grid[i], confvec[i], ensemble, potential) for
+            MCState(temp.t_grid[i], confvec[i], ensemble, potential) for
             i in 1:(mc_params.n_traj)
         ]
         results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
@@ -517,8 +510,8 @@ function build_states(
         confinfo = readdlm("./checkpoint/config.data")
         start_config = read_config(confinfo)
         mc_states = [
-            MCState(temp.t_grid[i], temp.beta_grid[i], start_config, ensemble, potential)
-            for i in 1:(mc_params.n_traj)
+            MCState(temp.t_grid[i], start_config, ensemble, potential) for
+            i in 1:(mc_params.n_traj)
         ]
         results = Output{Float64}(mc_params.n_bin; en_min=mc_states[1].en_tot)
     end

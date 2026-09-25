@@ -11,13 +11,13 @@ pressure = 101325
 AtoBohr = 1.8897261259077824
 
 # temperature grid
-ti = 10
-tf = 25
+ti = 20
+tf = 35
 n_traj = 24
 temp = TempGrid{n_traj}(ti, tf)
 
 # MC simulation details
-mc_cycles = 1_000_000 # default 20% equilibration cycles on top
+mc_cycles = 100_000 # default 20% equilibration cycles on top
 mc_sample = 1        # sample every mc_sample MC cycles
 displ_atom = 0.05    # in Angstrom
 n_adjust = 100
@@ -44,7 +44,8 @@ pot = ELJPotentialEven{6}(c)
 #------------------------Move Strategy------------------------#
 #-------------------------------------------------------------#
 separated_volume = false
-ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^2, separated_volume)
+# The 2.294 conversion factor: Joule to Hartree
+ensemble = NPT(n_atoms, pressure * 2.2937122783969076e-13 / AtoBohr^3, separated_volume)
 
 #-------------------------------------------------------------#
 #-----------------------Starting Config-----------------------#
@@ -94,5 +95,7 @@ start_config = Config(positions, boundary_condition)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
-T, Cp = multihistogram_NPT(ensemble, temp, results, 1e-10, false; debug=false)
+mc_states, results, stats = ptmc_run!(
+    mc_params, temp, start_config, pot, ensemble; save=1000
+)
+#T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false)
