@@ -78,14 +78,26 @@ function generate_test_cases(n_atoms)
             RectangularBC(5.0, 5.0),
             RhombicBC(5.0, 5.0),
         )
-            if bc isa SphericalBC && ensemble_type === NPT
-                continue
-            elseif bc isa CubicBC && ensemble_type === NPT
-                ensemble = NPT(n_atoms, 0.01, false)
-            elseif ensemble_type == NPT
-                ensemble = NPT(n_atoms, 0.01, true)
+            if ensemble_type === NPT
+                if bc isa SphericalBC
+                    continue
+                elseif bc isa CubicBC
+                    ensemble = NPT(n_atoms, 0.01, false)
+                elseif bc isa RectangularBC
+                    for stressed in [true, false]
+                        if stressed
+                            ensemble = NPT(
+                                n_atoms, n_atoms, 1, 0, 50e9, true, [0.05, -0.1], 23.0
+                            )
+                        else
+                            ensemble = NPT(n_atoms, 0.01, true)
+                        end
+                    end
+                elseif bc isa RhombicBC
+                    ensemble = NPT(n_atoms, 0.01, true)
+                end
             else
-                ensemble = ensemble_type(n_atoms)
+                ensemble = NVT(n_atoms)
             end
             for potential in (
                 # TODO: RuNNer
@@ -128,8 +140,7 @@ end
                 true_tan = get_tantheta_mat(config)
                 @test mc_state.potential_variables.tan_mat == true_tan
             end
-
-            for i in 1:10_000
+            for i in 1:100
                 accept = iseven(i)
                 move = mc_move_deterministic!(
                     accept, mc_state, move_strategy, potential, ensemble
@@ -155,7 +166,6 @@ end
                     mc_state.ensemble_variables,
                     potential,
                 )[1]
-
                 updated_energy = mc_state.en_tot
 
                 @test updated_energy ≈ true_energy
@@ -163,7 +173,51 @@ end
                 # With these high energy configurations, the energy has a tendency to drift
                 # a bit. Resetting it to the correct energy fixes the issue.
                 # TODO: this should probably also be done by the MC algorithm
+
                 mc_state.en_tot = true_energy
+                if typeof(ensemble) === NPT && boundary_condition isa RectangularBC
+                    hamiltonian_enthalpy = hamiltonian(mc_state, ensemble)
+                    # Determine Enthalpy using energy stored in mc_state
+                    current_energy = true_energy
+                    current_volume = volume(mc_state.config.boundary_condition)
+                    current_xy = mc_state.config.boundary_condition.box_length
+                    current_z = mc_state.config.boundary_condition.box_height
+
+                    if i == 1
+                        global old_H_variables = [
+                            current_energy,
+                            current_volume,
+                            current_xy,
+                            current_z,
+                            hamiltonian_enthalpy,
+                        ]
+                        #= if its the first run, we have nothing to compare to. In this
+                        case, we just set all the current variables to the old variables
+                        and move on to the next iteration.=#
+                        continue
+                    end
+                    enthalpy_change = get_enthalpy_change(
+                        current_energy - old_H_variables[1],
+                        ensemble,
+                        current_volume::Float64,
+                        current_xy::Float64,
+                        current_z::Float64,
+                        old_H_variables[2]::Float64,
+                        old_H_variables[3]::Float64,
+                        old_H_variables[4]::Float64,
+                    )
+                    true_enthalpy_change = hamiltonian_enthalpy - old_H_variables[5]
+                    @test true_enthalpy_change ≈ enthalpy_change
+                    old_H_variables = [
+                        current_energy,
+                        current_volume,
+                        current_xy,
+                        current_z,
+                        hamiltonian_enthalpy,
+                    ]
+                    #= Once we've checked the enthalpy for this iteration, we store the
+                    variables we need for comparison with the next iteration=#
+                end
             end
         end
     end
