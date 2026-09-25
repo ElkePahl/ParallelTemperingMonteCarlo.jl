@@ -346,30 +346,4 @@ function update_max_stepsize!(
 
     return mc_state
 end
-"""
-    get_enthalpy_from_energy(
-        energy::Number,
-        mc_state::MCState, 
-        ensemble::NPT
-    )
-This function is not used in the main program, but instead exists for testing purposes, in
-particular, for checking that the enthalpy is correctly updated. It simply calculates the
-enthalpy for an [`MCState`](@ref) by using an external value for the energy, and the
-relevant [`NPT`](@ref) ensemble variables.
-"""
-function get_enthalpy_from_energy(energy::Number, mc_state::MCState, ensemble::NPT)
-    simple_H = energy + volume(mc_state.config.boundary_condition) * ensemble.pressure
-    if iszero(ensemble.stress_tensor)
-        return simple_H
-    else
-        xy = mc_state.config.boundary_condition.box_length
-        z = mc_state.config.boundary_condition.box_height
-        σ = ensemble.stress_tensor
-        L0 = ensemble.reference_length
-        correction = L0 * (σ[1] * xy^2 + σ[2] * z^2 * 0.5)
-        proper_H = simple_H + correction
-        return proper_H
-    end
-end
-
 end
