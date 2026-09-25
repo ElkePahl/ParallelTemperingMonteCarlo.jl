@@ -125,7 +125,7 @@ end
     tf = 16.0
     n_traj = 16
     temp = TempGrid{n_traj}(ti, tf)
-
+    old_H_variables = zeros(5)
     for (id, (boundary_condition, ensemble, potential)) in generate_test_cases(10)
         config = generate_config(ensemble, boundary_condition)
 
@@ -184,7 +184,7 @@ end
                     current_z = mc_state.config.boundary_condition.box_height
 
                     if i == 1
-                        global old_H_variables = [
+                        old_H_variables = [
                             current_energy,
                             current_volume,
                             current_xy,
