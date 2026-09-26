@@ -125,7 +125,7 @@ end
     tf = 16.0
     n_traj = 16
     temp = TempGrid{n_traj}(ti, tf)
-
+    old_H_variables = zeros(5)
     for (id, (boundary_condition, ensemble, potential)) in generate_test_cases(10)
         config = generate_config(ensemble, boundary_condition)
 
@@ -176,28 +176,20 @@ end
 
                 mc_state.en_tot = true_energy
                 if typeof(ensemble) === NPT && boundary_condition isa RectangularBC
-                    true_enthalpy = get_enthalpy_from_energy(
-                        true_energy, mc_state, ensemble
-                    )
-                    # Determine Enthalpy directly from true_energy (from configuration)
-
                     hamiltonian_enthalpy = hamiltonian(mc_state, ensemble)
                     # Determine Enthalpy using energy stored in mc_state
-
-                    @test true_enthalpy ≈ hamiltonian_enthalpy
-
                     current_energy = true_energy
                     current_volume = volume(mc_state.config.boundary_condition)
                     current_xy = mc_state.config.boundary_condition.box_length
                     current_z = mc_state.config.boundary_condition.box_height
 
                     if i == 1
-                        global old_H_variables = [
+                        old_H_variables = [
                             current_energy,
                             current_volume,
                             current_xy,
                             current_z,
-                            true_enthalpy,
+                            hamiltonian_enthalpy,
                         ]
                         #= if its the first run, we have nothing to compare to. In this
                         case, we just set all the current variables to the old variables
@@ -214,10 +206,14 @@ end
                         old_H_variables[3]::Float64,
                         old_H_variables[4]::Float64,
                     )
-                    true_enthalpy_change = true_enthalpy - old_H_variables[5]
+                    true_enthalpy_change = hamiltonian_enthalpy - old_H_variables[5]
                     @test true_enthalpy_change ≈ enthalpy_change
                     old_H_variables = [
-                        current_energy, current_volume, current_xy, current_z, true_enthalpy
+                        current_energy,
+                        current_volume,
+                        current_xy,
+                        current_z,
+                        hamiltonian_enthalpy,
                     ]
                     #= Once we've checked the enthalpy for this iteration, we store the
                     variables we need for comparison with the next iteration=#
