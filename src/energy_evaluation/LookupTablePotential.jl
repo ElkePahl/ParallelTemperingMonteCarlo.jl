@@ -81,9 +81,6 @@ function dimer_energy(pot::LookupTablePotential, r2, tan)
         e = pot.table[angle_index, 1]
     elseif r2 <= (pot.start_dist + pot.l_dist * pot.d_dist)^2
         dist_index = round(Int32, (r2^0.5 - pot.start_dist) / pot.d_dist)
-        if dist_index == 0
-            println(r2)
-        end
         e = pot.table[angle_index, dist_index]
     else
         e = pot.c6coeff / r2^3

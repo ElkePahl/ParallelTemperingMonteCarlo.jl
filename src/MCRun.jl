@@ -264,6 +264,8 @@ function equilibration_cycle!(
     n_steps::Int,
     results::Output,
     stats,
+    writer,
+    flush_interval,
 ) where {N,E}
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
@@ -272,6 +274,12 @@ function equilibration_cycle!(
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         next!(progress)
+
+        if !isnothing(writer) && i % flush_interval == 0
+            # write using writer set up earlier and flush DataFrame
+            Arrow.write(writer, stats)
+            empty!(stats)
+        end
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
         #TODO: why doesn't it do anything here? Should be doing equilibration steps here as well?
@@ -307,6 +315,8 @@ function equilibration(
     results::Output,
     restart::Bool,
     stats,
+    writer,
+    flush_interval,
 ) where {N,E}
     for state in mc_states
         push!(state.ham, 0)
@@ -317,7 +327,14 @@ function equilibration(
         return mc_states, results
     else
         return equilibration_cycle!(
-            mc_states, move_strat, mc_params, n_steps, results, stats
+            mc_states,
+            move_strat,
+            mc_params,
+            n_steps,
+            results,
+            stats,
+            writer,
+            flush_interval,
         )
     end
 end
@@ -405,9 +422,24 @@ function ptmc_run!(
         mc_params, temp, start_config, potential, ensemble
     )
 
+    # Set up Arrow writer if needed.
+    if flush_interval < mc_params.mc_cycles
+        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
+    else
+        writer = nothing
+    end
+
     # Equilibration
     mc_states, results = equilibration(
-        mc_states, move_strategy, mc_params, n_steps, results, restart, stats
+        mc_states,
+        move_strategy,
+        mc_params,
+        n_steps,
+        results,
+        restart,
+        stats,
+        writer,
+        flush_interval,
     )
     if save ≢ false
         save_histparams(results)
@@ -419,12 +451,6 @@ function ptmc_run!(
         desc="Main loop",
         enabled=isinteractive(),
     )
-    # Set up Arrow writer if needed.
-    if flush_interval ≤ mc_params.mc_cycles && !isnothing(stats_filename)
-        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
-    else
-        writer = nothing
-    end
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
