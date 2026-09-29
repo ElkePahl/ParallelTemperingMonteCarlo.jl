@@ -264,6 +264,8 @@ function equilibration_cycle!(
     n_steps::Int,
     results::Output,
     stats,
+    writer,
+    flush_interval,
 ) where {N,E}
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
@@ -272,9 +274,15 @@ function equilibration_cycle!(
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         next!(progress)
+
+        if !isnothing(writer) && i % flush_interval == 0
+            # write using writer set up earlier and flush DataFrame
+            Arrow.write(writer, stats)
+            empty!(stats)
+        end
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
-        #TODO: why doesn't it do anything here? Should be doing equilibration steps here as well?
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
@@ -307,6 +315,8 @@ function equilibration(
     results::Output,
     restart::Bool,
     stats,
+    writer,
+    flush_interval,
 ) where {N,E}
     for state in mc_states
         push!(state.ham, 0)
@@ -317,7 +327,14 @@ function equilibration(
         return mc_states, results
     else
         return equilibration_cycle!(
-            mc_states, move_strat, mc_params, n_steps, results, stats
+            mc_states,
+            move_strat,
+            mc_params,
+            n_steps,
+            results,
+            stats,
+            writer,
+            flush_interval,
         )
     end
 end
@@ -339,11 +356,11 @@ end
     )
     ptmc_run!(
         restart::Bool;
-        rdfsave = false
-        save = 1000
-        eq_cycles = 0.2
-        saveconfigs = false
-        configsname = "configuration"
+        rdfsave = false,
+        save = 1000,
+        eq_cycles = 0.2,
+        saveconfigs = false,
+        configsname = "configuration",
     )
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs.
@@ -365,7 +382,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
   under.
 - `stats_filename=nothing`: if set to an arrow filename, the stats will be written to that
   file.
-- `flush_interval=1_000_000`: if `stats_filename ≢ nothing`, the stats will be periodically
+- `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
 """
 function ptmc_run!(
@@ -381,7 +398,7 @@ function ptmc_run!(
     configsname="configuration",
     workingdirectory=pwd(),
     stats_filename=nothing,
-    flush_interval=1_000_000,
+    flush_interval=100_000,
 )
     # Initialisation
     cd(workingdirectory)
@@ -405,9 +422,24 @@ function ptmc_run!(
         mc_params, temp, start_config, potential, ensemble
     )
 
+    # Set up Arrow writer if needed.
+    if flush_interval < mc_params.mc_cycles
+        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
+    else
+        writer = nothing
+    end
+
     # Equilibration
     mc_states, results = equilibration(
-        mc_states, move_strategy, mc_params, n_steps, results, restart, stats
+        mc_states,
+        move_strategy,
+        mc_params,
+        n_steps,
+        results,
+        restart,
+        stats,
+        writer,
+        flush_interval,
     )
     if save ≢ false
         save_histparams(results)
@@ -419,12 +451,6 @@ function ptmc_run!(
         desc="Main loop",
         enabled=isinteractive(),
     )
-    # Set up Arrow writer if needed.
-    if flush_interval ≤ mc_params.mc_cycles && !isnothing(stats_filename)
-        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
-    else
-        writer = nothing
-    end
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
