@@ -54,14 +54,16 @@ end
 
     @test stats1 == DataFrame(Arrow.Table("test.arrow"))
     @test stats2 == DataFrame(Arrow.Table("test-1.arrow"))
+    # Only these can be compared since even with a fixed seed, multithreaded computations
+    # are non-deterministic.
     @test stats1.cycle == stats2.cycle
     @test stats1.temperature == stats2.temperature
 
-    # check that all chunks are 100 × number of trajectories long
-
+    # check that chunking was only performed for stats1
     @test stats1.cycle isa Arrow.SentinelArrays.ChainedVector
     @test stats2.cycle isa Arrow.Primitive
 
+    # check that all chunks are 100 × number of trajectories long
     @test all(x -> length(x) == 2400, stats1.cycle.arrays)
 
     @test stats1.hamiltonian ≈ stats1.total_energy .+ stats1.volume .* 3.4439667494478555e-9
