@@ -56,12 +56,23 @@ end
 end
 
 @testset "LookupTable" begin
+    v1 = SVector(1.0, 2.0, 3.0)
+    v2 = SVector(2.0, 4.0, 60.0)
+    v3 = SVector(0.0, 1.0, 0.0)
+    bc = SphericalBC(; radius=60.0)
+    conf = Config([v1, v2, v3], bc)
+    d2mat = get_distance2_mat(conf)
     link = joinpath(@__DIR__, "../scripts/lookup-tables/look-up_table-2.txt")
     potlut = LookupTablePotential(link)
+    vars = set_variables(conf, d2mat, potlut)
+    evars = set_ensemble_variables(conf, NVT(3))
     @test potlut.table[1][1] == 282.19449125205114
     @test potlut.start_dist == 0.1
     @test potlut.start_angle == 0
     @test length(potlut.table) == potlut.l_angle * potlut.l_dist
+
+    E, _ = initialise_energy(conf, d2mat, vars, evars, potlut)
+    @test E ≈ -0.00010093917980892753
 end
 
 @testset "RuNNerPotentialTest" begin
