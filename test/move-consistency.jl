@@ -8,6 +8,48 @@ using StaticArrays
 using LinearAlgebra
 
 """
+    get_enthalpy_change(
+        ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64,
+    )
+    get_enthalpy_change(
+        ΔE::Float64,
+        ensemble::NPT,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
+    )
+Compute the change in enthalpy of a trial move. Two methods, one for NPT, one for NσT.
+"""
+function get_enthalpy_change(
+    ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64
+)
+    ΔH = ΔE + ensemble.pressure * (volume_changed - volume_unchanged)
+    return ΔH
+end
+function get_enthalpy_change(
+    ΔE::Float64,
+    ensemble::NPT,
+    volume_changed::Float64,
+    xy_changed::Float64,
+    z_changed::Float64,
+    volume_unchanged::Float64,
+    xy_unchanged::Float64,
+    z_unchanged::Float64,
+)
+    crude_ΔH = get_enthalpy_change(ΔE, ensemble, volume_changed, volume_unchanged)
+    stress_correction =
+        ensemble.reference_length * (
+            ensemble.stress_tensor[1] * (xy_changed^2 - xy_unchanged^2) +
+            ensemble.stress_tensor[2] * 0.5 * (z_changed^2 - z_unchanged^2)
+        )
+    full_ΔH = crude_ΔH + stress_correction
+    return full_ΔH
+end
+
+"""
     generate_config(ensemble, boundary_condition)
 
 Generate a (uniform) random configuration that fits into boundary condition.

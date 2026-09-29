@@ -55,6 +55,15 @@ function MoveStrategy(ensemble::NNVT)
 end
 Base.length(ms::MoveStrategy) = sum(ms.weights)
 
+"""
+    mc_move!(mc_state::MCState, move_strat::MoveStrategy)
+
+Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed.
+- Generates either a move of an appropriate type, see [`generate_move!`](@ref).
+- Calculates energy based on the potential and new move, see [`get_energy!`](@ref).
+- Tests acceptance and swaps if relevant, see [`metropolis_probability`](@ref) and
+  [`swap_config!`](@ref).
+"""
 function mc_move!(mc_state::MCState, move_strat::MoveStrategy, accept=nothing)
     selected = rand(1:length(move_strat))
     mc_state.ensemble_variables.index = selected
@@ -390,7 +399,7 @@ function metropolis_probability(::VolumeChange{true}, mc_state)
     new_z = new_bc.box_height
     σ = ensemble.stress_tensor
 
-    if reference_length ≠ 0
+    if !iszero(reference_length) && !iszero(σ)
         delta_h =
             delta_energy +
             ensemble.pressure * (new_volume - old_volume) +

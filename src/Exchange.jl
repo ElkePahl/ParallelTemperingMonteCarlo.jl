@@ -14,14 +14,16 @@ using ..BoundaryConditions
 using ..Configurations
 using ..EnergyEvaluation
 using ..Ensembles
-export get_metropolis_probability,
-    metropolis_condition,
-    exc_acceptance,
-    exc_trajectories!,
-    get_enthalpy_change,
-    get_enthalpy_from_energy
+#export get_metropolis_probability,
+#    metropolis_condition,
+#    exc_acceptance,
+#    exc_trajectories!,
+#    get_enthalpy_change,
+#    get_enthalpy_from_energy
 
 export parallel_tempering_exchange!, update_max_stepsize!
+
+#=
 """
     get_enthalpy_change(
         ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64,
@@ -189,6 +191,7 @@ function metropolis_condition(movetype::String, mc_state::MCState, ensemble)
         error("chosen move_type not implemented yet (see Exchange.jl)")
     end
 end
+=#
 
 """
     exc_acceptance(beta_1::Number, beta_2::Number, en_1::Number, en_2::Number)
