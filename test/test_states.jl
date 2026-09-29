@@ -8,8 +8,7 @@ using ParallelTemperingMonteCarlo.MCMoves:
     AtomDisplacement,
     AtomSwap
 
-using ParallelTemperingMonteCarlo.Exchange:
-    exc_trajectories!
+using ParallelTemperingMonteCarlo.Exchange: exc_trajectories!
 
 @testset "States" begin
     v1 = SVector(1.0, 2.0, 3.0)
