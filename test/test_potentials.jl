@@ -73,6 +73,9 @@ end
 
     E, _ = initialise_energy(conf, d2mat, vars, evars, potlut)
     @test E ≈ -0.00010093917980892753
+
+    @test long_range_correction(potlut, 32, 0.1) == 1.0
+    @test long_range_correction(potlut, 32, 12.1) ≈ -0.019674727500255562
 end
 
 @testset "RuNNerPotentialTest" begin
