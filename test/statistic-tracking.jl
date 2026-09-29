@@ -1,7 +1,7 @@
 using ParallelTemperingMonteCarlo, Test, Arrow, Random, DataFrames
 
-function run_full_computation(; flush_interval)
-    Random.seed!(1234)
+function run_full_computation(; flush_interval, seed)
+    Random.seed!(seed)
 
     n_atoms = 32
     pressure = 101325
@@ -28,40 +28,7 @@ function run_full_computation(; flush_interval)
     move_strat = MoveStrategy(ensemble)
 
     # Face centred cubic structure.
-    pos_ne32 = [
-        [-4.3837, -4.3837, -4.3837],
-        [-2.1918, -2.1918, -4.3837],
-        [-2.1918, -4.3837, -2.1918],
-        [-4.3837, -2.1918, -2.1918],
-        [-4.3837, -4.3837, 0.0000],
-        [-2.1918, -2.1918, 0.0000],
-        [-2.1918, -4.3837, 2.1918],
-        [-4.3837, -2.1918, 2.1918],
-        [-4.3837, 0.0000, -4.3837],
-        [-2.1918, 2.1918, -4.3837],
-        [-2.1918, 0.0000, -2.1918],
-        [-4.3837, 2.1918, -2.1918],
-        [-4.3837, 0.0000, 0.0000],
-        [-2.1918, 2.1918, 0.0000],
-        [-2.1918, 0.0000, 2.1918],
-        [-4.3837, 2.1918, 2.1918],
-        [0.0000, -4.3837, -4.3837],
-        [2.1918, -2.1918, -4.3837],
-        [2.1918, -4.3837, -2.1918],
-        [0.0000, -2.1918, -2.1918],
-        [0.0000, -4.3837, 0.0000],
-        [2.1918, -2.1918, 0.0000],
-        [2.1918, -4.3837, 2.1918],
-        [0.0000, -2.1918, 2.1918],
-        [0.0000, 0.0000, -4.3837],
-        [2.1918, 2.1918, -4.3837],
-        [2.1918, 0.0000, -2.1918],
-        [0.0000, 2.1918, -2.1918],
-        [0.0000, 0.0000, 0.0000],
-        [2.1918, 2.1918, 0.0000],
-        [2.1918, 0.0000, 2.1918],
-        [0.0000, 2.1918, 2.1918],
-    ]
+    pos_ne32 = face_centred_cubic(1; r_min=3.01)
 
     positions = pos_ne32 * AtoBohr
     box_length = 8.7674 * AtoBohr
@@ -80,13 +47,22 @@ function run_full_computation(; flush_interval)
 end
 
 @testset "Statistic tracking" begin
-    _, _, stats1 = run_full_computation(; flush_interval=100)
-    _, _, stats2 = run_full_computation(; flush_interval=10000)
+    _, _, stats1 = run_full_computation(; flush_interval=100, seed=123)
+    _, _, stats2 = run_full_computation(; flush_interval=10000, seed=123)
 
     @test size(stats1) == size(stats2) == (26400, 9)
 
     @test stats1 == DataFrame(Arrow.Table("test.arrow"))
     @test stats2 == DataFrame(Arrow.Table("test-1.arrow"))
+    @test stats1.cycle == stats2.cycle
+    @test stats1.temperature == stats2.temperature
+
+    # check that all chunks are 100 × number of trajectories long
+
+    @test stats1.cycle isa Arrow.SentinelArrays.ChainedVector
+    @test stats2.cycle isa Arrow.Primitive
+
+    @test all(x -> length(x) == 2400, stats1.cycle.arrays)
 
     @test stats1.hamiltonian ≈ stats1.total_energy .+ stats1.volume .* 3.4439667494478555e-9
 
