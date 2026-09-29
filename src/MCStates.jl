@@ -1,3 +1,14 @@
+"""
+    module MCStates
+
+This module primarily defines the custom type MCState, containing all relevant parameters
+which encode the state of the simulation at a given moment.
+
+## Exported types
+-   [`MCState`](@ref)
+## Exported functions
+-   [`max_length`](@ref)
+"""
 module MCStates
 
 using ..BoundaryConditions
@@ -6,9 +17,7 @@ using ..MachineLearningPotential
 using ..EnergyEvaluation
 using ..Ensembles
 using ..CustomTypes
-#using ..InputParams
-
-export MCState, max_length#, NNPState
+export MCState, max_length
 
 """
     MCState(
@@ -35,19 +44,22 @@ Monte Carlo state for a given temperature `temp` containing all information requ
 perform a Monte Carlo step.
 
 ## Fields
-    -   `temp`: temperature
-    -   `beta`: inverse temperature
-    -   `config`: actual configuration in Markov chain [`Config`](@ref)
-    -   `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `potential` given
-    -   `new_dist2_vec`: calculates the new r2 between atoms based on a trial move
-    -   `new_en` : new energy value for trial configuraiton
-    -   `en_tot`: total energy of `config`; generated automatically when `potential` given
-    -   `potential_variables` : mutable struct containing energy-related variables for the current configuration
-    -   `ensemble_variables` : mutable struct containing ensemble-related variables for the current configuraiton
-    -   `ham`: vector containing sampled energies - generated in MC run
-    -   `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument
-    -   `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument
-    -   `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument
+- `temp`: temperature.
+- `beta`: inverse temperature.
+- `config`: actual configuration in Markov chain [`Config`](@ref).
+- `dist_2mat`: matrix of squared distances d_ij between atoms i and j; generated automatically when potential `potential` given.
+- `new_dist2_vec`: calculates the new r2 between atoms based on a trial move.
+- `new_en` : new energy value for trial configuraiton.
+- `en_tot`: total energy of `config`; generated automatically when `potential` given.
+- `potential_variables` : mutable struct containing energy-related variables for the current configuration.
+- `ensemble_variables` : mutable struct containing ensemble-related variables for the current configuraiton.
+- `ham`: vector containing sampled energies - generated in MC run.
+- `count_atom`: number of accepted atom moves - total and between adjustment of step sizes; key-word argument.
+- `count_vol`: number of accepted volume moves - total and between adjustment of step sizes; key-word argument.
+- `count_exc`: number of attempted (10%) and accepted exchanges with neighbouring trajectories; key-word argument.
+- `acceptance`: the acceptance rate of the last MC cycle.
+- `step`: the last taken MC cycle.
+- `last_stats`: the stats associated with the last MC cycle. Used as temporary storage for the stats before they get written out to the `DataFrame`.
 """
 mutable struct MCState{BC,P,PV,E,EV}
     temp::Float64

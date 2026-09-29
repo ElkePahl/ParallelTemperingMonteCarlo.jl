@@ -1,6 +1,6 @@
 module MCRun
 
-export metropolis_condition, mc_step!, mc_cycle!, ptmc_run!, get_energy!
+export metropolis_condition, mc_cycle!, ptmc_run!, get_energy!
 export exc_acceptance, exc_trajectories!
 export acc_test!, check_e_bounds, reset_counters, equilibration_cycle!, equilibration
 export mc_move!
@@ -22,12 +22,135 @@ using ..Initialization
 using ..CustomTypes
 
 """
-    mc_step!(mc_states, move_strat, n_steps)
+    get_energy!(mc_state::MCState, movetype::String)
 
-Distributes each state in `mc_state` to the [`mc_move!`](@ref) function in accordance with a
-`move_strat`.
+Calculates energy for different ensembles and move types.
+Currently implemented for:
+- [`NVT`](@ref) ensemble without `r_cut`
+- [`NPT`](@ref) ensemble with `r_cut`
+- [`NNVT`](@ref) ensemble for multiple-species atoms
 """
-function mc_step!(mc_states, move_strat, n_steps::Int, stats)
+function get_energy!(
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, movetype::String
+) where {E<:NVTVariables}
+    if movetype == "atommove"
+        mc_state.potential_variables, mc_state.new_en = energy_update!(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.new_dist2_vec,
+            mc_state.en_tot,
+            mc_state.potential,
+        )
+    end
+    return mc_state
+end
+function get_energy!(
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, movetype::String
+) where {E<:NPTVariables}
+    if movetype == "atommove"
+        mc_state.potential_variables, mc_state.new_en = energy_update!(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.new_dist2_vec,
+            mc_state.en_tot,
+            mc_state.potential,
+        )
+    else
+        mc_state.new_en = dimer_energy_config(
+            mc_state.ensemble_variables.trial_config,
+            mc_state.ensemble_variables.new_dist2_mat,
+            mc_state.potential_variables,
+            mc_state.potential;
+            new=true,
+        )
+    end
+    return mc_state
+end
+function get_energy!(
+    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, movetype::String
+) where {E<:NNVTVariables}
+    if movetype == "atommove"
+        mc_state.potential_variables, mc_state.new_en = energy_update!(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.new_dist2_vec,
+            mc_state.en_tot,
+            mc_state.potential,
+        )
+    else
+        mc_state.potential_variables, mc_state.new_en = swap_energy_update(
+            mc_state.ensemble_variables,
+            mc_state.config,
+            mc_state.potential_variables,
+            mc_state.dist2_mat,
+            mc_state.en_tot,
+            mc_state.potential,
+        )
+    end
+    return mc_state
+end
+
+"""
+    acc_test!(mc_state::MCState, movetype::String)
+
+Checks if metropolis condition is fulfilled, comparing it to a random variable in [0,1].
+If the condition is met, the new variables become the current `mc_state` using [`swap_config!`](@ref).
+`ensemble` and `movetype` dictate the exact calculation of the metropolis condition,
+and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
+"""
+function acc_test!(mc_state::MCState, movetype::String)
+    if metropolis_condition(movetype, mc_state, mc_state.ensemble) >= rand()
+        swap_config!(mc_state, movetype)
+        return true
+    else
+        return false
+    end
+end
+"""
+    mc_move!(mc_state::MCState, move_strat::MoveStrategy)
+
+Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `potential` defining the PES.
+-   Calculates an index for the move
+-   Generates either a volume or atom move depending on `movestrat[index]`
+-   Calculates energy based on the pot and new move
+-   Tests acc and swaps if relevant
+"""
+function mc_move!(mc_state::MCState, move_strat::MoveStrategy{N,E}) where {N,E}
+    mc_state.ensemble_variables.index = rand(1:N)
+
+    mc_state = generate_move!(
+        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index]
+    )
+
+    mc_state = get_energy!(
+        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index]
+    )
+
+    return acc_test!(mc_state, move_strat.movestrat[mc_state.ensemble_variables.index])
+end
+
+"""
+    mc_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, index)
+    mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, results, idx, rdfsave)
+
+Basic function utilised by the simulation. For each of the `n_steps` run a single step on the `mc_states` according to `move_strat`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
+
+Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
+"""
+function mc_cycle!(
+    mc_states,
+    move_strat::MoveStrategy{N,E},
+    mc_params::MCParams,
+    n_steps::Int,
+    index::Int,
+    stats,
+) where {N,E}
     Threads.@threads for trajectory_id in eachindex(mc_states)
         state = mc_states[trajectory_id]
         n_accepted = 0
@@ -38,6 +161,7 @@ function mc_step!(mc_states, move_strat, n_steps::Int, stats)
             push!(indices, state.ensemble_variables.index)
         end
 
+        # stats get written to each state so we don't asynchronously push to the DataFrame
         state.step += 1
         state.acceptance = n_accepted / n_steps
         state.last_stats = (;
@@ -51,21 +175,6 @@ function mc_step!(mc_states, move_strat, n_steps::Int, stats)
             report_stats(state, state.ensemble)...,
         )
     end
-    return mc_states
-end
-
-"""
-    mc_cycle!(mc_states, move_strat, mc_params::MCParams, n_steps, index)
-    mc_cycle!(mc_states, move_strat, mc_params, pot, ensemble, n_steps, results, idx, rdfsave)
-
-Basic function utilised by the simulation. For each of the `n_steps` run a single [`mc_step!`](@ref) on the `mc_states` according to `move_strat`, then complete the [`parallel_tempering_exchange!`](@ref) and `update_step_size!`.
-
-Second method includes the [`sampling_step!`](@ref) which updates the `results` struct. The first method is used by the [`equilibration_cycle!`](@ref) and therefore does __not__ update the results struct.
-"""
-function mc_cycle!(
-    mc_states, move_strat, mc_params::MCParams, n_steps::Int, index::Int, stats
-)
-    mc_step!(mc_states, move_strat, n_steps, stats)
     ensemble = mc_states[1].ensemble
 
     if rand() < 0.1
@@ -149,8 +258,15 @@ defined in `mc_params` are completed without updating the results before initial
 equilibration cycle.
 """
 function equilibration_cycle!(
-    mc_states, move_strat, mc_params::MCParams, n_steps::Int, results::Output, stats
-)
+    mc_states,
+    move_strat::MoveStrategy{N,E},
+    mc_params::MCParams,
+    n_steps::Int,
+    results::Output,
+    stats,
+    writer,
+    flush_interval,
+) where {N,E}
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
@@ -158,12 +274,25 @@ function equilibration_cycle!(
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         next!(progress)
+
+        if !isnothing(writer) && i % flush_interval == 0
+            # write using writer set up earlier and flush DataFrame
+            Arrow.write(writer, stats)
+            empty!(stats)
+        end
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
-        #TODO: why doesn't it do anything here? Should be doing equilibration steps here as well?
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
+
+        if !isnothing(writer) && i % flush_interval == 0
+            # write using writer set up earlier and flush DataFrame
+            Arrow.write(writer, stats)
+            empty!(stats)
+        end
+
         next!(progress)
     end
     #post equilibration reset
@@ -193,7 +322,9 @@ function equilibration(
     results::Output,
     restart::Bool,
     stats,
-)
+    writer,
+    flush_interval,
+) where {N,E}
     for state in mc_states
         push!(state.ham, 0)
         push!(state.ham, 0)
@@ -203,7 +334,14 @@ function equilibration(
         return mc_states, results
     else
         return equilibration_cycle!(
-            mc_states, move_strat, mc_params, n_steps, results, stats
+            mc_states,
+            move_strat,
+            mc_params,
+            n_steps,
+            results,
+            stats,
+            writer,
+            flush_interval,
         )
     end
 end
@@ -225,11 +363,11 @@ end
     )
     ptmc_run!(
         restart::Bool;
-        rdfsave = false
-        save = 1000
-        eq_cycles = 0.2
-        saveconfigs = false
-        configsname = "configuration"
+        rdfsave = false,
+        save = 1000,
+        eq_cycles = 0.2,
+        saveconfigs = false,
+        configsname = "configuration",
     )
 
 Main call for the ptmc program. Given `mc_params` dictating the number of cycles etc. the `temps` containing the temperature and beta values we aim to simulate, an initial `start_config` and the `potential` and `ensemble` we run a complete simulation, explicitly outputting the `mc_states` and `results` structs.
@@ -251,7 +389,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
   under.
 - `stats_filename=nothing`: if set to an arrow filename, the stats will be written to that
   file.
-- `flush_interval=1_000_000`: if `stats_filename ≢ nothing`, the stats will be periodically
+- `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
 """
 function ptmc_run!(
@@ -267,7 +405,7 @@ function ptmc_run!(
     configsname="configuration",
     workingdirectory=pwd(),
     stats_filename=nothing,
-    flush_interval=1_000_000,
+    flush_interval=100_000,
 )
     # Initialisation
     cd(workingdirectory)
@@ -291,9 +429,24 @@ function ptmc_run!(
         mc_params, temp, start_config, potential, ensemble
     )
 
+    # Set up Arrow writer if needed.
+    if flush_interval ≤ mc_params.mc_cycles && !isnothing(stats_filename)
+        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
+    else
+        writer = nothing
+    end
+
     # Equilibration
     mc_states, results = equilibration(
-        mc_states, move_strategy, mc_params, n_steps, results, restart, stats
+        mc_states,
+        move_strategy,
+        mc_params,
+        n_steps,
+        results,
+        restart,
+        stats,
+        writer,
+        flush_interval,
     )
     if save ≢ false
         save_histparams(results)
@@ -305,12 +458,6 @@ function ptmc_run!(
         desc="Main loop",
         enabled=isinteractive(),
     )
-    # Set up Arrow writer if needed.
-    if flush_interval < mc_params.mc_cycles
-        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
-    else
-        writer = nothing
-    end
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
             mc_states,
@@ -329,7 +476,7 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
-        if !isnothing(stats_filename) && i % flush_interval == 0
+        if !isnothing(writer) && i % flush_interval == 0
             # write using writer set up earlier and flush DataFrame
             Arrow.write(writer, stats)
             empty!(stats)

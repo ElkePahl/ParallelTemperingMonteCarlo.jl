@@ -254,7 +254,7 @@ function hamiltonian(state, ensemble::NPT)
         z = state.config.boundary_condition.box_height
         L0 = ensemble.reference_length
 
-        return E + p*V + L0 * (σ[1] * xy + σ[2] * z / 2)
+        return E + p*V + L0 * (σ[1] * xy^2 + σ[2] * z^2 / 2)
     else
         return E + p*V
     end

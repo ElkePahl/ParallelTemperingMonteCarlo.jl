@@ -251,4 +251,13 @@ end
 
         @test 12 ≤ max_heat_capacity ≤ 14
     end
+
+    @testset "chunked arrow files" begin
+        df = Arrow.Table("testing_data/chunked.arrow")
+
+        properties = thermodynamic_properties(df)
+        max_heat_capacity = properties.temperature[argmax(properties.heat_capacity)]
+
+        @test 25 < max_heat_capacity < 40
+    end
 end

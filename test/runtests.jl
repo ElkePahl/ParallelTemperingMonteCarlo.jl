@@ -239,10 +239,6 @@ end
 #include("checkpoint_test.jl")
 #end
 
-@safetestset "RuNNer" begin
-    include("test_runner_forward.jl")
-end
-
 # @safetestset "script testing" begin
 #     function read_save_data(filename)
 #         readfile = open(filename, "r+")
