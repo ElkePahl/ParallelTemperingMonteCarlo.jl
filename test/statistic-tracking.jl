@@ -50,7 +50,9 @@ end
     _, _, stats1 = run_full_computation(; flush_interval=100, seed=123)
     _, _, stats2 = run_full_computation(; flush_interval=10000, seed=123)
 
-    @test size(stats1) == size(stats2) == (26400, 9)
+    # 1000 production cycles + 200 equilibration cycles, for 24 trajectories.
+    # All requested equilibration cycles now perform MC steps and are recorded.
+    @test size(stats1) == size(stats2) == (28800, 9)
 
     @test stats1 == DataFrame(Arrow.Table("test.arrow"))
     @test stats2 == DataFrame(Arrow.Table("test-1.arrow"))

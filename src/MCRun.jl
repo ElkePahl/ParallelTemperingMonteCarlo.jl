@@ -286,6 +286,13 @@ function equilibration_cycle!(
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
+
+        if !isnothing(writer) && i % flush_interval == 0
+            # write using writer set up earlier and flush DataFrame
+            Arrow.write(writer, stats)
+            empty!(stats)
+        end
+
         next!(progress)
     end
     #post equilibration reset
@@ -423,7 +430,7 @@ function ptmc_run!(
     )
 
     # Set up Arrow writer if needed.
-    if flush_interval < mc_params.mc_cycles
+    if flush_interval ≤ mc_params.mc_cycles && !isnothing(stats_filename)
         writer = open(Arrow.Writer, stats_filename; compress=:zstd)
     else
         writer = nothing
@@ -469,7 +476,7 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
-        if !isnothing(stats_filename) && i % flush_interval == 0
+        if !isnothing(writer) && i % flush_interval == 0
             # write using writer set up earlier and flush DataFrame
             Arrow.write(writer, stats)
             empty!(stats)
