@@ -282,7 +282,7 @@ function equilibration_cycle!(
         end
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
-        #TODO: why doesn't it do anything here? Should be doing equilibration steps here as well?
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
