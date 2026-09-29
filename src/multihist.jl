@@ -45,7 +45,6 @@ function readfile(xdir::String; debug=false)
     if debug
         println("Files Read")
     end
-    #energyvector = [(j - 1) * de + emin for j in 1:NBins]
     energyvector = [(j - 0.5) * de + emin for j in 1:NBins]
 
     return HistArray, energyvector, beta, NTraj, NBins, kB

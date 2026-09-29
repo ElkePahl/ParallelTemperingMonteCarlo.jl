@@ -166,8 +166,6 @@ function multihistogram_NVT(
     end
 
     cv = zeros(tempnumber_result)
-    ee = zeros(tempnumber_result)
-    ee2 = zeros(tempnumber_result)
     for i in 1:tempnumber_result
         betat = beta_result[i]
         eenergy = 0
@@ -203,10 +201,8 @@ function multihistogram_NVT(
                 ) / normalconst[i] * energy_t^2
         end
         cv[i] = (eenergy2 - eenergy^2) / (k * temp_result[i]^2)
-        ee[i] = eenergy
-        ee2[i] = eenergy2
     end
-    return (; temperature=temp_result, heat_capacity=cv, energy=ee, energy_squared=ee2)
+    return (; temperature=temp_result, heat_capacity=cv)
 end
 
 end
