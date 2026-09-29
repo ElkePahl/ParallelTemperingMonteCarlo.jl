@@ -85,6 +85,7 @@ end
         xy_unchanged::Float64,
         z_unchanged::Float64,
         beta::Float64,
+        reference_length::Float64=15.8
     )
 Function returning the probability value associated with a trial move.
 Three methods included, one for NVT, one for NPT, one for NσT.
