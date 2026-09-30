@@ -106,9 +106,9 @@ function MultiHistogram(
         throw(ArgumentError("`equilibration_cycles` must be non-negative"))
     end
 
-    max_cycle = maximum(cycle; init=0)
+    num_cycles = maximum(cycle; init=0)
     if isnothing(equilibration_cycles)
-        first_used = round(Int, 1/6 * max_cycle)
+        first_used = round(Int, 1/6 * num_cycles)
     else
         first_used = equilibration_cycles + 1
     end
