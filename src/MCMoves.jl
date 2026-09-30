@@ -149,7 +149,7 @@ Accept the trial move that was set up by [`generate_move!`](@ref), [`get_energy!
 
 This function must be called _after_ [`generate_move!`](@ref) and [`get_energy!`](@ref).
 """
-swap_config
+swap_config!
 
 """
     AtomDisplacement() <: AbstractMove
