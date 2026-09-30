@@ -91,7 +91,7 @@ function MultiHistogram(df; kwargs...)
 end
 
 function MultiHistogram(
-    traj_id, temperature, cycle, hamiltonian; num_bins=100, skip_ratio=1 / 11
+    traj_id, temperature, cycle, hamiltonian; num_bins=100, skip_ratio=1 / 6
 )
     if !(length(traj_id) == length(temperature) == length(cycle) == length(hamiltonian))
         throw(
