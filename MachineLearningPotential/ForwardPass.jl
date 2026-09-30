@@ -133,6 +133,9 @@ function forward_pass(
     num_parameters,
     parameters,
 )
+    if forward_ptr[] == C_NULL
+        throw(ArgumentError("RuNNer not installed properly."))
+    end
     ccall(
         forward_ptr[],
         Float64,
