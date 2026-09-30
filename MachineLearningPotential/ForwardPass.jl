@@ -8,7 +8,7 @@ const forward_ptr = Ref{Ptr{Cvoid}}(C_NULL)
 
 function __init__()
     librunner[] = Libdl.dlopen(joinpath(lib_path(), "librunnerjulia.so"))
-    forward_ptr[] = Libdl.dlsym(librunner[], :forward)
+    return forward_ptr[] = Libdl.dlsym(librunner[], :forward)
 end
 
 """
