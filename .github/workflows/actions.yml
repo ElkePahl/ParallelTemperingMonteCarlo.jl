@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - main
+    tags: '*'
   pull_request:
-    branches:
-      - main
 
 jobs:
   test:
@@ -18,15 +17,15 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/cache@v2
+      - uses: actions/checkout@v4
       - name: Install system libraries
         run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 libgfortran5
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
+      - uses: julia-actions/cache@v2
       - name: "Run tests"
         run: |
           export JULIA_PROJECT=@.
