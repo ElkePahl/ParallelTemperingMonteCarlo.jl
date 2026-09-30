@@ -33,5 +33,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # If authenticating with GitHub Actions token
           GITHUB_REF: "main"
         run: |
-          julia -e 'println(ENV)'
           julia --project=docs/ docs/make.jl

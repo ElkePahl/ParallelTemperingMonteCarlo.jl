@@ -7,8 +7,11 @@ const librunner = Ref{Ptr{Cvoid}}(C_NULL)
 const forward_ptr = Ref{Ptr{Cvoid}}(C_NULL)
 
 function __init__()
-    librunner[] = Libdl.dlopen(joinpath(lib_path(), "librunnerjulia.so"))
-    return forward_ptr[] = Libdl.dlsym(librunner[], :forward)
+    runner_file = joinpath(lib_path(), "librunnerjulia.so")
+    if isfile(runner_file)
+        librunner[] = Libdl.dlopen(runner_file)
+        return forward_ptr[] = Libdl.dlsym(librunner[], :forward)
+    end
 end
 
 """
@@ -65,6 +68,9 @@ function forward_pass(
     num_parameters,
     parameters,
 )
+    if forward_ptr[] == C_NULL
+        throw(ArgumentError("RuNNer not installed properly."))
+    end
     eatom = Vector{Float64}(undef, batchsize)
     ccall(
         forward_ptr[],
