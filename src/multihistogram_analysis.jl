@@ -7,7 +7,7 @@ using DataFrames: DataFrame
 using LinearAlgebra: dot
 export MultiHistogram, num_trajectories, num_bins, thermodynamic_properties
 
-const kB = 3.16681196e-6
+const kB = 3.16681196e-6 # in atomic units
 
 """
     check_trajectory_temperature_consistency(traj_id, temperature)
@@ -36,22 +36,22 @@ function check_trajectory_temperature_consistency(traj_id, temperature)
 end
 
 """
-    MultiHistogram(df; num_bins=100, skip_ratio=1/11)
+    MultiHistogram(df; num_bins=100, equilibration_cycles)
 
 Construct a `MultiHistogram` from parallel tempering Monte Carlo data in `df` for use with
 multihistogram analysis.
 
 `df` is a `DataFrame` that contains the columns `trajectory_id`, `temperature`, `cycle`, and
 `hamiltonian`. Each trajectory is assumed to correspond to a fixed temperature. The
-generalized Hamiltonian is ``E`` for an [`NVT`](@ref) ensemble and ``E + pV`` for an
-[`NPT`](@ref) ensemble.
+generalized Hamiltonian is ``E`` for an [`NVT`](@ref) ensemble, ``E + pV`` for an
+[`NPT`](@ref) ensemble, and ``E + pV + L_0 σ ⋅ L``.
 
 # Arguments
 - `df`: DataFrame containing the Monte Carlo samples.
 - `num_bins=100`: Number of equally spaced Hamiltonian bins.
-- `skip_ratio=1/11`: Fraction of the simulation discarded as initial
-  equilibration. Samples with `cycle ≤ round(maximum(cycle) * skip_ratio)`
-  are discarded.
+- `equilibration_cycles`: Number of steps of the simulation discarded as initial
+  equilibration. Samples with `cycle ≤ equilibration_cycles` are discarded. Defaults to
+  1/6 of the data.
 
 # Fields
 - `num_bins`: Number of Hamiltonian bins.
@@ -91,7 +91,7 @@ function MultiHistogram(df; kwargs...)
 end
 
 function MultiHistogram(
-    traj_id, temperature, cycle, hamiltonian; num_bins=100, skip_ratio=1 / 11
+    traj_id, temperature, cycle, hamiltonian; num_bins=100, equilibration_cycles=nothing
 )
     if !(length(traj_id) == length(temperature) == length(cycle) == length(hamiltonian))
         throw(
@@ -102,12 +102,16 @@ function MultiHistogram(
     end
     if num_bins ≤ 2
         throw(ArgumentError("`num_bins` must be at least 3"))
-    elseif skip_ratio < 0 || skip_ratio ≥ 1
-        throw(ArgumentError("`skip_ratio` must be in range [0, 1)"))
+    elseif equilibration_cycles < 0
+        throw(ArgumentError("`equilibration_cycles` must be non-negative"))
     end
 
     max_cycle = maximum(cycle; init=0)
-    first_used = round(Int, max_cycle * skip_ratio)
+    if isnothing(equilibration_cycles)
+        first_used = round(Int, 1/6 * max_cycle)
+    else
+        first_used = equilibration_cycles + 1
+    end
 
     # Find range of data, excluding initial equilibration phase
     lo = Inf
@@ -119,9 +123,9 @@ function MultiHistogram(
         end
     end
     if !isfinite(lo) || !isfinite(hi) || lo == hi
-        throw(
-            ArgumentError("cannot construct histogram. Consider decreasing `skip_ratio`.")
-        )
+        throw(ArgumentError(
+            "cannot construct histogram. Consider decreasing `equilibration_cycles`."
+        ))
     end
 
     num_traj = maximum(traj_id; init=0)
