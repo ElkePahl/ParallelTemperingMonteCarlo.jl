@@ -4,31 +4,18 @@ on:
   push:
     branches:
       - main
-      - 'feature/**'
-      - 'bugfix/**'
-    # tags: '*'
   pull_request:
     branches:
       - main
-      #- develop
-      #- feature/github-actions
 
 jobs:
-  testNewVersion:
+  test:
     runs-on: ${{ matrix.os }}
-    # env:
-    #   ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
     strategy:
       matrix:
         julia-version: [1]
-        # julia-arch: [x64, x86]
         julia-arch: [x64]
-        # os: [ubuntu-latest, windows-latest, macOS-latest]
         os: [ubuntu-latest]
-        # 32-bit Julia binaries are not available on macOS
-        # exclude:
-        #   - os: macOS-latest
-        #     julia-arch: x86
 
     steps:
       - uses: actions/checkout@v2
