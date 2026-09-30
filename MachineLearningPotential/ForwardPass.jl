@@ -1,6 +1,15 @@
 module ForwardPass
 
+using Libdl
 export NeuralNetworkPotential, forward_pass
+
+const librunner = Ref{Ptr{Cvoid}}(C_NULL)
+const forward_ptr = Ref{Ptr{Cvoid}}(C_NULL)
+
+function __init__()
+    librunner[] = Libdl.dlopen(joinpath(lib_path(), "librunnerjulia.so"))
+    forward_ptr[] = Libdl.dlsym(librunner[], :forward)
+end
 
 """
     lib_path()
@@ -58,7 +67,7 @@ function forward_pass(
 )
     eatom = Vector{Float64}(undef, batchsize)
     ccall(
-        (:forward, joinpath(lib_path(), "librunnerjulia.so")),
+        forward_ptr[],
         Float64,
         (
             Ref{Float64},
@@ -119,7 +128,7 @@ function forward_pass(
     parameters,
 )
     ccall(
-        (:forward, "./librunnerjulia.so"),
+        forward_ptr[],
         Float64,
         (
             Ref{Float64},

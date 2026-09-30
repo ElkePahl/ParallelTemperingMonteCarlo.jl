@@ -2,7 +2,7 @@
 
 using Test
 using ParallelTemperingMonteCarlo
-using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
+using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: forward_ptr
 
 function forward_pass(
     input::Matrix{Float64},
@@ -16,7 +16,7 @@ function forward_pass(
     """Perform a forward pass using a Fortran library."""
     eatom = zeros(Float64, batchsize)
     return ccall(
-        (:forward, joinpath(lib_path(), "librunnerjulia.so")),
+        forward_ptr[],
         Float64,
         (
             Ref{Float64},
