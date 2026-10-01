@@ -123,9 +123,11 @@ function MultiHistogram(
         end
     end
     if !isfinite(lo) || !isfinite(hi) || lo == hi
-        throw(ArgumentError(
-            "cannot construct histogram. Consider decreasing `equilibration_cycles`."
-        ))
+        throw(
+            ArgumentError(
+                "cannot construct histogram. Consider decreasing `equilibration_cycles`."
+            ),
+        )
     end
 
     num_traj = maximum(traj_id; init=0)
