@@ -68,8 +68,7 @@ function initialise_energy(
     potential_variables.en_atom_vec = forward_pass(
         potential_variables.g_matrix, length(config), pot.nnp
     )
-    en_tot = sum(potential_variables.en_atom_vec)
-    return en_tot
+    return sum(potential_variables.en_atom_vec)
 end
 
 function energy_update!(
@@ -256,9 +255,7 @@ function initialise_energy(
         )
     end
 
-    en_tot = sum(potential_variables.en_atom_vec)
-
-    return en_tot
+    return sum(potential_variables.en_atom_vec)
 end
 
 function energy_update!(
@@ -279,9 +276,7 @@ function energy_update!(
         new_dist2_vec,
         pot,
     )
-    new_energy = calc_new_runner_energy!(potential_variables, pot)
-
-    return new_energy
+    return calc_new_runner_energy!(potential_variables, pot)
 end
 
 """

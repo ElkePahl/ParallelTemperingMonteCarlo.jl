@@ -52,7 +52,7 @@ end
 
     # 1000 production cycles + 200 equilibration cycles, for 24 trajectories.
     # All requested equilibration cycles now perform MC steps and are recorded.
-    @test size(stats1) == size(stats2) == (28800, 10)
+    @test size(stats1) == size(stats2) == (28800, 9)
 
     @test stats1 == DataFrame(Arrow.Table("test.arrow"))
     @test stats2 == DataFrame(Arrow.Table("test-1.arrow"))

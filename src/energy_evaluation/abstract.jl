@@ -289,7 +289,5 @@ function swap_energy_update(
         ensemble_variables.swap_indices, config, potential_variables, dist2_matrix, pot
     )
 
-    new_en = calc_new_runner_energy!(potential_variables, pot)
-
-    return new_en
+    return calc_new_runner_energy!(potential_variables, pot)
 end

@@ -11,7 +11,6 @@ end
 
 @testset "Ensembles" begin
     x = MoveStrategy(NVT(10))
-    @test length(x) == length(x)
 
     bc = SphericalBC(; radius=2.0)
     v1 = SVector(1.0, 2.0, 3.0)
@@ -23,7 +22,6 @@ end
     @test length(envars_nvt.trial_move) == 3
 
     y = MoveStrategy(NPT(5, 101325, false))
-    @test length(y) == length(y)
     conf2 = Config([v1, v1, v1], CubicBC(8.7674))
     envars_npt = set_ensemble_variables(conf2, NPT(3, 101325, false))
 
