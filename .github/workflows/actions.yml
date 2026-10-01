@@ -4,39 +4,28 @@ on:
   push:
     branches:
       - main
-      - 'feature/**'
-      - 'bugfix/**'
-    # tags: '*'
+    tags: '*'
   pull_request:
-    branches:
-      - main
-      #- develop
-      #- feature/github-actions
 
 jobs:
-  testNewVersion:
+  test:
     runs-on: ${{ matrix.os }}
-    # env:
-    #   ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
     strategy:
       matrix:
-        julia-version: [1.12]
-        # julia-arch: [x64, x86]
+        julia-version: [1]
         julia-arch: [x64]
-        # os: [ubuntu-latest, windows-latest, macOS-latest]
-        os: [ubuntu-22.04]
-        # 32-bit Julia binaries are not available on macOS
-        # exclude:
-        #   - os: macOS-latest
-        #     julia-arch: x86
+        os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 libgfortran5
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
+      - uses: julia-actions/cache@v2
       - name: "Run tests"
         run: |
           export JULIA_PROJECT=@.
@@ -51,4 +40,4 @@ jobs:
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ./lcov.info
-        if: ${{ matrix.julia-version == '1.12' }}
+        if: ${{ matrix.julia-version == '1' }}
