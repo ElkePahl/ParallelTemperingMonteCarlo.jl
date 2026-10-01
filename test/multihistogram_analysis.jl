@@ -18,7 +18,7 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
     )
 
     @testset "construction" begin
-        mh = MultiHistogram(df; num_bins=4, skip_ratio=0)
+        mh = MultiHistogram(df; num_bins=4, equilibration_cycles=0)
 
         @test mh isa MultiHistogram
         @test num_trajectories(mh) == 3
@@ -33,7 +33,7 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
     end
 
     @testset "equilibration is discarded" begin
-        mh = MultiHistogram(df; num_bins=4, skip_ratio=0.5)
+        mh = MultiHistogram(df; num_bins=4, equilibration_cycles=2)
 
         # max cycle = 4, so first_used = 2 and cycles 1 and 2 are discarded.
         @test sum(mh.weights) == 6
@@ -41,14 +41,14 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
     end
 
     @testset "DataFrame and vector constructors agree" begin
-        mh1 = MultiHistogram(df; num_bins=4, skip_ratio=0)
+        mh1 = MultiHistogram(df; num_bins=4, equilibration_cycles=0)
         mh2 = MultiHistogram(
             df.trajectory_id,
             df.temperature,
             df.cycle,
             df.hamiltonian;
             num_bins=4,
-            skip_ratio=0,
+            equilibration_cycles=0,
         )
 
         @test mh1.temperature == mh2.temperature
@@ -64,9 +64,9 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
 
         @test_throws ArgumentError MultiHistogram(df; num_bins=2)
 
-        @test_throws ArgumentError MultiHistogram(df; skip_ratio=-0.01)
+        @test_throws ArgumentError MultiHistogram(df; equilibration_cycles=-1)
 
-        @test_throws ArgumentError MultiHistogram(df; skip_ratio=1)
+        @test_throws ArgumentError MultiHistogram(df; equilibration_cycles=size(df, 1))
 
         inconsistent_temperature = copy(df.temperature)
         inconsistent_temperature[2] = 301.0
@@ -77,7 +77,7 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             df.cycle,
             df.hamiltonian;
             num_bins=4,
-            skip_ratio=0,
+            equilibration_cycles=0,
         )
 
         missing_trajectory = copy(df.trajectory_id)
@@ -89,7 +89,7 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             df.cycle,
             df.hamiltonian;
             num_bins=4,
-            skip_ratio=0,
+            equilibration_cycles=0,
         )
     end
 
@@ -99,7 +99,12 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
         temperature2 = fill(300.0, 4)
 
         @test_throws ArgumentError MultiHistogram(
-            trajectory2, temperature2, cycle2, fill(1.0, 4); num_bins=4, skip_ratio=0
+            trajectory2,
+            temperature2,
+            cycle2,
+            fill(1.0, 4);
+            num_bins=4,
+            equilibration_cycles=0,
         )
 
         @test_throws ArgumentError MultiHistogram(
@@ -108,7 +113,7 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             cycle2,
             [-1.0, -1.0, -1.0, -1.0];
             num_bins=4,
-            skip_ratio=0,
+            equilibration_cycles=0,
         )
     end
 end
@@ -136,7 +141,7 @@ end
     ]
 
     mh = MultiHistogram(
-        trajectory_id, temperature, cycle, hamiltonian; num_bins=8, skip_ratio=0
+        trajectory_id, temperature, cycle, hamiltonian; num_bins=8, equilibration_cycles=0
     )
 
     @testset "log denominator update" begin
@@ -204,7 +209,7 @@ end
 
     @testset "returns expected columns and sizes" begin
         result = thermodynamic_properties(
-            df; num_bins=12, skip_ratio=0, points=7, tol=1e-10, maxiter=5000
+            df; num_bins=12, equilibration_cycles=0, points=7, tol=1e-10, maxiter=5000
         )
 
         @test result isa DataFrame
@@ -222,10 +227,10 @@ end
     end
 
     @testset "MultiHistogram and DataFrame interfaces agree" begin
-        mh = MultiHistogram(df; num_bins=12, skip_ratio=0)
+        mh = MultiHistogram(df; num_bins=12, equilibration_cycles=0)
 
         from_df = thermodynamic_properties(
-            df; num_bins=12, skip_ratio=0, points=7, tol=1e-10, maxiter=5000
+            df; num_bins=12, equilibration_cycles=0, points=7, tol=1e-10, maxiter=5000
         )
 
         from_mh = thermodynamic_properties(mh; points=7, tol=1e-10, maxiter=5000)
@@ -238,7 +243,7 @@ end
     end
 
     @testset "validation" begin
-        mh = MultiHistogram(df; num_bins=8, skip_ratio=0)
+        mh = MultiHistogram(df; num_bins=8, equilibration_cycles=0)
 
         @test_throws ArgumentError thermodynamic_properties(mh; points=0)
     end
