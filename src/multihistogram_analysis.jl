@@ -44,7 +44,8 @@ multihistogram analysis.
 `df` is a `DataFrame` that contains the columns `trajectory_id`, `temperature`, `cycle`, and
 `hamiltonian`. Each trajectory is assumed to correspond to a fixed temperature. The
 generalized Hamiltonian is ``E`` for an [`NVT`](@ref) ensemble, ``E + pV`` for an
-[`NPT`](@ref) ensemble, and ``E + pV + L_0 σ ⋅ L``.
+[`NPT`](@ref) ensemble, and ``E + pV + L_0 σ ⋅ L`` for the ``NσT`` (see [`NPT`](@ref))
+ensemble.
 
 # Arguments
 - `df`: DataFrame containing the Monte Carlo samples.
@@ -123,11 +124,7 @@ function MultiHistogram(
         end
     end
     if !isfinite(lo) || !isfinite(hi) || lo == hi
-        throw(
-            ArgumentError(
-                "cannot construct histogram. Consider decreasing `equilibration_cycles`."
-            ),
-        )
+        throw(ArgumentError("cannot construct histogram."))
     end
 
     num_traj = maximum(traj_id; init=0)

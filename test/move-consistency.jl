@@ -8,22 +8,45 @@ using StaticArrays
 using LinearAlgebra
 
 """
-    mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
-
-Like `mc_move!`, but accepts the step if `accept ≡ true`. Returns move name for easier
-debugging.
+    get_enthalpy_change(
+        ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64,
+    )
+    get_enthalpy_change(
+        ΔE::Float64,
+        ensemble::NPT,
+        volume_changed::Float64,
+        xy_changed::Float64,
+        z_changed::Float64,
+        volume_unchanged::Float64,
+        xy_unchanged::Float64,
+        z_unchanged::Float64,
+    )
+Compute the change in enthalpy of a trial move. Two methods, one for NPT, one for NσT.
 """
-function mc_move_deterministic!(accept, mc_state, move_strat, pot, ensemble)
-    mc_state.ensemble_variables.index = index = rand(eachindex(move_strat.movestrat))
-    move = move_strat.movestrat[index]
-
-    generate_move!(mc_state, move)
-    get_energy!(mc_state, move)
-
-    if accept
-        swap_config!(mc_state, move)
-    end
-    return move
+function get_enthalpy_change(
+    ΔE::Float64, ensemble::NPT, volume_changed::Float64, volume_unchanged::Float64
+)
+    ΔH = ΔE + ensemble.pressure * (volume_changed - volume_unchanged)
+    return ΔH
+end
+function get_enthalpy_change(
+    ΔE::Float64,
+    ensemble::NPT,
+    volume_changed::Float64,
+    xy_changed::Float64,
+    z_changed::Float64,
+    volume_unchanged::Float64,
+    xy_unchanged::Float64,
+    z_unchanged::Float64,
+)
+    crude_ΔH = get_enthalpy_change(ΔE, ensemble, volume_changed, volume_unchanged)
+    stress_correction =
+        ensemble.reference_length * (
+            ensemble.stress_tensor[1] * (xy_changed^2 - xy_unchanged^2) +
+            ensemble.stress_tensor[2] * 0.5 * (z_changed^2 - z_unchanged^2)
+        )
+    full_ΔH = crude_ΔH + stress_correction
+    return full_ΔH
 end
 
 """
@@ -142,9 +165,7 @@ end
             end
             for i in 1:100
                 accept = iseven(i)
-                move = mc_move_deterministic!(
-                    accept, mc_state, move_strategy, potential, ensemble
-                )
+                move = mc_move!(mc_state, move_strategy, accept)
 
                 updated_dist2 = mc_state.dist2_mat
                 true_dist2 = get_distance2_mat(mc_state.config)

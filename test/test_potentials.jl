@@ -27,7 +27,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
     vars = set_variables(conf1, d2mat, pot)
     evars = set_ensemble_variables(conf1, NVT(3))
     en_tot = dimer_energy_config(conf1, d2mat, vars, pot)
-    en, vars = initialise_energy(conf1, d2mat, vars, evars, pot)
+    en = initialise_energy(conf1, d2mat, vars, evars, pot)
     @test en ≈ en_tot
 
     bc2 = CubicBC(4.0)
@@ -35,7 +35,7 @@ using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
 
     evars1 = set_ensemble_variables(conf2, NPT(3, 10, false))
     en_tot_pbc = dimer_energy_config(conf2, d2mat, vars, pot1)
-    en_pbc, vars_pbc = initialise_energy(conf2, d2mat, vars, evars1, pot1)
+    en_pbc = initialise_energy(conf2, d2mat, vars, evars1, pot1)
     @test en_pbc == en_tot_pbc
 end
 @testset "EmbeddedAtomTest" begin
@@ -51,7 +51,7 @@ end
     evars = set_ensemble_variables(conf, NVT(3))
     @test typeof(vars.component_vector) == Matrix{Float64}
     @test vars.component_vector[:, 1] == vars.component_vector[:, 2]
-    E, vars = initialise_energy(conf, d2mat, vars, evars, pot1)
+    E = initialise_energy(conf, d2mat, vars, evars, pot1)
     @test E ≈ -1.3495549581716526
 end
 
@@ -71,7 +71,7 @@ end
     @test potlut.start_angle == 0
     @test length(potlut.table) == potlut.l_angle * potlut.l_dist
 
-    E, _ = initialise_energy(conf, d2mat, vars, evars, potlut)
+    E = initialise_energy(conf, d2mat, vars, evars, potlut)
     @test E ≈ -0.00010093917980892753
 
     @test long_range_correction(potlut, 32, 0.1) == 1.0
@@ -96,6 +96,6 @@ end
     @test vars.f_matrix[1, 2] == cutoff_function(sqrt(d2mat[1, 2]), runnerpotential.r_cut)
     @test vars.f_matrix[2, 2] == 1.0
     @test isa(vars.g_matrix, MMatrix)
-    E, vars = initialise_energy(conf, d2mat, vars, evars, runnerpotential)
+    E = initialise_energy(conf, d2mat, vars, evars, runnerpotential)
     @test E ≈ -0.261652899
 end
