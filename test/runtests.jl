@@ -239,10 +239,6 @@ end
 #include("checkpoint_test.jl")
 #end
 
-@safetestset "RuNNer" begin
-    include("test_runner_forward.jl")
-end
-
 # @safetestset "script testing" begin
 #     function read_save_data(filename)
 #         readfile = open(filename, "r+")
@@ -286,8 +282,12 @@ end
     include("move-consistency.jl")
 end
 
-@safetestset "statistic tracking" begin
+@safetestset "Statistic tracking" begin
     include("statistic-tracking.jl")
+end
+
+@safetestset "Multihistogram analysis" begin
+    include("multihistogram_analysis.jl")
 end
 
 @testset "scripts run without errors" begin

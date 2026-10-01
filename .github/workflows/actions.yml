@@ -17,11 +17,11 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install system libraries
         run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 libgfortran5
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@v2
+        uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}

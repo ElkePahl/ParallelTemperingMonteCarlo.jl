@@ -91,7 +91,7 @@ start_config = Config(pos_ne13, bc_ne13)
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
 
-_, results = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
+_, results, stats = ptmc_run!(mc_params, temp, start_config, pot, ensemble; save=1000)
 
 res = multihistogram_NVT(ensemble, temp, results, 1e-10, false)
 

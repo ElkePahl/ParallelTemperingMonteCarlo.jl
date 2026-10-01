@@ -80,8 +80,7 @@ function quasiprob(
         denom = denom + ncycles[i] * exp(-beta[i] * energy_t - free_energy[i] - offset)
     end
 
-    quasiprob = quasiprob / denom * exp(-betat * energy_t - offset)
-    return quasiprob
+    return quasiprob / denom * exp(-betat * energy_t - offset)
 end
 
 """
@@ -203,7 +202,7 @@ function multihistogram_NVT(
         end
         cv[i] = (eenergy2 - eenergy^2) / (k * temp_result[i]^2)
     end
-    return (; T=temp_result, C=cv)
+    return (; temperature=temp_result, heat_capacity=cv)
 end
 
 end
