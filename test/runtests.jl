@@ -312,7 +312,7 @@ end
         @test true
     end
     @safetestset "brass55-short.jl" begin
-        include(joinpath(@__DIR__, "brass55-short.jl"))
+        include(joinpath(@__DIR__, "../scripts/brass55-short.jl"))
         @test true
     end
     @safetestset "NsigT run" begin
