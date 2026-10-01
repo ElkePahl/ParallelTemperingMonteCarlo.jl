@@ -311,6 +311,10 @@ end
         include(joinpath(@__DIR__, "../scripts/cu38.jl"))
         @test true
     end
+    @safetestset "brass55-short.jl" begin
+        include(joinpath(@__DIR__, "brass55-short.jl"))
+        @test true
+    end
     @safetestset "NsigT run" begin
         include(joinpath(@__DIR__, "ar96pbcstress_test.jl"))
         @test true
