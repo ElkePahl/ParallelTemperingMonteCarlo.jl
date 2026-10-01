@@ -59,7 +59,7 @@ T = [111, 110, 100]
 #-------------------------------------------#
 #-----------Including scaling data----------#
 #-------------------------------------------#
-scalingvalues = readdlm(joinpath(data_path, "scaling.data"))[1:end-1,:]
+scalingvalues = readdlm(joinpath(data_path, "scaling.data"))[1:(end - 1), :]
 G_value_vec = Vector{Float64}[]
 for row in eachrow(scalingvalues[1:88, :])
     max_min = [row[4], row[3]]
