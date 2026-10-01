@@ -135,7 +135,7 @@ function initialise_energy(
         potential_variables.component_vector, pot.ean, pot.eCam
     )
 
-    return en_tot, potential_variables
+    return en_tot
 end
 
 function energy_update!(
@@ -161,5 +161,5 @@ function energy_update!(
     new_energy = calc_energies_from_components(
         potential_variables.new_component_vector, pot.ean, pot.eCam
     )
-    return potential_variables, new_energy
+    return new_energy
 end

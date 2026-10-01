@@ -421,7 +421,7 @@ end
 Update the energy `mc_state.en_new` according to the move.
 """
 function get_energy!(::AtomDisplacement, mc_state)
-    return mc_state.potential_variables, mc_state.new_en = energy_update!(
+    return mc_state.new_en = energy_update!(
         mc_state.ensemble_variables,
         mc_state.config,
         mc_state.potential_variables,
@@ -432,7 +432,7 @@ function get_energy!(::AtomDisplacement, mc_state)
     )
 end
 function get_energy!(::AtomSwap, mc_state)
-    return mc_state.potential_variables, mc_state.new_en = swap_energy_update(
+    return mc_state.new_en = swap_energy_update(
         mc_state.ensemble_variables,
         mc_state.config,
         mc_state.potential_variables,
