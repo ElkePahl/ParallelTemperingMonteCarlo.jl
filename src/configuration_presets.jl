@@ -36,8 +36,9 @@ function face_centred_cubic(
         push!(points, T(x + 0.5, y, z + 0.5))
         push!(points, T(x + 0.5, y + 0.5, z))
     end
-    map!(pt -> check_boundary(CubicBC(cell_size + 1), pt), points)
-    map!(pt -> √2 * r_min * pt, points)
+    for (i, pt) in enumerate(points)
+        points[i] = √2 * r_min * check_boundary(CubicBC(cell_size + 1), pt)
+    end
 
     box_size = √2 * r_min * (cell_size + 1)
     if boundary_condition ≡ CubicBC
@@ -81,8 +82,9 @@ function body_centred_cubic(
         push!(points, T(x, y, z))
         push!(points, T(x + 0.5, y + 0.5, z + 0.5))
     end
-    map!(pt -> check_boundary(CubicBC(cell_size + 1), pt), points)
-    map!(pt -> 2√3 / 3 * r_min * pt, points)
+    for (i, pt) in enumerate(points)
+        points[i] = 2√3 / 3 * r_min * check_boundary(CubicBC(cell_size + 1), pt)
+    end
 
     box_size = 2√3 / 3 * r_min * (cell_size + 1)
     if boundary_condition ≡ CubicBC
@@ -162,7 +164,9 @@ function magic_cluster(magic_number_index; r_min=1, delta_r=r_min / 2)
     end
     recentre!(points)
     scale_factor = r_min / min_distance(points)
-    map!(p -> scale_factor * p, points)
+    for (i, p) in enumerate(points)
+        points[i] = scale_factor * p
+    end
 
     bc = SphericalBC(; radius=delta_r + radius(points))
 
