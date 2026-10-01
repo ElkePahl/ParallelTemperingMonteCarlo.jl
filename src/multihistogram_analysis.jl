@@ -102,7 +102,7 @@ function MultiHistogram(
     end
     if num_bins ≤ 2
         throw(ArgumentError("`num_bins` must be at least 3"))
-    elseif equilibration_cycles < 0
+    elseif !isnothing(equilibration_cycles) && equilibration_cycles < 0
         throw(ArgumentError("`equilibration_cycles` must be non-negative"))
     end
 
@@ -117,7 +117,7 @@ function MultiHistogram(
     lo = Inf
     hi = -Inf
     for i in 1:length(hamiltonian)
-        if cycle[i] > first_used
+        if cycle[i] ≥ first_used
             lo = min(lo, hamiltonian[i])
             hi = max(hi, hamiltonian[i])
         end
@@ -138,7 +138,7 @@ function MultiHistogram(
     weights = zeros(Int, num_bins, num_traj)
 
     for j in 1:length(hamiltonian)
-        if cycle[j] > first_used
+        if cycle[j] ≥ first_used
             H = hamiltonian[j]
             traj = traj_id[j]
 
