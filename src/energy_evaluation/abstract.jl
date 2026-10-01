@@ -159,9 +159,7 @@ according to the potential as `pot` and the configurational variables
 function initialise_energy(
     config::Config, dist2_mat, potential_variables, _, potential::AbstractDimerPotential
 )
-    return dimer_energy_config(
-        config, dist2_mat, potential_variables, potential; new=false
-    )
+    return dimer_energy_config(config, dist2_mat, potential_variables, potential; new=false)
 end
 
 """
