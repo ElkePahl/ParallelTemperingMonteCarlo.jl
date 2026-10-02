@@ -36,7 +36,7 @@ n_traj = 28
 
 temp = TempGrid{n_traj}(ti, tf)
 
-mc_cycles = 2000000
+mc_cycles = 2000
 mc_sample = 1
 n_adjust = 100
 
@@ -245,10 +245,10 @@ states, results, stats = ptmc_run!(
     restart=false,
     save=10000,
     saveconfigs=10000,
-    configsname="cu55_2000000_stats_corrected_",
+    configsname="cu55_stats_pilot_",
     workingdirectory=script_folder,
-    stats_filename="cu55_2000000_stats_corrected.arrow",
-    flush_interval=10_000,
+    stats_filename="cu55_stats_pilot.arrow",
+    flush_interval=100,
 )
 
 println()
