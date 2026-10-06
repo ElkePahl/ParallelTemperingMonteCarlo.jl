@@ -9,11 +9,12 @@ const forward_ptr = Ref{Ptr{Cvoid}}(C_NULL)
 function __init__()
     runner_file = "librunnerjulia.$(Libdl.dlext)"
     runner_path = joinpath(lib_path(), runner_file)
-    librunner[] = Libdl.dlopen(runner_path; throw_error=false)
-    if librunner == C_NULL && Sys.islinux()
+    runner_pointer = Libdl.dlopen(runner_path; throw_error=false)
+    if isnothing(runner_pointer) && Sys.islinux()
         # only warn on linux since we don't have the shared object file for other platforms
         @warn "Error loading `$runner_file`. Machine learning potentials will not work correctly."
-    elseif librunner ≠ C_NULL
+    elseif !isnothing(runner_pointer)
+        librunner[] = runner_pointer
         return forward_ptr[] = Libdl.dlsym(librunner[], :forward)
     end
 end
