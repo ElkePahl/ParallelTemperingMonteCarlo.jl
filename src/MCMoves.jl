@@ -120,6 +120,7 @@ abstract type AbstractMove end
 """
     generate_move!(::AbstractMove, ::MCState)
 
+Prepare a move according to the [`AbstractMove`](@ref) provided.
 """
 generate_move!
 

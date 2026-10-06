@@ -203,9 +203,9 @@ end
 
 Update the energy after an
 [`AtomDisplacement`](@ref Main.ParallelTemperingMonteCarlo.MCMoves.AtomDisplacement) move.
-The moved atom is extracted from `ensemble_variables`, and the distances between the moved
-atom and all other atoms are in `new_dist2_vec`, and `total_energy` is the total energy of
-the configuration before the move.
+The moved atom is extracted from `ensemble_variables`, the distances between the moved atom
+and all other atoms are in `new_dist2_vec`, and `total_energy` is the total energy of the
+configuration before the move.
 
 Returns new total energy after the move.
 """
