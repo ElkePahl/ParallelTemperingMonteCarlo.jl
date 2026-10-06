@@ -3,7 +3,8 @@ name: Documentation
 on:
   push:
     branches:
-      - main
+      - main # update to match your development branch (master, main, dev, trunk, ...)
+      - Docs
     tags: '*'
   pull_request:
     branches:
@@ -18,14 +19,14 @@ jobs:
       statuses: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@latest
-      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
-      - uses: julia-actions/cache@latest
-      - name: "Install dependencies"
-      - uses: julia-actions/julia-buildpkg@latest
-      - name: "Build and deploy"
+      - uses: julia-actions/cache@v3
+      - name: Install dependencies
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+      - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REF: "main"
