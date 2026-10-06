@@ -24,8 +24,6 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@v2
-      - name: Install system libraries
-        run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 libgfortran5
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
