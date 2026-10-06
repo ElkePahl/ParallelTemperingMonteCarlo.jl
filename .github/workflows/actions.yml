@@ -17,26 +17,23 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@latest
       - name: Install system libraries
         run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 libgfortran5
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@v3
+        uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@latest
+      - name: "Install dependencies"
+      - uses: julia-actions/julia-buildpkg@latest
       - name: "Run tests"
-        run: |
-          export JULIA_PROJECT=@.
-          julia -e "using InteractiveUtils; versioninfo(verbose=true)"
-          # Run regular tests
-          julia -e "using Pkg; Pkg.test(\"ParallelTemperingMonteCarlo\"; coverage=true);"
-
+      - uses: julia-actions/julia-runtest@latest
       - name: "Process coverage"
         uses: julia-actions/julia-processcoverage@latest
       - name: "Coveralls"
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@latest
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ./lcov.info
