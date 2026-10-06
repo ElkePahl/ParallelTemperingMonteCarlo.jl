@@ -7,7 +7,7 @@ const librunner = Ref{Ptr{Cvoid}}(C_NULL)
 const forward_ptr = Ref{Ptr{Cvoid}}(C_NULL)
 
 function __init__()
-    runner_file = "librunnerjulia.$(Libdl.dlext())"
+    runner_file = "librunnerjulia.$(Libdl.dlext)"
     runner_path = joinpath(lib_path(), runner_file)
     librunner[] = Libdl.dlopen(runner_path; throw_error=false)
     if librunner == C_NULL && Sys.islinux()
