@@ -12,8 +12,14 @@ struct Reporter{F<:Union{String,Nothing},W<:Union{Arrow.Writer{IOStream},Nothing
 end
 
 function Reporter(
-    start_config, potential, ensemble, mc_params;
-    flush_interval, filename, verbose, return_stats,
+    start_config,
+    potential,
+    ensemble,
+    mc_params;
+    flush_interval,
+    filename,
+    verbose,
+    return_stats,
 )
     # Make sure filename does not already exist.
     if !isnothing(filename)
@@ -76,7 +82,7 @@ function finalise!(r::Reporter)
         df = DataFrame(r.stats)
     end
     foreach(r.metadata) do (key, value)
-        metadata!(df, key, value)
+        return metadata!(df, key, value)
     end
     return df
 end

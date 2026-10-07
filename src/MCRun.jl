@@ -321,12 +321,7 @@ function equilibration(
         return mc_states, results
     else
         return equilibration_cycle!(
-            mc_states,
-            move_strat,
-            mc_params,
-            n_steps,
-            results,
-            reporter,
+            mc_states, move_strat, mc_params, n_steps, results, reporter
         )
     end
 end
@@ -393,7 +388,7 @@ function ptmc_run!(
     workingdirectory=pwd(),
     stats_filename=nothing,
     flush_interval=100_000,
-    verbose_flush=!isinteractive(),
+    verbose_flush=(!isinteractive()),
     return_stats=true,
 )
     # Initialisation
@@ -403,8 +398,14 @@ function ptmc_run!(
     end
 
     reporter = Reporter(
-        start_config, potential, ensemble, mc_params;
-        flush_interval, filename=stats_filename, verbose=verbose_flush, return_stats,
+        start_config,
+        potential,
+        ensemble,
+        mc_params;
+        flush_interval,
+        filename=stats_filename,
+        verbose=verbose_flush,
+        return_stats,
     )
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
@@ -413,13 +414,7 @@ function ptmc_run!(
 
     # Equilibration
     mc_states, results = equilibration(
-        mc_states,
-        move_strategy,
-        mc_params,
-        n_steps,
-        results,
-        restart,
-        reporter,
+        mc_states, move_strategy, mc_params, n_steps, results, restart, reporter
     )
     if save ≢ false
         save_histparams(results)
