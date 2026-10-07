@@ -194,6 +194,7 @@ function mc_cycle!(
         exchanged = i ∈ (exchange_index, exchange_index + 1)
         report!(reporter, (; state.last_stats..., exchanged))
     end
+
     flush!(reporter, index)
     return mc_states
 end
@@ -274,14 +275,12 @@ function equilibration_cycle!(
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
         next!(progress)
-        flush!(reporter, i)
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
-        flush!(reporter, i)
         next!(progress)
     end
     #post equilibration reset
