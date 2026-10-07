@@ -1,5 +1,5 @@
 using Arrow
-using DataFrames
+using DataFrames: DataFrames, metadata!
 
 struct Reporter{F<:Union{String,Nothing},W<:Union{Arrow.Writer{IOStream},Nothing}}
     stats::Vector{NamedTuple}
@@ -50,7 +50,7 @@ function Reporter(
 
     # Open a writer if flushing
     if !isnothing(filename) && flush_interval ≤ mc_params.mc_cycles
-        writer = open(Arrow.Writer, stats_filename; compress=:zstd, metadata)
+        writer = open(Arrow.Writer, filename; compress=:zstd, metadata)
     else
         writer = nothing
     end
@@ -62,7 +62,7 @@ end
 function flush!(r::Reporter, mc_cycle)
     if !isnothing(r.writer) && iszero(mc_cycle % r.flush_interval)
         r.verbose && @info "mc_cycle $mc_cycle: Flushing..."
-        Arrow.write(r.writer, r.stats)
+        !isempty(r.stats) && Arrow.write(r.writer, r.stats)
         empty!(r.stats)
     end
 end
@@ -71,13 +71,12 @@ report!(r::Reporter, row) = push!(r.stats, row)
 
 function finalise!(r::Reporter)
     if !isnothing(r.filename) && isnothing(r.writer)
-        Arrow.write(stats_filename, stats; compress=:zstd, metadata=r.metadata)
-        df = DataFrame(Arrow.Table(stats_filename))
+        Arrow.write(r.filename, r.stats; compress=:zstd, metadata=r.metadata)
+        df = DataFrame(Arrow.Table(r.filename))
     elseif !isnothing(r.filename) && !isnothing(r.writer)
-        Arrow.write(writer, stats)
-        empty!(stats)
-        close(writer)
-        df = DataFrame(Arrow.Table(stats_filename))
+        !isempty(r.stats) && Arrow.write(r.writer, r.stats)
+        close(r.writer)
+        df = DataFrame(Arrow.Table(r.filename))
     else
         df = DataFrame(r.stats)
     end
