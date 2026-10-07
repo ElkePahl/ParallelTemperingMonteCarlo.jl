@@ -40,13 +40,24 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
         @test mh.num_samples == [2, 2, 2]
     end
 
+    @testset "equilibration is read from metadata" begin
+        df = copy(df)
+        metadata!(df, "eq_cycles", "2")
+        mh = MultiHistogram(df; num_bins=4)
+
+        # max cycle = 4, so first_used = 2 and cycles 1 and 2 are discarded.
+        @test sum(mh.weights) == 6
+        @test mh.num_samples == [2, 2, 2]
+    end
+
     @testset "DataFrame and vector constructors agree" begin
         mh1 = MultiHistogram(df; num_bins=4, equilibration_cycles=0)
         mh2 = MultiHistogram(
             df.trajectory_id,
             df.temperature,
             df.cycle,
-            df.hamiltonian;
+            df.hamiltonian,
+            Dict();
             num_bins=4,
             equilibration_cycles=0,
         )
@@ -60,7 +71,9 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
     end
 
     @testset "input validation" begin
-        @test_throws DimensionMismatch MultiHistogram([1, 2], [300.0], [1, 2], [-1.0, -2.0])
+        @test_throws DimensionMismatch MultiHistogram(
+            [1, 2], [300.0], [1, 2], [-1.0, -2.0], Dict()
+        )
 
         @test_throws ArgumentError MultiHistogram(df; num_bins=2)
 
@@ -75,7 +88,8 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             df.trajectory_id,
             inconsistent_temperature,
             df.cycle,
-            df.hamiltonian;
+            df.hamiltonian,
+            Dict();
             num_bins=4,
             equilibration_cycles=0,
         )
@@ -87,7 +101,8 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             missing_trajectory,
             df.temperature,
             df.cycle,
-            df.hamiltonian;
+            df.hamiltonian,
+            Dict();
             num_bins=4,
             equilibration_cycles=0,
         )
@@ -102,7 +117,8 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             trajectory2,
             temperature2,
             cycle2,
-            fill(1.0, 4);
+            fill(1.0, 4),
+            Dict();
             num_bins=4,
             equilibration_cycles=0,
         )
@@ -111,7 +127,8 @@ using ParallelTemperingMonteCarlo.MultiHistogramAnalysis: kB
             trajectory2,
             temperature2,
             cycle2,
-            [-1.0, -1.0, -1.0, -1.0];
+            [-1.0, -1.0, -1.0, -1.0],
+            Dict();
             num_bins=4,
             equilibration_cycles=0,
         )
@@ -141,7 +158,13 @@ end
     ]
 
     mh = MultiHistogram(
-        trajectory_id, temperature, cycle, hamiltonian; num_bins=8, equilibration_cycles=0
+        trajectory_id,
+        temperature,
+        cycle,
+        hamiltonian,
+        Dict();
+        num_bins=8,
+        equilibration_cycles=0,
     )
 
     @testset "log denominator update" begin
@@ -249,7 +272,7 @@ end
     end
 
     @testset "known results" begin
-        df = Arrow.Table("testing_data/neon-55-100K.arrow")
+        df = Arrow.Table(joinpath(@__DIR__, "testing_data/neon-55-100K.arrow"))
 
         properties = thermodynamic_properties(df)
         max_heat_capacity = properties.temperature[argmax(properties.heat_capacity)]
@@ -258,7 +281,7 @@ end
     end
 
     @testset "chunked arrow files" begin
-        df = Arrow.Table("testing_data/chunked.arrow")
+        df = Arrow.Table(joinpath(@__DIR__, "testing_data/chunked.arrow"))
 
         properties = thermodynamic_properties(df)
         max_heat_capacity = properties.temperature[argmax(properties.heat_capacity)]

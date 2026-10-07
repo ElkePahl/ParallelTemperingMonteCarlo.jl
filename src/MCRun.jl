@@ -371,7 +371,7 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
 - `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
 - `verbose_flush=!isinteractive()`: if set to `true` a message is printed on flush.
-- `return_stats=true`: if set to `false`, the stats [`DataFrame`](@ref) is not returned.
+- `return_stats=true`: if set to `false`, the stats `DataFrame` is not returned.
 """
 function ptmc_run!(
     mc_params::MCParams,
