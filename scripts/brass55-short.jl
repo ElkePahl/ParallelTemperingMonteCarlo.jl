@@ -1,8 +1,20 @@
-using ParallelTemperingMonteCarlo, DelimitedFiles
-using ParallelTemperingMonteCarlo.MachineLearningPotential.ForwardPass: lib_path
+using ParallelTemperingMonteCarlo
+using Random, DelimitedFiles
 
-script_folder = @__DIR__
-data_path = joinpath(script_folder, "testing_data")
+data_path = joinpath(@__DIR__, "data")
+
+n_atoms = 55
+ti = 250.0
+tf = 900.0
+n_traj = 10
+
+temp = TempGrid{n_traj}(ti, tf)
+mc_cycles = 20
+mc_params = MCParams(mc_cycles, n_traj, n_atoms)
+
+# Potential
+evtohartree = 0.0367493
+nmtobohr = 18.8973
 
 X = [
     2 0.001 0.000 11.338
@@ -12,7 +24,6 @@ X = [
     2 0.400 0.000 11.338
 ]
 
-radsymmvec = []
 #--------------------------------------------#
 #--------Vector of angular symm values-------#
 #--------------------------------------------#
@@ -44,24 +55,24 @@ V = [
     [0.08, -1, 4, 11.338],
     [0.08, 1, 4, 11.338],
 ]
-
-angularsymmvec = []
+T = [111, 110, 100]
 #-------------------------------------------#
 #-----------Including scaling data----------#
 #-------------------------------------------#
-file = open(joinpath(data_path, "scaling.data")) # full path "./data/scaling.data"
-scalingvalues = readdlm(file)
-close(file)
-G_value_vec = []
+scalingvalues = readdlm(joinpath(data_path, "scaling.data"))[1:(end - 1), :]
+G_value_vec = Vector{Float64}[]
 for row in eachrow(scalingvalues[1:88, :])
     max_min = [row[4], row[3]]
     push!(G_value_vec, max_min)
 end
-G_value_vec_b = []
+G_value_vec_b = Vector{Float64}[]
 for row in eachrow(scalingvalues[89:end, :])
     max_min = [row[4], row[3]]
     push!(G_value_vec_b, max_min)
 end
+
+radsymmvec = RadialType2a{Float64}[]
+
 for symmindex in eachindex(eachrow(X))
     row = X[symmindex, :]
     radsymm = RadialType2a{Float64}(
@@ -73,11 +84,12 @@ for symmindex in eachindex(eachrow(X))
     )
     push!(radsymmvec, radsymm)
 end
+
+angularsymmvec = AngularType3a{Float64}[]
+
 let n_index = 10
     let j_index = 0
         for element in V
-            #for types in T
-
             j_index += 1
 
             symmfunc = AngularType3a{Float64}(
@@ -99,7 +111,6 @@ let n_index = 10
             )
 
             push!(angularsymmvec, symmfunc)
-            #end
         end
     end
 end
@@ -110,20 +121,22 @@ totalsymmvec = vcat(radsymmvec, angularsymmvec)
 #--------------------------------------------------#
 #-----------Initialising the nnp weights-----------#
 #--------------------------------------------------#
-num_nodes::Vector{Int32} = [88, 20, 20, 1]
-activation_functions::Vector{Int32} = [1, 2, 2, 1]
+num_nodes = Int32[88, 20, 20, 1]
+activation_functions = Int32[1, 2, 2, 1]
+weights = vec(readdlm(joinpath(data_path, "weights.029.data")))
+nnp_copper = NeuralNetworkPotential(num_nodes, activation_functions, weights)
 
-file = open(joinpath(data_path, "weights.029.data"), "r+") # "./data/weights.029.data"
-weights = readdlm(file)
-close(file)
-weights = vec(weights)
-nnpcu = NeuralNetworkPotential(num_nodes, activation_functions, weights)
+weights2 = vec(readdlm(joinpath(data_path, "weights.030.data")))
+nnp_zinc = NeuralNetworkPotential(num_nodes, activation_functions, weights2)
+ensemble = NNVT([50, 5]; n_atom_swaps=2)
 
-file2 = open(joinpath(data_path, "weights.030.data"), "r+") #./data/weights.030.data
-weights2 = readdlm(file2)
-close(file2)
-weights2 = vec(weights2)
-nnpzn = NeuralNetworkPotential(num_nodes, activation_functions, weights2)
-ensemble = NNVT([32, 6]; n_atom_swaps=2)
+runnerpotential = RuNNerPotential2Atom(
+    nnp_copper, nnp_zinc, radsymmvec, angularsymmvec, 50, 5
+)
 
-runnerpotential = RuNNerPotential2Atom(nnpcu, nnpzn, radsymmvec, angularsymmvec, 4, 2)
+config = magic_cluster(2; r_min=3.13)
+shuffle!(config.positions)
+
+states, results, stats = ptmc_run!(
+    mc_params, temp, config, runnerpotential, ensemble; save=100
+)

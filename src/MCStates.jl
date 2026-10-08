@@ -178,7 +178,7 @@ function MCState(temp, config, ensemble, potential; kwargs...)
     potential_variables = set_variables(config, dist2_mat, potential)
     ensemble_variables = set_ensemble_variables(config, ensemble)
 
-    en_tot, potential_variables = initialise_energy(
+    en_tot = initialise_energy(
         config, dist2_mat, potential_variables, ensemble_variables, potential
     )
 

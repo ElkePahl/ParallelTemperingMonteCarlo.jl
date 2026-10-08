@@ -159,10 +159,7 @@ according to the potential as `pot` and the configurational variables
 function initialise_energy(
     config::Config, dist2_mat, potential_variables, _, potential::AbstractDimerPotential
 )
-    return dimer_energy_config(
-        config, dist2_mat, potential_variables, potential; new=false
-    ),
-    potential_variables
+    return dimer_energy_config(config, dist2_mat, potential_variables, potential; new=false)
 end
 
 """
@@ -194,27 +191,23 @@ function dimer_energy_atom(potential, index, cutoff, dist2, tan)
 end
 
 """
-    energy_update!(ensemblevariables, config, potential_variables, dist2_mat, new_dist2_vec, en_tot, pot)
+    energy_update!(
+        ensemble_variables,
+        config,
+        potential_variables,
+        dist2_mat,
+        new_dist2_vec,
+        total_energy,
+        potential,
+    )
 
-Energy update function for use within a cycle. at the top level this is called with the new
-position `trial_pos` which is the `index`-th atom in the `config` it operates on the
-`potential_variables` along with the `dist2_mat`. Using `pot` the potential to find the
-`new_en`.
+Update the energy after an
+[`AtomDisplacement`](@ref Main.ParallelTemperingMonteCarlo.MCMoves.AtomDisplacement) move.
+The moved atom is extracted from `ensemble_variables`, and the distances between the moved
+atom and all other atoms are in `new_dist2_vec`, and `total_energy` is the total energy of
+the configuration before the move.
 
-Has additional methods including `r_cut` where appropriate for use with periodic boundary
-conditions.
-
-This function is designed as a curry function. The generic [`get_energy!`](@ref
-Main.ParallelTemperingMonteCarlo.MCRun.get_energy!) function operates on a __vector__ of
-states, this function takes each state and the set potential and calls the potential
-specific [`energy_update!`](@ref) function.
-
--   Methods defined for:
-    -   [`AbstractDimerPotential`](@ref)
-    -   [`AbstractDimerPotentialB`](@ref)
-    -   [`EmbeddedAtomPotential`](@ref)
-    -   [`RuNNerPotential`](@ref)
-    -   [`RuNNerPotential2Atom`](@ref)
+Returns new total energy after the move.
 """
 function energy_update!(
     ensemble_variables,
@@ -234,7 +227,7 @@ function energy_update!(
         dimer_energy_atom(potential, index, cutoff, new_dist2_vec) -
         dimer_energy_atom(potential, index, cutoff, old_dist2_vec)
 
-    return potential_variables, total_energy + delta_energy
+    return total_energy + delta_energy
 end
 function energy_update!(
     ensemble_variables,
@@ -262,7 +255,7 @@ function energy_update!(
         dimer_energy_atom(potential, index, cutoff, new_dist2_vec, new_tan_vec) -
         dimer_energy_atom(potential, index, cutoff, old_dist2_vec, old_tan_vec)
 
-    return potential_variables, total_energy + delta_energy
+    return total_energy + delta_energy
 end
 
 """
@@ -296,7 +289,5 @@ function swap_energy_update(
         ensemble_variables.swap_indices, config, potential_variables, dist2_matrix, pot
     )
 
-    potential_variables, new_en = calc_new_runner_energy!(potential_variables, pot)
-
-    return potential_variables, new_en
+    return calc_new_runner_energy!(potential_variables, pot)
 end
