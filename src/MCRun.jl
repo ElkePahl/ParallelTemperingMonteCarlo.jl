@@ -22,6 +22,7 @@ using ..Initialization
 using ..CustomTypes
 
 include("swap_config.jl")
+include("Reporter.jl")
 
 #TODO update energy documentation
 """
@@ -152,7 +153,7 @@ function mc_cycle!(
     mc_params::MCParams,
     n_steps::Int,
     index::Int,
-    stats,
+    reporter,
 ) where {N,E}
     Threads.@threads for trajectory_id in eachindex(mc_states)
         state = mc_states[trajectory_id]
@@ -191,8 +192,10 @@ function mc_cycle!(
     end
     for (i, state) in enumerate(mc_states)
         exchanged = i ∈ (exchange_index, exchange_index + 1)
-        push!(stats, (; state.last_stats..., exchanged))
+        report!(reporter, (; state.last_stats..., exchanged))
     end
+
+    flush!(reporter, index)
     return mc_states
 end
 function mc_cycle!(
@@ -204,11 +207,11 @@ function mc_cycle!(
     idx::Int,
     rdfsave::Bool,
     potential,
-    stats,
+    reporter,
 ) where {N,E}
     #TODO: Implement saving configurations after n steps
 
-    mc_cycle!(mc_states, move_strat, mc_params, n_steps, idx, stats)
+    mc_cycle!(mc_states, move_strat, mc_params, n_steps, idx, reporter)
     ensemble = mc_states[1].ensemble
 
     if rem(idx, mc_params.mc_sample) == 0
@@ -263,36 +266,21 @@ function equilibration_cycle!(
     mc_params::MCParams,
     n_steps::Int,
     results::Output,
-    stats,
-    writer,
-    flush_interval,
+    reporter,
 ) where {N,E}
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
     progress = Progress(mc_params.eq_cycles; desc="Equilibration", enabled=isinteractive())
     for i in 1:(mc_params.eq_cycles ÷ 2)
-        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
         next!(progress)
-
-        if !isnothing(writer) && i % flush_interval == 0
-            # write using writer set up earlier and flush DataFrame
-            Arrow.write(writer, stats)
-            empty!(stats)
-        end
     end
     for i in (mc_params.eq_cycles ÷ 2 + 1):(mc_params.eq_cycles)
-        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, stats)
+        mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
         for state in mc_states
             ebounds = check_e_bounds(state.en_tot, ebounds)
         end
-
-        if !isnothing(writer) && i % flush_interval == 0
-            # write using writer set up earlier and flush DataFrame
-            Arrow.write(writer, stats)
-            empty!(stats)
-        end
-
         next!(progress)
     end
     #post equilibration reset
@@ -321,9 +309,7 @@ function equilibration(
     n_steps::Int,
     results::Output,
     restart::Bool,
-    stats,
-    writer,
-    flush_interval,
+    reporter,
 ) where {N,E}
     for state in mc_states
         push!(state.ham, 0)
@@ -334,14 +320,7 @@ function equilibration(
         return mc_states, results
     else
         return equilibration_cycle!(
-            mc_states,
-            move_strat,
-            mc_params,
-            n_steps,
-            results,
-            stats,
-            writer,
-            flush_interval,
+            mc_states, move_strat, mc_params, n_steps, results, reporter
         )
     end
 end
@@ -391,6 +370,8 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
   file.
 - `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
+- `verbose_flush=!isinteractive()`: if set to `true` a message is printed on flush.
+- `return_stats=true`: if set to `false`, the stats `DataFrame` is not returned.
 """
 function ptmc_run!(
     mc_params::MCParams,
@@ -406,47 +387,33 @@ function ptmc_run!(
     workingdirectory=pwd(),
     stats_filename=nothing,
     flush_interval=100_000,
+    verbose_flush=(!isinteractive()),
+    return_stats=true,
 )
     # Initialisation
     cd(workingdirectory)
     if save ≢ false
         save_init(potential, ensemble, mc_params, temp)
     end
-    stats = DataFrame()
 
-    if !isnothing(stats_filename)
-        counter = 0
-        base, ext = splitext(stats_filename)
-        while isfile(stats_filename)
-            counter += 1
-            new_filename = string("$base-$counter", ext)
-            @warn "File $stats_filename exists. Using $new_filename"
-            stats_filename = new_filename
-        end
-    end
+    reporter = Reporter(
+        start_config,
+        potential,
+        ensemble,
+        mc_params;
+        flush_interval,
+        filename=stats_filename,
+        verbose=verbose_flush,
+        return_stats,
+    )
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
         mc_params, temp, start_config, potential, ensemble
     )
 
-    # Set up Arrow writer if needed.
-    if flush_interval ≤ mc_params.mc_cycles && !isnothing(stats_filename)
-        writer = open(Arrow.Writer, stats_filename; compress=:zstd)
-    else
-        writer = nothing
-    end
-
     # Equilibration
     mc_states, results = equilibration(
-        mc_states,
-        move_strategy,
-        mc_params,
-        n_steps,
-        results,
-        restart,
-        stats,
-        writer,
-        flush_interval,
+        mc_states, move_strategy, mc_params, n_steps, results, restart, reporter
     )
     if save ≢ false
         save_histparams(results)
@@ -468,7 +435,7 @@ function ptmc_run!(
             i,
             rdfsave,
             potential,
-            stats,
+            reporter,
         )
         if save ≢ false && rem(i, save) == 0
             checkpoint(i, mc_states, results, ensemble, rdfsave)
@@ -476,28 +443,10 @@ function ptmc_run!(
         if saveconfigs ≢ false && rem(i, saveconfigs) == 0
             save_configs(mc_states, string(configsname, i))
         end
-        if !isnothing(writer) && i % flush_interval == 0
-            # write using writer set up earlier and flush DataFrame
-            Arrow.write(writer, stats)
-            empty!(stats)
-        end
         next!(progress)
     end
 
-    if save ≢ false && rem(mc_params.mc_cycles, save) ≠ 0
-        # Save at the end if we didn't save in the last step.
-        checkpoint(mc_params.mc_cycles, mc_states, results, ensemble, rdfsave)
-    end
-    if !isnothing(stats_filename) && !isnothing(writer)
-        # write remaining rows and re-read DataFrame
-        Arrow.write(writer, stats)
-        close(writer)
-        stats = DataFrame(Arrow.Table(stats_filename))
-    elseif !isnothing(stats_filename) && isnothing(writer)
-        # write entire table to disk
-        Arrow.write(stats_filename, stats; compress=:zstd)
-        stats = DataFrame(Arrow.Table(stats_filename))
-    end
+    stats = finalise!(reporter)
 
     #Finalisation of results
     results = finalise_results(mc_states, mc_params, results)
