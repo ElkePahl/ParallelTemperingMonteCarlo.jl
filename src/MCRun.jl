@@ -370,8 +370,11 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
   file.
 - `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
-- `verbose_flush=!isinteractive()`: if set to `true` a message is printed on flush.
+- `verbose=!isinteractive()`: if set to `true` a message is printed on flush.
+- `show_progress=!verbose && isinteractive(): if set to `true`, a progress bar is shown.
 - `return_stats=true`: if set to `false`, the stats `DataFrame` is not returned.
+- `extra_metadata`: additional metadata to be recorded in the `DataFrame`. Should be an
+  iterable of key-value pairs. Both the keys and the values are converted to strings.
 """
 function ptmc_run!(
     mc_params::MCParams,
@@ -387,8 +390,10 @@ function ptmc_run!(
     workingdirectory=pwd(),
     stats_filename=nothing,
     flush_interval=100_000,
-    verbose_flush=(!isinteractive()),
+    verbose=!isinteractive(),
+    show_progress=!verbose && isinteractive(),
     return_stats=true,
+    extra_metadata=nothing,
 )
     # Initialisation
     cd(workingdirectory)
@@ -403,8 +408,9 @@ function ptmc_run!(
         mc_params;
         flush_interval,
         filename=stats_filename,
-        verbose=verbose_flush,
+        verbose,
         return_stats,
+        extra_metadata,
     )
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
@@ -423,7 +429,7 @@ function ptmc_run!(
     progress = Progress(
         length(start_counter:(mc_params.mc_cycles));
         desc="Main loop",
-        enabled=isinteractive(),
+        enabled=show_progress,
     )
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
