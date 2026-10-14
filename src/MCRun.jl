@@ -390,8 +390,8 @@ function ptmc_run!(
     workingdirectory=pwd(),
     stats_filename=nothing,
     flush_interval=100_000,
-    verbose=!isinteractive(),
-    show_progress=!verbose && isinteractive(),
+    verbose=(!isinteractive()),
+    show_progress=(!verbose && isinteractive()),
     return_stats=true,
     extra_metadata=nothing,
 )
@@ -427,9 +427,7 @@ function ptmc_run!(
 
     # Main loop
     progress = Progress(
-        length(start_counter:(mc_params.mc_cycles));
-        desc="Main loop",
-        enabled=show_progress,
+        length(start_counter:(mc_params.mc_cycles)); desc="Main loop", enabled=show_progress
     )
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(

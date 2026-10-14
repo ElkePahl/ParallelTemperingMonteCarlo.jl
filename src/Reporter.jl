@@ -75,7 +75,7 @@ function Reporter(
         "mc_sample" => string(mc_params.mc_sample),
         "n_atoms" => string(mc_params.n_atoms),
         "n_bin" => string(mc_params.n_bin),
-        "timestamp" => string(time())
+        "timestamp" => string(time()),
     ]
     if !isnothing(extra_metadata)
         for (k, v) in extra_metadata
@@ -97,7 +97,14 @@ function Reporter(
     end
 
     return Reporter(
-        NamedTuple[], flush_interval, filename, writer, metadata, verbose, mc_cycles, return_stats
+        NamedTuple[],
+        flush_interval,
+        filename,
+        writer,
+        metadata,
+        verbose,
+        mc_cycles,
+        return_stats,
     )
 end
 

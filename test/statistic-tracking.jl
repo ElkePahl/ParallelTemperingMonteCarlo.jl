@@ -43,7 +43,7 @@ function run_full_computation(; flush_interval, seed, kwargs...)
         ensemble;
         stats_filename="test.arrow",
         flush_interval,
-        kwargs...
+        kwargs...,
     )
 end
 
@@ -58,7 +58,9 @@ end
     end
 
     _, _, stats1 = run_full_computation(; flush_interval=100, seed=123)
-    _, _, stats2 = run_full_computation(; flush_interval=10000, seed=123, extra_metadata=[:a => 1])
+    _, _, stats2 = run_full_computation(;
+        flush_interval=10000, seed=123, extra_metadata=[:a => 1]
+    )
 
     # 1000 production cycles + 200 equilibration cycles, for 24 trajectories.
     # All requested equilibration cycles now perform MC steps and are recorded.
