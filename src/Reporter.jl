@@ -7,8 +7,8 @@ using DataFrames: DataFrames, metadata!
         potential,
         ensemble,
         mc_params;
-        flush_interval,
         filename,
+        flush_interval,
         verbose,
         return_stats,
         extra_metadata,
