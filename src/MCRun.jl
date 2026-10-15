@@ -271,7 +271,11 @@ function equilibration_cycle!(
     ebounds = [100.0, -100.0]
     # Don't touch ebound for the first half of the run in case energies
     # are very high at the beginning.
-    progress = Progress(mc_params.eq_cycles; desc="Equilibration", enabled=isinteractive())
+    progress = Progress(
+        mc_params.eq_cycles;
+        desc="Equilibration",
+        enabled=!reporter.verbose && !isinteractive(),
+    )
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
         next!(progress)
@@ -371,7 +375,6 @@ The second method relies on a series of checkpoint files -see Checkpoint module 
 - `flush_interval=100_000`: if `stats_filename ≢ nothing`, the stats will be periodically
   flushed to disk.
 - `verbose=!isinteractive()`: if set to `true` a message is printed on flush.
-- `show_progress=!verbose && isinteractive(): if set to `true`, a progress bar is shown.
 - `return_stats=true`: if set to `false`, the stats `DataFrame` is not returned.
 - `extra_metadata`: additional metadata to be recorded in the `DataFrame`. Should be an
   iterable of key-value pairs. Both the keys and the values are converted to strings.
@@ -391,7 +394,6 @@ function ptmc_run!(
     stats_filename=nothing,
     flush_interval=100_000,
     verbose=(!isinteractive()),
-    show_progress=(!verbose && isinteractive()),
     return_stats=true,
     extra_metadata=nothing,
 )
@@ -427,7 +429,9 @@ function ptmc_run!(
 
     # Main loop
     progress = Progress(
-        length(start_counter:(mc_params.mc_cycles)); desc="Main loop", enabled=show_progress
+        length(start_counter:(mc_params.mc_cycles));
+        desc="Main loop",
+        enabled=!reporter.verbose && !isinteractive(),
     )
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
