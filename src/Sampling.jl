@@ -160,8 +160,6 @@ function initialise_histograms!(
 
     if debug
         println(results.v_min)
-    end
-    if debug
         println(results.v_max)
     end
 
@@ -190,9 +188,6 @@ function initialise_histograms!(
     results.v_min = bc.box_length^2 * bc.box_height * 3^0.5 / 2 * 0.8
     results.v_max = bc.box_length^2 * bc.box_height * 3^0.5 / 2 * 2.0
 
-    println(results.v_min)
-    println(results.v_max)
-
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
 
     results.delta_v_hist = (results.v_max - results.v_min) / results.n_bin
@@ -216,9 +211,6 @@ function initialise_histograms!(mc_params, results, e_bounds, bc::RectangularBC)
 
     results.v_min = bc.box_length^2 * bc.box_height * 0.8
     results.v_max = bc.box_length^2 * bc.box_height * 2.0
-
-    println(results.v_min)
-    println(results.v_max)
 
     results.delta_en_hist = (results.en_max - results.en_min) / (results.n_bin - 1)
 
@@ -288,11 +280,8 @@ function update_rdf!(mc_states, results::Output, delta_r2::Number)
         #for element in mc_states[j_traj].dist2_mat
         for i in 1:length(mc_states[1].config)
             for k in 1:i
-                #            println(delta_r2)
-                #            println(mc_states[j_traj].dist2_mat[k_traj])
                 idx = rdf_index(mc_states[j_traj].dist2_mat[i, k], delta_r2)
                 if idx != 0 && idx <= results.n_bin * 5
-                    #println(idx)
                     results.rdf[j_traj][idx] += 1
                 end
             end
@@ -402,8 +391,6 @@ function finalise_results_convergence(i_check, mc_states, mc_params, results)
         mc_states[i_traj].count_exc[2] / mc_states[i_traj].count_exc[1] for
         i_traj in 1:(mc_params.n_traj)
     ]
-
-    println(results.heat_cap)
 
     return results
 end

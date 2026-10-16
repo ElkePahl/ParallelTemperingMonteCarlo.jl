@@ -1,6 +1,6 @@
 using ParallelTemperingMonteCarlo, Test, Arrow, Random, DataFrames
 
-function run_full_computation(; flush_interval, seed)
+function run_full_computation(; flush_interval, seed, kwargs...)
     Random.seed!(seed)
 
     n_atoms = 32
@@ -43,12 +43,24 @@ function run_full_computation(; flush_interval, seed)
         ensemble;
         stats_filename="test.arrow",
         flush_interval,
+        kwargs...,
     )
 end
 
 @testset "Statistic tracking" begin
+    if isfile("test.arrow")
+        rm("test.arrow")
+    end
+    i = 1
+    while isfile("test-$i.arrow")
+        rm("test-$i.arrow")
+        i += 1
+    end
+
     _, _, stats1 = run_full_computation(; flush_interval=100, seed=123)
-    _, _, stats2 = run_full_computation(; flush_interval=10000, seed=123)
+    _, _, stats2 = run_full_computation(;
+        flush_interval=10000, seed=123, extra_metadata=[:a => 1]
+    )
 
     # 1000 production cycles + 200 equilibration cycles, for 24 trajectories.
     # All requested equilibration cycles now perform MC steps and are recorded.
@@ -69,6 +81,11 @@ end
     @test all(x -> length(x) == 2400, stats1.cycle.arrays)
 
     @test stats1.hamiltonian ≈ stats1.total_energy .+ stats1.volume .* 3.4439667494478555e-9
+
+    @test metadata(stats1, "n_atoms") == "32"
+    @test metadata(DataFrame(Arrow.Table("test.arrow")), "mc_cycles") == "1000"
+    @test metadata(stats2, "a") == "1"
+    @test metadata(DataFrame(Arrow.Table("test-1.arrow")), "a") == "1"
 
     # cleanup
     i = 1

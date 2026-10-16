@@ -3,7 +3,7 @@ module MultiHistogramAnalysis
 using ..InputParams: TempGrid
 using ProgressMeter: ProgressMeter, ProgressThresh
 using LogExpFunctions: logsumexp
-using DataFrames: DataFrame
+using DataFrames: DataFrame, metadata
 using LinearAlgebra: dot
 export MultiHistogram, num_trajectories, num_bins, thermodynamic_properties
 
@@ -51,7 +51,7 @@ generalized Hamiltonian is ``E`` for an [`NVT`](@ref) ensemble, ``E + pV`` for a
 - `num_bins=100`: Number of equally spaced Hamiltonian bins.
 - `equilibration_cycles`: Number of steps of the simulation discarded as initial
   equilibration. Samples with `cycle ≤ equilibration_cycles` are discarded. Defaults to
-  1/6 of the data.
+  reading the value from `df`'s metadata.
 
 # Fields
 - `num_bins`: Number of Hamiltonian bins.
@@ -86,12 +86,18 @@ num_bins(mh::MultiHistogram) = size(mh.weights, 1)
 
 function MultiHistogram(df; kwargs...)
     return MultiHistogram(
-        df.trajectory_id, df.temperature, df.cycle, df.hamiltonian; kwargs...
+        df.trajectory_id, df.temperature, df.cycle, df.hamiltonian, metadata(df); kwargs...
     )
 end
 
 function MultiHistogram(
-    traj_id, temperature, cycle, hamiltonian; num_bins=100, equilibration_cycles=nothing
+    traj_id,
+    temperature,
+    cycle,
+    hamiltonian,
+    metadata;
+    num_bins=100,
+    equilibration_cycles=nothing,
 )
     if !(length(traj_id) == length(temperature) == length(cycle) == length(hamiltonian))
         throw(
@@ -108,7 +114,13 @@ function MultiHistogram(
 
     num_cycles = maximum(cycle; init=0)
     if isnothing(equilibration_cycles)
-        first_used = round(Int, 1/6 * num_cycles)
+        eq_cycles = get(metadata, "eq_cycles", nothing)
+        if isnothing(eq_cycles)
+            @warn "`df` does not have `\"eq_cycles\"` in its metadata. Using `1/6 * num_cycles`."
+            first_used = round(Int, 1/6 * num_cycles)
+        else
+            first_used = parse(Int, eq_cycles) + 1
+        end
     else
         first_used = equilibration_cycles + 1
     end
