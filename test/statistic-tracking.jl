@@ -43,13 +43,23 @@ function run_full_computation(; flush_interval=1000000, seed=1234, filename="tes
         ensemble;
         stats_filename=filename,
         flush_interval,
+        kwargs...,
     )
 end
 
 @testset "Statistic tracking" begin
+    if isfile("test.arrow")
+        rm("test.arrow")
+    end
+    i = 1
+    while isfile("test-$i.arrow")
+        rm("test-$i.arrow")
+        i += 1
+    end
+
     _, _, stats1 = run_full_computation(; flush_interval=100, seed=123)
     _, _, stats2 = run_full_computation(;
-        flush_interval=10000, seed=123, filename="test-1.arrow"
+        flush_interval=10000, seed=123, filename="test-1.arrow", extra_metadata=[:a => 1]
     )
     @test_warn "File test-1.arrow exists. Using test-2.arrow" run_full_computation()
 
@@ -72,6 +82,11 @@ end
     @test all(x -> length(x) == 2400, stats1.cycle.arrays)
 
     @test stats1.hamiltonian ≈ stats1.total_energy .+ stats1.volume .* 3.4439667494478555e-9
+
+    @test metadata(stats1, "n_atoms") == "32"
+    @test metadata(DataFrame(Arrow.Table("test.arrow")), "mc_cycles") == "1000"
+    @test metadata(stats2, "a") == "1"
+    @test metadata(DataFrame(Arrow.Table("test-1.arrow")), "a") == "1"
 
     # cleanup
     i = 1
