@@ -242,7 +242,6 @@ function generate_move!(::VolumeChange{false}, mc_state)
 
     # Recalculating the distance matrix is necessary even on uniform moves. scaling it can
     # cause numerical issues.
-    # mc_state.ensemble_variables.new_dist2_mat .= mc_state.dist2_mat .* scale^2
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
@@ -250,9 +249,8 @@ function generate_move!(::VolumeChange{false}, mc_state)
 end
 
 function generate_move!(vol_move::VolumeChange{true}, mc_state)
-    #change volume
-    ra = rand(1:6)
-    if ra == 1  # Choose z-direction volume change
+    # z-direction with probability 1/3, xy-direction with probability 2/3
+    if rand(1:3) == 1
         mc_state.ensemble_variables.xy_or_z = 2
         mc_state.ensemble_variables.trial_config, scale = volume_change_z(
             mc_state.config,
@@ -261,7 +259,7 @@ function generate_move!(vol_move::VolumeChange{true}, mc_state)
             mc_state.max_boxheight,
             vol_move.max_asymmetry,
         )
-    elseif ra <= 3  # Choose xy-direction volume change
+    else
         mc_state.ensemble_variables.xy_or_z = 1
         mc_state.ensemble_variables.trial_config, scale = volume_change_xy(
             mc_state.config,
@@ -270,26 +268,14 @@ function generate_move!(vol_move::VolumeChange{true}, mc_state)
             mc_state.max_boxheight,
             vol_move.max_asymmetry,
         )
-    else   # Choose all-direction volume change
-        mc_state.ensemble_variables.xy_or_z = 0
-        mc_state.ensemble_variables.trial_config, scale = volume_change_xyz(
-            mc_state.config, mc_state.max_displ[2], mc_state.max_boxlength
-        )
     end
 
     if mc_state.potential_variables isa DimerPotentialBVariables
-        if ra <= 3
-            get_tantheta_mat!(
-                mc_state.potential_variables.new_tan_mat,
-                mc_state.ensemble_variables.trial_config,
-            )
-        else
-            mc_state.potential_variables.new_tan_mat .= mc_state.potential_variables.tan_mat
-        end
+        get_tantheta_mat!(
+            mc_state.potential_variables.new_tan_mat,
+            mc_state.ensemble_variables.trial_config,
+        )
     end
-
-    # Recalculating the distance matrix is necessary even on uniform moves. scaling it can
-    # cause numerical issues.
     get_distance2_mat!(
         mc_state.ensemble_variables.new_dist2_mat, mc_state.ensemble_variables.trial_config
     )
@@ -377,10 +363,12 @@ function metropolis_probability(::VolumeChange{false}, mc_state)
 
     old_volume = volume(mc_state.config.boundary_condition)
     new_volume = volume(mc_state.ensemble_variables.trial_config.boundary_condition)
+    old_length = mc_state.config.boundary_condition.box_length
+    new_length = mc_state.ensemble_variables.trial_config.boundary_condition.box_length
     delta_energy = mc_state.new_en - mc_state.en_tot
     delta_h = delta_energy + ensemble.pressure * (new_volume - old_volume)
     probability = exp(
-        -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_volume / old_volume)
+        -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_length / old_length)
     )
     return min(probability, 1.0)
 end
@@ -411,7 +399,8 @@ function metropolis_probability(::VolumeChange{true}, mc_state)
     end
 
     probability = exp(
-        -delta_h * mc_state.beta + (ensemble.n_atoms + 1) * log(new_volume / old_volume)
+        -delta_h * mc_state.beta +
+        (ensemble.n_atoms + 1) * log((new_xy * new_z) / (old_xy * old_z)),
     )
     return min(probability, 1.0)
 end
@@ -487,7 +476,7 @@ function swap_config!(::AtomSwap, mc_state)
     return pot_vars.en_atom_vec, pot_vars.new_en_atom = pot_vars.new_en_atom,
     pot_vars.en_atom_vec
 end
-function swap_config!(::VolumeChange, mc_state)
+function swap_config!(::VolumeChange{separated}, mc_state) where {separated}
     trial_config = mc_state.ensemble_variables.trial_config
 
     # TODO: swap instead of copying
@@ -495,8 +484,7 @@ function swap_config!(::VolumeChange, mc_state)
     mc_state.dist2_mat .= mc_state.ensemble_variables.new_dist2_mat
 
     # if xy_or_z == 0, tangents don't change.
-    if mc_state.potential isa AbstractDimerPotentialB &&
-        mc_state.ensemble_variables.xy_or_z ≥ 1
+    if mc_state.potential isa AbstractDimerPotentialB && separated
         mc_state.potential_variables.tan_mat .= mc_state.potential_variables.new_tan_mat
     end
 

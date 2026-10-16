@@ -174,6 +174,7 @@ end
 
                 if potential isa AbstractDimerPotentialB
                     updated_tan = mc_state.potential_variables.tan_mat
+
                     true_tan = get_tantheta_mat(mc_state.config)
 
                     @test updated_tan ≈ true_tan
