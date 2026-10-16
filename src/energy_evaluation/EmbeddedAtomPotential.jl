@@ -131,11 +131,9 @@ function initialise_energy(
     ensemble_variables::AbstractEnsembleVariables,
     pot::EmbeddedAtomPotential,
 )
-    en_tot = calc_energies_from_components(
+    return calc_energies_from_components(
         potential_variables.component_vector, pot.ean, pot.eCam
     )
-
-    return en_tot, potential_variables
 end
 
 function energy_update!(
@@ -158,8 +156,7 @@ function energy_update!(
         pot.m,
     )
 
-    new_energy = calc_energies_from_components(
+    return calc_energies_from_components(
         potential_variables.new_component_vector, pot.ean, pot.eCam
     )
-    return potential_variables, new_energy
 end

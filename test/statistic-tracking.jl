@@ -1,6 +1,6 @@
 using ParallelTemperingMonteCarlo, Test, Arrow, Random, DataFrames
 
-function run_full_computation(; flush_interval, seed, kwargs...)
+function run_full_computation(; flush_interval=1000000, seed=1234, filename="test.arrow")
     Random.seed!(seed)
 
     n_atoms = 32
@@ -41,7 +41,7 @@ function run_full_computation(; flush_interval, seed, kwargs...)
         start_config,
         pot,
         ensemble;
-        stats_filename="test.arrow",
+        stats_filename=filename,
         flush_interval,
         kwargs...,
     )
@@ -59,8 +59,9 @@ end
 
     _, _, stats1 = run_full_computation(; flush_interval=100, seed=123)
     _, _, stats2 = run_full_computation(;
-        flush_interval=10000, seed=123, extra_metadata=[:a => 1]
+        flush_interval=10000, seed=123, filename="test-1.arrow", extra_metadata=[:a => 1]
     )
+    @test_warn "File test-1.arrow exists. Using test-2.arrow" run_full_computation()
 
     # 1000 production cycles + 200 equilibration cycles, for 24 trajectories.
     # All requested equilibration cycles now perform MC steps and are recorded.
@@ -96,5 +97,5 @@ end
             i += 1
         end
     end
-    @test i == 2
+    @test i == 3
 end

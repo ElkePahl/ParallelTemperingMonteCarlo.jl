@@ -68,8 +68,7 @@ function initialise_energy(
     potential_variables.en_atom_vec = forward_pass(
         potential_variables.g_matrix, length(config), pot.nnp
     )
-    en_tot = sum(potential_variables.en_atom_vec)
-    return en_tot, potential_variables
+    return sum(potential_variables.en_atom_vec)
 end
 
 function energy_update!(
@@ -96,10 +95,10 @@ function energy_update!(
             new_dist2_vec,
             pot,
         )
-        potential_variables, new_energy = calc_new_runner_energy!(potential_variables, pot)
+        new_energy = calc_new_runner_energy!(potential_variables, pot)
     end
 
-    return potential_variables, new_energy
+    return new_energy
 end
 
 """
@@ -161,7 +160,7 @@ function calc_new_runner_energy!(potential_variables::NNPVariables, pot::RuNNerP
         potential_variables.new_g_matrix, length(potential_variables.en_atom_vec), pot.nnp
     )
     new_en = sum(potential_variables.new_en_atom)
-    return potential_variables, new_en
+    return new_en
 end
 #----------------------------------------------------------#
 #--------------------NNP with two atoms--------------------#
@@ -256,9 +255,7 @@ function initialise_energy(
         )
     end
 
-    en_tot = sum(potential_variables.en_atom_vec)
-
-    return en_tot, potential_variables
+    return sum(potential_variables.en_atom_vec)
 end
 
 function energy_update!(
@@ -279,9 +276,7 @@ function energy_update!(
         new_dist2_vec,
         pot,
     )
-    potential_variables, new_energy = calc_new_runner_energy!(potential_variables, pot)
-
-    return potential_variables, new_energy
+    return calc_new_runner_energy!(potential_variables, pot)
 end
 
 """
@@ -400,5 +395,5 @@ function calc_new_runner_energy!(
 
     new_en = sum(potential_variables.new_en_atom)
 
-    return potential_variables, new_en
+    return new_en
 end
