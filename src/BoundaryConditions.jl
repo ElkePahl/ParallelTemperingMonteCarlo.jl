@@ -80,9 +80,16 @@ r_cut(::AbstractBC) = Inf
     volume(::AbstractBC)
 
 Returns the volume of a box according to its geometry for use where the ensemble does not
-imply a fixed `V`.
+imply a fixed volume.
 """
 volume(::AbstractBC) = missing
+
+"""
+    size(::AbstractBC)
+
+Returns the dimensions of the box as a `SVector`. Only needed when volume moves are used.
+"""
+size(::AbstractBC) = missing
 
 """
     scale_xyz(::AbstractBC, α)
@@ -183,6 +190,9 @@ end
 function volume(bc::CubicBC)
     return bc.box_length^3
 end
+function box_size(bc::CubicBC)
+    return SVector(bc.box_length, bc.box_length, bc.box_length)
+end
 function check_boundary(bc::CubicBC, position)
     return position .- bc.box_length .* round.(position ./ bc.box_length)
 end
@@ -212,6 +222,9 @@ struct RectangularBC{T} <: PeriodicBC{T}
 end
 function volume(bc::RectangularBC)
     return bc.box_length^2 * bc.box_height
+end
+function box_size(bc::RectangularBC)
+    return SVector(bc.box_length, bc.box_length, bc.box_height)
 end
 function check_boundary(bc::RectangularBC, position)
     box_size = SVector(bc.box_length, bc.box_length, bc.box_height)
@@ -258,6 +271,9 @@ struct RhombicBC{T} <: PeriodicBC{T}
 end
 function volume(bc::RhombicBC)
     return bc.box_length^2 * bc.box_height * √3 / 2
+end
+function box_size(bc::RhombicBC)
+    return SVector(bc.box_length, bc.box_length, bc.box_height)
 end
 function check_boundary(bc::RhombicBC, position)
     return position - SVector(

@@ -51,18 +51,20 @@ function initialisation(
     temp::TempGrid,
     start_config::Config,
     potential::AbstractPotential,
-    ensemble::AbstractEnsemble,
+    ensemble::AbstractEnsemble;
+    kwargs...,
 )
-    return initialisation(mc_params, temp, (start_config,), potential, ensemble)
+    return initialisation(mc_params, temp, (start_config,), potential, ensemble; kwargs...)
 end
 function initialisation(
     mc_params::MCParams,
     temp::TempGrid,
     start_config,
     potential::AbstractPotential,
-    ensemble::AbstractEnsemble,
+    ensemble::AbstractEnsemble;
+    kwargs...,
 )
-    move_strategy = MoveStrategy(ensemble)
+    move_strategy = MoveStrategy(ensemble; kwargs...)
     mc_states = map(1:(mc_params.n_traj)) do i
         return MCState(
             temp.t_grid[i], start_config[mod1(i, length(start_config))], ensemble, potential

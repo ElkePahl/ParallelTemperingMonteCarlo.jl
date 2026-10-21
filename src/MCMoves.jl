@@ -38,19 +38,20 @@ function MoveStrategy(pairs...)
     return MoveStrategy(moves, weights)
 end
 
-function MoveStrategy(ensemble::NVT)
-    return MoveStrategy(AtomDisplacement() => ensemble.n_atom_moves)
+function MoveStrategy(ensemble::NVT; kwargs...)
+    return MoveStrategy(AtomDisplacement(; kwargs...) => ensemble.n_atom_moves)
 end
-function MoveStrategy(ensemble::NPT)
+function MoveStrategy(ensemble::NPT; kwargs...)
     n_atoms = ensemble.n_atoms
     return MoveStrategy(
-        AtomDisplacement() => ensemble.n_atom_moves,
+        AtomDisplacement(; kwargs...) => ensemble.n_atom_moves,
         VolumeChange(; separated=ensemble.separated_volume) => ensemble.n_volume_moves,
     )
 end
-function MoveStrategy(ensemble::NNVT)
+function MoveStrategy(ensemble::NNVT; kwargs...)
     return MoveStrategy(
-        AtomDisplacement() => ensemble.n_atom_moves, AtomSwap() => ensemble.n_atom_swaps
+        AtomDisplacement(; kwargs...) => ensemble.n_atom_moves,
+        AtomSwap() => ensemble.n_atom_swaps,
     )
 end
 Base.length(ms::MoveStrategy) = sum(ms.weights)
@@ -153,14 +154,47 @@ This function must be called _after_ [`generate_move!`](@ref) and [`get_energy!`
 swap_config!
 
 """
-    AtomDisplacement() <: AbstractMove
+    AtomDisplacement(; gaussian=false, scaled=false) <: AbstractMove
 
 An [`AbstractMove`](@ref) that moves a single atom. For a MC state `mc_state`, the move's
 max move size is determined by `mc_state.max_displ[1]`.
-"""
-struct AtomDisplacement <: AbstractMove end
 
-function generate_move!(::AtomDisplacement, mc_state::MCState)
+## Keyword argument
+- `gaussian=false`: if set to `true`, displacements are picked from a normal distribution.
+- `scaled=false`: if set to `true`, displacements are scaled to the box dimensions
+  (applicable to configurations with [`RectangularBC`](@ref) and [`RhombicBC`](@ref) only).
+"""
+struct AtomDisplacement{G,S} <: AbstractMove end
+AtomDisplacement(; gaussian=false, scaled=false) = AtomDisplacement{gaussian,scaled}()
+
+function scale_delta_move(
+    ::AtomDisplacement{gaussian,true}, boundary::Union{RectangularBC,RhombicBC}, max_displ
+) where {gaussian}
+    if gaussian
+        relative = @SVector(randn(3))
+    else
+        relative = 2@SVector(rand(3)) .- 1
+    end
+
+    return SVector(
+        (2rand() - 1) * max_displ * boundary.box_length,
+        (2rand() - 1) * max_displ * boundary.box_length,
+        (2rand() - 1) * max_displ * boundary.box_height,
+    )
+end
+function propose_delta_move(
+    ::AtomDisplacement{true,true}, boundary::Union{RectangularBC,RhombicBC}, max_displ
+)
+    return SVector(
+        randn() * max_displ * boundary.box_length,
+        randn() * max_displ * boundary.box_length,
+        randn() * max_displ * boundary.box_height,
+    )
+end
+
+function generate_move!(
+    ::AtomDisplacement{gaussian,scaled}, mc_state::MCState
+) where {gaussian,scaled}
     initial_position = mc_state.config[mc_state.ensemble_variables.index]
     max_displacement = mc_state.max_displ[1] # <- move variables?
     boundary_condition = mc_state.config.boundary_condition
@@ -174,11 +208,17 @@ function generate_move!(::AtomDisplacement, mc_state::MCState)
         num_attempts ≥ 100 && error("Error: too many moves out of bounds")
         num_attempts == 50 && recentre!(mc_state.config)
 
-        delta_move = SVector(
-            (rand() - 0.5) * max_displacement,
-            (rand() - 0.5) * max_displacement,
-            (rand() - 0.5) * max_displacement,
-        )
+        if gaussian
+            rel_delta_move = @SVector(randn(3))
+        else
+            rel_delta_move = 2@SVector(rand(3)) .- 1
+        end
+        if scaled && !ismissing(box_size(boundary_condition))
+            delta_move = max_displacement * rel_delta_move .* box_size(boundary_condition)
+        else
+            delta_move = max_displacement * rel_delta_move
+        end
+
         trial_position = initial_position + delta_move
         trial_position = check_boundary(boundary_condition, trial_position)
 

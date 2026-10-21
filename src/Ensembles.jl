@@ -11,7 +11,6 @@ export AbstractEnsembleVariables,
     NVTVariables, NPTVariables, NNVTVariables, set_ensemble_variables, hamiltonian
 
 export report_stats
-export MoveStrategy
 
 """
     AbstractEnsemble
@@ -126,14 +125,20 @@ function NPT(
     stress_tensor=[0, 0],
     reference_length::Float64=0.0,
 )
+    n_vol_moves = separated_volume ? 3 : 1
     return NPT(
-        n_atoms, n_atoms, 1, 0, pressure, separated_volume, stress_tensor, reference_length
+        n_atoms,
+        n_atoms,
+        n_vol_moves,
+        0,
+        pressure,
+        separated_volume,
+        stress_tensor,
+        reference_length,
     )
 end
-#=For users who are using regular NPT, this function allows a shortcut for constructing
-a separated volume NPT ensemble.=#
 function NPT(n_atoms, pressure, separated_volume)
-    return NPT(n_atoms, n_atoms, 1, 0, pressure, separated_volume, [0, 0], 0)
+    return NPT(n_atoms, pressure; separated_volume)
 end
 function report_stats(mc_state, ::NPT)
     bc = mc_state.config.boundary_condition

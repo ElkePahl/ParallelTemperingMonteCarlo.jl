@@ -158,7 +158,7 @@ function equilibration_cycle!(
     progress = Progress(
         mc_params.eq_cycles;
         desc="Equilibration",
-        enabled=(!reporter.verbose && !isinteractive()),
+        enabled=(!reporter.verbose && isinteractive()),
     )
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
@@ -280,6 +280,7 @@ function ptmc_run!(
     verbose=(!isinteractive()),
     return_stats=true,
     extra_metadata=nothing,
+    kwargs...,
 )
     # Initialisation
     cd(workingdirectory)
@@ -300,7 +301,7 @@ function ptmc_run!(
     )
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
-        mc_params, temp, start_config, potential, ensemble
+        mc_params, temp, start_config, potential, ensemble; kwargs...
     )
 
     # Equilibration
@@ -315,7 +316,7 @@ function ptmc_run!(
     progress = Progress(
         length(start_counter:(mc_params.mc_cycles));
         desc="Main loop",
-        enabled=(!reporter.verbose && !isinteractive()),
+        enabled=(!reporter.verbose && isinteractive()),
     )
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
