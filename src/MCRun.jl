@@ -280,7 +280,7 @@ function ptmc_run!(
     verbose=(!isinteractive()),
     return_stats=true,
     extra_metadata=nothing,
-    kwargs...,
+    kwargs...
 )
     # Initialisation
     cd(workingdirectory)

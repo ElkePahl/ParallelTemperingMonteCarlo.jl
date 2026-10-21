@@ -62,7 +62,7 @@ function initialisation(
     start_config,
     potential::AbstractPotential,
     ensemble::AbstractEnsemble;
-    kwargs...,
+    kwargs...
 )
     move_strategy = MoveStrategy(ensemble; kwargs...)
     mc_states = map(1:(mc_params.n_traj)) do i
