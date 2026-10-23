@@ -5,7 +5,8 @@ using ProgressMeter: ProgressMeter, ProgressThresh
 using LogExpFunctions: logsumexp
 using DataFrames: DataFrame, metadata
 using LinearAlgebra: dot
-export MultiHistogram, num_trajectories, num_bins, thermodynamic_properties
+export MultiHistogram,
+    num_trajectories, num_bins, thermodynamic_properties, heat_capacity_peak
 
 const kB = 3.16681196e-6 # in atomic units
 
@@ -99,6 +100,9 @@ function MultiHistogram(
     metadata;
     num_bins=100,
     equilibration_cycles=nothing,
+    stop_at=nothing,
+    window_size=nothing,
+    limits=nothing,
 )
     if !(length(traj_id) == length(temperature) == length(cycle) == length(hamiltonian))
         throw(
@@ -107,18 +111,23 @@ function MultiHistogram(
             ),
         )
     end
+    issorted(cycle) || throw(ArgumentError("the data should be sorted by `cycle`"))
     if num_bins ≤ 2
         throw(ArgumentError("`num_bins` must be at least 3"))
     elseif !isnothing(equilibration_cycles) && equilibration_cycles < 0
         throw(ArgumentError("`equilibration_cycles` must be non-negative"))
+    elseif !isnothing(stop_at) && !isnothing(window_size)
+        throw(ArgumentError("specify at most one of `stop_at` and `window_size`"))
+    elseif !isnothing(window_size) && window_size ≤ 0
+        throw(ArgumentError("`window_size` must be positive"))
     end
 
     num_cycles = maximum(cycle; init=0)
     if isnothing(equilibration_cycles)
         eq_cycles = get(metadata, "eq_cycles", nothing)
         if isnothing(eq_cycles)
-            @warn "`df` does not have `\"eq_cycles\"` in its metadata. Using `1/6 * num_cycles`."
-            first_used = round(Int, 1/6 * num_cycles)
+            @warn "metadata does not contain `eq_cycles`. Using `1/6 * num_cycles`."
+            first_used = round(Int, num_cycles / 6) + 1
         else
             first_used = parse(Int, eq_cycles) + 1
         end
@@ -126,17 +135,39 @@ function MultiHistogram(
         first_used = equilibration_cycles + 1
     end
 
-    # Find range of data, excluding initial equilibration phase
-    lo = Inf
-    hi = -Inf
-    for i in 1:length(hamiltonian)
-        if cycle[i] ≥ first_used
-            lo = min(lo, hamiltonian[i])
-            hi = max(hi, hamiltonian[i])
-        end
+    if !isnothing(window_size)
+        last_used = first_used + window_size - 1
+    elseif !isnothing(stop_at)
+        last_used = stop_at
+    else
+        num_cycles
     end
-    if !isfinite(lo) || !isfinite(hi) || lo == hi
-        throw(ArgumentError("cannot construct histogram."))
+    if last_used < first_used
+        throw(
+            ArgumentError(
+                "no cycles selected: first used $first_used, last used $last_used"
+            ),
+        )
+    elseif last_used > num_cycles
+        throw(
+            ArgumentError("requested cycles up to $last_used, but data ends at $num_cycles")
+        )
+    end
+
+    rows = searchsortedfirst(cycle, first_used):searchsortedlast(cycle, last_used)
+    isempty(rows) && throw(ArgumentError("no samples in cycles $first_used:$last_used"))
+
+    if isnothing(limits)
+        lo, hi = extrema(@view hamiltonian[rows])
+    else
+        lo, hi = limits
+    end
+    if !(isfinite(lo) && isfinite(hi) && lo < hi)
+        throw(
+            ArgumentError(
+                "invalid Hamiltonian range ($lo, $hi); cannot construct histogram"
+            ),
+        )
     end
 
     num_traj = maximum(traj_id; init=0)
@@ -146,22 +177,27 @@ function MultiHistogram(
     edges = collect(range(lo, hi; length=num_bins + 1))
     weights = zeros(Int, num_bins, num_traj)
 
-    for j in 1:length(hamiltonian)
-        if cycle[j] ≥ first_used
-            H = hamiltonian[j]
-            traj = traj_id[j]
-
-            bin = floor(Int, (H - lo) / ΔH) + 1
-            bin = clamp(bin, 1, num_bins)
-            weights[bin, traj] += 1
+    for j in rows
+        H = hamiltonian[j]
+        if !(lo ≤ H ≤ hi)
+            continue
         end
+        bin = min(floor(Int, (H - lo) / ΔH) + 1, num_bins)  # H == hi → last bin
+        weights[bin, traj_id[j]] += 1
     end
 
     num_samples = vec(sum(weights; dims=1))
+    sum(num_samples) > 0 || throw(ArgumentError("no samples within limits ($lo, $hi)"))
 
     beta = inv.(unique_temps .* kB)
     bin_centre = (edges[1:(end - 1)] + edges[2:end]) ./ 2
     return MultiHistogram(unique_temps, beta, bin_centre, edges, weights, num_samples)
+end
+# This method changes the number of samples for bootstrapping
+function MultiHistogram(mh::MultiHistogram, num_samples)
+    return MultiHistogram(
+        mh.temperature, mh.beta, mh.bin_centre, mh.edges, mh.weights, num_samples
+    )
 end
 
 """
@@ -190,7 +226,7 @@ using self-consistent iteration of the trajectory free energies.
 Iteration stops when the sum of squared changes in the free energies is below
 `tol`, or when `maxiter` iterations have been reached.
 """
-function get_log_weights(mh::MultiHistogram, tol, maxiter)
+function get_log_weights(mh::MultiHistogram, tol, maxiter, show_progress)
     tol > 0 || throw(ArgumentError("`tol` must be positive"))
     maxiter > 0 || throw(ArgumentError("`maxiter` must be positive"))
 
@@ -204,7 +240,7 @@ function get_log_weights(mh::MultiHistogram, tol, maxiter)
     new_free_energy = zeros(num_trajectories(mh))
     log_denominator = zeros(num_bins(mh))
 
-    progress = ProgressThresh(tol)
+    progress = ProgressThresh(tol; enabled=show_progress)
     for iter in 1:maxiter
         update_log_denominator!(log_denominator, mh, free_energy)
 
@@ -255,11 +291,15 @@ function thermodynamic_properties(data; tol=1e-12, maxiter=5000, points=nothing,
     return thermodynamic_properties(mh; points, tol, maxiter)
 end
 function thermodynamic_properties(
-    mh::MultiHistogram; points=10 * num_trajectories(mh), tol=1e-12, maxiter=5000
+    mh::MultiHistogram;
+    points=10 * num_trajectories(mh),
+    tol=1e-12,
+    maxiter=5000,
+    show_progress=isinteractive(),
 )
     points > 0 || throw(ArgumentError("`points` must be positive"))
 
-    log_weights = get_log_weights(mh, tol, maxiter)
+    log_weights = get_log_weights(mh, tol, maxiter, show_progress)
 
     temp_grid_result = TempGrid{points}(extrema(mh.temperature)...)
     temperatures_result = temp_grid_result.t_grid
@@ -295,4 +335,53 @@ function thermodynamic_properties(
         entropy,
     )
 end
+
+"""
+    heat_capacity_peak(df; x_name=:temperature, y_name=:heat_capacity)
+    heat_capacity_peak(temperature, heat_capacity)
+
+Find the peak in the heat capacity curve by fitting a parabola to the global maximum and its
+neighbouring points. Returns the temperature and the heat capacity value at that point.
+"""
+function heat_capacity_peak(
+    df; x_name=:temperature, y_name=:heat_capacity, warn=true, kwargs...
+)
+    #if haskey(df, x_name)
+    return heat_capacity_peak(df[!, x_name], df[!, y_name]; warn)
+    #else
+    #    return heat_capacity_peak(thermodynamic_properties(df; kwargs...); x_name, y_name, warn)
+    #end
+end
+function heat_capacity_peak(temperature, heat_capacity; warn=true)
+    if length(temperature) ≠ length(heat_capacity)
+        throw(ArgumentError("`temperature` and `heat_capacity` must have the same length."))
+    end
+    index_of_max = argmax(heat_capacity)
+
+    if index_of_max == 1
+        warn &&
+            @warn "maximum found in the first index. Repeat computation at lower temperatures"
+        return (missing, missing)
+    elseif index_of_max == length(heat_capacity)
+        warn &&
+            @warn "maximum found in the last index. Repeat computation at higher temperatures"
+        return (missing, missing)
+    end
+
+    # fit parabola to 3 points around the maximum
+    x = temperature[(index_of_max - 1):(index_of_max + 1)]
+    y = heat_capacity[(index_of_max - 1):(index_of_max + 1)]
+
+    x_max =
+        0.5 * (y[1]*(x[2]^2 - x[3]^2) + y[2]*(x[3]^2 - x[1]^2) + y[3]*(x[1]^2 - x[2]^2)) /
+        (y[1]*(x[2] - x[3]) + y[2]*(x[3] - x[1]) + y[3]*(x[1] - x[2]))
+    a =
+        (y[1]*(x[2]-x[3]) + y[2]*(x[3]-x[1]) + y[3]*(x[1]-x[2])) /
+        ((x[1]-x[2])*(x[1]-x[3])*(x[2]-x[3]))
+    y_max = y[2] - a*(x[2] - x_max)^2
+    @assert y_max ≥ y[2]
+
+    return (x_max, y_max)
+end
+
 end
