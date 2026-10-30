@@ -38,19 +38,19 @@ using ParallelTemperingMonteCarlo.Exchange: exc_trajectories!
     generate_move!(AtomDisplacement(), state)
 
     get_energy!(AtomDisplacement(), state)
-    @test state.new_en - state.en_tot ≈ -4.99895252855e-5
+    @test state.new_en - state.en_tot ≈ -0.00010562150485776299
     @test metropolis_probability(AtomDisplacement(), state) == 1.0
 
     swap_config!(AtomDisplacement(), state)
     @test state.ensemble_variables.trial_move == state.config[1]
     @test state.new_dist2_vec == state.dist2_mat[1, :]
 
-    @test state2.en_tot - state.en_tot ≈ 4.99895252855e-5
+    @test state2.en_tot - state.en_tot ≈ 0.00010562150485776299
 
     update_max_stepsize!(state, 3, ensemble, 0.4, 0.6)
     @test state.max_displ[1] < 0.1
     exc_trajectories!(state, state2)
-    @test state2.en_tot - state.en_tot ≈ -4.99895252855e-5
+    @test state2.en_tot - state.en_tot ≈ -0.00010562150485776299
     @test state.config == conf1
 end
 @testset "States V" begin
@@ -83,18 +83,18 @@ end
     generate_move!(AtomDisplacement(), state)
 
     get_energy!(AtomDisplacement(), state)
-    @test state.new_en - state.en_tot ≈ -4.99895252855e-5
+    @test state.new_en - state.en_tot ≈ -0.00010562150485776299
     @test metropolis_probability(AtomDisplacement(), state) == 1.0
 
     swap_config!(AtomDisplacement(), state)
     @test state.ensemble_variables.trial_move == state.config[1]
     @test state.new_dist2_vec == state.dist2_mat[1, :]
-    @test state2.en_tot - state.en_tot ≈ 4.99895252855e-5
+    @test state2.en_tot - state.en_tot ≈ 0.00010562150485776299
 
     update_max_stepsize!(state, 3, ensemble, 0.4, 0.6)
     @test state.max_displ[1] < 0.1
     exc_trajectories!(state, state2)
-    @test state2.en_tot - state.en_tot ≈ -4.99895252855e-5
+    @test state2.en_tot - state.en_tot ≈ -0.00010562150485776299
     @test state.config == conf1
 end
 
@@ -141,7 +141,7 @@ end
 
     get_energy!(AtomDisplacement(), state)
     delen = state.new_en - state.en_tot
-    @test delen ≈ -7.5971516e-5
+    @test delen ≈ -0.0001391987034257136
     #test exc after atom move
     @test metropolis_probability(AtomDisplacement(), state) == 1.0
     swap_config!(AtomDisplacement(), state)

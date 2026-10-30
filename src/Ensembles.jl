@@ -99,19 +99,14 @@ end
 #= This first method is to ensure that any prior code which constructed an NPT ensemble
 using 6 variables continues to construct the correct ensemble now that there are 8 options.=#
 function NPT(
-    n_atoms::Int64,
-    n_atom_moves::Int64,
-    n_volume_moves::Int64,
-    n_atom_swaps::Int64,
-    pressure::Float64,
-    separated_volume::Bool,
+    n_atoms, n_atom_moves, n_volume_moves, n_atom_swaps, pressure, separated_volume
 )
     return NPT(
         n_atoms,
         n_atom_moves,
         n_volume_moves,
         n_atom_swaps,
-        pressure,
+        float(pressure),
         separated_volume,
         [0, 0],
         0,
@@ -119,8 +114,8 @@ function NPT(
 end
 # This generates the appropriate ensemble by assuming omitted parameters take on default values.
 function NPT(
-    n_atoms::Int64,
-    pressure::Float64;
+    n_atoms,
+    pressure;
     separated_volume::Bool=false,
     stress_tensor=[0, 0],
     reference_length::Float64=0.0,
@@ -131,7 +126,7 @@ function NPT(
         n_atoms,
         n_vol_moves,
         0,
-        pressure,
+        float(pressure),
         separated_volume,
         stress_tensor,
         reference_length,

@@ -1,6 +1,8 @@
 using ParallelTemperingMonteCarlo, Test, Arrow, Random, DataFrames
 
-function run_full_computation(; flush_interval=1000000, seed=1234, filename="test.arrow")
+function run_full_computation(;
+    flush_interval=1000000, seed=1234, filename="test.arrow", kwargs...
+)
     Random.seed!(seed)
 
     n_atoms = 32
