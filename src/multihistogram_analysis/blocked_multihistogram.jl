@@ -1,5 +1,39 @@
 export BlockedMultiHistogram, equilibration_analysis, bootstrap_heat_capacity_peak
 
+"""
+    BlockedMultiHistogram(filename::String; num_bins=1000, num_blocks=1000)
+    BlockedMultiHistogram(tbl; num_bins=1000, num_blocks=1000)
+    BlockedMultiHistogram(
+        trajectory_id, temperature, cycle, hamiltonian; num_bins=1000, num_blocks=1000
+    )
+
+Histograms of the Hamiltonian from a parallel tempering Monte Carlo run, split into
+`num_blocks` contiguous blocks of cycles. Use [`collapse`](@ref) to sum any selection of
+blocks into a [`MultiHistogram`](@ref), e.g. for equilibration analysis or block
+bootstrapping.
+
+The data can be given as the path to an Arrow file, as a table with the columns
+`trajectory_id`, `temperature`, `cycle`, and `hamiltonian` (e.g. an `Arrow.Table` or a
+`DataFrame`), or as the individual columns. The rows do not need to be sorted.
+
+All cycles are binned; no equilibration period is discarded. To skip equilibration, leave
+out the first blocks when collapsing (see [`equilibration_analysis`](@ref)).
+
+# Keyword arguments
+- `num_bins=1000`: Number of equally spaced Hamiltonian bins, spanning the full range of
+  the data.
+- `num_blocks=1000`: Number of blocks. Each block contains `num_cycles ÷ num_blocks`
+  cycles. Trailing cycles that do not fill a whole block are discarded.
+
+# Fields
+- `temperature`: Temperature associated with each trajectory.
+- `beta`: Inverse temperature, `1 / (kB * temperature)`, for each trajectory.
+- `bin_centre`: Hamiltonian value at the centre of each bin.
+- `edges`: Hamiltonian bin edges, with `num_bins + 1` entries.
+- `weights`: Histogram counts, indexed by `(bin, trajectory, block)`.
+- `num_samples`: Number of samples, indexed by `(trajectory, block)`.
+- `block_size`: Number of cycles in each block.
+"""
 struct BlockedMultiHistogram
     temperature::Vector{Float64}
     beta::Vector{Float64}
@@ -70,7 +104,14 @@ function BlockedMultiHistogram(
     )
 end
 Base.length(bmh::BlockedMultiHistogram) = size(bmh.weights, 3)
+
+"""
+    block_size(bmh::BlockedMultiHistogram)
+
+Return the number of cycles in each block of `bmh`.
+"""
 block_size(bmh::BlockedMultiHistogram) = bmh.block_size
+
 num_trajectories(bmh::BlockedMultiHistogram) = size(bmh.weights, 2)
 num_bins(bmh::BlockedMultiHistogram) = size(bmh.weights, 1)
 
@@ -97,11 +138,25 @@ end
     collapse(bmh::BlockedMultiHistogram, indices)
 
 Collapse a [`BlockedMultiHistogram`](@ref) to a [`MultiHistogram`](@ref) by summing the
-blocks that correspond to `indices`.
+blocks that correspond to `indices`. Blocks that appear more than once in `indices` are
+counted with multiplicity.
+
+See also [`collapse!`](@ref) for an in-place version.
 """
 function collapse(bmh::BlockedMultiHistogram, indices)
     return collapse!(collapse_target(bmh), bmh, indices)
 end
+
+"""
+    collapse!(mh::MultiHistogram, bmh::BlockedMultiHistogram, indices)
+
+Overwrite the weights and sample counts of `mh` with the sum of the blocks of `bmh` given
+by `indices`, and return `mh`. Blocks that appear more than once in `indices` are counted
+with multiplicity.
+
+`mh` must have the same bins and trajectories as `bmh`; use [`collapse_target`](@ref) to
+create one. See also [`collapse`](@ref).
+"""
 function collapse!(mh::MultiHistogram, bmh::BlockedMultiHistogram, indices)
     mh.weights .= 0
     mh.num_samples .= 0

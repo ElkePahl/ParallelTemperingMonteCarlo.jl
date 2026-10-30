@@ -263,20 +263,27 @@ end
 """
     thermodynamic_properties(data; tol=1e-12, maxiter=5000, points=nothing, kwargs...)
     thermodynamic_properties(
-        mh::MultiHistogram, [free_energy=nothing];
-        points, tol=1e-12, maxiter=5000
+        mh::MultiHistogram, [free_energy_init];
+        points=10 * num_trajectories(mh), tol=1e-12, maxiter=5000,
+        show_progress=isinteractive(),
     )
 
 Compute thermodynamic properties from multihistogram analysis.
 
-For `data`, `kwargs...` are passed to `MultiHistogram`. `points` specifies the
-number of temperatures at which to evaluate the properties; by default it is
-`10 * num_trajectories(mh)`. `tol` and `maxiter` control the free-energy
-iteration (convergence tolerance and number of iterations).
+For `data`, `kwargs...` are passed to [`MultiHistogram`](@ref). `points` specifies the
+number of temperatures, geometrically spaced between the lowest and highest simulated
+temperature, at which to evaluate the properties; by default it is
+`10 * num_trajectories(mh)`. `tol` and `maxiter` control the free-energy iteration
+(convergence tolerance and maximum number of iterations), and `show_progress` toggles its
+progress display.
 
 Returns a `DataFrame` containing `temperature`, `heat_capacity`, `hamiltonian`,
-`hamiltonian_squared`, and `entropy`. If free energy is passed, free energy is returned as
-well.
+`hamiltonian_squared`, and `entropy`. The entropy is only defined up to an additive
+constant.
+
+If `free_energy_init` is given, it is used as the starting point of the free-energy
+iteration and is not modified. In this case, the converged free energies are returned as
+well, as `(properties, free_energy)`, so they can be used to warm-start a later call.
 """
 function thermodynamic_properties(data; tol=1e-12, maxiter=5000, points=nothing, kwargs...)
     mh = MultiHistogram(data; kwargs...)
