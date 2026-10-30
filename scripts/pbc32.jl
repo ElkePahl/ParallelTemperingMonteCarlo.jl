@@ -4,15 +4,13 @@ using Random
 #-------------------------------------------------------#
 #-----------------------MC Params-----------------------#
 #-------------------------------------------------------#
-Random.seed!(1234)
-
 n_atoms = 32
 pressure = 101325
 AtoBohr = 1.8897261259077824
 
 # temperature grid
-ti = 20
-tf = 35
+ti = 30
+tf = 45
 n_traj = 24
 temp = TempGrid{n_traj}(ti, tf)
 
@@ -95,7 +93,5 @@ start_config = Config(positions, boundary_condition)
 #----------------------------------------------------------------#
 #-------------------------Run Simulation-------------------------#
 #----------------------------------------------------------------#
-mc_states, results, stats = ptmc_run!(
-    mc_params, temp, start_config, pot, ensemble; save=1000
-)
+mc_states, results, stats = ptmc_run!(mc_params, temp, start_config, pot, ensemble)
 #T, Cv = multihistogram_NPT(ensemble, temp, results, 1e-10, false)
