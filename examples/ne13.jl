@@ -1,7 +1,7 @@
-# Example 1: Melting a 13-Atom Neon Cluster 
+# Example 1: Melting a 13-Atom Neon Cluster
 # ==========================================
 
-#= This is an example calculation for finding the melting temperature of a 
+#= This is an example calculation for finding the melting temperature of a
 13-atoms neon cluster using a parallel-tempering Monte Carlo simulation. =#
 # First, we load ParallelTemperingMonteCarlo and Plots:
 
@@ -33,7 +33,7 @@ c = [
 pot = ELJPotentialEven{6}(c)
 
 #= We further have to define the starting configuration of the simulation.
-For Ne13 we choose the icosahedral ground state from the Cambridge cluster database. 
+For Ne13 we choose the icosahedral ground state from the Cambridge cluster database.
 The atomic positions are given in Angstrom, which are then converted to Bohr radii
 as the program uses atomic units. =#
 
@@ -58,7 +58,7 @@ AtoBohr = 1.8897259886;
 pos_ne13 = pos_ne13 * AtoBohr
 
 #= Finally, we choose appropriate boundary conditions, here spherical boundary conditions
- (solid boundary around the cluster), to suppress atom loss processes.  
+ (solid boundary around the cluster), to suppress atom loss processes.
  Finding this radius is a non-trivial task, and has to be chosen and tested carefully.
  A radius chosen too small will exert artificial pressure on the cluster
  while too large a value leads to atoms being ejected. =#
@@ -72,7 +72,7 @@ start_config = Config(pos_ne13, bc_ne13)
 # ## Setting up the Simulation Parameters
 
 #= We first set the temperature grid, which defines the range of temperatures we consider.
-This is done by defining the upper and lower temperature limits, 
+This is done by defining the upper and lower temperature limits,
 along with the number of temperatures (also called trajectories) we want to sample.
 Note, that a geometrical distribution of temperatures is chosen to maximise overlaps
 in the energy histograms. =#
@@ -113,7 +113,7 @@ ensemble = NVT(n_atoms);
 
 # ## Running the Simulation
 
-#= Finally, we run the simulation. 
+#= Finally, we run the simulation.
 This method returns the current state and results of the simulation.
 The data is stored in various local files created in the current working directory. =#
 
@@ -145,9 +145,9 @@ plot(
 data = [results.en_histogram[i] for i in 1:n_traj]
 plot(data)
 
-#= For post-processing of the data we use the multihistogram method. 
-This method accesses the stored data created from `ptmc_run!` and returns values for 
-the energies, histogram data, temperature, partition function, heat capacity, 
+#= For post-processing of the data we use the multihistogram method.
+This method accesses the stored data created from `ptmc_run!` and returns values for
+the energies, histogram data, temperature, partition function, heat capacity,
 heat capacity gradient, and entropy, which can be plotted as shown: =#
 
 energies, histogramdata, T, Z, Cv, dCv, S = postprocess();

@@ -30,6 +30,7 @@ surface = sort([
     "Multihistogram",
     "Multihistogram_NPT",
     "Multihistogram_NVT",
+    "MultiHistogramAnalysis",
 ])
 
 #Submodules of a submodule in the ParallelTemperingMonteCarlo module

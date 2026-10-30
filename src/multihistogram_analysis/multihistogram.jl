@@ -1,13 +1,5 @@
-module MultiHistogramAnalysis
-
-using ..InputParams: TempGrid
-using ProgressMeter: ProgressMeter, ProgressThresh
-using LogExpFunctions: logsumexp
-using DataFrames: DataFrame, metadata
-using LinearAlgebra: dot
-export MultiHistogram, num_trajectories, num_bins, thermodynamic_properties
-
-const kB = 3.16681196e-6 # in atomic units
+export MultiHistogram,
+    num_trajectories, num_bins, thermodynamic_properties, heat_capacity_peak
 
 """
     check_trajectory_temperature_consistency(traj_id, temperature)
@@ -36,16 +28,17 @@ function check_trajectory_temperature_consistency(traj_id, temperature)
 end
 
 """
-    MultiHistogram(df; num_bins=100, equilibration_cycles)
+    MultiHistogram(df; num_bins=100, equilibration_cycles, stop_at, window_size, limits)
 
 Construct a `MultiHistogram` from parallel tempering Monte Carlo data in `df` for use with
 multihistogram analysis.
 
 `df` is a `DataFrame` that contains the columns `trajectory_id`, `temperature`, `cycle`, and
 `hamiltonian`. Each trajectory is assumed to correspond to a fixed temperature. The
-generalized Hamiltonian is ``E`` for an [`NVT`](@ref) ensemble, ``E + pV`` for an
-[`NPT`](@ref) ensemble, and ``E + pV + L_0 σ ⋅ L`` for the ``NσT`` (see [`NPT`](@ref))
-ensemble.
+generalized Hamiltonian is ``E`` for an [`NVT`](@ref Main.ParallelTemperingMonteCarlo.NVT)
+ensemble, ``E + pV`` for an [`NPT`](@ref Main.ParallelTemperingMonteCarlo.NPT) ensemble, and
+``E + pV + L_0 σ ⋅ L`` for the ``NσT`` (see
+[`NPT`](@ref Main.ParallelTemperingMonteCarlo.NPT)) ensemble.
 
 # Arguments
 - `df`: DataFrame containing the Monte Carlo samples.
@@ -53,9 +46,15 @@ ensemble.
 - `equilibration_cycles`: Number of steps of the simulation discarded as initial
   equilibration. Samples with `cycle ≤ equilibration_cycles` are discarded. Defaults to
   reading the value from `df`'s metadata.
+- `stop_at`: Last cycle to include. Defaults to the last cycle in the data.
+- `window_size`: Number of cycles to include, starting after equilibration. Mutually
+  exclusive with `stop_at`.
+- `limits`: `(lo, hi)` range of the Hamiltonian histogram. Samples outside it are
+  discarded. Defaults to the range of the selected data.
+
+`df` must be sorted by `cycle`.
 
 # Fields
-- `num_bins`: Number of Hamiltonian bins.
 - `temperature`: Temperature associated with each trajectory.
 - `beta`: Inverse thermal energy, `1 / (kB * temperature)`, for each trajectory.
 - `bin_centre`: Hamiltonian value at the centre of each bin.
@@ -99,6 +98,9 @@ function MultiHistogram(
     metadata;
     num_bins=100,
     equilibration_cycles=nothing,
+    stop_at=nothing,
+    window_size=nothing,
+    limits=nothing,
 )
     if !(length(traj_id) == length(temperature) == length(cycle) == length(hamiltonian))
         throw(
@@ -107,18 +109,23 @@ function MultiHistogram(
             ),
         )
     end
+    issorted(cycle) || throw(ArgumentError("the data should be sorted by `cycle`"))
     if num_bins ≤ 2
         throw(ArgumentError("`num_bins` must be at least 3"))
     elseif !isnothing(equilibration_cycles) && equilibration_cycles < 0
         throw(ArgumentError("`equilibration_cycles` must be non-negative"))
+    elseif !isnothing(stop_at) && !isnothing(window_size)
+        throw(ArgumentError("specify at most one of `stop_at` and `window_size`"))
+    elseif !isnothing(window_size) && window_size ≤ 0
+        throw(ArgumentError("`window_size` must be positive"))
     end
 
     num_cycles = maximum(cycle; init=0)
     if isnothing(equilibration_cycles)
         eq_cycles = get(metadata, "eq_cycles", nothing)
         if isnothing(eq_cycles)
-            @warn "`df` does not have `\"eq_cycles\"` in its metadata. Using `1/6 * num_cycles`."
-            first_used = round(Int, 1/6 * num_cycles)
+            @warn "metadata does not contain `eq_cycles`. Using `1/6 * num_cycles`."
+            first_used = round(Int, num_cycles / 6) + 1
         else
             first_used = parse(Int, eq_cycles) + 1
         end
@@ -126,17 +133,39 @@ function MultiHistogram(
         first_used = equilibration_cycles + 1
     end
 
-    # Find range of data, excluding initial equilibration phase
-    lo = Inf
-    hi = -Inf
-    for i in 1:length(hamiltonian)
-        if cycle[i] ≥ first_used
-            lo = min(lo, hamiltonian[i])
-            hi = max(hi, hamiltonian[i])
-        end
+    if !isnothing(window_size)
+        last_used = first_used + window_size - 1
+    elseif !isnothing(stop_at)
+        last_used = stop_at
+    else
+        last_used = num_cycles
     end
-    if !isfinite(lo) || !isfinite(hi) || lo == hi
-        throw(ArgumentError("cannot construct histogram."))
+    if last_used < first_used
+        throw(
+            ArgumentError(
+                "no cycles selected: first used $first_used, last used $last_used"
+            ),
+        )
+    elseif last_used > num_cycles
+        throw(
+            ArgumentError("requested cycles up to $last_used, but data ends at $num_cycles")
+        )
+    end
+
+    rows = searchsortedfirst(cycle, first_used):searchsortedlast(cycle, last_used)
+    isempty(rows) && throw(ArgumentError("no samples in cycles $first_used:$last_used"))
+
+    if isnothing(limits)
+        lo, hi = extrema(@view hamiltonian[rows])
+    else
+        lo, hi = limits
+    end
+    if !isfinite(lo) || !isfinite(hi) || lo ≥ hi
+        throw(
+            ArgumentError(
+                "invalid Hamiltonian range ($lo, $hi); cannot construct histogram"
+            ),
+        )
     end
 
     num_traj = maximum(traj_id; init=0)
@@ -146,21 +175,21 @@ function MultiHistogram(
     edges = collect(range(lo, hi; length=num_bins + 1))
     weights = zeros(Int, num_bins, num_traj)
 
-    for j in 1:length(hamiltonian)
-        if cycle[j] ≥ first_used
-            H = hamiltonian[j]
-            traj = traj_id[j]
-
-            bin = floor(Int, (H - lo) / ΔH) + 1
-            bin = clamp(bin, 1, num_bins)
-            weights[bin, traj] += 1
+    for j in rows
+        H = hamiltonian[j]
+        if !(lo ≤ H ≤ hi)
+            continue
         end
+        bin = min(floor(Int, (H - lo) / ΔH) + 1, num_bins)  # H == hi → last bin
+        weights[bin, traj_id[j]] += 1
     end
 
     num_samples = vec(sum(weights; dims=1))
+    sum(num_samples) > 0 || throw(ArgumentError("no samples within limits ($lo, $hi)"))
 
     beta = inv.(unique_temps .* kB)
     bin_centre = (edges[1:(end - 1)] + edges[2:end]) ./ 2
+
     return MultiHistogram(unique_temps, beta, bin_centre, edges, weights, num_samples)
 end
 
@@ -182,7 +211,7 @@ function update_log_denominator!(log_denominator, mh::MultiHistogram, free_energ
 end
 
 """
-    get_log_weights(mh, tol, maxiter)
+    get_log_weights!(mh, tol, maxiter, show_progress, free_energy)
 
 Compute the logarithm of the unnormalised multihistogram density of states
 using self-consistent iteration of the trajectory free energies.
@@ -190,7 +219,7 @@ using self-consistent iteration of the trajectory free energies.
 Iteration stops when the sum of squared changes in the free energies is below
 `tol`, or when `maxiter` iterations have been reached.
 """
-function get_log_weights(mh::MultiHistogram, tol, maxiter)
+function get_log_weights!(mh::MultiHistogram, tol, maxiter, show_progress, free_energy)
     tol > 0 || throw(ArgumentError("`tol` must be positive"))
     maxiter > 0 || throw(ArgumentError("`maxiter` must be positive"))
 
@@ -200,11 +229,10 @@ function get_log_weights(mh::MultiHistogram, tol, maxiter)
         log_numerator[k] = iszero(total) ? -Inf : log(total)
     end
 
-    free_energy = zeros(num_trajectories(mh))
-    new_free_energy = zeros(num_trajectories(mh))
+    new_free_energy = similar(free_energy)
     log_denominator = zeros(num_bins(mh))
 
-    progress = ProgressThresh(tol)
+    progress = ProgressThresh(tol; enabled=show_progress)
     for iter in 1:maxiter
         update_log_denominator!(log_denominator, mh, free_energy)
 
@@ -226,7 +254,7 @@ function get_log_weights(mh::MultiHistogram, tol, maxiter)
 
         if delta < tol
             update_log_denominator!(log_denominator, mh, new_free_energy)
-            return log_numerator - log_denominator
+            return log_numerator - log_denominator, new_free_energy
         end
         free_energy, new_free_energy = new_free_energy, free_energy
     end
@@ -235,17 +263,28 @@ end
 
 """
     thermodynamic_properties(data; tol=1e-12, maxiter=5000, points=nothing, kwargs...)
-    thermodynamic_properties(mh::MultiHistogram; points, tol=1e-12, maxiter=5000)
+    thermodynamic_properties(
+        mh::MultiHistogram, [free_energy_init];
+        points=10 * num_trajectories(mh), tol=1e-12, maxiter=5000,
+        show_progress=isinteractive(),
+    )
 
 Compute thermodynamic properties from multihistogram analysis.
 
-For `data`, `kwargs...` are passed to `MultiHistogram`. `points` specifies the
-number of temperatures at which to evaluate the properties; by default it is
-`10 * num_trajectories(mh)`. `tol` and `maxiter` control the free-energy
-iteration (convergence tolerance and number of iterations).
+For `data`, `kwargs...` are passed to [`MultiHistogram`](@ref). `points` specifies the
+number of temperatures, geometrically spaced between the lowest and highest simulated
+temperature, at which to evaluate the properties; by default it is
+`10 * num_trajectories(mh)`. `tol` and `maxiter` control the free-energy iteration
+(convergence tolerance and maximum number of iterations), and `show_progress` toggles its
+progress display.
 
 Returns a `DataFrame` containing `temperature`, `heat_capacity`, `hamiltonian`,
-`hamiltonian_squared`, and `entropy`.
+`hamiltonian_squared`, and `entropy`. The entropy is only defined up to an additive
+constant.
+
+If `free_energy_init` is given, it is used as the starting point of the free-energy
+iteration and is not modified. In this case, the converged free energies are returned as
+well, as `(properties, free_energy)`, so they can be used to warm-start a later call.
 """
 function thermodynamic_properties(data; tol=1e-12, maxiter=5000, points=nothing, kwargs...)
     mh = MultiHistogram(data; kwargs...)
@@ -255,13 +294,25 @@ function thermodynamic_properties(data; tol=1e-12, maxiter=5000, points=nothing,
     return thermodynamic_properties(mh; points, tol, maxiter)
 end
 function thermodynamic_properties(
-    mh::MultiHistogram; points=10 * num_trajectories(mh), tol=1e-12, maxiter=5000
+    mh::MultiHistogram,
+    free_energy_init=nothing;
+    points=10 * num_trajectories(mh),
+    tol=1e-12,
+    maxiter=5000,
+    show_progress=isinteractive(),
 )
     points > 0 || throw(ArgumentError("`points` must be positive"))
+    if isnothing(free_energy_init)
+        free_energy = zeros(num_trajectories(mh))
+    else
+        free_energy = copy(free_energy_init) # to make it thread-safe
+    end
 
-    log_weights = get_log_weights(mh, tol, maxiter)
+    log_weights, free_energy = get_log_weights!(
+        mh, tol, maxiter, show_progress, free_energy
+    )
 
-    temp_grid_result = TempGrid{points}(extrema(mh.temperature)...)
+    temp_grid_result = TempGrid{Int(points)}(extrema(mh.temperature)...)
     temperatures_result = temp_grid_result.t_grid
     betas_result = temp_grid_result.beta_grid
 
@@ -287,12 +338,61 @@ function thermodynamic_properties(
         entropy[i] = kB * (log_Z + β * H)
     end
 
-    return DataFrame(;
+    result = DataFrame(;
         temperature=temperatures_result,
         heat_capacity,
         hamiltonian,
         hamiltonian_squared,
         entropy,
     )
+    if isnothing(free_energy_init)
+        return result
+    else
+        return result, free_energy
+    end
 end
+
+"""
+    heat_capacity_peak(df; x_name=:temperature, y_name=:heat_capacity, warn=true)
+    heat_capacity_peak(temperature, heat_capacity; warn=true)
+
+Find the peak in the heat capacity curve by fitting a parabola to the global maximum and its
+neighbouring points. Returns the temperature and the heat capacity value at that point.
+
+If the maximum lies at either end of the curve, returns `(missing, missing)` and, if `warn`
+is set, emits a warning.
+"""
+function heat_capacity_peak(df; x_name=:temperature, y_name=:heat_capacity, warn=true)
+    return heat_capacity_peak(df[!, x_name], df[!, y_name]; warn)
+end
+function heat_capacity_peak(temperature, heat_capacity; warn=true)
+    if length(temperature) ≠ length(heat_capacity)
+        throw(ArgumentError("`temperature` and `heat_capacity` must have the same length."))
+    end
+    index_of_max = argmax(heat_capacity)
+
+    if index_of_max == 1
+        warn &&
+            @warn "Maximum found in the first index. Repeat computation for a wider temperature range."
+        return (missing, missing)
+    elseif index_of_max == length(heat_capacity)
+        warn &&
+            @warn "Maximum found in the last index. Repeat computation for a wider temperature range."
+        return (missing, missing)
+    end
+
+    # fit parabola to 3 points around the maximum
+    x1, x2, x3 = temperature[(index_of_max - 1):(index_of_max + 1)]
+    y1, y2, y3 = heat_capacity[(index_of_max - 1):(index_of_max + 1)]
+
+    x_max =
+        0.5 * (y1 * (x2^2 - x3^2) + y2 * (x3^2 - x1^2) + y3 * (x1^2 - x2^2)) /
+        (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2))
+    a =
+        (y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2)) /
+        ((x1 - x2) * (x1 - x3) * (x2 - x3))
+    y_max = y2 - a*(x2 - x_max)^2
+    @assert y_max ≥ y2
+
+    return (x_max, y_max)
 end
