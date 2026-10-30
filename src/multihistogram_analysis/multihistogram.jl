@@ -35,9 +35,10 @@ multihistogram analysis.
 
 `df` is a `DataFrame` that contains the columns `trajectory_id`, `temperature`, `cycle`, and
 `hamiltonian`. Each trajectory is assumed to correspond to a fixed temperature. The
-generalized Hamiltonian is ``E`` for an [`NVT`](@ref) ensemble, ``E + pV`` for an
-[`NPT`](@ref) ensemble, and ``E + pV + L_0 σ ⋅ L`` for the ``NσT`` (see [`NPT`](@ref))
-ensemble.
+generalized Hamiltonian is ``E`` for an [`NVT`](@ref Main.ParallelTemperingMonteCarlo.NVT)
+ensemble, ``E + pV`` for an [`NPT`](@ref Main.ParallelTemperingMonteCarlo.NPT) ensemble, and
+``E + pV + L_0 σ ⋅ L`` for the ``NσT`` (see
+[`NPT`](@ref Main.ParallelTemperingMonteCarlo.NPT)) ensemble.
 
 # Arguments
 - `df`: DataFrame containing the Monte Carlo samples.
