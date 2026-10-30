@@ -21,123 +21,7 @@ using ..MCSampling
 using ..Initialization
 using ..CustomTypes
 
-include("swap_config.jl")
 include("Reporter.jl")
-
-#TODO update energy documentation
-"""
-    get_energy!(mc_state::MCState, movetype::String)
-
-Calculates energy for different ensembles and move types.
-Currently implemented for:
-- [`NVT`](@ref) ensemble without `r_cut`
-- [`NPT`](@ref) ensemble with `r_cut`
-- [`NNVT`](@ref) ensemble for multiple-species atoms
-"""
-function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, movetype::String
-) where {E<:NVTVariables}
-    if movetype == "atommove"
-        mc_state.potential_variables, mc_state.new_en = energy_update!(
-            mc_state.ensemble_variables,
-            mc_state.config,
-            mc_state.potential_variables,
-            mc_state.dist2_mat,
-            mc_state.new_dist2_vec,
-            mc_state.en_tot,
-            mc_state.potential,
-        )
-    end
-    return mc_state
-end
-function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, movetype::String
-) where {E<:NPTVariables}
-    if movetype == "atommove"
-        mc_state.potential_variables, mc_state.new_en = energy_update!(
-            mc_state.ensemble_variables,
-            mc_state.config,
-            mc_state.potential_variables,
-            mc_state.dist2_mat,
-            mc_state.new_dist2_vec,
-            mc_state.en_tot,
-            mc_state.potential,
-        )
-    else
-        mc_state.new_en = dimer_energy_config(
-            mc_state.ensemble_variables.trial_config,
-            mc_state.ensemble_variables.new_dist2_mat,
-            mc_state.potential_variables,
-            mc_state.potential;
-            new=true,
-        )
-    end
-    return mc_state
-end
-function get_energy!(
-    mc_state::MCState{<:Any,<:Any,<:Any,<:Any,E}, movetype::String
-) where {E<:NNVTVariables}
-    if movetype == "atommove"
-        mc_state.potential_variables, mc_state.new_en = energy_update!(
-            mc_state.ensemble_variables,
-            mc_state.config,
-            mc_state.potential_variables,
-            mc_state.dist2_mat,
-            mc_state.new_dist2_vec,
-            mc_state.en_tot,
-            mc_state.potential,
-        )
-    else
-        mc_state.potential_variables, mc_state.new_en = swap_energy_update(
-            mc_state.ensemble_variables,
-            mc_state.config,
-            mc_state.potential_variables,
-            mc_state.dist2_mat,
-            mc_state.en_tot,
-            mc_state.potential,
-        )
-    end
-    return mc_state
-end
-
-"""
-    acc_test!(mc_state::MCState, movetype::String)
-
-Checks if metropolis condition is fulfilled, comparing it to a random variable in [0,1].
-If the condition is met, the new variables become the current `mc_state` using [`swap_config!`](@ref).
-`ensemble` and `movetype` dictate the exact calculation of the metropolis condition,
-and the internal `potential_variables` within the mc_states dictate how [`swap_config!`](@ref) operates.
-"""
-function acc_test!(mc_state::MCState, movetype::String)
-    if metropolis_condition(movetype, mc_state, mc_state.ensemble) >= rand()
-        swap_config!(mc_state, movetype)
-        return true
-    else
-        return false
-    end
-end
-"""
-    mc_move!(mc_state::MCState, move_strat::MoveStrategy)
-
-Basic move for one `mc_state` according to a `move_strat` dictating the types of moves allowed within the `ensemble` when moving across a `potential` defining the PES.
--   Calculates an index for the move
--   Generates either a volume or atom move depending on `movestrat[index]`
--   Calculates energy based on the pot and new move
--   Tests acc and swaps if relevant
-"""
-function mc_move!(mc_state::MCState, move_strat::MoveStrategy{N,E}) where {N,E}
-    mc_state.ensemble_variables.index = rand(1:N)
-
-    mc_state = generate_move!(
-        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index]
-    )
-
-    mc_state = get_energy!(
-        mc_state, move_strat.movestrat[mc_state.ensemble_variables.index]
-    )
-
-    return acc_test!(mc_state, move_strat.movestrat[mc_state.ensemble_variables.index])
-end
 
 """
     mc_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, index)
@@ -200,7 +84,7 @@ function mc_cycle!(
 end
 function mc_cycle!(
     mc_states,
-    move_strat::MoveStrategy{N,E},
+    move_strat,
     mc_params::MCParams,
     n_steps::Int,
     results::Output,
@@ -208,7 +92,7 @@ function mc_cycle!(
     rdfsave::Bool,
     potential,
     reporter,
-) where {N,E}
+)
     #TODO: Implement saving configurations after n steps
 
     mc_cycle!(mc_states, move_strat, mc_params, n_steps, idx, reporter)
@@ -253,7 +137,7 @@ function reset_counters(state::MCState)
 end
 
 """
-    equilibration_cycle!(mc_states, move_strat::MoveStrategy, mc_params::MCParams, n_steps, results::Output, stats)
+    equilibration_cycle!(mc_states, move_strat, mc_params::MCParams, n_steps, results::Output, stats)
 
 Function to thermalise a set of `mc_states` ensuring that the number of equilibration cycles
 defined in `mc_params` are completed without updating the results before initialising the
@@ -274,7 +158,7 @@ function equilibration_cycle!(
     progress = Progress(
         mc_params.eq_cycles;
         desc="Equilibration",
-        enabled=(!reporter.verbose && !isinteractive()),
+        enabled=(!reporter.verbose && isinteractive()),
     )
     for i in 1:(mc_params.eq_cycles ÷ 2)
         mc_cycle!(mc_states, move_strat, mc_params, n_steps, i, reporter)
@@ -300,7 +184,7 @@ end
 
 #TODO: why is restart not functional?
 """
-    equilibration(mc_states, move_strat::MoveStrategy, mc_params, pot, ensemble, n_steps::Int, results::Output, restart, stats)
+    equilibration(mc_states, move_strat, mc_params, pot, ensemble, n_steps::Int, results::Output, restart, stats)
 
 While initialisation sets `mc_states`, `params` etc. we require something to thermalise our simulation and set the histograms. This function is mostly a wrapper for the [`equilibration_cycle!`](@ref) function that optionally removes the thermalisation from restart.
 
@@ -308,7 +192,7 @@ N.B. Restart is currently non-functional, do not try use it
 """
 function equilibration(
     mc_states,
-    move_strat::MoveStrategy{N,E},
+    move_strat,
     mc_params::MCParams,
     n_steps::Int,
     results::Output,
@@ -396,6 +280,7 @@ function ptmc_run!(
     verbose=(!isinteractive()),
     return_stats=true,
     extra_metadata=nothing,
+    kwargs...,
 )
     # Initialisation
     cd(workingdirectory)
@@ -416,7 +301,7 @@ function ptmc_run!(
     )
 
     mc_states, move_strategy, results, n_steps, start_counter = initialisation(
-        mc_params, temp, start_config, potential, ensemble
+        mc_params, temp, start_config, potential, ensemble; kwargs...
     )
 
     # Equilibration
@@ -431,7 +316,7 @@ function ptmc_run!(
     progress = Progress(
         length(start_counter:(mc_params.mc_cycles));
         desc="Main loop",
-        enabled=(!reporter.verbose && !isinteractive()),
+        enabled=(!reporter.verbose && isinteractive()),
     )
     for i in start_counter:(mc_params.mc_cycles)
         mc_cycle!(
